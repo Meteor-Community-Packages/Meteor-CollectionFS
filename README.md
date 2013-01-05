@@ -44,7 +44,8 @@ Using Meteor and gridFS priciples we get:
 ```
 *In the future there will be made an alias making it ```ContactsFS.allow({```* 
 
-####4.Adding the view:
+##Uploading file
+####1. Adding the view:
 ```html
     <template name="queControl">
       <h3>Select file(s) to upload:</h3>
@@ -52,7 +53,7 @@ Using Meteor and gridFS priciples we get:
     </template>
 ```
 
-####5. Adding the controller: [client]
+####2. Adding the controller: [client]
 ```js
     Template.queControl.events({
       'change .fileUploader': function (e) {
@@ -63,6 +64,43 @@ Using Meteor and gridFS priciples we get:
       }
     });
 ```
+
+##Downloading file
+####1. Adding the view:
+```html
+    <template name="fileTable">
+      {{#each Files}}
+        <a class="btn btn-primary btn-mini btnFileSaveAs">Save as</a>{{filename}}<br/>
+      {{else}}
+        No files uploaded
+      {{/each}}
+    </template>
+```
+
+####2. Adding the controller: [client]
+```js
+    Template.fileTable.events({
+      'click .btnFileSaveAs': function() {
+        ContactsFS.retrieveBlob(this._id, function(fileItem) {
+          if (fileItem.blob)
+            saveAs(fileItem.blob, fileItem.filename)
+          else
+            saveAs(fileItem.file, fileItem.filename);
+        });
+      } //EO saveAs
+    });
+```
+
+####3. Adding controller helper: [client]
+```js
+    Template.fileTable.helpers({
+      Files: function() {
+        return ContactsFS.files.find({}, { sort: { uploadDate:-1 } });
+      }
+    });
+```
+*- In future there would be made an alias for ```.find``` eg. ```ContactsFS.find({});```*
+*- In future only a blob will be returned, this will return local file if available. The `Save as` calls the Filesaver.js by Eli Grey, http://eligrey.com*
 
 ###Sorry:
 * This is made as ```Make it work, make it fast```, well it's not fast - yet
