@@ -527,9 +527,10 @@ _.extend(_queCollectionFS.prototype, {
 _.extend(collectionFS.prototype, {
 	storeFile: function(file, options) {
 		var self = this;
+		var fileId = null;
 		if (Meteor.isClient) {
 			var record = self.que.makeGridFSFileRecord(file, options);
-			var fileId = self.files.insert(record);			
+			fileId = self.files.insert(record);			
 			//Put file in upload que
 			self.que.addFile(fileId, file);
 		}
@@ -540,6 +541,7 @@ _.extend(collectionFS.prototype, {
 			//GridFS myFS = new GridFS(myDatabase);            // returns a default GridFS (e.g. "fs" bucket collection)
 			//myFS.storeFile(new File("/tmp/largething.mpg")); // saves the file into the "fs" GridFS store
 		}
+		return fileId;
 	}, //EO storeFile
 	//callback(fileItem)
 	retrieveBlob: function(fileId, callback) {
