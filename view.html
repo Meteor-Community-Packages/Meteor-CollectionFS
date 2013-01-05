@@ -129,7 +129,13 @@
     <tr>
       <td>
         {{#if needToResumeUpload}}
-          <input name="files" type="file" class="btnResumeFile" style="width:60px;">
+          {{#if isOwner}}
+            <input name="files" type="file" class="btnResumeFile" style="width:60px;">
+          {{else}}
+            <span class="label label-info">
+              Waiting
+            </span>
+          {{/if}}
         {{else}}
           {{#if isDownloading}}
             {{#if isPaused}}

@@ -73,6 +73,9 @@ Template.fileTable.helpers({
   isPaused: function() {
     return Filesystem.que.isPaused();
   },
+  isOwner: function() {
+    return (this.owner == Meteor.userId());
+  },
   progress : function() {
     var filesProgress = Math.round(this.currentChunk / (this.countChunks - 1) * 100);
     var queProgress = Filesystem.que.progress(this._id);
