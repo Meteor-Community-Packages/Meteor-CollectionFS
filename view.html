@@ -1,0 +1,210 @@
+<head>
+  <title>Gi-CollectionFS</title>
+  <meta http-equiv="Content-Type" content="text/ html; charset=UTF-8" />
+</head>
+<body>
+  <div class="navbar navbar-inverse navbar-static-top">
+    <!-- Main menu bar -->
+    <div class="navbar-inner">
+      <div class="container">
+        <button id="mainMenuToggle" class="btn btn-navbar collapsed" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+
+        <a class="brand" href="#">Gi-CollectionFS{{> connectionStatus}}</a>
+        <!-- Main menu Current Folder -->
+        {{loginButtons}}
+
+        {{> mainMenu}}
+
+      </div> <!-- container -->  
+    </div> <!-- EO navbar inner -->
+  </div> <!-- EO navbar top -->
+  
+  <div class="container-fluid"> 
+    <div class="row-fluid">
+      <!-- Side bar -->
+      <div class="span2">
+
+      </div> <!-- EO side bar -->
+      <!-- Body content -->
+      <div class="span10">
+       
+        {{> uploadTest}}
+        
+      </div> <!-- EO Body content -->
+    </div> <!-- EO row -->
+  </div> <!-- EO container fluid -->
+
+</body>
+
+<template name="stats">
+  {{#if statToggleStats}}
+  <table class="table-bordered" width="100%">
+    {{#with statistics}}
+    <tr>
+      <td colspan="2">
+        TimerQue Length: {{timeQueLength}}
+      </td>
+      <td colspan="2">
+        
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4">Download statistics kbit/sec: {{bitPrSecDownload}}</td>
+    </tr>
+    <tr>
+      <td>Total</td><td>append to Blob</td><td>MeteorCall total</td><td>MeteorCall server</td>
+    </tr><tr>
+      <td>{{downloadTotal}}</td><td>{{downloadFileReader}}</td><td>{{downloadMeteorCall}}</td><td>{{downloadMeteorCallServer}}</td>
+    </tr>
+    <tr>
+      <td colspan="4">Upload statistics kbit/sec: {{bitPrSecUpload}}</td>
+    </tr>
+    <tr>
+      <td>Total</td><td>read file slice</td><td>MeteorCall total</td><td>MeteorCall server</td>
+    </tr><tr>
+      <td>{{uploadTotal}}</td><td>{{uploadFileReader}}</td><td>{{uploadMeteorCall}}</td><td>{{uploadMeteorCallServer}}</td>
+    </tr>
+   {{/with}}
+  </table>  
+  {{/if}}
+</template>
+
+<template name="loginInto">
+  <table class="table-bordered" width="100%">
+    <tr>
+      <td>
+        <h3>Log in'n try uploading</h3>
+        <i>Login and upload some files and test pause/start + resume capabilities after connection loss or browser crash..</i><br/>
+        <br/>
+        In short: a GridFS like storage - guess it migth even be compatible, no server side functions yet (not really needed) just: pure meteor.<br/>
+        We get to benifit of the accounts system, where access can be controlled as collections  - In the example it's on autopublish, meaning if two seperate users resumes upload on same file I guess the clients could simply collaborate on uploading.
+        <br/>
+        <br/>
+        collectionFS by RaiX aka Morten N.O. Noergaard Henriksen, mh@gi2.dk - kind of a mixin between gridFS and Meteor.Collections<br/>
+        Credit to Eli Grey, http://eligrey.com for the nice Filesaver.js - "save as" functionality<br/>
+        <br/>
+        <i>Well, it's just a test, really speed etc. not that optimized, it's my first code in node/meteor.. Nice job Meteor guys!</i>     
+      </td>
+   </tr>
+  </table> 
+</template>
+
+<template name="queControl">
+  <table class="table-bordered" width="100%">
+    <tr>
+      <td colspan="2">
+        <br/>
+        <h3>Select file(s) to upload:</h3>
+        <input name="files" type="file" class="fileUploader" multiple>
+        <br/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        {{#if isPaused}}
+          <a href="#" class="btn btnResume"><i class="icon-play"></i>Resume</a>
+        {{else}}
+          <a href="#" class="btn btnPause"><i class="icon-pause"></i>Pause</a>
+        {{/if}}
+      </td>
+      <td>
+        <a href="#" class="btn btnToggleStats"><i class="icon-list-alt"></i>Toggle Stats</a>
+      </td>
+   </tr>
+  </table> 
+</template>
+
+<template name="fileTable">
+  <table class="table-hover table-bordered" width="100%">
+    <tr>
+      <th>Action</th><th>Size</th><th>Status</th><th>Name</th><th>Progress</th><th>Owner</th>
+    </tr>
+
+    {{#each Files}}
+    <tr>
+      <td>
+        {{#if needToResumeUpload}}
+          <input name="files" type="file" class="btnResumeFile" style="width:60px;">
+        {{else}}
+          {{#if isDownloading}}
+            {{#if isPaused}}
+              <span class="label label-warning">
+                Paused
+              </span>
+            {{else}}
+              <span class="label label-info">
+                Loading
+              </span>
+            {{/if}}
+          {{else}}
+            <a class="btn btn-primary btn-mini btnFileSaveAs">Save as</a>
+          {{/if}}
+        {{/if}}
+      </td>
+      <td>{{niceSize}}</td>
+      <td>        
+        <span class="label {{transfereStyleBS}}">
+          {{transfereText}}
+        </span> 
+      </td>
+      <td>{{filename}}</td>
+      <td>
+        <div class="progress" style="margin:0px;">
+          {{#with progress}}
+          <div class="bar {{barAStyle}}" style="width: {{progressA}}%;">{{progressA}}%</div>
+          <div class="bar {{barBStyle}}" style="width: {{progressB}}%;">{{progressB}}%</div>
+          {{/with}}
+        </div>
+      </td>
+      <td>
+        {{getUsername owner}}
+      </td>
+    </tr>
+    {{else}}
+    <tr>
+      <td colspan="6" align="center" style="padding: 40px;">
+        No files, yet!<br/>
+        <br/>
+        <i>upload some files and test resume capabilities after connection loss or browser crash..</i>
+      </td>
+    </tr>
+    {{/each}}
+  </table>
+</template>
+
+<template name="uploadTest">
+  {{#if currentUser}}
+    {{> queControl}} 
+  {{else}}
+    {{> loginInto}}
+  {{/if}}
+  <br/>
+  {{> stats}}  
+  <br/>
+  {{> fileTable}}
+</template>
+
+<template name="mainMenu">
+  <!-- Menu collapsed -->
+  <div id="mainMenu" class="nav-collapse collapse">
+    <ul class="nav">
+      <li><a href="#" class="btnMainMenuDashboard" data-toggle="collapse" data-target=".nav-collapse">collectionFS</a></li>
+    </ul>
+  </div>
+</template>
+
+<template name="connectionStatus">
+  {{#if connection.connected}}
+  <i class="icon-signal"></i>
+  {{else}}
+    {{#if connection.waiting}}
+      <i class="icon-repeat"></i>
+    {{else}}
+      <i class="icon-refresh"></i>
+    {{/if}}
+  {{/if}}
+</template>
