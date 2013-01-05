@@ -90,6 +90,7 @@ Using Meteor and gridFS priciples we get:
       } //EO saveAs
     });
 ```
+*In future only a blob will be returned, this will return local file if available. The `Save as` calls the Filesaver.js by Eli Grey, http://eligrey.com - It doesn't work on iPad*
 
 ####3. Adding controller helper: [client]
 ```js
@@ -99,8 +100,7 @@ Using Meteor and gridFS priciples we get:
       }
     });
 ```
-*- In future there would be made an alias for ```.find``` eg. ```ContactsFS.find({});```*
-*- In future only a blob will be returned, this will return local file if available. The `Save as` calls the Filesaver.js by Eli Grey, http://eligrey.com*
+*In future there would be made an alias for ```.find``` eg. ```ContactsFS.find({});```*
 
 ###Sorry:
 * This is made as ```Make it work, make it fast```, well it's not fast - yet
