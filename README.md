@@ -17,7 +17,7 @@ Using Meteor and gridFS priciples we get:
 ####1. Install: [client, server]
 ```
     Include the file ```CollectionFS.js``` in your project folder
-``
+```
 
 ####2. Create model: [client, server]
 ```js
