@@ -41,9 +41,12 @@ This couldn't get any simpler?
     Include the file ```CollectionFS.js```, contains both server and client code
 
 2.Create model: [client, server]
+```js
     ContactsFS = new collectionFS('contacts');
+```
 
 3.Adding security in model: [client, server]
+```js
     ContactsFS.files.allow({
       insert: function(userId, myFile) { return userId && myFile.owner === userId; },
       update: function(userId, files, fields, modifier) {
@@ -58,14 +61,18 @@ This couldn't get any simpler?
       },
       remove: function(userId, files) { return false; }
     });
+``` 
 
 4.Adding the view:
+```html
     <template name="queControl">
       <h3>Select file(s) to upload:</h3>
       <input name="files" type="file" class="fileUploader" multiple>
     </template>
+```
 
 5.Adding the controller: [client]
+```js
     Template.queControl.events({
       'change .fileUploader': function (e) {
          var files = e.target.files;
@@ -74,3 +81,4 @@ This couldn't get any simpler?
          }
       }
     });
+```
