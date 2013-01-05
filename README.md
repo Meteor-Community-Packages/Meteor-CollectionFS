@@ -43,6 +43,7 @@ Using Meteor and gridFS priciples we get:
     });
 ```
 *In the future there will be made an alias making it ```ContactsFS.allow({```* 
+*It's here you can add restrictions eg. on content-types, filesizes etc.*
 
 ##Uploading file
 ####1. Adding the view:
