@@ -84,6 +84,6 @@ Using Meteor and gridFS priciples we get:
 * Only one can upload at the moment, but really multiple instances and users could be supported ```(TODO in code)```
 * When code hot deploy the que halts, not sure how to address this, maybe a listener on connection status?
 * Deviates from gridFS by using chunkSize = 1024 (gridFS = 256?) - less transport bagage
-* Deviates frim gridFS by using files.len istead of files.length (as in gridFS, using .length creates error in Meteor?)
+* Deviates from gridFS by using files.len istead of files.length (as in gridFS, using .length creates error in Meteor?)
 * Speed, it sends data via Meteor.apply, this lags big time, therefore multiple workers are spawned to compensate
 * Current version is set to autosubscribe, this needs to be addressed in future
