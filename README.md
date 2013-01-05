@@ -3,12 +3,12 @@ Is a simple way of handling files on the web in the Meteor environment
 
 CollectionFS is a mix of both Meteor.Collection and GridFS mongoDB.
 Using Meteor and gridFS priciples we get:
-	* Security handling
-	* Handling sharing
-	* Restrictions eg. only allow certain content types, fields, users etc.
-	* Reactive data, the collectionFS's methods should all be reactive
-	* Abillity for the user to resume upload after connection loss, browser crash or cola in keyboard
-	* At the moment files are loaded into the client as Blob universal way of handling large binary data
+* Security handling
+* Handling sharing
+* Restrictions eg. only allow certain content types, fields, users etc.
+* Reactive data, the collectionFS's methods should all be reactive
+* Abillity for the user to resume upload after connection loss, browser crash or cola in keyboard
+* At the moment files are loaded into the client as Blob universal way of handling large binary data
 
 Sorry:
 	* This is made as ```Make it work, make it fast```, well it should work
