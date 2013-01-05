@@ -1,6 +1,8 @@
 #CollectionFS
 Is a simple way of handling files on the web in the Meteor environment
 
+Have a look at [Live example](http://collectionfs.meteor.com/)
+
 CollectionFS is a mix of both Meteor.Collection and GridFS mongoDB.
 Using Meteor and gridFS priciples we get:
 * Security handling
@@ -34,18 +36,19 @@ Using Meteor and gridFS priciples we get:
 * Speed, it sends data via Meteor.apply, this lags big time, therefore multiple workers are spawned to compensate
 * Current version is set to autosubscribe, this needs to be addressed in future, eg. ```subscribeFS()``` and ```publishFS()```
 
-##How?
-This couldn't get any simpler?
+##How to use?
 
-1.Install: [client, server]
-    Include the file ```CollectionFS.js```, contains both server and client code
+####1. Install: [client, server]
+```
+    Include the file ```CollectionFS.js``` in your project folder
+``
 
-2.Create model: [client, server]
+####2. Create model: [client, server]
 ```js
     ContactsFS = new collectionFS('contacts');
 ```
 
-3.Adding security in model: [client, server]
+####3. Adding security in model: [client, server]
 ```js
     ContactsFS.files.allow({
       insert: function(userId, myFile) { return userId && myFile.owner === userId; },
@@ -63,7 +66,7 @@ This couldn't get any simpler?
     });
 ``` 
 
-4.Adding the view:
+####4.Adding the view:
 ```html
     <template name="queControl">
       <h3>Select file(s) to upload:</h3>
@@ -71,7 +74,7 @@ This couldn't get any simpler?
     </template>
 ```
 
-5.Adding the controller: [client]
+####5. Adding the controller: [client]
 ```js
     Template.queControl.events({
       'change .fileUploader': function (e) {
