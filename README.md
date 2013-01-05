@@ -19,7 +19,7 @@ Using Meteor and gridFS priciples we get:
 
 ###Decisions:
 * Initially I thought about using localStorage, but the limited size in the sandbox didn't make sense
-* Really wanted to make the Meteor serve files directly via url handling, getting the benefit of server+browser caching - but
+* Really wanted to make the Meteor serve files directly via url handling, getting the benefit of server+browser caching
 * Deviating the gridFS spec to make the code work and faster
 
 ###Future:
@@ -35,6 +35,42 @@ Using Meteor and gridFS priciples we get:
 * Current version is set to autosubscribe, this needs to be addressed in future, eg. ```subscribeFS()``` and ```publishFS()```
 
 ##How?
-This couldn't get any simpler:
-	1. Include the file ```CollectionFS.js```, contains both server and clien code
+This couldn't get any simpler?
 
+1.Install: [client, server]
+    Include the file ```CollectionFS.js```, contains both server and client code
+
+2.Create model: [client, server]
+    ContactsFS = new collectionFS('contacts');
+
+3.Adding security in model: [client, server]
+    ContactsFS.files.allow({
+      insert: function(userId, myFile) { return userId && myFile.owner === userId; },
+      update: function(userId, files, fields, modifier) {
+        return _.all(files, function (myFile) {
+          if (userId !== myFile.owner)
+            return false; //not owner
+          var allowed = ["complete", "currentChunk", "countChunks", "md5", "metadata"];
+          if (_.difference(fields, allowed).length)
+            return false; //invalid 
+          return true;
+        });  //EO interate through cases
+      },
+      remove: function(userId, files) { return false; }
+    });
+
+4.Adding the view:
+    <template name="queControl">
+      <h3>Select file(s) to upload:</h3>
+      <input name="files" type="file" class="fileUploader" multiple>
+    </template>
+
+5.Adding the controller: [client]
+    Template.queControl.events({
+      'change .fileUploader': function (e) {
+         var files = e.target.files;
+         for (var i = 0, f; f = files[i]; i++) {
+           ContactsFS.storeFile(f);
+         }
+      }
+    });
