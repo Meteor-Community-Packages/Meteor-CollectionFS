@@ -65,7 +65,7 @@ Using Meteor and gridFS priciples we get:
       }
     });
 ```
-*ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as threads. It's possible to add metadata: ´´´storeFile(file, {})´´´ - callback or eventlisteners are on the todo*
+*ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as threads. It's possible to add metadata: ```storeFile(file, {})``` - callback or eventlisteners are on the todo*
 
 ##Downloading file
 ####1. Adding the view:
