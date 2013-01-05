@@ -23,6 +23,7 @@ Using Meteor and gridFS priciples we get:
 ```js
     ContactsFS = new collectionFS('contacts');
 ```
+*You can still create a ```Contacts = new Meteor.Collection('contacts')``` since gridFS maps on eg. ```.files``` and ```.chunks```*
 
 ####3. Adding security in model: [client, server]
 ```js
