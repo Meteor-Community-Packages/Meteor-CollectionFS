@@ -16,7 +16,7 @@ Using Meteor and gridFS priciples we get:
 
 ####1. Install: [client, server]
 ```
-    Include the file ```CollectionFS.js``` in your project folder
+    Include the file 'CollectionFS.js' in your project folder
 ```
 
 ####2. Create model: [client, server]
@@ -75,8 +75,8 @@ Using Meteor and gridFS priciples we get:
 * Deviating the gridFS spec to make the code work and faster
 
 ###Future:
-* Handlebar helpers? ```{{fileProgress}}```, ```{{fileInQue}}```, ```{{{fileAsURL}}}```, ```{{{fileURL _id}}}``` etc.
-* Maybe in time have the option to serve files directly from Meteor via url ```{{{fileAsURL}}}```- leaving caching to the server and browser?
+* Handlebar helpers? ```{{fileProgress}}```, ```{{fileInQue}}```, ```{{fileAsURL}}```, ```{{fileURL _id}}``` etc.
+* Maybe in time have the option to serve files directly from Meteor via url ```{{fileAsURL}}```- leaving caching to the server and browser?
 * Server side handling image size etc. not supported, but would be a must have if to be used in realworld apps
 * It doesn't use gridFS, but could be compatible with gridFS and other databases in time
 * Only one can upload at the moment, but really multiple instances and users could be supported ```(TODO in code)```
@@ -84,4 +84,4 @@ Using Meteor and gridFS priciples we get:
 * Deviates from gridFS by using chunkSize = 1024 (gridFS = 256?) - less transport bagage
 * Deviates frim gridFS by using files.len istead of files.length (as in gridFS, using .length creates error in Meteor?)
 * Speed, it sends data via Meteor.apply, this lags big time, therefore multiple workers are spawned to compensate
-* Current version is set to autosubscribe, this needs to be addressed in future, eg. ```subscribeFS()``` and ```publishFS()```
+* Current version is set to autosubscribe, this needs to be addressed in future
