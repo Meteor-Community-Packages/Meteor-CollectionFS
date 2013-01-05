@@ -23,7 +23,7 @@ Using Meteor and gridFS priciples we get:
 ```js
     ContactsFS = new collectionFS('contacts');
 ```
-*You can still create a ```Contacts = new Meteor.Collection('contacts')``` since gridFS maps on eg. ```.files``` and ```.chunks```*
+*You can still create a ```Contacts = new Meteor.Collection('contacts')``` since gridFS maps on eg. ```contacts.files``` and ```contacts.chunks```*
 
 ####3. Adding security in model: [client, server]
 ```js
@@ -41,7 +41,8 @@ Using Meteor and gridFS priciples we get:
       },
       remove: function(userId, files) { return false; }
     });
-``` 
+```
+*In the future there will be made an alias making it ```ContactsFS.allow({```* 
 
 ####4.Adding the view:
 ```html
