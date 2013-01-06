@@ -27,12 +27,11 @@
 // });
 //
 // Server:
-// on startup if needed by collectionFS - one worker pr collectionFS
-// Get next in que
-// if none then die and wait, spawn by interval
-// work on file handlers
+// on startup queListener spawned if needed by collectionFS - one queListener pr collectionFS
+// queListener spawns fileHandlers pr. item in fileHandlerQue as setTimeout(, 0) and delete item from que
+// if empty que then die and wait, spawn by interval
 //
-// die after ended taskQue, spawn by interval
+// fileHandlers die after ended
 // 
 // Client:
 // When upload confirmed complete, set fs.files.complete and add _id to collectionFS.fileHandlerQue (wich triggers a worker at interval)
