@@ -114,8 +114,8 @@ Further details in server/collectionFS.server.js
 ```js
 CollectionFS.fileHandlers({
   //Default image cache
-  handler['default']: function(fileId, blob) {
-    return blob;
+  handler['']: function(fileId, blob) { //Can it be empty ['']? default cache file
+    return blob; //just send blob directly to the filesystem
   },
   //Some specific
   handler['40x40']: function(fileId, blob) {
@@ -124,9 +124,9 @@ CollectionFS.fileHandlers({
    },
   //Upload to remote server
   handler['remote']: function(fileId, blob) {
-     //Some serverside imagick/file handling functions, user can define this
+     //Some serverside upload to remote server, dont return blob to filesystem
      return null;
-   },
+   }
  });
 ```
 
