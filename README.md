@@ -21,29 +21,25 @@ Using Meteor and gridFS priciples we get:
 
 ####2. Create model: [client, server]
 ```js
-    ContactsFS = new collectionFS('contacts');
+    ContactsFS = new CollectionFS('contacts');
 ```
 *You can still create a ```Contacts = new Meteor.Collection('contacts')``` since gridFS maps on eg. ```contacts.files``` and ```contacts.chunks```*
 
 ####3. Adding security in model: [client, server]
 *Only needed when using ```accounts-...``` (eg. removed the ```insecure``` package)*
 ```js
-    ContactsFS.files.allow({
+    Filesystem.allow({
       insert: function(userId, myFile) { return userId && myFile.owner === userId; },
       update: function(userId, files, fields, modifier) {
-        return _.all(files, function (myFile) {
-          if (userId !== myFile.owner)
-            return false; //not owner
-          var allowed = ["complete", "currentChunk", "countChunks", "md5", "metadata"];
-          if (_.difference(fields, allowed).length)
-            return false; //invalid 
-          return true;
-        });  //EO interate through cases
+            return _.all(files, function (myFile) {
+              return (userId == myFile.owner);
+
+        });  //EO interate through files
       },
       remove: function(userId, files) { return false; }
     });
 ```
-*In the future there will be made an alias making it ```ContactsFS.allow({```* 
+*The collectionFS supports functions ```.allow```, ```.deny```, ```.find```, ```findOne``` used when subscribing/ publishing from server* 
 *It's here you can add restrictions eg. on content-types, filesizes etc.*
 
 ##Uploading file
@@ -99,7 +95,7 @@ Using Meteor and gridFS priciples we get:
 ```js
     Template.fileTable.helpers({
       Files: function() {
-        return ContactsFS.files.find({}, { sort: { uploadDate:-1 } });
+        return ContactsFS.find({}, { sort: { uploadDate:-1 } });
       }
     });
 ```
@@ -132,18 +128,6 @@ CollectionFS.fileHandlers({
 ```
 *Need to figure out how to prevent Meteor to reload when uploading to the public folder*
 
-###Sorry:
-* This is made as ```Make it work, make it fast```, well it's not fast - yet
-* No test suite - any good ones for Meteor?
-* No smart packages - dont know how, yet
-* Current code contains relics in form of logs and timers used in the example ```statistics``` and for debuggin
-* I'm new to node.js, Meteor and github - this is my first code ever in Meteor
-
-###Decisions:
-* Initially I thought about using localStorage, but the limited size in the sandbox didn't make sense
-* Really wanted to make the Meteor serve files directly via url handling, getting the benefit of server+browser caching
-* Deviating the gridFS spec to make the code work and faster
-
 ###Future:
 * Handlebar helpers? ```{{fileProgress}}```, ```{{fileInQue}}```, ```{{fileAsURL}}```, ```{{fileURL _id}}``` etc.
 * Maybe in time have the option to serve files directly from Meteor via url ```{{fileAsURL}}```- leaving caching to the server and browser?
@@ -155,3 +139,15 @@ CollectionFS.fileHandlers({
 * Deviates from gridFS by using files.len istead of files.length (as in gridFS, using .length creates error in Meteor?)
 * Speed, it sends data via Meteor.apply, this lags big time, therefore multiple workers are spawned to compensate
 * Current version is set to autosubscribe, this needs to be addressed in future
+
+###Notes:
+* This is made as ```Make it work, make it fast```, well it's not fast - yet
+* No test suite - any good ones for Meteor?
+* No smart packages - dont know how, yet
+* Current code contains relics in form of logs and timers used in the example ```statistics``` and for debuggin
+* I'm new to node.js, Meteor and github - this is my first code ever in Meteor
+
+###Decisions:
+* Initially I thought about using localStorage, but the limited size in the sandbox didn't make sense
+* Really wanted to make the Meteor serve files directly via url handling, getting the benefit of server+browser caching
+* Deviating the gridFS spec to make the code work and faster

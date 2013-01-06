@@ -6,7 +6,7 @@
  * 
  */
 
-collectionFS = function(name, options) {
+CollectionFS = function(name, options) {
 	var self = this;
 	self._name = name;
 	self.files = new Meteor.Collection(self._name+'.files'); //TODO: Add change listener?
@@ -69,7 +69,6 @@ collectionFS = function(name, options) {
 
 }; //EO collectionFS
 
-//var _queCollectionFS = {
 _queCollectionFS = function(name) {
 	var self = this;
 	self._name = name;
@@ -87,3 +86,51 @@ _queCollectionFS = function(name) {
 	self.myCounter = 0;
 	self.mySize = 0;
 };
+
+_.extend(CollectionFS.prototype, {
+	find: function(options) { return this.files.find(options); },
+	findOne: function(options) { return this.files.findOne(options); },
+	allow: function(options) { return this.files.allow(options); },
+	deny: function(options) { return this.files.deny(options); }
+});
+
+
+_.extend(_queCollectionFS.prototype, {
+
+	compareFile: function(fileRecordA, fileRecordB) {
+		var errors = 0;
+		var leaveOutField = {'_id':true, 'uploadDate':true, 'currentChunk':true };
+		for (var fieldName in fileRecordA) {
+			if (!leaveOutField[fieldName]) {
+				if (fileRecordA[fieldName] != fileRecordB[fieldName]) {
+					errors++; 
+				}
+			}
+		} //EO for
+		return (errors == 0);
+	},
+	makeGridFSFileRecord: function(file, options) {
+		var self = this;
+		var countChunks = Math.ceil(file.size / self.chunkSize);
+		return {
+		  chunkSize : self.chunkSize,
+		  uploadDate : Date.now(),
+		  md5 : null,
+		  complete : false,
+		  currentChunk: -1,
+		  owner: Meteor.userId(),
+		  countChunks: countChunks,
+		  filename : file.name,
+		  len : file.size,
+		 // 'length': file.size,
+		  contentType : file.type,
+		  metadata : (options) ? options : null
+		};
+		//TODO:
+		//XXX: Implement md5 later, guess every chunk should have a md5...
+		//XXX:checkup on gridFS date format
+		//ERROR: Minimongo error/memory leak? when adding attr. length to insert object
+		//length : file.size,    gridFS size of the file in bytes, renamed ".len" to make it work?
+	} //EO makeGridFSFileRecord
+});
+

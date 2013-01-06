@@ -68,7 +68,7 @@ Template.fileTable.events({
 
 Template.fileTable.helpers({
   Files: function() {
-    return Filesystem.files.find({}, { sort: { uploadDate:-1 } });
+    return Filesystem.find({}, { sort: { uploadDate:-1 } });
   },
   isPaused: function() {
     return Filesystem.que.isPaused();

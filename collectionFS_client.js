@@ -1,6 +1,6 @@
 (function () {
 
-	_.extend(collectionFS.prototype, {
+	_.extend(CollectionFS.prototype, {
 		storeFile: function(file, options) {
 			var self = this;
 			var fileId = null;
@@ -446,44 +446,8 @@
 				//XXX: Spawn progress event?
 				return self.que[fileId].currentChunk-1;
 			}
-		}, //EO nextChunk
-		//////////////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////// UTIL /////////////////////////////////////////////////
-		//////////////////////////////////////////////////////////////////////////////////////////////////
-		compareFile: function(fileRecordA, fileRecordB) {
-			var errors = 0;
-			var leaveOutField = {'_id':true, 'uploadDate':true, 'currentChunk':true };
-			for (var fieldName in fileRecordA) {
-				if (!leaveOutField[fieldName]) {
-					if (fileRecordA[fieldName] != fileRecordB[fieldName]) {
-						errors++; 
-					}
-				}
-			} //EO for
-			return (errors == 0);
-		},
-		makeGridFSFileRecord: function(file, options) {
-			var self = this;
-			var countChunks = Math.ceil(file.size / self.chunkSize);
-			return {
-			  chunkSize : self.chunkSize,
-			  uploadDate : Date.now(),
-			  md5 : null,
-			  complete : false,
-			  currentChunk: -1,
-			  owner: Meteor.userId(),
-			  countChunks: countChunks,
-			  filename : file.name,
-			  len : file.size,
-			  contentType : file.type,
-			  metadata : (options) ? options : null
-			};
-			//TODO:
-			//XXX: Implement md5 later, guess every chunk should have a md5...
-			//XXX:checkup on gridFS date format
-			//ERROR: Minimongo error/memory leak? when adding attr. length to insert object
-			//length : file.size,    gridFS size of the file in bytes, renamed ".len" to make it work?
-		} //EO makeGridFSFileRecord
+		} //EO nextChunk
+
 
 	}); //EO
 

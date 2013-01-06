@@ -38,25 +38,25 @@
 
 (function () {
 
-_queListener = function() {
-	var self = this;
-	self.que = [];
-};//EO queListener
+	_queListener = function() {
+		var self = this;
+		self.que = [];
+	};//EO queListener
 
-_.extend(_queListener.prototype, {
-	add: function(fileId, collectionFS) {
-		//add fileId to que
-		self.que[fileId] = collectionFS;
-	},
-	remove: function(fileId) {
-		//remove fileId from que
-		delete self.que[fileId];
-	},
-	checkQue: function() {
-		//check items in que
-		//if (collectionFS.fileHandlers)
-	}
-});//EO queListener extend
+	_.extend(_queListener.prototype, {
+		add: function(fileId, collectionFS) {
+			//add fileId to que
+			self.que[fileId] = collectionFS;
+		},
+		remove: function(fileId) {
+			//remove fileId from que
+			delete self.que[fileId];
+		},
+		checkQue: function() {
+			//check items in que
+			//if (collectionFS.fileHandlers)
+		}
+	});//EO queListener extend
 
 
 })();//EO file
