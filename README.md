@@ -129,6 +129,7 @@ CollectionFS.fileHandlers({
    }
  });
 ```
+*Need to figure out how to prevent Meteor to reload when uploading to the public folder*
 
 ###Sorry:
 * This is made as ```Make it work, make it fast```, well it's not fast - yet
