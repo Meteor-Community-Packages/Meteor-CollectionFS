@@ -103,6 +103,32 @@ Using Meteor and gridFS priciples we get:
     });
 ```
 *In future there would be made an alias for ```.find``` eg. ```ContactsFS.find({});```*
+##Current being developed
+
+####Issue 4: ```Create a server cache/ url reference```
+Create a server cache for completed files in the public/collectionFS._name folder.
+Update fs.files record attribute: fileURL[]
+
+Prepare abillity for special versin caching options creating converting images, docs, tts, sound, video, remote server upload etc.
+Further details in server/collectionFS.server.js
+```js
+CollectionFS.fileHandlers({
+  //Default image cache
+  handler['default']: function(fileId, blob) {
+    return blob;
+  },
+  //Some specific
+  handler['40x40']: function(fileId, blob) {
+     //Some serverside image/file handling functions, user can define this
+     return blob;
+   },
+  //Upload to remote server
+  handler['remote']: function(fileId, blob) {
+     //Some serverside imagick/file handling functions, user can define this
+     return null;
+   },
+ });
+```
 
 ###Sorry:
 * This is made as ```Make it work, make it fast```, well it's not fast - yet
