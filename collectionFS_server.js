@@ -35,7 +35,9 @@
 // 
 // Client:
 // When upload confirmed complete, set fs.files.complete and add _id to collectionFS.fileHandlerQue (wich triggers a worker at interval)
-//
+
+(function () {
+
 _queListener = function() {
 	var self = this;
 	self.que = [];
@@ -52,6 +54,9 @@ _.extend(_queListener.prototype, {
 	},
 	checkQue: function() {
 		//check items in que
-		if (collectionFS.fileHandlers)
+		//if (collectionFS.fileHandlers)
 	}
 });//EO queListener extend
+
+
+})();//EO file
