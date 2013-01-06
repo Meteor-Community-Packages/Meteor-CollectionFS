@@ -26,7 +26,7 @@ Using Meteor and gridFS priciples we get:
 *You can still create a ```Contacts = new Meteor.Collection('contacts')``` since gridFS maps on eg. ```contacts.files``` and ```contacts.chunks```*
 
 ####3. Adding security in model: [client, server]
-*Only needed when using ```accounts-...``` (removed the ```insecure``` package)*
+*Only needed when using ```accounts-...``` (eg. removed the ```insecure``` package)*
 ```js
     ContactsFS.files.allow({
       insert: function(userId, myFile) { return userId && myFile.owner === userId; },
