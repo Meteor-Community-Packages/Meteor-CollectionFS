@@ -100,46 +100,50 @@ Using Meteor and gridFS priciples we get:
       }
     });
 ```
-*In future there would be made an alias for ```.find``` eg. ```ContactsFS.find({});```*
-##Development at the moment
 
-####Issue 4: ```Create a server cache/ url reference```
-Create a server cache for completed files in the public/collectionFS._name folder.
-Update fs.files record attribute: fileURL[]
+###Create server cache/versions of files and get an url reference```
+Filehandlers are serverside functions that makes caching versions easier. The functions are run and handled a file record and a blob / ```Buffer``` containing all the bytes.
+* Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file - all done reactivly live.
+* If only custom metadata is returned without a blob / Buffer then no files saved but metadata is saved in database.
+* If null returned then only filehandler name and a date is saved in database.
+* If false returned the filehandler failed and it will be resumed later
 
-Prepare abillity for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
 Further details in server/collectionFS.server.js
 ```js
-CollectionFS.fileHandlers({
-  //Default image cache
-  handler['']: function(fileId, blob) { //Can it be empty ['']? default cache file
-    return blob; //just send blob directly to the filesystem
+Filesystem.fileHandlers({
+  default1: function(options) { //Options contains blob and fileRecord - same is expected in return if should be saved on filesytem, can be modified
+    console.log('I am handling 1: '+options.fileRecord.filename);
+    return { blob: options.blob, fileRecord: options.fileRecord }; //if no blob then save result in fileURL (added createdAt)
   },
-  //Some specific
-  handler['40x40']: function(fileId, blob) {
-     //Some serverside image/file handling functions, user can define this
-     return blob;
-   },
-  //Upload to remote server
-  handler['remote']: function(fileId, blob) {
-     //Some serverside upload to remote server, dont return blob to filesystem
-     return null;
-   }
- });
+  default2: function(options) {
+    if (options.fileRecord.len > 5000000 || options.fileRecord.contentType != 'image/jpeg') //Save som space, only make cache if less than 1Mb
+      return null; //Not an error as if returning false, false would be tried again later...
+    console.log('I am handling 2: '+options.fileRecord.filename);
+    return { blob: options.blob, fileRecord: options.fileRecord }; 
+  },
+  size40x40: function(options) {
+    return null;
+    /*var im = __meteor_bootstrap__.require('imagemagick');
+    im.resize({
+                srcData: options.blob,
+                width: 40
+           });*/
+    console.log('I am handling: '+options.fileRecord.filename+' to...');
+    return { extension: 'jpg', blob: options.blob, fileRecord: options.fileRecord }; //or just 'options'...
+  }
+});
 ```
-*Need to figure out how to prevent Meteor to reload when uploading to the public folder*
+*This is brand new on the testbed, future brings easy image handling shortcuts to imagemagic, maybe som sound/video converting and som integration for uploading to eg. google drive, dropbox etc.*
 
 ###Future:
 * Handlebar helpers? ```{{fileProgress}}```, ```{{fileInQue}}```, ```{{fileAsURL}}```, ```{{fileURL _id}}``` etc.
-* Maybe in time have the option to serve files directly from Meteor via url ```{{fileAsURL}}```- leaving caching to the server and browser?
-* Server side handling image size etc. not supported, but would be a must have if to be used in realworld apps
-* It doesn't use gridFS, but could be compatible with gridFS and other databases in time
+* Test server side handling image size etc.
 * Only one can upload at the moment, but really multiple instances and users could be supported ```(TODO in code)```
 * When code hot deploy the que halts, not sure how to address this, maybe a listener on connection status?
-* Deviates from gridFS by using files.len istead of files.length (as in gridFS, using .length creates error in Meteor?)
+* Deviates from gridFS by using files.len istead of files.length (as in gridFS, using .length creates error in Meteor, confirmed)
 * Speed, it sends data via Meteor.apply, this lags big time, therefore multiple workers are spawned to compensate
 * Current version is set to autosubscribe, this needs to be addressed in future
-
+* Prepare abillity for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
 ###Notes:
 * This is made as ```Make it work, make it fast```, well it's not fast - yet
 * No test suite - any good ones for Meteor?

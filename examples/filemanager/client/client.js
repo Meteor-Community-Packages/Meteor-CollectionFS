@@ -63,7 +63,12 @@ Template.fileTable.events({
 
       //alert('Blob landed...'+fileItem._id+' '+self._id);
     });
-  } //EO saveAs
+  }, //EO saveAs
+  'click .showImage': function(e) {
+    document.getElementById('previewImage').src = this.path;
+    document.getElementById('myModalLabel').innerHTML = 'Created by fileHandler "'+this.func+'"';
+    document.getElementById('description').innerHTML = 'Url: <a hre="'+this.path+'">'+this.path+'</a>';
+  }
 });
 
 Template.fileTable.helpers({
@@ -75,6 +80,15 @@ Template.fileTable.helpers({
   },
   isOwner: function() {
     return (this.owner == Meteor.userId());
+  },
+  fileURL: function(func) {
+    if (!this.fileURL)
+      return func;
+    for (var fId in this.fileURL) {
+      if (this.fileURL[fId].func && this.fileURL[fId].func == func)
+        return this.fileURL[fId].path;
+    }
+    return false;
   },
   progress : function() {
     var filesProgress = Math.round(this.currentChunk / (this.countChunks - 1) * 100);

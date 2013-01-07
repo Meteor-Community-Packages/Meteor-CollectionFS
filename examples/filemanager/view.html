@@ -39,6 +39,7 @@
     </div> <!-- EO row -->
   </div> <!-- EO container fluid -->
 
+{{> viewImage}}
 </body>
 
 <template name="stats">
@@ -84,6 +85,15 @@
         In short: a GridFS like storage - guess it migth even be compatible, no server side functions yet (not really needed) just: pure meteor.<br/>
         We get to benifit of the accounts system, where access can be controlled as collections  - In the example it's on autopublish, meaning if two seperate users resumes upload on same file I guess the clients could simply collaborate on uploading.
         <br/>
+        <h4>Cache a version from DB to the filesystem?</h4>It can be cached on server and in client without overheating Meteor.<br/>
+        Filehandlers can also be used to convert images, sound, video, doc, pdf etc. eg. for a 40x40px img using imagemagick. Or upload to remote server. The client is reactivly updated as filehandling finishes.
+        <pre>
+Filesystem.fileHandlers({
+  default1: function(options) {
+    console.log('I am handling 1: '+options.fileRecord.filename);
+    return { blob: options.blob, fileRecord: options.fileRecord }; //if no blob then save result in fileURL (added createdAt)
+  }
+});</pre>
         <br/>
         collectionFS by RaiX aka Morten N.O. Noergaard Henriksen, mh@gi2.dk - kind of a mixin between gridFS and Meteor.Collections<br/>
         Credit to Eli Grey, http://eligrey.com for the nice Filesaver.js - "save as" functionality<br/>
@@ -119,14 +129,25 @@
   </table> 
 </template>
 
+<template name="imageList">
+  {{#each fileURL}}
+    <a href="#myModal" data-toggle="modal" class="showImage"><img src="{{path}}" alt="{{filename}}" width="20px"/></a>
+  {{else}}
+    No cache
+  {{/each}}
+</template>
+
 <template name="fileTable">
   <table class="table-hover table-bordered" width="100%">
     <tr>
-      <th>Action</th><th>Size</th><th>Status</th><th>Name</th><th>Progress</th><th>Owner</th>
+      <th>From url <i>(5 images)</i></th><th>Action</th><th>Size</th><th>Status</th><th>Name</th><th>Progress</th><th>Owner</th>
     </tr>
 
     {{#each Files}}
     <tr>
+      <td>
+        {{> imageList}}
+      </td>
       <td>
         {{#if needToResumeUpload}}
           {{#if isOwner}}
@@ -181,6 +202,23 @@
     </tr>
     {{/each}}
   </table>
+</template>
+
+<template name="viewImage">   
+  <!-- Modal -->
+  <div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <h3 id="myModalLabel">View a cached version</h3>
+    </div>
+    <div class="modal-body">
+      <p><img id="previewImage" src=""/></p>
+      <div id="description"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    </div>
+  </div>
 </template>
 
 <template name="uploadTest">
