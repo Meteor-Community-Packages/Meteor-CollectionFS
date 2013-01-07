@@ -6,7 +6,9 @@
 			var fileId = null;
 			if (Meteor.isClient) {
 				var record = self.que.makeGridFSFileRecord(file, options);
-				fileId = self.files.insert(record);			
+				fileId = self.files.insert(record);	
+				if (!fileId)
+					return null;		
 				//Put file in upload que
 				self.que.addFile(fileId, file);
 			}

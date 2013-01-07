@@ -101,7 +101,7 @@ Using Meteor and gridFS priciples we get:
     });
 ```
 *In future there would be made an alias for ```.find``` eg. ```ContactsFS.find({});```*
-##Current being developed
+##Development at the moment
 
 ####Issue 4: ```Create a server cache/ url reference```
 Create a server cache for completed files in the public/collectionFS._name folder.
