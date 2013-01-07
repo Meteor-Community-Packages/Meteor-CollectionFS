@@ -88,8 +88,8 @@ _queCollectionFS = function(name) {
 };
 
 _.extend(CollectionFS.prototype, {
-	find: function(options) { return this.files.find(options); },
-	findOne: function(options) { return this.files.findOne(options); },
+	find: function(options, optOptions) { return this.files.find(options, optOptions); },
+	findOne: function(options, optOptions) { return this.files.findOne(options, optOptions); },
 	allow: function(options) { return this.files.allow(options); },
 	deny: function(options) { return this.files.deny(options); }
 });
