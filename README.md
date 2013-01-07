@@ -14,10 +14,11 @@ Using Meteor and gridFS priciples we get:
 
 ##How to use?
 
-####1. Install: [client, server]
+####1. Install:
 ```
-    Include the file 'CollectionFS.js' in your project folder
+    mrt add collectionFS
 ```
+*Requires ```Meteorite``` get it at [atmosphere.meteor.com](https://atmosphere.meteor.com)*
 
 ####2. Create model: [client, server]
 ```js
