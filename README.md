@@ -119,7 +119,7 @@ Filesystem.fileHandlers({
     if (options.fileRecord.len > 5000000 || options.fileRecord.contentType != 'image/jpeg') //Save som space, only make cache if less than 1Mb
       return null; //Not an error as if returning false, false would be tried again later...
     console.log('I am handling 2: '+options.fileRecord.filename);
-    return { blob: options.blob, fileRecord: options.fileRecord }; 
+    return options; 
   },
   size40x40: function(options) {
     return null;
