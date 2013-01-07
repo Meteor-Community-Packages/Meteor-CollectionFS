@@ -29,7 +29,7 @@ Using Meteor and gridFS priciples we get:
 ####3. Adding security in model: [client, server]
 *Only needed when using ```accounts-...``` (eg. removed the ```insecure``` package)*
 ```js
-    Filesystem.allow({
+    ContactsFS.allow({
       insert: function(userId, myFile) { return userId && myFile.owner === userId; },
       update: function(userId, files, fields, modifier) {
             return _.all(files, function (myFile) {
