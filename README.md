@@ -107,7 +107,7 @@ Using Meteor and gridFS priciples we get:
 Create a server cache for completed files in the public/collectionFS._name folder.
 Update fs.files record attribute: fileURL[]
 
-Prepare abillity for special versin caching options creating converting images, docs, tts, sound, video, remote server upload etc.
+Prepare abillity for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
 Further details in server/collectionFS.server.js
 ```js
 CollectionFS.fileHandlers({
