@@ -32,7 +32,7 @@
       </div> <!-- EO side bar -->
       <!-- Body content -->
       <div class="span10">
-       
+
         {{> uploadTest}}
         
       </div> <!-- EO Body content -->
@@ -82,23 +82,19 @@
         <h3>Log in'n try uploading</h3>
         <i>Login and upload some files and test pause/start + resume capabilities after connection loss or browser crash..</i><br/>
         <br/>
-        In short: a GridFS like storage - guess it migth even be compatible, no server side functions yet (not really needed) just: pure meteor.<br/>
-        We get to benifit of the accounts system, where access can be controlled as collections  - In the example it's on autopublish, meaning if two seperate users resumes upload on same file I guess the clients could simply collaborate on uploading.
+        In short: CollectionFS is a GridFS like storage build on Meteor and node.js<br/>
         <br/>
-        <h4>Cache a version from DB to the filesystem?</h4>It can be cached on server and in client without overheating Meteor.<br/>
+        Files can be converted from database to filesystem via simple filehandlers<br/>
         Filehandlers can also be used to convert images, sound, video, doc, pdf etc. eg. for a 40x40px img using imagemagick. Or upload to remote server. The client is reactivly updated as filehandling finishes.
         <pre>
 Filesystem.fileHandlers({
   default1: function(options) {
-    console.log('I am handling 1: '+options.fileRecord.filename);
+    //passthrough to cache or change the data `options.blob` and `options.fileRecord`
     return { blob: options.blob, fileRecord: options.fileRecord }; //if no blob then save result in fileURL (added createdAt)
   }
 });</pre>
         <br/>
-        collectionFS by RaiX aka Morten N.O. Noergaard Henriksen, mh@gi2.dk - kind of a mixin between gridFS and Meteor.Collections<br/>
-        Credit to Eli Grey, http://eligrey.com for the nice Filesaver.js - "save as" functionality<br/>
-        <br/>
-        <i>Well, it's just a test, really speed etc. not that optimized, it's my first code in node/meteor.. Nice job Meteor guys!</i>     
+        <i>Well, it's just a test, really speed etc. not that optimized working on it, Nice job Meteor guys!</i>     
       </td>
    </tr>
   </table> 
@@ -146,7 +142,9 @@ Filesystem.fileHandlers({
     {{#each Files}}
     <tr>
       <td>
-        {{> imageList}}
+        {{#if getSession '_fileHandlersSupported'}}
+          {{> imageList}}
+        {{/if}}
       </td>
       <td>
         {{#if needToResumeUpload}}
@@ -221,11 +219,35 @@ Filesystem.fileHandlers({
   </div>
 </template>
 
+<template name="supportInfo">
+  {{#if getSession '_fileHandlersSupported'}}
+    {{#if getSession '_fileHandlersSymlinks'}}
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        Congrats! Filehandlers are supported on this server, enjoy!
+      </div>
+    {{else}}
+      <div class="alert alert-block">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        Warning, fileHandlers partially supported, fallback using 'public' for uploads - <u>Meteor will restart server at every fileupload.</u> For full support allow creation of symlinks
+      </div>
+    {{/if}}
+  {{else}}
+    <div class="alert alert-error">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      Serverside filehandling not supported on this server, app need read/write access in order to save uploaded files
+    </div>
+  {{/if}}
+
+</template>
+
 <template name="uploadTest">
   {{#if currentUser}}
+    {{> supportInfo}}
     {{> queControl}} 
   {{else}}
     {{> loginInto}}
+    {{> supportInfo}}
   {{/if}}
   <br/>
   {{> stats}}  

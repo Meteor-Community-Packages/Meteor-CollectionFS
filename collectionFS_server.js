@@ -39,12 +39,17 @@
 
 
 	//var queListener = new _queListener();
+var _fileHandlersSupported = false;
+var _fileHandlersSymlinks = true;
+var _fileHandlersFileWrite = false;
 
  _queListener = function(collectionFS) {
 		var self = this;
 		self.collectionFS = collectionFS; //initialized collectionFS
 		self.cfsMainFolder = 'uploads';
 		self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;
+		self.pathURL = self.path;
+		self.pathURLFallback = 'cfs/'+self.collectionFS._name;
 		self.fs = __meteor_bootstrap__.require('fs');
 		self.fsOk = true;
 		//Init path
@@ -52,14 +57,35 @@
 			self.fs.mkdir(self.cfsMainFolder+'/cfs', function(err){
 				self.fs.mkdir(self.path, function(err){
 					//Workaround meteor server refresh, thanks SO dustin.b
-				    self.fs.symlinkSync('../../../../'+self.cfsMainFolder, 
-				    	'.meteor/local/build/static/'+self.cfsMainFolder); 
-				    self.fs.exists(self.path, function (exists) {
-			    		console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
-				    	if (!exists)
-				    		self.fsOk = false; //Stop services
-						console.log('Path: '+self.path);
-				    });
+				    self.fs.symlink('../../../../'+self.cfsMainFolder, '.meteor/local/build/static/'+self.cfsMainFolder, function(err){
+					    self.fs.exists(self.path, function (exists) {
+					    	_fileHandlersSupported = exists;
+				    		console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
+					    	if (!exists)
+					    		self.fsOk = false; //Stop services
+							console.log('Path: '+self.path);
+
+					    }); //EO Exists
+					    if (err) {
+					    	_fileHandlersSymlinks = false;
+					    	//Use 'public' folder instead of uploads
+							self.cfsMainFolder = 'public';
+							self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;					    	
+							self.fs.mkdir(self.cfsMainFolder, function(err) {
+								self.fs.mkdir(self.cfsMainFolder+'/cfs', function(err){
+									self.fs.mkdir(self.path, function(err){
+										self.fs.exists(self.path, function (exists) {
+											_fileHandlersSupported = exists;
+											self.testFileWrite();
+										});
+									}); //collection
+								});//EO cfs
+							});//EO Main folder
+
+					    } else { //EO symlink Error
+					    	self.testFileWrite();
+					    }
+				    }); //EO symlink
 				}); //EO self.collectionFS._name folder
 			}); //EO cfs seperate collectionFS folder
 		}); // EO self.cfsMainFolder folder
@@ -72,6 +98,18 @@
 	};//EO queListener
 
 	_.extend(_queListener.prototype, {
+		testFileWrite: function() {
+			var self = this;
+			var myFile = self.cfsMainFolder+'/testFileWrite.txt';
+			self.fs.writeFile(myFile, '123456789', Fiber(function(err) {
+				//Add to fileURL array
+				if (!err) {
+					self.fs.exists(myFile, function (exists) {
+						_fileHandlersFileWrite = exists;
+					}); //EO Exists
+				} 
+			}).run()); //EO fileWrite				
+		},
 		checkQue: function() {
 			var self = this;
 			//check items in que and init workers for conversion
@@ -86,11 +124,11 @@
 						self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
 					}
 					//Ready, Spawn new worker
-					if (self.fsOk)
+					if (self.fsOk && _fileHandlersFileWrite)
 						Meteor.setTimeout(function() { self.checkQue(); }, 1000); //Wait a second 1000	
 				} else {
 					//No filehandlers added, wait 5 sec before Spawn new worker - nothing else to do yet
-					if (self.fsOk)
+					if (self.fsOk && _fileHandlersFileWrite)
 						Meteor.setTimeout(function() { self.checkQue(); }, 5000); //Wait 5 second 5000	
 				}
 			} //No collection?? cant go on..
@@ -125,12 +163,19 @@
 						//save the file and update fileURL
 						var extension = (result.extension)?result.extension:result.fileRecord.filename.substr(-3).toLowerCase();
 						var myFilename = result.fileRecord._id+'_'+func+'.'+extension;
+						var myPathURL = (_fileHandlersSymlinks)?self.pathURL:self.pathURLFallback;
 	
 						self.fs.writeFile(self.path+'/'+myFilename, result.blob, 'binary', Fiber(function(err) {
 							//Add to fileURL array
-							self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-								fileURL: { path: self.path+'/'+myFilename, extension: extension, createdAt: Date.now(), func: func }
-							}}); //EO Update
+							if (!err) {
+								self.fs.exists(self.path+'/'+myFilename, function (exists) {
+									if (exists) {
+										self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
+											fileURL: { path: myPathURL+'/'+myFilename, extension: extension, createdAt: Date.now(), func: func }
+										}}); //EO Update
+									} //EO does exist
+								}); //EO Exists
+							}
 						}).run()); //EO fileWrite
 					} else {
 						//no blob? Just save result as an option?
@@ -147,9 +192,9 @@
 						}}); //EO Update
 					} else {
 						//Do nothing, handled by crawler
-						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-							fileURL: { error: 'User function '+func+' failed' }
-						}}); //EO Update
+					//	self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
+					//		fileURL: { error: 'User function '+func+' failed' }
+					//	}}); //EO Update
 					}//EO filehandling failed
 				} //EO no result
 				//console.log('function: '+func);

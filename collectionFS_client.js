@@ -60,7 +60,7 @@
 			if (context && !self.listeners[context.id]) {
 			    self.listeners[context.id] = context;
 			    context.onInvalidate(function () { delete self.listeners[context.id]; });
-			} //EO Meteor listeners
+			} //EO Meteor listeners 
 		},
 
 		getTimer: function(prefix, name) {
@@ -175,7 +175,9 @@
 			for (var fileId in self.que) {
 				var fileItem = self._getItem(fileId);
 				if (fileItem.download) {
-					self.downloadChunk(fileId);
+					//Spawn loaders
+					for (var i = 0; i < self.spawns; i++)
+						setTimeout(function() { self.downloadChunk(fileRecord._id); });
 				} else {
 					//Spawn loaders
 					for (var i = 0; i < self.spawns; i++)
@@ -229,6 +231,9 @@
 				self.que[fileId].blob = new Blob(fileItem.queChunks, { type: fileItem.contentType });
 				fileItem.callback(self._getItem(fileId));
 			}	
+			//Now completed, trigger update
+			for (var contextId in self.listeners)
+				self.listeners[contextId].invalidate();
 		},
 
 		downloadChunk: function(fileId, optChunkNumber) {
@@ -282,10 +287,10 @@
 							}
 							//update and notify listenters
 
-							if (fileItem.currentChunk % 1 == 0) {
+						/*	if (fileItem.currentChunk % 1 == 0) {
 								for (var contextId in self.listeners)
 						    		self.listeners[contextId].invalidate();
-							}
+							}*/
 						}
 					} 
 				}//EO func
@@ -400,7 +405,7 @@
 				countChunks = fileItem.countChunks, 
 				data = data
 			],[
-				wait = true
+				wait = false
 			], function(error, result) {
 					//Callback
 					self.setTimer('upload', 'meteorcallserver', result.time);
@@ -437,8 +442,8 @@
 	//self.que[fileId].countChunks = 1; //Uncomment for debugging
 			self.que[fileId].complete = (self.que[fileId].currentChunk == self.que[fileId].countChunks);
 			//Que progressed
-			for (var contextId in self.listeners)
-	    		self.listeners[contextId].invalidate();
+		/*	for (var contextId in self.listeners)
+	    		self.listeners[contextId].invalidate();*/
 			if (self.que[fileId].complete) {
 				//done
 				//XXX: Spawn complete event?

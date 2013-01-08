@@ -16,6 +16,9 @@ if (typeof Handlebars !== 'undefined') {
     }
     return '';
   });
+  Handlebars.registerHelper('getSession', function (key) {
+    return Session.get(key);
+  });
 }
 
 Template.queControl.events({

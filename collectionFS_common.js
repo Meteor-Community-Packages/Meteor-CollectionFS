@@ -26,47 +26,56 @@
 		} //EO isServer
 
 		var methodFunc = {};
-		methodFunc['saveChunck'+self._name] = function(fileId, chunkNumber, countChunks, data) {
-			var complete = (chunkNumber == countChunks - 1);
-			var updateFiles = true; //(chunkNumber % 100 == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
-			var cId = null;
-			if (Meteor.isServer && fileId) {
-				var startTime = Date.now();
-				cId = self.chunks.insert({
-					//"_id" : <unspecified>,    // object id of the chunk in the _chunks collection
-					"files_id" : fileId,    	// _id of the corresponding files collection entry
-					"n" : chunkNumber,          // chunks are numbered in order, starting with 0
-					"data" : data,          	// the chunk's payload as a BSON binary type			
-				});
+		if (true) {
+			methodFunc['saveChunck'+self._name] = function(fileId, chunkNumber, countChunks, data) {
+				this.unblock();
+				var complete = (chunkNumber == countChunks - 1);
+				var updateFiles = (chunkNumber  == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
+				var cId = null;
+				if (Meteor.isServer && fileId) {
+					var startTime = Date.now();
+					cId = self.chunks.insert({
+						//"_id" : <unspecified>,    // object id of the chunk in the _chunks collection
+						"files_id" : fileId,    	// _id of the corresponding files collection entry
+						"n" : chunkNumber,          // chunks are numbered in order, starting with 0
+						"data" : data,          	// the chunk's payload as a BSON binary type			
+					});
 
-				/* Improve chunk index integrity have a look at TODO in uploadChunk() */
-				if (cId) { //If chunk added successful
-					if (complete || updateFiles)  //update file status
-						self.files.update({ _id:fileId }, { 
-							$set: { complete: complete, currentChunk: chunkNumber+1 }
-						});
-					//** Only update currentChunk if not complete? , complete: {$ne: true}
-				} //If cId
-			} //EO isServer
-			return { fileId: fileId, chunkId: cId, complete: complete, currentChunk: chunkNumber+1, time: (Date.now()-startTime)};
-		}; //EO saveChunck+name
+					/* Improve chunk index integrity have a look at TODO in uploadChunk() */
+					if (cId) { //If chunk added successful
+						if (complete || updateFiles)  //update file status
+							self.files.update({ _id:fileId }, { 
+								$set: { complete: complete, currentChunk: chunkNumber+1 }
+							})
+						else
+							self.files.update({ _id:fileId }, { 
+								$set: { currentChunk: chunkNumber+1 }
+							});
+						//** Only update currentChunk if not complete? , complete: {$ne: true}
+					} //If cId
+				} //EO isServer
+				return { fileId: fileId, chunkId: cId, complete: complete, currentChunk: chunkNumber+1, time: (Date.now()-startTime)};
+			}; //EO saveChunck+name
 
-		methodFunc['loadChunck'+self._name] = function(fileId, chunkNumber, countChunks) {
-			var complete = (chunkNumber == countChunks-1);
-			var chunk = null;
-			if (Meteor.isServer && fileId) {
-				var startTime = Date.now();
-				chunk = self.chunks.findOne({
-					//"_id" : <unspecified>,    // object id of the chunk in the _chunks collection
-					"files_id" : fileId,    	// _id of the corresponding files collection entry
-					"n" : chunkNumber          // chunks are numbered in order, starting with 0
-					//"data" : data,          	// the chunk's payload as a BSON binary type			
-				});
+			methodFunc['loadChunck'+self._name] = function(fileId, chunkNumber, countChunks) {
+				var complete = (chunkNumber == countChunks-1);
+				var chunk = null;
+				if (Meteor.isServer && fileId) {
+					var startTime = Date.now();
+					chunk = self.chunks.findOne({
+						//"_id" : <unspecified>,    // object id of the chunk in the _chunks collection
+						"files_id" : fileId,    	// _id of the corresponding files collection entry
+						"n" : chunkNumber          // chunks are numbered in order, starting with 0
+						//"data" : data,          	// the chunk's payload as a BSON binary type			
+					});
 
-				return { fileId: fileId, chunkId: chunk._id, currentChunk:chunkNumber, complete: complete, data: chunk.data, time: (Date.now()-startTime) };
-			} //EO isServer
-		}; //EO saveChunck+name
-		Meteor.methods(methodFunc); //EO Meteor.methods
+					return { fileId: fileId, chunkId: chunk._id, currentChunk:chunkNumber, complete: complete, data: chunk.data, time: (Date.now()-startTime) };
+				} //EO isServer
+			}; //EO saveChunck+name
+
+
+			Meteor.methods(methodFunc); //EO Meteor.methods
+		} //EO isServer
 
 		var queListener = null; //If on client
 		//Init queListener for fileHandling at the server
@@ -78,9 +87,27 @@
 				self.queListener = new _queListener(self);
 			});
 		}
+		if (Meteor.isClient) {
+			//check server _fileHandlersSupported
+			//self.queListener.fsOk
+			Meteor.startup(function () {
+				Meteor.call('returnFileHandlerSupport', function(err, res) {
+					Session.set('_fileHandlersSupported', (res._fileHandlersFileWrite && res._fileHandlersSymlinks));
+					Session.set('_fileHandlersSymlinks', res._fileHandlersSymlinks);
+					Session.set('_fileHandlersFileWrite', res._fileHandlersFileWrite);					
+				}); //EO call
+			}); //EO startup 
+		}
 
 	}; //EO collectionFS
 
+	if (Meteor.isServer) {
+		Meteor.methods({
+		  returnFileHandlerSupport: function () {
+		    return {_fileHandlersSupported: _fileHandlersSupported, _fileHandlersSymlinks: _fileHandlersSymlinks, _fileHandlersFileWrite:_fileHandlersFileWrite};
+		  }
+		});
+	}
 	_queCollectionFS = function(name) {
 		var self = this;
 		self._name = name;
@@ -88,7 +115,7 @@
 		self.queLastTime = {};			//Deprecate
 		self.queLastTimeNr = 0;			//Deprecate
 		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
-		self.spawns = 50;
+		self.spawns = 10;
 		//self.paused = false;			//Deprecate
 		self.listeners = {};			//Deprecate
 		self.lastTimeUpload = null;		//Deprecate
