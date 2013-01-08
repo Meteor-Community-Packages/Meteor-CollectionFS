@@ -28,7 +28,7 @@
 		var methodFunc = {};
 		if (true) {
 			methodFunc['saveChunck'+self._name] = function(fileId, chunkNumber, countChunks, data) {
-				this.unblock();
+				//this.unblock();
 				var complete = (chunkNumber == countChunks - 1);
 				var updateFiles = (chunkNumber  == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
 				var cId = null;

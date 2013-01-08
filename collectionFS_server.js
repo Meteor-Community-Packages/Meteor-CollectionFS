@@ -41,7 +41,7 @@
 	//var queListener = new _queListener();
 var _fileHandlersSupported = false;
 var _fileHandlersSymlinks = true;
-var _fileHandlersFileWrite = false;
+var _fileHandlersFileWrite = true;
 
  _queListener = function(collectionFS) {
 		var self = this;
@@ -51,7 +51,6 @@ var _fileHandlersFileWrite = false;
 		self.pathURL = self.path;
 		self.pathURLFallback = 'cfs/'+self.collectionFS._name;
 		self.fs = __meteor_bootstrap__.require('fs');
-		self.fsOk = true;
 		//Init path
 		self.fs.mkdir(self.cfsMainFolder, function(err) {
 			self.fs.mkdir(self.cfsMainFolder+'/cfs', function(err){
@@ -61,8 +60,6 @@ var _fileHandlersFileWrite = false;
 					    self.fs.exists(self.path, function (exists) {
 					    	_fileHandlersSupported = exists;
 				    		console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
-					    	if (!exists)
-					    		self.fsOk = false; //Stop services
 							console.log('Path: '+self.path);
 
 					    }); //EO Exists
@@ -114,6 +111,7 @@ var _fileHandlersFileWrite = false;
 			var self = this;
 			//check items in que and init workers for conversion
 //console.log('_queListener.checkQue();');
+//console.log('.'+Date.now());
 			if (self.collectionFS) {
 				if (self.collectionFS._fileHandlers) {
 					//ok got filehandler object, spawn worker
@@ -124,11 +122,11 @@ var _fileHandlersFileWrite = false;
 						self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
 					}
 					//Ready, Spawn new worker
-					if (self.fsOk && _fileHandlersFileWrite)
+					if (_fileHandlersFileWrite)
 						Meteor.setTimeout(function() { self.checkQue(); }, 1000); //Wait a second 1000	
 				} else {
 					//No filehandlers added, wait 5 sec before Spawn new worker - nothing else to do yet
-					if (self.fsOk && _fileHandlersFileWrite)
+					if (_fileHandlersFileWrite)
 						Meteor.setTimeout(function() { self.checkQue(); }, 5000); //Wait 5 second 5000	
 				}
 			} //No collection?? cant go on..
@@ -165,18 +163,14 @@ var _fileHandlersFileWrite = false;
 						var myFilename = result.fileRecord._id+'_'+func+'.'+extension;
 						var myPathURL = (_fileHandlersSymlinks)?self.pathURL:self.pathURLFallback;
 	
-						self.fs.writeFile(self.path+'/'+myFilename, result.blob, 'binary', Fiber(function(err) {
-							//Add to fileURL array
-							if (!err) {
-								self.fs.exists(self.path+'/'+myFilename, function (exists) {
-									if (exists) {
-										self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-											fileURL: { path: myPathURL+'/'+myFilename, extension: extension, createdAt: Date.now(), func: func }
-										}}); //EO Update
-									} //EO does exist
-								}); //EO Exists
-							}
-						}).run()); //EO fileWrite
+						self.fs.writeFileSync(self.path+'/'+myFilename, result.blob, 'binary')
+						//Add to fileURL array
+						if (self.fs.existsSync(self.path+'/'+myFilename)) {
+							self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
+								fileURL: { path: myPathURL+'/'+myFilename, extension: extension, createdAt: Date.now(), func: func }
+							}}); //EO Update
+						} //EO does exist
+
 					} else {
 						//no blob? Just save result as an option?
 						result.createdAt = Date.now();

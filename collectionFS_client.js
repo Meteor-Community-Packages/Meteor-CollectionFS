@@ -405,7 +405,7 @@
 				countChunks = fileItem.countChunks, 
 				data = data
 			],[
-				wait = false
+				wait = true
 			], function(error, result) {
 					//Callback
 					self.setTimer('upload', 'meteorcallserver', result.time);
