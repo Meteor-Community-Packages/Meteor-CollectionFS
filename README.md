@@ -11,6 +11,7 @@ Using Meteor and gridFS priciples we get:
 * Reactive data, the collectionFS's methods should all be reactive
 * Abillity for the user to resume upload after connection loss, browser crash or cola in keyboard
 * At the moment files are loaded into the client as Blob universal way of handling large binary data
+* Create multiple cached versions, sizes or formats of your files and get an url to the file
 
 ##How to use?
 
@@ -133,7 +134,7 @@ Filesystem.fileHandlers({
   }
 });
 ```
-*This is brand new on the testbed, future brings easy image handling shortcuts to imagemagic, maybe som sound/video converting and som integration for uploading to eg. google drive, dropbox etc.*
+*This is brand new on the testbed, future brings easy image handling shortcuts to imagemagic, maybe som sound/video converting and some integration for uploading to eg. google drive, dropbox etc.*
 
 ###Future:
 * Handlebar helpers? ```{{fileProgress}}```, ```{{fileInQue}}```, ```{{fileAsURL}}```, ```{{fileURL _id}}``` etc.
