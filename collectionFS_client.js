@@ -176,12 +176,18 @@
 				var fileItem = self._getItem(fileId);
 				if (fileItem.download) {
 					//Spawn loaders
-					for (var i = 0; i < self.spawns; i++)
-						setTimeout(function() { self.downloadChunk(fileRecord._id); });
+					if (self.spawns)
+						self.downloadChunk(fileRecord._id)
+					else
+						for (var i = 0; i < self.spawns; i++)
+							setTimeout(function() { self.downloadChunk(fileRecord._id); });
 				} else {
 					//Spawn loaders
-					for (var i = 0; i < self.spawns; i++)
-						setTimeout(function() { self.getDataChunk(fileId); });
+					if (self.spawns)
+						self.getDataChunk(fileId)
+					else
+						for (var i = 0; i < self.spawns; i++)
+							setTimeout(function() { self.getDataChunk(fileId); });
 				}
 			}
 		}, //EO resume
@@ -294,7 +300,7 @@
 						}
 					} 
 				}//EO func
-			);			
+			);//EO Meteor.apply			
 		}, //EO 
 
 		// getFile callback(fileItem)
@@ -321,8 +327,11 @@
 	    		self.listeners[contextId].invalidate();
 
 			//Spawn loaders
-			for (var i = 0; i < self.spawns; i++)
-				setTimeout(function() { self.downloadChunk(fileRecord._id); });
+			if (self.spawns == 1)
+				self.downloadChunk(fileRecord._id)
+			else
+				for (var i = 0; i < self.spawns; i++)
+					setTimeout(function() { self.downloadChunk(fileRecord._id); });
 		}, //EO 
 		//////////////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////// UPLOAD ///////////////////////////////////////////////
@@ -347,8 +356,11 @@
 	    		self.listeners[contextId].invalidate();
 			
 			//Spawn loaders
-			for (var i = 0; i < self.spawns; i++)
-				setTimeout(function() { self.getDataChunk(fileId); });
+			if (self.spawns == 1)
+				self.getDataChunk(fileId)
+			else
+				for (var i = 0; i < self.spawns; i++)
+					setTimeout(function() { self.getDataChunk(fileId); });
 		}, //EO addFile
 
 		getDataChunk: function(fileId, optChunkNumber) {

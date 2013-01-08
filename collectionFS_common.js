@@ -28,7 +28,7 @@
 		var methodFunc = {};
 		if (true) {
 			methodFunc['saveChunck'+self._name] = function(fileId, chunkNumber, countChunks, data) {
-				//this.unblock();
+				this.unblock();
 				var complete = (chunkNumber == countChunks - 1);
 				var updateFiles = (chunkNumber  == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
 				var cId = null;
@@ -115,7 +115,7 @@
 		self.queLastTime = {};			//Deprecate
 		self.queLastTimeNr = 0;			//Deprecate
 		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
-		self.spawns = 10;
+		self.spawns = 1;
 		//self.paused = false;			//Deprecate
 		self.listeners = {};			//Deprecate
 		self.lastTimeUpload = null;		//Deprecate
