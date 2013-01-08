@@ -102,7 +102,7 @@ Using Meteor and gridFS priciples we get:
     });
 ```
 
-###Create server cache/versions of files and get an url reference```
+###Create server cache/versions of files and get an url reference
 Filehandlers are serverside functions that makes caching versions easier. The functions are run and handled a file record and a blob / ```Buffer``` containing all the bytes.
 * Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file - all done reactivly live.
 * If only custom metadata is returned without a blob / Buffer then no files saved but metadata is saved in database.
