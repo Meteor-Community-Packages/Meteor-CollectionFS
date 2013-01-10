@@ -55,12 +55,12 @@
 	_.extend(_queCollectionFS.prototype, {
 		addMeteorListeners: function(context) {
 			//var context = Meteor.deps.Context.current; 
-			var self = this;
+		/*	var self = this;
 			//XXX: is it posible error should be placed "in function"?
 			if (context && !self.listeners[context.id]) {
 			    self.listeners[context.id] = context;
 			    context.onInvalidate(function () { delete self.listeners[context.id]; });
-			} //EO Meteor listeners 
+			} //EO Meteor listeners */
 		},
 
 		getTimer: function(prefix, name) {
@@ -105,7 +105,7 @@
 
 		getItem: function(fileId) {
 			var self = this;
-			self.addMeteorListeners(Meteor.deps.Context.current);
+	//		self.addMeteorListeners(Meteor.deps.Context.current);
 			return self._getItem(fileId);
 		}, //EO getItem	
 
@@ -121,7 +121,7 @@
 			if (!fileItem)
 				return false;
 			var pointerChunk = (onlyBuffer)?fileItem.currentChunk:fileItem.currentChunkServer; //TODO:
-			self.addMeteorListeners(Meteor.deps.Context.current);
+	//		self.addMeteorListeners(Meteor.deps.Context.current);
 			if (fileItem)
 				return Math.round(pointerChunk / (fileItem.countChunks) * 100)
 			else
@@ -130,7 +130,7 @@
 
 		isComplete: function(fileId) {
 			var self = this;
-			self.addMeteorListeners(Meteor.deps.Context.current);
+	//		self.addMeteorListeners(Meteor.deps.Context.current);
 			return self._getItem(fileId).complete;
 		}, //EO isComplete
 
@@ -146,7 +146,7 @@
 
 		isDownloaded: function(fileId) {
 			var self = this;
-			self.addMeteorListeners(Meteor.deps.Context.current);
+	//		self.addMeteorListeners(Meteor.deps.Context.current);
 			var fileItem = self._getItem(fileId);
 			if (fileItem.file)
 				return true;
@@ -238,8 +238,8 @@
 				fileItem.callback(self._getItem(fileId));
 			}	
 			//Now completed, trigger update
-			for (var contextId in self.listeners)
-				self.listeners[contextId].invalidate();
+		/*	for (var contextId in self.listeners)
+				self.listeners[contextId].invalidate();*/
 		},
 
 		downloadChunk: function(fileId, optChunkNumber) {
@@ -293,10 +293,10 @@
 							}
 							//update and notify listenters
 
-						/*	if (fileItem.currentChunk % 1 == 0) {
-								for (var contextId in self.listeners)
-						    		self.listeners[contextId].invalidate();
-							}*/
+							if (fileItem.currentChunk % 1 == 0) {
+								/*for (var contextId in self.listeners)
+						    		self.listeners[contextId].invalidate();*/
+							}
 						}
 					} 
 				}//EO func
@@ -319,12 +319,12 @@
 				currentChunk: (currentChunk)?currentChunk:0, //current loaded chunk of countChunks-1  
 				countChunks: fileRecord.countChunks,
 				callback: callback,
-				len: fileRecord.len
+				length: fileRecord['length']
 			};
 
 			//Added download request to the que
-			for (var contextId in self.listeners)
-	    		self.listeners[contextId].invalidate();
+			/*for (var contextId in self.listeners)
+	    		self.listeners[contextId].invalidate();*/
 
 			//Spawn loaders
 			if (self.spawns == 1)
@@ -352,12 +352,12 @@
 				//filereader: new FileReader(),	
 			};
 			//Added upload request to the que
-			for (var contextId in self.listeners)
-	    		self.listeners[contextId].invalidate();
+			/*for (var contextId in self.listeners)
+	    		self.listeners[contextId].invalidate();*/
 			
 			//Spawn loaders
 			if (self.spawns == 1)
-				self.getDataChunk(fileId)
+				self.getDataChunk(fileId, 0)
 			else
 				for (var i = 0; i < self.spawns; i++)
 					setTimeout(function() { self.getDataChunk(fileId); });
@@ -420,6 +420,8 @@
 				wait = true
 			], function(error, result) {
 					//Callback
+					if (error)
+						console.log(error);
 					self.setTimer('upload', 'meteorcallserver', result.time);
 					self.stopTimer('upload', 'meteorcall', timerMeteorCall);
 					if (result.chunkId) {
@@ -432,12 +434,12 @@
 						//	if not missing any chunks then complete else request client to upload by returning missing chunk number?
 						//
 						// var next = result.currentChunck;  //Chunck to download.. if not the save func gotta test fs.chunks index
-						var next = self.nextChunk(result.fileId); //or let server decide
+						var next = result.currentChunk; // self.nextChunk(result.fileId); //or let server decide
 						//!result.complete && 
-						if (next ) {
+						if (!result.complete) {
 							self.getDataChunk(result.fileId, next);
 						} else {
-
+							//Client or server check chunks..
 
 						}									
 					} 
@@ -454,7 +456,7 @@
 	//self.que[fileId].countChunks = 1; //Uncomment for debugging
 			self.que[fileId].complete = (self.que[fileId].currentChunk == self.que[fileId].countChunks);
 			//Que progressed
-		/*	for (var contextId in self.listeners)
+			/*for (var contextId in self.listeners)
 	    		self.listeners[contextId].invalidate();*/
 			if (self.que[fileId].complete) {
 				//done

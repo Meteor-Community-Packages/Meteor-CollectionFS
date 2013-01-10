@@ -13,7 +13,8 @@
 // TODO: add picture / profile photo
 
 var _extractProfile = function (userObjId) {
-
+  if (!userObjId)
+    return null;
     //Check if an _id isset otherwise assume input as being _id
     var user = (userObjId._id)?userObjId: Meteor.users.findOne({_id: userObjId});
   if (user) {

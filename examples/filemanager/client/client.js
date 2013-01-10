@@ -156,13 +156,13 @@ Template.fileTable.helpers({
     return myDate.getHours()+':'+myDate.getMinutes()+':'+myDate.getSeconds();
   },
   niceSize: function() {
-    var cGb = Math.floor(this.len / 1000000000);
-    if (cGb > 0) return (Math.floor(this.len / 10000000)/100) + 'Gb';
-    var cMb = Math.floor(this.len / 1000000);
-    if (cMb > 0) return (Math.floor(this.len / 10000)/100) + 'Mb';
-    var cKb = Math.floor(this.len / 1000);
-    if (cKb > 0) return (Math.floor(this.len / 10)/100) + 'Kb';
-    return this.len + 'bytes';
+    var cGb = Math.floor(this.length / 1000000000);
+    if (cGb > 0) return (Math.floor(this.length / 10000000)/100) + 'Gb';
+    var cMb = Math.floor(this.length / 1000000);
+    if (cMb > 0) return (Math.floor(this.length / 10000)/100) + 'Mb';
+    var cKb = Math.floor(this.length / 1000);
+    if (cKb > 0) return (Math.floor(this.length / 10)/100) + 'Kb';
+    return this.length + 'bytes';
   },
   transfereText: function() {
     if (!this.complete) {

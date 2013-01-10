@@ -122,11 +122,11 @@ var _fileHandlersFileWrite = true;
 						self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
 					}
 					//Ready, Spawn new worker
-					if (_fileHandlersFileWrite)
+					//if (_fileHandlersFileWrite) //do allways init filehandlers. could be used to other tings than save on disk
 						Meteor.setTimeout(function() { self.checkQue(); }, 1000); //Wait a second 1000	
 				} else {
 					//No filehandlers added, wait 5 sec before Spawn new worker - nothing else to do yet
-					if (_fileHandlersFileWrite)
+					//if (_fileHandlersFileWrite) //do allways init filehandlers. could be used to other tings than save on disk
 						Meteor.setTimeout(function() { self.checkQue(); }, 5000); //Wait 5 second 5000	
 				}
 			} //No collection?? cant go on..
@@ -137,7 +137,7 @@ var _fileHandlersFileWrite = true;
 			var self = this;
 			var fileURL = [];
 			//Retrive blob
-			var blob = new Buffer(fileRecord.len, { type: fileRecord.contentType}); //Allocate mem
+			var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
 
 			self.collectionFS.chunks.find({files_id: fileRecord._id}, { $sort: {n:1} }).forEach(function(chunk){
 				for (var i=0; i < chunk.data.length; i++) {
@@ -146,7 +146,7 @@ var _fileHandlersFileWrite = true;
 				}
 			}); //EO find chunks
 
-			console.log('Handle FileId: ' + fileRecord._id + '    buffer:'+fileRecord.len);
+			console.log('Handle FileId: ' + fileRecord._id + '    buffer:'+fileRecord['length']);
 			//do some work, execute user defined functions
 			for (var func in fileHandlers) {
 				//TODO: check if func in fileRecord.fileURL...if so then skip 
