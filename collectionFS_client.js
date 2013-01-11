@@ -319,8 +319,8 @@
 				currentChunk: (currentChunk)?currentChunk:0, //current loaded chunk of countChunks-1  
 				countChunks: fileRecord.countChunks,
 				callback: callback,
-//				len: fileRecord['len']
-				length: fileRecord['length']  //When fix in meteor...
+				len: fileRecord['len']
+//				length: fileRecord['length']  //When fix in meteor...
 
 			};
 

@@ -217,8 +217,8 @@
 			  owner: Meteor.userId(),
 			  countChunks: countChunks,
 			  filename : file.name,
-			  length: file.size, //Issue in Meteor
-			//  len: file.size,
+			//  length: file.size, //Issue in Meteor
+			  len: file.size,
 			  contentType : file.type,
 			  metadata : (options) ? options : null
 			};
