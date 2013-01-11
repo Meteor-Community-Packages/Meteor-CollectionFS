@@ -319,7 +319,9 @@
 				currentChunk: (currentChunk)?currentChunk:0, //current loaded chunk of countChunks-1  
 				countChunks: fileRecord.countChunks,
 				callback: callback,
-				length: fileRecord['length']
+//				len: fileRecord['len']
+				length: fileRecord['length']  //When fix in meteor...
+
 			};
 
 			//Added download request to the que
@@ -434,7 +436,8 @@
 						//	if not missing any chunks then complete else request client to upload by returning missing chunk number?
 						//
 						// var next = result.currentChunck;  //Chunck to download.. if not the save func gotta test fs.chunks index
-						var next = result.currentChunk; // self.nextChunk(result.fileId); //or let server decide
+
+						var next = self.nextChunk(result.fileId); //or let server decide
 						//!result.complete && 
 						if (!result.complete) {
 							self.getDataChunk(result.fileId, next);

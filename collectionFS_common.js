@@ -45,28 +45,28 @@
 
 					/* Improve chunk index integrity have a look at TODO in uploadChunk() */
 					if (cId) { //If chunk added successful
-						console.log('update: '+self.files.update({_id: fileId}, { $inc: { currentChunk: 1 }}));
+						/*console.log('update: '+self.files.update({_id: fileId}, { $inc: { currentChunk: 1 }}));
 						result = self.files.findOne({_id: fileId});
 						console.log('Server wants chunk nr: '+result.currentChunk+'  for file: ' + fileId);
 						if (complete) {
 							//TODO: Check integrity from server or via client?
 							self.files.update({_id: fileId}, { $set: { complete: true }});
-						} //EO check
+						} //EO check*/
 
-					/*	if (complete || updateFiles)  //update file status
+						if (complete || updateFiles)  //update file status
 							self.files.update({ _id:fileId }, { 
 								$set: { complete: complete, currentChunk: chunkNumber+1 }
 							})
 						else
 							self.files.update({ _id:fileId }, { 
 								$set: { currentChunk: chunkNumber+1 }
-							});*/
+							});
 						//** Only update currentChunk if not complete? , complete: {$ne: true}
 					} //If cId
 				} //EO isServer
-				//return { fileId: fileId, chunkId: cId, complete: complete, currentChunk: chunkNumber+1, time: (Date.now()-startTime)};
-				console.log('Return currentChunk: '+result.currentChunk);
-				return { fileId: fileId, chunkId: cId, complete: complete, currentChunk: result.currentChunk, time: (Date.now()-startTime)};
+				return { fileId: fileId, chunkId: cId, complete: complete, currentChunk: chunkNumber+1, time: (Date.now()-startTime)};
+				//console.log('Return currentChunk: '+result.currentChunk);
+				//return { fileId: fileId, chunkId: cId, complete: complete, currentChunk: result.currentChunk, time: (Date.now()-startTime)};
 			}; //EO saveChunck+name
 
 			methodFunc['loadChunck'+self._name] = function(fileId, chunkNumber, countChunks) {
@@ -217,8 +217,8 @@
 			  owner: Meteor.userId(),
 			  countChunks: countChunks,
 			  filename : file.name,
-			 // len : file.size,
 			  length: file.size, //Issue in Meteor
+			//  len: file.size,
 			  contentType : file.type,
 			  metadata : (options) ? options : null
 			};

@@ -137,7 +137,9 @@ var _fileHandlersFileWrite = true;
 			var self = this;
 			var fileURL = [];
 			//Retrive blob
-			var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
+			var fileSize = ( fileRecord['len']||fileRecord['length']);
+			var blob = new Buffer(fileSize, { type: fileRecord.contentType}); //Allocate mem
+			//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
 
 			self.collectionFS.chunks.find({files_id: fileRecord._id}, { $sort: {n:1} }).forEach(function(chunk){
 				for (var i=0; i < chunk.data.length; i++) {
@@ -146,7 +148,7 @@ var _fileHandlersFileWrite = true;
 				}
 			}); //EO find chunks
 
-			console.log('Handle FileId: ' + fileRecord._id + '    buffer:'+fileRecord['length']);
+			console.log('Handle FileId: ' + fileRecord._id + '    buffer:'+fileSize);
 			//do some work, execute user defined functions
 			for (var func in fileHandlers) {
 				//TODO: check if func in fileRecord.fileURL...if so then skip 
