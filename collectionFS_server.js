@@ -137,7 +137,7 @@ var _fileHandlersFileWrite = true;
 			var self = this;
 			var fileURL = [];
 			//Retrive blob
-			var fileSize = ( fileRecord['len']||fileRecord['length']);
+			var fileSize = ( fileRecord['len']||fileRecord['length']); //Due to Meteor error
 			var blob = new Buffer(fileSize, { type: fileRecord.contentType}); //Allocate mem
 			//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
 
