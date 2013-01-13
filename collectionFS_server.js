@@ -137,8 +137,9 @@ var _fileHandlersFileWrite = true;
 			var self = this;
 			var fileURL = [];
 			//Retrive blob
-			var fileSize = ( fileRecord['len']||fileRecord['length']); //Due to Meteor error
-			var blob = new Buffer(fileSize, { type: fileRecord.contentType}); //Allocate mem
+			var fileSize = ( fileRecord['len']||fileRecord['length']); //Due to Meteor issue
+			console.log('filesize: '+fileSize+' recSize: '+fileRecord['length']);
+			var blob = new Buffer(1*fileSize); //Allocate mem *1 due to Meteor issue
 			//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
 
 			self.collectionFS.chunks.find({files_id: fileRecord._id}, { $sort: {n:1} }).forEach(function(chunk){

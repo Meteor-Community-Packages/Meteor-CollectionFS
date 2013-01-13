@@ -28,14 +28,14 @@
 		var methodFunc = {};
 		if (Meteor.isServer) {
 			methodFunc['saveChunck'+self._name] = function(fileId, chunkNumber, countChunks, data) {
-				//this.unblock();
+				this.unblock();
 				var complete = (chunkNumber == countChunks - 1);
-				var updateFiles = true; //(chunkNumber  == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
+				var updateFiles = (chunkNumber  == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
 				var cId = null;
 				var result = null;
 				if (Meteor.isServer && fileId) {
 					var startTime = Date.now();
-					console.log('inserts chunk: '+ chunkNumber);	//ERROR: two chunks with same nr....
+					//console.log('inserts chunk: '+ chunkNumber);	//ERROR: two chunks with same nr....
 					cId = self.chunks.insert({
 						//"_id" : <unspecified>,    // object id of the chunk in the _chunks collection
 						"files_id" : fileId,    	// _id of the corresponding files collection entry
@@ -70,6 +70,7 @@
 			}; //EO saveChunck+name
 
 			methodFunc['loadChunck'+self._name] = function(fileId, chunkNumber, countChunks) {
+				this.unblock();
 				var complete = (chunkNumber == countChunks-1);
 				var chunk = null;
 				if (Meteor.isServer && fileId) {
@@ -80,7 +81,7 @@
 						"n" : chunkNumber          // chunks are numbered in order, starting with 0
 						//"data" : data,          	// the chunk's payload as a BSON binary type			
 					});
-
+					//console.log('Read: '+chunkNumber+' complete: '+complete);
 					return { fileId: fileId, chunkId: chunk._id, currentChunk:chunkNumber, complete: complete, data: chunk.data, time: (Date.now()-startTime) };
 				} //EO isServer
 			}; //EO saveChunck+name
@@ -165,7 +166,7 @@
 		self.queLastTime = {};			//Deprecate
 		self.queLastTimeNr = 0;			//Deprecate
 		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
-		self.spawns = 1;
+		self.spawns = 30;
 		//self.paused = false;			//Deprecate
 		self.listeners = {};			//Deprecate
 		self.lastTimeUpload = null;		//Deprecate

@@ -53,14 +53,21 @@
 
 
 	_.extend(_queCollectionFS.prototype, {
-		addMeteorListeners: function(context) {
-			//var context = Meteor.deps.Context.current; 
-		/*	var self = this;
+		addMeteorListeners: function(fileId) {
+			var self = this;
+			var context = Meteor.deps.Context.current;
 			//XXX: is it posible error should be placed "in function"?
+			//var self.listeners[fileId] = (self.listeners[fileId])?self.listeners[fileId]:{};
+			 
 			if (context && !self.listeners[context.id]) {
 			    self.listeners[context.id] = context;
 			    context.onInvalidate(function () { delete self.listeners[context.id]; });
-			} //EO Meteor listeners */
+			} //EO Meteor listeners 
+		},
+		triggerMeteorListeners: function(fileId) {
+			var self = this;
+			for (var contextId in self.listeners)
+	    		self.listeners[contextId].invalidate();
 		},
 
 		getTimer: function(prefix, name) {
@@ -105,7 +112,7 @@
 
 		getItem: function(fileId) {
 			var self = this;
-	//		self.addMeteorListeners(Meteor.deps.Context.current);
+			self.addMeteorListeners(fileId);
 			return self._getItem(fileId);
 		}, //EO getItem	
 
@@ -121,7 +128,7 @@
 			if (!fileItem)
 				return false;
 			var pointerChunk = (onlyBuffer)?fileItem.currentChunk:fileItem.currentChunkServer; //TODO:
-	//		self.addMeteorListeners(Meteor.deps.Context.current);
+			self.addMeteorListeners(fileId);
 			if (fileItem)
 				return Math.round(pointerChunk / (fileItem.countChunks) * 100)
 			else
@@ -130,7 +137,7 @@
 
 		isComplete: function(fileId) {
 			var self = this;
-	//		self.addMeteorListeners(Meteor.deps.Context.current);
+			self.addMeteorListeners(fileId);
 			return self._getItem(fileId).complete;
 		}, //EO isComplete
 
@@ -146,7 +153,7 @@
 
 		isDownloaded: function(fileId) {
 			var self = this;
-	//		self.addMeteorListeners(Meteor.deps.Context.current);
+			self.addMeteorListeners(fileId);
 			var fileItem = self._getItem(fileId);
 			if (fileItem.file)
 				return true;
@@ -177,10 +184,10 @@
 				if (fileItem.download) {
 					//Spawn loaders
 					if (self.spawns)
-						self.downloadChunk(fileRecord._id)
+						self.downloadChunk(fileId)
 					else
 						for (var i = 0; i < self.spawns; i++)
-							setTimeout(function() { self.downloadChunk(fileRecord._id); });
+							setTimeout(function() { self.downloadChunk(fileId); });
 				} else {
 					//Spawn loaders
 					if (self.spawns)
@@ -235,11 +242,14 @@
 
 			if (fileItem.queChunks.length == fileItem.countChunks) { //Last worker make chunks into blob
 				self.que[fileId].blob = new Blob(fileItem.queChunks, { type: fileItem.contentType });
-				fileItem.callback(self._getItem(fileId));
+				var myCallback = fileItem.callback;
+				if (fileItem.callback) {
+					fileItem.callback = null; //Only do this once
+					myCallback(self._getItem(fileId));
+				}
+				//Now completed, trigger update
+				self.triggerMeteorListeners(fileId);
 			}	
-			//Now completed, trigger update
-		/*	for (var contextId in self.listeners)
-				self.listeners[contextId].invalidate();*/
 		},
 
 		downloadChunk: function(fileId, optChunkNumber) {
@@ -293,10 +303,9 @@
 							}
 							//update and notify listenters
 
-							if (fileItem.currentChunk % 1 == 0) {
-								/*for (var contextId in self.listeners)
-						    		self.listeners[contextId].invalidate();*/
-							}
+							/*if (self.que[fileId].currentChunk % 1 == 0) {
+								self.triggerMeteorListeners(fileId);
+							}*/
 						}
 					} 
 				}//EO func
@@ -325,8 +334,7 @@
 			};
 
 			//Added download request to the que
-			/*for (var contextId in self.listeners)
-	    		self.listeners[contextId].invalidate();*/
+			self.triggerMeteorListeners(fileRecord._id);
 
 			//Spawn loaders
 			if (self.spawns == 1)
@@ -354,8 +362,7 @@
 				//filereader: new FileReader(),	
 			};
 			//Added upload request to the que
-			/*for (var contextId in self.listeners)
-	    		self.listeners[contextId].invalidate();*/
+			self.triggerMeteorListeners(fileId);
 			
 			//Spawn loaders
 			if (self.spawns == 1)
@@ -459,8 +466,8 @@
 	//self.que[fileId].countChunks = 1; //Uncomment for debugging
 			self.que[fileId].complete = (self.que[fileId].currentChunk == self.que[fileId].countChunks);
 			//Que progressed
-			/*for (var contextId in self.listeners)
-	    		self.listeners[contextId].invalidate();*/
+			if (self.que[fileId].currentChunk % 1 == 0 || self.que[fileId].complete)
+				self.triggerMeteorListeners(fileId);
 			if (self.que[fileId].complete) {
 				//done
 				//XXX: Spawn complete event?
