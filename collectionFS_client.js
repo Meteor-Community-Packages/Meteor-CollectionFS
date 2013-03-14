@@ -51,25 +51,8 @@
 	}); //EO extend collection
 
 
-
 	_.extend(_queCollectionFS.prototype, {
-		addMeteorListeners: function(fileId) {
-			var self = this;
-			var context = Meteor.deps.Context.current;
-			//XXX: is it posible error should be placed "in function"?
-			//var self.listeners[fileId] = (self.listeners[fileId])?self.listeners[fileId]:{};
-			 
-			if (context && !self.listeners[context.id]) {
-			    self.listeners[context.id] = context;
-			    context.onInvalidate(function () { delete self.listeners[context.id]; });
-			} //EO Meteor listeners 
-		},
-		triggerMeteorListeners: function(fileId) {
-			var self = this;
-			for (var contextId in self.listeners)
-	    		self.listeners[contextId].invalidate();
-		},
-
+		//To deprecate all timer functions
 		getTimer: function(prefix, name) {
 			var self = this;
 			var myName = prefix+self._name+name;
@@ -112,11 +95,11 @@
 
 		getItem: function(fileId) {
 			var self = this;
-			self.addMeteorListeners(fileId);
+			Deps.depend(self.fileDeps);
 			return self._getItem(fileId);
 		}, //EO getItem	
 
-		//_getItem is privat function, no meteor listeners
+		//_getItem is privat function, not reactive
 		_getItem: function(fileId) {
 			var self = this;
 			return self.que[fileId];
@@ -128,7 +111,7 @@
 			if (!fileItem)
 				return false;
 			var pointerChunk = (onlyBuffer)?fileItem.currentChunk:fileItem.currentChunkServer; //TODO:
-			self.addMeteorListeners(fileId);
+			Deps.depend(self.fileDeps);
 			if (fileItem)
 				return Math.round(pointerChunk / (fileItem.countChunks) * 100)
 			else
@@ -137,7 +120,7 @@
 
 		isComplete: function(fileId) {
 			var self = this;
-			self.addMeteorListeners(fileId);
+			Deps.depend(self.fileDeps);
 			return self._getItem(fileId).complete;
 		}, //EO isComplete
 
@@ -153,7 +136,7 @@
 
 		isDownloaded: function(fileId) {
 			var self = this;
-			self.addMeteorListeners(fileId);
+			Deps.depend(self.fileDeps);
 			var fileItem = self._getItem(fileId);
 			if (fileItem.file)
 				return true;
@@ -165,8 +148,8 @@
 
 		isPaused: function() {
 			var self = this;
-			//self.addMeteorListeners(Meteor.deps.Context.current);
-			return Session.get('_queCollectionFS.paused'); //self.paused; //use session instead
+			Deps.depend(self.fileDeps);
+			return self.paused;
 		},
 
 
@@ -176,21 +159,21 @@
 		//Bind to hot push code to resume after server reboot
 		resume: function() {
 			var self = this;
-			Session.set('_queCollectionFS.paused', false);
-			//self.paused = false;
+			self.paused = false;
+			self.fileDeps.changed();
 			//console.log('paused:'+self.paused);
 			for (var fileId in self.que) {
 				var fileItem = self._getItem(fileId);
 				if (fileItem.download) {
 					//Spawn loaders
-					if (self.spawns)
+					if (!self.spawns)
 						self.downloadChunk(fileId)
 					else
 						for (var i = 0; i < self.spawns; i++)
 							setTimeout(function() { self.downloadChunk(fileId); });
 				} else {
 					//Spawn loaders
-					if (self.spawns)
+					if (!self.spawns)
 						self.getDataChunk(fileId)
 					else
 						for (var i = 0; i < self.spawns; i++)
@@ -201,12 +184,8 @@
 
 		pause: function() {
 			var self = this;
-			Session.set('_queCollectionFS.paused', true);
-			//self.paused = true;
-			//que status changed
-			//console.log('paused:'+self.paused);
-			//for (var contextId in self.listeners)
-	    	//	self.listeners[contextId].invalidate();
+			this.paused = true;
+			this.fileDeps.changed();
 		},
 
 		resumeFile: function(fileRecord, file) {
@@ -248,7 +227,7 @@
 					myCallback(self._getItem(fileId));
 				}
 				//Now completed, trigger update
-				self.triggerMeteorListeners(fileId);
+				self.fileDeps.changed();
 			}	
 		},
 
@@ -304,7 +283,7 @@
 							//update and notify listenters
 
 							/*if (self.que[fileId].currentChunk % 1 == 0) {
-								self.triggerMeteorListeners(fileId);
+								self.fileDeps.changed();
 							}*/
 						}
 					} 
@@ -334,10 +313,10 @@
 			};
 
 			//Added download request to the que
-			self.triggerMeteorListeners(fileRecord._id);
+			self.fileDeps.changed();
 
 			//Spawn loaders
-			if (self.spawns == 1)
+			if (!self.spawns)
 				self.downloadChunk(fileRecord._id)
 			else
 				for (var i = 0; i < self.spawns; i++)
@@ -362,10 +341,10 @@
 				//filereader: new FileReader(),	
 			};
 			//Added upload request to the que
-			self.triggerMeteorListeners(fileId);
+			self.fileDeps.changed();
 			
 			//Spawn loaders
-			if (self.spawns == 1)
+			if (!self.spawns)
 				self.getDataChunk(fileId, 0)
 			else
 				for (var i = 0; i < self.spawns; i++)
@@ -467,7 +446,7 @@
 			self.que[fileId].complete = (self.que[fileId].currentChunk == self.que[fileId].countChunks);
 			//Que progressed
 			if (self.que[fileId].currentChunk % 1 == 0 || self.que[fileId].complete)
-				self.triggerMeteorListeners(fileId);
+				self.fileDeps.changed();
 			if (self.que[fileId].complete) {
 				//done
 				//XXX: Spawn complete event?

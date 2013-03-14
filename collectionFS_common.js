@@ -163,11 +163,12 @@
 		var self = this;
 		self._name = name;
 		self.que = {};
+		self.fileDeps  = new Deps.Dependency;
 		self.queLastTime = {};			//Deprecate
 		self.queLastTimeNr = 0;			//Deprecate
 		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
-		self.spawns = 30;
-		//self.paused = false;			//Deprecate
+		self.spawns = 30;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
+		self.paused = false;
 		self.listeners = {};			//Deprecate
 		self.lastTimeUpload = null;		//Deprecate
 		self.lastCountUpload = 0;		//Deprecate
