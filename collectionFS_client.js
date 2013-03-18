@@ -254,7 +254,7 @@
 			var timerTotal = self.startTimer();
 			var timerMeteorCall = self.startTimer();
 
-			Meteor.apply('loadChunck'+fileItem.collectionName, [
+			self.connection.apply('loadChunck'+fileItem.collectionName, [
 				fileId = fileId, 
 				chunkNumber = myChunkNumber, 
 				countChunks = fileItem.countChunks
@@ -302,6 +302,7 @@
 				blob: null,
 				queChunks: [],
 				collectionName:self._name,
+				connection:self.connection,
 				contentType: fileRecord.contentType,
 				currentChunkServer: (currentChunk)?currentChunk:0,
 				currentChunk: (currentChunk)?currentChunk:0, //current loaded chunk of countChunks-1  
@@ -335,6 +336,7 @@
 				complete: false,
 				file: file,
 				collectionName:self._name,
+				connection:self.connection,
 				currentChunkServer: (currentChunk)?currentChunk:0,
 				currentChunk: (currentChunk)?currentChunk:0, //current loaded chunk of countChunks-1  
 				countChunks: countChunks,
@@ -399,7 +401,7 @@
 			var timerTotal = self.startTimer();
 			var timerMeteorCall = self.startTimer();
 
-			Meteor.apply('saveChunck'+fileItem.collectionName, [
+			self.connection.apply('saveChunck'+fileItem.collectionName, [
 				fileId = fileId, 
 				currentChunk = chunkNumber, 
 				countChunks = fileItem.countChunks, 

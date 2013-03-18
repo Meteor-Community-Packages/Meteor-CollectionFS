@@ -124,7 +124,7 @@
 		// be defined.
 		// If fileHandlersFileWrite false then que listeners will still be spawned 
 		// though the system doesnt support file handler writing, making it
-		// impossible to cashe to harddrive - though a filehandler could be used
+		// impossible to cache to harddrive - though a filehandler could be used
 		// for other purposes eg. sending mail notifications or upload file to 
 		// remote host.
 		// 
@@ -164,6 +164,7 @@
 		self._name = name;
 		self.que = {};
 		self.fileDeps  = new Deps.Dependency;
+		self.connection = (Meteor.isClient)?Meteor.connect(Meteor.default_connection._stream.rawUrl):null;
 		self.queLastTime = {};			//Deprecate
 		self.queLastTimeNr = 0;			//Deprecate
 		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
