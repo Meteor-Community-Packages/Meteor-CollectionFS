@@ -16,13 +16,17 @@
 
 	//Auto subscribe
 		if (Meteor.isClient) {
-			Meteor.subscribe(self._name+'.files'); //TODO: needed if nullable?
+			if(!options || !options.hasOwnProperty('autosubscribe') || options.autosubscribe) {
+				Meteor.subscribe(self._name+'.files'); //TODO: needed if nullable?
+			}
 		} //EO isClient	
 
 		if (Meteor.isServer) {
-		  Meteor.publish(self._name+'.files', function () { //TODO: nullable? autopublish?
-		    return self.files.find({});
-		  });		
+			if(!options || !options.hasOwnProperty('autopublish') || options.autopublish) {
+			  Meteor.publish(self._name+'.files', function () { //TODO: nullable? autopublish?
+			    return self.files.find({});
+			  });		
+			}
 		} //EO initializesServer
 
 		var methodFunc = {};
@@ -43,6 +47,8 @@
 						"data" : data,          	// the chunk's payload as a BSON binary type			
 					});
 
+					numChunks = self.chunks.find({"files_id":fileId}).count();
+
 					/* Improve chunk index integrity have a look at TODO in uploadChunk() */
 					if (cId) { //If chunk added successful
 						/*console.log('update: '+self.files.update({_id: fileId}, { $inc: { currentChunk: 1 }}));
@@ -55,11 +61,11 @@
 
 						if (complete || updateFiles)  //update file status
 							self.files.update({ _id:fileId }, { 
-								$set: { complete: complete, currentChunk: chunkNumber+1 }
+								$set: { complete: complete, currentChunk: chunkNumber+1, numChunks:numChunks }
 							})
 						else
 							self.files.update({ _id:fileId }, { 
-								$set: { currentChunk: chunkNumber+1 }
+								$set: { currentChunk: chunkNumber+1, numChunks:numChunks}
 							});
 						//** Only update currentChunk if not complete? , complete: {$ne: true}
 					} //If cId
@@ -86,7 +92,7 @@
 				} //EO isServer
 			}; //EO saveChunck+name
 
-			methodFunc['getMissingChunk'] = function(fileId) {
+			methodFunc['getMissingChunk'+self._name] = function(fileId) {
 				console.log('getMissingChunk: '+fileRecord._id);
 				var self = this;
 				var fileRecord = self.files.findOne({_id: fileId});
@@ -182,6 +188,8 @@
 	_.extend(CollectionFS.prototype, {
 		find: function(arguments, options) { return this.files.find(arguments, options); },
 		findOne: function(arguments, options) { return this.files.findOne(arguments, options); },
+		update: function(selector, modifier, options) { return this.files.update(selector, modifier, options); },
+		remove: function(selector) { return this.files.remove(selector); },
 		allow: function(arguments) { return this.files.allow(arguments); },
 		deny: function(arguments) { return this.files.deny(arguments); },
 		fileHandlers: function(options) {

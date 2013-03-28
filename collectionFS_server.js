@@ -63,7 +63,9 @@ var _fileHandlersFileWrite = true;
 							console.log('Path: '+self.path);
 
 					    }); //EO Exists
-					    if (err) {
+					    // errno 47 is EEXISTS, which is fine
+					    if (err && err.errno != 47) {
+					    	console.log(err);
 					    	_fileHandlersSymlinks = false;
 					    	//Use 'public' folder instead of uploads
 							self.cfsMainFolder = 'public';
