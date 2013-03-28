@@ -48,13 +48,15 @@ var _fileHandlersFileWrite = true;
 		self.collectionFS = collectionFS; //initialized collectionFS
 		self.fs = __meteor_bootstrap__.require('fs');
 
-	  if !self.fs.existsSync 'public/'
+	  if !self.fs.existsSync('public/') {
 	  	// we're running in a bundle if the public directory doesn't exist
-	  	path = __meteor_bootstrap__.require('path')
-	    bundleRoot = path.dirname(__meteor_bootstrap__.require.main.filename)
+	  	path = __meteor_bootstrap__.require('path');
+	    bundleRoot = path.dirname(__meteor_bootstrap__.require.main.filename);
 	    self.cfsMainFolder = bundleRoot + '/static/uploads';
-	  else
+	  }
+	  else {
 			self.cfsMainFolder = 'uploads';
+		}
 
 		self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;
 		self.pathURL = self.path;
