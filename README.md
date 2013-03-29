@@ -44,6 +44,47 @@ Using Meteor and gridFS priciples we get:
 *The collectionFS supports functions ```.allow```, ```.deny```, ```.find```, ```findOne``` used when subscribing/ publishing from server* 
 *It's here you can add restrictions eg. on content-types, filesizes etc.*
 
+####4. Disabling autopublish: 
+If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published 
+#####[server]
+```js
+    // do NOT autopublish
+    ContactsFS = new CollectionFS('contacts', {autopublish:false});
+
+    // example #1 - manually publish with an optional param
+    Meteor.publish('contacts.files', function(complete) {
+      // sort by handedAt time and only return specific fields
+      return ContactsFS.find(
+        { complete:complete }, 
+        { 
+          sort:{handledAt:1 }, 
+          fields:{_id:1, filename:1, handledAt:1, numChunks:1, totalChunks:1} 
+        }
+        );
+    });
+
+    // example #2 - limit results and only show users files they own
+    Meteor.publish('contacts.files', function() {
+      if(this.userId) {
+        return ContactsFS.find({owner:this.userId}, {limit:30});
+      }
+      else {
+        return ContactsFS.find({owner:0}, {limit:30});
+      }
+    });    
+```
+#####[client]
+```js
+    // do NOT autosubscribe
+    ContactsFS = new CollectionFS('contacts', {autosubscribe:false});
+
+    // example #1 - manually subscribe and show completed only 
+    // (goes with example #1 above)
+
+    var showCompleteOnly = true;
+    Meteor.subscribe('contacts.files', showCompleteOnly);
+```
+
 ##Uploading file
 ####1. Adding the view:
 ```html
@@ -65,6 +106,35 @@ Using Meteor and gridFS priciples we get:
     });
 ```
 *ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as threads. It's possible to add metadata: ```storeFile(file, {})``` - callback or eventlisteners are on the todo*
+
+####3. Adding file upload progress helpers: [client]
+```html
+    <template name="files">
+      <ul>
+      {{#each uploadedFiles}}
+      <li>{{filename}} - {{progress}}%</li>
+      {{/each}}
+      </ul>
+    </template>
+```
+```js
+    // return all uploaded files sorted by handledAt time
+    Template.files.uploadedFiles = function() {
+      return ContactFS.find({}, {sort:{handledAt:1}});
+    };
+
+    // return the percent complete for the current file
+    Template.files.progress = function() {
+      if(this.complete) {
+        return 100;
+      }
+      else {
+        percent = Math.round(this.numChunks / (this.countChunks - 1) * 100);
+        if(isNaN(percent)) percent = 0;
+        return percent;
+      }
+    };
+```
 
 ##Downloading file
 ####1. Adding the view:
@@ -132,6 +202,27 @@ Filesystem.fileHandlers({
     console.log('I am handling: '+options.fileRecord.filename+' to...');
     return { extension: 'jpg', blob: options.blob, fileRecord: options.fileRecord }; //or just 'options'...
   }
+  size100x100gm: function(options) {
+    if (options.fileRecord.contentType != 'image/jpeg') // jpeg files only
+      return null;  
+
+    /*
+    var dest = '/path/to/resized/file.jpg'; // change this to be the output path + filename
+
+    var gm = __meteor_bootstrap__.require('gm'); // GraphicsMagick required
+    gm( options.blob, dest).resize(100,100).quality(90).write(dst, function(err) {
+        if(err) {
+          console.log('GraphicsMagick error ' + err);
+        }
+        else {
+          console.log('Finished writing image.');
+        }
+      });
+    */
+
+    // don't create a full size image for this handler
+    return null;
+  }
 });
 ```
 *This is brand new on the testbed, future brings easy image handling shortcuts to imagemagic, maybe som sound/video converting and some integration for uploading to eg. google drive, dropbox etc.*
@@ -143,7 +234,6 @@ Filesystem.fileHandlers({
 * When code hot deploy the que halts, not sure how to address this, maybe a listener on connection status?
 * Deviates from gridFS by using files.len istead of files.length (as in gridFS, using .length creates error in Meteor, confirmed)
 * Speed, it sends data via Meteor.apply, this lags big time, therefore multiple workers are spawned to compensate
-* Current version is set to autosubscribe, this needs to be addressed in future
 * Prepare abillity for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
 ###Notes:
 * This is made as ```Make it work, make it fast```, well it's not fast - yet

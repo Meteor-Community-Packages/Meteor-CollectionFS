@@ -16,32 +16,38 @@
 
 	//Auto subscribe
 		if (Meteor.isClient) {
-			Meteor.subscribe(self._name+'.files'); //TODO: needed if nullable?
+			if(!options || !options.hasOwnProperty('autosubscribe') || options.autosubscribe) {
+				Meteor.subscribe(self._name+'.files'); //TODO: needed if nullable?
+			}
 		} //EO isClient	
 
 		if (Meteor.isServer) {
-		  Meteor.publish(self._name+'.files', function () { //TODO: nullable? autopublish?
-		    return self.files.find({});
-		  });		
+			if(!options || !options.hasOwnProperty('autopublish') || options.autopublish) {
+			  Meteor.publish(self._name+'.files', function () { //TODO: nullable? autopublish?
+			    return self.files.find({});
+			  });		
+			}
 		} //EO initializesServer
 
 		var methodFunc = {};
 		if (Meteor.isServer) {
 			methodFunc['saveChunck'+self._name] = function(fileId, chunkNumber, countChunks, data) {
-				//this.unblock();
+				this.unblock();
 				var complete = (chunkNumber == countChunks - 1);
-				var updateFiles = true; //(chunkNumber  == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
+				var updateFiles = (chunkNumber  == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
 				var cId = null;
 				var result = null;
 				if (Meteor.isServer && fileId) {
 					var startTime = Date.now();
-					console.log('inserts chunk: '+ chunkNumber);	//ERROR: two chunks with same nr....
+					//console.log('inserts chunk: '+ chunkNumber);	//ERROR: two chunks with same nr....
 					cId = self.chunks.insert({
 						//"_id" : <unspecified>,    // object id of the chunk in the _chunks collection
 						"files_id" : fileId,    	// _id of the corresponding files collection entry
 						"n" : chunkNumber,          // chunks are numbered in order, starting with 0
 						"data" : data,          	// the chunk's payload as a BSON binary type			
 					});
+
+					numChunks = self.chunks.find({"files_id":fileId}).count();
 
 					/* Improve chunk index integrity have a look at TODO in uploadChunk() */
 					if (cId) { //If chunk added successful
@@ -55,11 +61,11 @@
 
 						if (complete || updateFiles)  //update file status
 							self.files.update({ _id:fileId }, { 
-								$set: { complete: complete, currentChunk: chunkNumber+1 }
+								$set: { complete: complete, currentChunk: chunkNumber+1, numChunks:numChunks }
 							})
 						else
 							self.files.update({ _id:fileId }, { 
-								$set: { currentChunk: chunkNumber+1 }
+								$set: { currentChunk: chunkNumber+1, numChunks:numChunks}
 							});
 						//** Only update currentChunk if not complete? , complete: {$ne: true}
 					} //If cId
@@ -70,6 +76,7 @@
 			}; //EO saveChunck+name
 
 			methodFunc['loadChunck'+self._name] = function(fileId, chunkNumber, countChunks) {
+				this.unblock();
 				var complete = (chunkNumber == countChunks-1);
 				var chunk = null;
 				if (Meteor.isServer && fileId) {
@@ -80,12 +87,12 @@
 						"n" : chunkNumber          // chunks are numbered in order, starting with 0
 						//"data" : data,          	// the chunk's payload as a BSON binary type			
 					});
-
+					//console.log('Read: '+chunkNumber+' complete: '+complete);
 					return { fileId: fileId, chunkId: chunk._id, currentChunk:chunkNumber, complete: complete, data: chunk.data, time: (Date.now()-startTime) };
 				} //EO isServer
 			}; //EO saveChunck+name
 
-			methodFunc['getMissingChunk'] = function(fileId) {
+			methodFunc['getMissingChunk'+self._name] = function(fileId) {
 				console.log('getMissingChunk: '+fileRecord._id);
 				var self = this;
 				var fileRecord = self.files.findOne({_id: fileId});
@@ -123,7 +130,7 @@
 		// be defined.
 		// If fileHandlersFileWrite false then que listeners will still be spawned 
 		// though the system doesnt support file handler writing, making it
-		// impossible to cashe to harddrive - though a filehandler could be used
+		// impossible to cache to harddrive - though a filehandler could be used
 		// for other purposes eg. sending mail notifications or upload file to 
 		// remote host.
 		// 
@@ -162,11 +169,13 @@
 		var self = this;
 		self._name = name;
 		self.que = {};
+		self.fileDeps  = new Deps.Dependency;
+		self.connection = (Meteor.isClient)?Meteor.connect(Meteor.default_connection._stream.rawUrl):null;
 		self.queLastTime = {};			//Deprecate
 		self.queLastTimeNr = 0;			//Deprecate
 		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
-		self.spawns = 1;
-		//self.paused = false;			//Deprecate
+		self.spawns = 30;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
+		self.paused = false;
 		self.listeners = {};			//Deprecate
 		self.lastTimeUpload = null;		//Deprecate
 		self.lastCountUpload = 0;		//Deprecate
@@ -179,6 +188,8 @@
 	_.extend(CollectionFS.prototype, {
 		find: function(arguments, options) { return this.files.find(arguments, options); },
 		findOne: function(arguments, options) { return this.files.findOne(arguments, options); },
+		update: function(selector, modifier, options) { return this.files.update(selector, modifier, options); },
+		remove: function(selector) { return this.files.remove(selector); },
 		allow: function(arguments) { return this.files.allow(arguments); },
 		deny: function(arguments) { return this.files.deny(arguments); },
 		fileHandlers: function(options) {
@@ -217,8 +228,8 @@
 			  owner: Meteor.userId(),
 			  countChunks: countChunks,
 			  filename : file.name,
-			//  length: file.size, //Issue in Meteor
-			  len: file.size,
+			  length: ''+file.size, //Issue in Meteor, when solved dont use ''+
+//			  len: file.size,
 			  contentType : file.type,
 			  metadata : (options) ? options : null
 			};

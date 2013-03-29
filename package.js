@@ -3,6 +3,7 @@ Package.describe({
 });
 
 Package.on_use(function(api) {
+  api.use('deps');
   api.add_files('collectionFS_common.js', ['client', 'server']);
   api.add_files('collectionFS_server.js', 'server');
   api.add_files('collectionFS_client.js', 'client');

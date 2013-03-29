@@ -46,28 +46,53 @@ var _fileHandlersFileWrite = true;
  _queListener = function(collectionFS) {
 		var self = this;
 		self.collectionFS = collectionFS; //initialized collectionFS
-		self.cfsMainFolder = 'uploads';
+		self.fs = __meteor_bootstrap__.require('fs');
+
+		if(!self.fs.existsSync('public/')){
+			// we're running in a bundle if the public directory doesn't exist
+			path = __meteor_bootstrap__.require('path');
+			bundleRoot = path.dirname(__meteor_bootstrap__.require.main.filename);
+			self.cfsMainFolder = bundleRoot + '/static/uploads';
+			self.bundle = true;
+		}
+		else {
+			self.cfsMainFolder = 'uploads';
+			self.bundle = false;
+		}
+
+		console.log( (self.bundle) ? 'Bundle mode' : 'Meteor mode (non bundle)');
+
 		self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;
 		self.pathURL = self.path;
 		self.pathURLFallback = 'cfs/'+self.collectionFS._name;
-		self.fs = __meteor_bootstrap__.require('fs');
+
 		//Init path
 		self.fs.mkdir(self.cfsMainFolder, function(err) {
 			self.fs.mkdir(self.cfsMainFolder+'/cfs', function(err){
 				self.fs.mkdir(self.path, function(err){
-					//Workaround meteor server refresh, thanks SO dustin.b
-				    self.fs.symlink('../../../../'+self.cfsMainFolder, '.meteor/local/build/static/'+self.cfsMainFolder, function(err){
-					    self.fs.exists(self.path, function (exists) {
-					    	_fileHandlersSupported = exists;
-				    		console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
+					if(self.bundle) {
+						self.fs.exists(self.path, function (exists) {
+							_fileHandlersSupported = exists;
+							console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
 							console.log('Path: '+self.path);
+						});
+					}
+					else {
+						//Workaround meteor server refresh, thanks SO dustin.b
+						self.fs.symlink('../../../../'+self.cfsMainFolder, '.meteor/local/build/static/'+self.cfsMainFolder, function(err){
+							self.fs.exists(self.path, function (exists) {
+								_fileHandlersSupported = exists;
+								console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
+								console.log('Path: '+self.path);
+							}); //EO Exists
 
-					    }); //EO Exists
-					    if (err) {
-					    	_fileHandlersSymlinks = false;
-					    	//Use 'public' folder instead of uploads
+							// errno 47 is EEXISTS, which is fine
+							if (err && err.errno != 47) {
+								console.log(err);
+								_fileHandlersSymlinks = false;
+								//Use 'public' folder instead of uploads
 							self.cfsMainFolder = 'public';
-							self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;					    	
+							self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;
 							self.fs.mkdir(self.cfsMainFolder, function(err) {
 								self.fs.mkdir(self.cfsMainFolder+'/cfs', function(err){
 									self.fs.mkdir(self.path, function(err){
@@ -79,10 +104,11 @@ var _fileHandlersFileWrite = true;
 								});//EO cfs
 							});//EO Main folder
 
-					    } else { //EO symlink Error
-					    	self.testFileWrite();
-					    }
-				    }); //EO symlink
+							} else { //EO symlink Error
+								self.testFileWrite();
+							}
+						}); //EO symlink
+					}
 				}); //EO self.collectionFS._name folder
 			}); //EO cfs seperate collectionFS folder
 		}); // EO self.cfsMainFolder folder
@@ -104,7 +130,7 @@ var _fileHandlersFileWrite = true;
 					self.fs.exists(myFile, function (exists) {
 						_fileHandlersFileWrite = exists;
 					}); //EO Exists
-				} 
+				}
 			}).run()); //EO fileWrite				
 		},
 		checkQue: function() {
@@ -137,8 +163,9 @@ var _fileHandlersFileWrite = true;
 			var self = this;
 			var fileURL = [];
 			//Retrive blob
-			var fileSize = ( fileRecord['len']||fileRecord['length']);
-			var blob = new Buffer(fileSize, { type: fileRecord.contentType}); //Allocate mem
+			var fileSize = ( fileRecord['len']||fileRecord['length']); //Due to Meteor issue
+			console.log('filesize: '+fileSize+' recSize: '+fileRecord['length']);
+			var blob = new Buffer(1*fileSize); //Allocate mem *1 due to Meteor issue
 			//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
 
 			self.collectionFS.chunks.find({files_id: fileRecord._id}, { $sort: {n:1} }).forEach(function(chunk){
@@ -164,11 +191,11 @@ var _fileHandlersFileWrite = true;
 						var extension = (result.extension)?result.extension:result.fileRecord.filename.substr(-3).toLowerCase();
 						var myFilename = result.fileRecord._id+'_'+func+'.'+extension;
 						var myPathURL = (_fileHandlersSymlinks)?self.pathURL:self.pathURLFallback;
-	
-						self.fs.writeFileSync(self.path+'/'+myFilename, result.blob, 'binary')
+
+						self.fs.writeFileSync(self.path+'/'+myFilename, result.blob, 'binary');
 						//Add to fileURL array
 						if (self.fs.existsSync(self.path+'/'+myFilename)) {
-							self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
+							self.collectionFS.files.update({ _id: fileRecord._id }, { $push: {
 								fileURL: { path: myPathURL+'/'+myFilename, extension: extension, createdAt: Date.now(), func: func }
 							}}); //EO Update
 						} //EO does exist
@@ -177,13 +204,13 @@ var _fileHandlersFileWrite = true;
 						//no blob? Just save result as an option?
 						result.createdAt = Date.now();
 						result.func = func;
-						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
+						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: {
 							fileURL: result
 						}}); //EO Update
 					} //EO no blob
 				} else {  //Otherwise guess user did something else eg. upload to remote server
 					if (result === null) { //if null returned then ok, but if false then error - handled by crawler 
-						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
+						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: {
 							fileURL: { createdAt: Date.now(), func: func }
 						}}); //EO Update
 					} else {
@@ -197,9 +224,9 @@ var _fileHandlersFileWrite = true;
 			} //EO Loop through fileHandler functions
 
 			//TODO: Set handledAt: Date.Now() on files //maybe in the beginning of function?
-	        //Update fileURL in db
-	        self.collectionFS.files.update({ _id: fileRecord._id }, { $set: { handledAt: Date.now() } });
-	        //TODO: maybe make some recovery / try again if a user defined handler fails - or force rerun from date. I'm thinking maybe just at followup interval function crawling a collection finding errors...
+					//Update fileURL in db
+					self.collectionFS.files.update({ _id: fileRecord._id }, { $set: { handledAt: Date.now() } });
+					//TODO: maybe make some recovery / try again if a user defined handler fails - or force rerun from date. I'm thinking maybe just at followup interval function crawling a collection finding errors...
 
 		}, //EO
 		crawlAndRunFailedHandlersAgain: function() {
