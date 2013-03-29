@@ -212,10 +212,10 @@ Filesystem.fileHandlers({
     var gm = __meteor_bootstrap__.require('gm'); // GraphicsMagick required
     gm( options.blob, dest).resize(100,100).quality(90).write(dst, function(err) {
         if(err) {
-          console.log 'GraphicsMagick error ' + err;
+          console.log('GraphicsMagick error ' + err);
         }
         else {
-          console.log 'Finished writing image.';
+          console.log('Finished writing image.');
         }
       });
     */
