@@ -45,7 +45,7 @@ Using Meteor and gridFS priciples we get:
 *It's here you can add restrictions eg. on content-types, filesizes etc.*
 
 ####4. Disabling autopublish: 
-*If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published 
+If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published 
 #####[server]
 ```js
     // do NOT autopublish
@@ -53,10 +53,13 @@ Using Meteor and gridFS priciples we get:
 
     // example #1 - manually publish with an optional param
     Meteor.publish('contacts.files', function(complete) {
-      // sort by handedAt time and only return the filename, handledAt and _id fields
+      // sort by handedAt time and only return specific fields
       return ContactsFS.find(
         { complete:complete }, 
-        { sort:{handledAt:1 }, fields:{_id:1, filename:1, handledAt:1} }
+        { 
+          sort:{handledAt:1 }, 
+          fields:{_id:1, filename:1, handledAt:1, numChunks:1, totalChunks:1} 
+        }
         );
     });
 
@@ -103,6 +106,35 @@ Using Meteor and gridFS priciples we get:
     });
 ```
 *ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as threads. It's possible to add metadata: ```storeFile(file, {})``` - callback or eventlisteners are on the todo*
+
+####3. Adding file upload progress helpers: [client]
+```html
+    <template name="files">
+      <ul>
+      {{#each uploadedFiles}}
+      <li>{{filename}} - {{progress}}%</li>
+      {{/each}}
+      </ul>
+    </template>
+```
+```js
+    // return all uploaded files sorted by handledAt time
+    Template.files.uploadedFiles = function() {
+      return ContactFS.find({}, {sort:{handledAt:1}});
+    };
+
+    // return the percent complete for the current file
+    Template.files.progress = function() {
+      if(this.complete) {
+        return 100;
+      }
+      else {
+        percent = Math.round(this.numChunks / (this.countChunks - 1) * 100);
+        if(isNaN(percent)) percent = 0;
+        return percent;
+      }
+    };
+```
 
 ##Downloading file
 ####1. Adding the view:
