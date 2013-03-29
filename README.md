@@ -45,7 +45,7 @@ Using Meteor and gridFS priciples we get:
 *It's here you can add restrictions eg. on content-types, filesizes etc.*
 
 ####4. Disabling autopublish: 
-* If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published *
+*If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published 
 #####[server]
 ```js
     // do NOT autopublish
@@ -54,7 +54,10 @@ Using Meteor and gridFS priciples we get:
     // example #1 - manually publish with an optional param
     Meteor.publish('contacts.files', function(complete) {
       // sort by handedAt time and only return the filename, handledAt and _id fields
-      return ContactsFS.find({complete:complete}, {sort:{handledAt:1}, fields:{_id:1,filename:1,handledAt:1}})
+      return ContactsFS.find(
+        { complete:complete }, 
+        { sort:{handledAt:1 }, fields:{_id:1, filename:1, handledAt:1} }
+        );
     });
 
     // example #2 - limit results and only show users files they own
@@ -185,7 +188,7 @@ Filesystem.fileHandlers({
       });
     */
 
-    // don't create a full size image just what GraphicsMagick creates
+    // don't create a full size image for this handler
     return null;
   }
 });
