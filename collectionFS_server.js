@@ -53,9 +53,11 @@ var _fileHandlersFileWrite = true;
 			path = __meteor_bootstrap__.require('path');
 			bundleRoot = path.dirname(__meteor_bootstrap__.require.main.filename);
 			self.cfsMainFolder = bundleRoot + '/static/uploads';
+			self.bundle = true;
 		}
 		else {
 			self.cfsMainFolder = 'uploads';
+			self.bundle = false;
 		}
 
 		self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;
@@ -66,14 +68,22 @@ var _fileHandlersFileWrite = true;
 		self.fs.mkdir(self.cfsMainFolder, function(err) {
 			self.fs.mkdir(self.cfsMainFolder+'/cfs', function(err){
 				self.fs.mkdir(self.path, function(err){
-					//Workaround meteor server refresh, thanks SO dustin.b
+					if(self.bundle) {
+						self.fs.exists(self.path, function (exists) {
+							_fileHandlersSupported = exists;
+							console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
+							console.log('Path: '+self.path);
+						});
+					}
+					else {
+						//Workaround meteor server refresh, thanks SO dustin.b
 						self.fs.symlink('../../../../'+self.cfsMainFolder, '.meteor/local/build/static/'+self.cfsMainFolder, function(err){
 							self.fs.exists(self.path, function (exists) {
 								_fileHandlersSupported = exists;
 								console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
-							console.log('Path: '+self.path);
-
+								console.log('Path: '+self.path);
 							}); //EO Exists
+
 							// errno 47 is EEXISTS, which is fine
 							if (err && err.errno != 47) {
 								console.log(err);
@@ -96,6 +106,7 @@ var _fileHandlersFileWrite = true;
 								self.testFileWrite();
 							}
 						}); //EO symlink
+					}
 				}); //EO self.collectionFS._name folder
 			}); //EO cfs seperate collectionFS folder
 		}); // EO self.cfsMainFolder folder
