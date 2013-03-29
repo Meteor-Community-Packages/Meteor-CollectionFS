@@ -60,6 +60,8 @@ var _fileHandlersFileWrite = true;
 			self.bundle = false;
 		}
 
+		console.log( (self.bundle) ? 'Bundle mode' : 'Meteor mode (non bundle)');
+
 		self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;
 		self.pathURL = self.path;
 		self.pathURLFallback = 'cfs/'+self.collectionFS._name;
