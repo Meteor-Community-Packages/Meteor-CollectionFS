@@ -142,7 +142,7 @@ Filesystem.fileHandlers({
     {{#each Files}}
     <tr>
       <td>
-        {{#if getSession '_fileHandlersSupported'}}
+        {{#if filehanderSupported}}
           {{> imageList}}
         {{/if}}
       </td>
@@ -220,18 +220,11 @@ Filesystem.fileHandlers({
 </template>
 
 <template name="supportInfo">
-  {{#if getSession '_fileHandlersSupported'}}
-    {{#if getSession '_fileHandlersSymlinks'}}
-      <div class="alert alert-success">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        Congrats! Filehandlers are supported on this server, enjoy!
-      </div>
-    {{else}}
-      <div class="alert alert-block">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        Warning, fileHandlers partially supported, fallback using 'public' for uploads - <u>Meteor will restart server at every fileupload.</u> For full support allow creation of symlinks
-      </div>
-    {{/if}}
+  {{#if filehandlerSupported}}
+    <div class="alert alert-success">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      Congrats! Filehandlers are supported in bundles, enjoy!
+    </div>
   {{else}}
     <div class="alert alert-error">
       <button type="button" class="close" data-dismiss="alert">&times;</button>

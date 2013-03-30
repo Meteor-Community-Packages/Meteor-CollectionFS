@@ -1,213 +1,237 @@
-//Server cache worker, idear:
-//
-//Basics
-//On server load init worker and taskQue if needed by collection if (fileHandlers)
-//When client confirms uploads run user defined functions on file described in fileHandlers
-//if null returned then proceed to the next function in fileHandler array
-//if data returned then put it in a file in eg.:  uploads/cfs/collection._name folder and update url array reference in database, triggers reactive update UI
-//Note: updating files in uploads refreshes server? - find solution later, maybe patch meteor core?
-//
-//In model:
-//CollectionFS.fileHandlers({
-//  //Default image cache
-//  handler['default']: function(fileId, blob) {
-//    return blob;
-//  },
-//  //Some specific
-//  handler['40x40']: function(fileId, blob) {
-//     //Some serverside image/file handling functions, user can define this
-//     return blob;
-//   },
-//  //Upload to remote server
-//  handler['remote']: function(fileId, blob) {
-//     //Some serverside imagick/file handling functions, user can define this
-//     return null;
-//   },
-//   
-// });
-//
-// Server:
-// on startup queListener spawned if needed by collectionFS - one queListener pr collectionFS
-// queListener spawns fileHandlers pr. item in fileHandlerQue as setTimeout(, 0) and delete item from que
-// if empty que then die and wait, spawn by interval
-// server sets .handledAt = Date.now(), .fileURL[]
-// fileHandlers die after ended
-// 
-// Client:
-// When upload confirmed complete, set fs.files.complete and add _id to collectionFS.fileHandlerQue (wich triggers a worker at interval)
-// 
-
-
-	//var queListener = new _queListener();
-var _fileHandlersSupported = false;
-var _fileHandlersSymlinks = true;
-var _fileHandlersFileWrite = true;
-
- _queListener = function(collectionFS) {
+/* CollectionFS.js
+ * A gridFS kind implementation.
+ * 2013-01-03
+ * 
+ * By Morten N.O. Henriksen, http://gi2.dk
+ * 
+ */
+	CollectionFS = function(name, options) {
 		var self = this;
-		self.collectionFS = collectionFS; //initialized collectionFS
-		self.cfsMainFolder = 'uploads';
-		self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;
-		self.pathURL = self.path;
-		self.pathURLFallback = 'cfs/'+self.collectionFS._name;
-		self.fs = __meteor_bootstrap__.require('fs');
-		//Init path
-		self.fs.mkdir(self.cfsMainFolder, function(err) {
-			self.fs.mkdir(self.cfsMainFolder+'/cfs', function(err){
-				self.fs.mkdir(self.path, function(err){
-					//Workaround meteor server refresh, thanks SO dustin.b
-				    self.fs.symlink('../../../../'+self.cfsMainFolder, '.meteor/local/build/static/'+self.cfsMainFolder, function(err){
-					    self.fs.exists(self.path, function (exists) {
-					    	_fileHandlersSupported = exists;
-				    		console.log( (exists) ? 'Filesystem initialized':'Filehandling not supported, stops services' );
-							console.log('Path: '+self.path);
+		self._name = name;
+		self.files = new Meteor.Collection(self._name+'.files'); //TODO: Add change listener?
+		self.chunks = new Meteor.Collection(self._name+'.chunks');
+		self.que = new _queCollectionFS(name);
+		self._fileHandlers = null; //Set by function fileHandlers({});
+		
+		myLog('CollectionFS: ' + name);
 
-					    }); //EO Exists
-					    if (err) {
-					    	_fileHandlersSymlinks = false;
-					    	//Use 'public' folder instead of uploads
-							self.cfsMainFolder = 'public';
-							self.path = self.cfsMainFolder+'/'+'cfs/'+self.collectionFS._name;					    	
-							self.fs.mkdir(self.cfsMainFolder, function(err) {
-								self.fs.mkdir(self.cfsMainFolder+'/cfs', function(err){
-									self.fs.mkdir(self.path, function(err){
-										self.fs.exists(self.path, function (exists) {
-											_fileHandlersSupported = exists;
-											self.testFileWrite();
-										});
-									}); //collection
-								});//EO cfs
-							});//EO Main folder
+		self._options = { autopublish: true, maxFilehandlers: __filehandlersMax };
+		_.extend(self._options, options);
 
-					    } else { //EO symlink Error
-					    	self.testFileWrite();
-					    }
-				    }); //EO symlink
-				}); //EO self.collectionFS._name folder
-			}); //EO cfs seperate collectionFS folder
-		}); // EO self.cfsMainFolder folder
+		__filehandlersMax = self._options.maxFilehandlers;
 
-		//Init
-		//console.log('Init _queListener: '+collectionFS._name);
-		//Spawn worker:
-		Meteor.setTimeout(function() { self.checkQue(); }, 0); //Initiate worker process
+		if (self._options.autopublish) {
+		  Meteor.publish(self._name+'.files', function () {
+		    return self.files.find({});
+		  }, {is_auto: true});		
+		} //EO Autopublish
 
-	};//EO queListener
+		var methodFunc = {};
 
-	_.extend(_queListener.prototype, {
-		testFileWrite: function() {
+		methodFunc['saveChunck'+self._name] = function(fileId, chunkNumber, countChunks, data) {
+			this.unblock();
+			var complete = (chunkNumber == countChunks - 1);
+			var updateFiles = (chunkNumber  == 0); //lower db overheat on files record. eg. chunkNumber % 100 == 0
+			var cId = null;
+			var result = null;
+			if (Meteor.isServer && fileId) {
+				var startTime = Date.now();
+				//console.log('inserts chunk: '+ chunkNumber);	//ERROR: two chunks with same nr....
+				cId = self.chunks.insert({
+					//"_id" : <unspecified>,    // object id of the chunk in the _chunks collection
+					"files_id" : fileId,    	// _id of the corresponding files collection entry
+					"n" : chunkNumber,          // chunks are numbered in order, starting with 0
+					"data" : data          	// the chunk's payload as a BSON binary type			
+				});
+
+				/* Improve chunk index integrity have a look at TODO in uploadChunk() */
+				if (cId) { //If chunk added successful
+					/*console.log('update: '+self.files.update({_id: fileId}, { $inc: { currentChunk: 1 }}));
+					result = self.files.findOne({_id: fileId});
+					console.log('Server wants chunk nr: '+result.currentChunk+'  for file: ' + fileId);
+					if (complete) {
+						//TODO: Check integrity from server or via client?
+						self.files.update({_id: fileId}, { $set: { complete: true }});
+					} //EO check*/
+
+					var numChunks = self.chunks.find({ "files_id": fileId }).count();
+
+					if (complete || updateFiles)  //update file status
+						self.files.update({ _id: fileId }, { 
+							$set: { complete: complete, currentChunk: chunkNumber+1, numChunks: numChunks }
+						})
+					else
+						self.files.update({ _id: fileId }, { 
+							$set: { currentChunk: chunkNumber+1, numChunks: numChunks }
+						});
+					//** Only update currentChunk if not complete? , complete: {$ne: true}
+				} //If cId
+			} //EO isServer
+
+			return { fileId: fileId, chunkId: cId, complete: complete, currentChunk: chunkNumber+1, time: (Date.now()-startTime)};
+			//console.log('Return currentChunk: '+result.currentChunk);
+			//return { fileId: fileId, chunkId: cId, complete: complete, currentChunk: result.currentChunk, time: (Date.now()-startTime)};
+		}; //EO saveChunck+name
+
+		methodFunc['loadChunck'+self._name] = function(fileId, chunkNumber, countChunks) {
+			this.unblock();
+			var complete = (chunkNumber == countChunks-1);
+			var chunk = null;
+			if (Meteor.isServer && fileId) {
+				var startTime = Date.now();
+				chunk = self.chunks.findOne({
+					//"_id" : <unspecified>,    // object id of the chunk in the _chunks collection
+					"files_id" : fileId,    	// _id of the corresponding files collection entry
+					"n" : chunkNumber          // chunks are numbered in order, starting with 0
+					//"data" : data,          	// the chunk's payload as a BSON binary type			
+				});
+				//console.log('Read: '+chunkNumber+' complete: '+complete);
+				return { fileId: fileId, chunkId: chunk._id, currentChunk:chunkNumber, complete: complete, data: chunk.data, time: (Date.now()-startTime) };
+			} //EO isServer
+		}; //EO saveChunck+name
+
+		methodFunc['getMissingChunk'+self._name] = function(fileId) {
+			console.log('getMissingChunk: '+fileRecord._id);
 			var self = this;
-			var myFile = self.cfsMainFolder+'/testFileWrite.txt';
-			self.fs.writeFile(myFile, '123456789', Fiber(function(err) {
-				//Add to fileURL array
-				if (!err) {
-					self.fs.exists(myFile, function (exists) {
-						_fileHandlersFileWrite = exists;
-					}); //EO Exists
-				} 
-			}).run()); //EO fileWrite				
-		},
-		checkQue: function() {
-			var self = this;
-			//check items in que and init workers for conversion
-//console.log('_queListener.checkQue();');
-//console.log('.'+Date.now());
-			if (self.collectionFS) {
-				if (self.collectionFS._fileHandlers) {
-					//ok got filehandler object, spawn worker
-					//Now, any news?
-					var fileRecord = self.collectionFS.findOne({ handledAt: null, complete: true }); //test currentChunk == countChunks in mongo?
-					if (fileRecord) { //Handle file, spawn worker
-						//console.log('spawn');
-						self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
+			var fileRecord = self.files.findOne({_id: fileId});
+			if (!fileRecord)
+				throw new Error('getMissingChunk file not found: ' + fileId);
+			//Check file chunks if they are all there
+			//Return missing chunk id
+			if (fileRecord.currentChunk == fileRecord.countChunks) { //Ok
+				if (Meteor.isServer) {
+					for (var cnr = 0; cnr < fileRecord.countChunks;cnr++) {
+						//Really? loop though all chunks? cant mongo or gridFS do this better? 
+						if (!self.chunks.findOne({ n: cnr}, { fields: { data:0 }})) {
+							//File error - missing chunks..
+							return cnr; //Return cnr that is missing
+						}
 					}
-					//Ready, Spawn new worker
-					//if (_fileHandlersFileWrite) //do allways init filehandlers. could be used to other tings than save on disk
-						Meteor.setTimeout(function() { self.checkQue(); }, 1000); //Wait a second 1000	
+					return false; //Checked and good to go (need md5?)
 				} else {
-					//No filehandlers added, wait 5 sec before Spawn new worker - nothing else to do yet
-					//if (_fileHandlersFileWrite) //do allways init filehandlers. could be used to other tings than save on disk
-						Meteor.setTimeout(function() { self.checkQue(); }, 5000); //Wait 5 second 5000	
+					return false; //client only, cant access .chunks collection from client, could be really big files
 				}
-			} //No collection?? cant go on..
-		}, //EO checkQue
+			} else {
+				return fileItem.currentChunk;  //return missing chunk to continue - fileupload not complete
+			}
+		}; //EO getMissingChunk
 
-		workFileHandlers: function(fileRecord, fileHandlers) {
-			//var fs = __meteor_bootstrap__.require('fs');			
-			var self = this;
-			var fileURL = [];
-			//Retrive blob
-			var fileSize = ( fileRecord['len']||fileRecord['length']); //Due to Meteor issue
-			console.log('filesize: '+fileSize+' recSize: '+fileRecord['length']);
-			var blob = new Buffer(1*fileSize); //Allocate mem *1 due to Meteor issue
-			//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
 
-			self.collectionFS.chunks.find({files_id: fileRecord._id}, { $sort: {n:1} }).forEach(function(chunk){
-				for (var i=0; i < chunk.data.length; i++) {
-					blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
-					//blob.writeUInt8( ((chunk.n * fileRecord.chunkSize) + i), chunk.data.charCodeAt(i) );
-				}
-			}); //EO find chunks
 
-			console.log('Handle FileId: ' + fileRecord._id + '    buffer:'+fileSize);
-			//do some work, execute user defined functions
-			for (var func in fileHandlers) {
-				//TODO: check if func in fileRecord.fileURL...if so then skip 
-				//if (func in fileRecord.fileURL[].func) next?
+		Meteor.methods(methodFunc); //EO Meteor.methods
 
-				//TODO: try catch running user defined code
-				var result = fileHandlers[func]({ fileRecord: fileRecord, blob: blob });
-
-				if (result) { //A result means do something for user defined function...
-					//Save on filesystem
-					if (result.blob) {
-						//save the file and update fileURL
-						var extension = (result.extension)?result.extension:result.fileRecord.filename.substr(-3).toLowerCase();
-						var myFilename = result.fileRecord._id+'_'+func+'.'+extension;
-						var myPathURL = (_fileHandlersSymlinks)?self.pathURL:self.pathURLFallback;
-	
-						self.fs.writeFileSync(self.path+'/'+myFilename, result.blob, 'binary')
-						//Add to fileURL array
-						if (self.fs.existsSync(self.path+'/'+myFilename)) {
-							self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-								fileURL: { path: myPathURL+'/'+myFilename, extension: extension, createdAt: Date.now(), func: func }
-							}}); //EO Update
-						} //EO does exist
-
-					} else {
-						//no blob? Just save result as an option?
-						result.createdAt = Date.now();
-						result.func = func;
-						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-							fileURL: result
-						}}); //EO Update
-					} //EO no blob
-				} else {  //Otherwise guess user did something else eg. upload to remote server
-					if (result === null) { //if null returned then ok, but if false then error - handled by crawler 
-						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-							fileURL: { createdAt: Date.now(), func: func }
-						}}); //EO Update
-					} else {
-						//Do nothing, handled by crawler
-					//	self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-					//		fileURL: { error: 'User function '+func+' failed' }
-					//	}}); //EO Update
-					}//EO filehandling failed
-				} //EO no result
-				//console.log('function: '+func);
-			} //EO Loop through fileHandler functions
-
-			//TODO: Set handledAt: Date.Now() on files //maybe in the beginning of function?
-	        //Update fileURL in db
-	        self.collectionFS.files.update({ _id: fileRecord._id }, { $set: { handledAt: Date.now() } });
-	        //TODO: maybe make some recovery / try again if a user defined handler fails - or force rerun from date. I'm thinking maybe just at followup interval function crawling a collection finding errors...
-
-		}, //EO
-		crawlAndRunFailedHandlersAgain: function() {
-			//Do something smart, check up if fileURL contains createdAt && func = handlers (could be a new one that should be used on all or one that failed)
-			//When fix error delete error from fileURL
-			//self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
-			//Repeat
+		// Filehanders are started here when on the server, there are spawned one
+		// que listener pr. collectionFS used in app, but only if collection has
+		// fileHanders defined will que listener be active. If no fileHandlers 
+		// defined the que listener will scale down and wait for fileHandlers to
+		// be defined.
+		// If fileHandlersFileWrite false then que listeners will still be spawned 
+		// though the system doesnt support file handler writing, making it
+		// impossible to cache to harddrive - though a filehandler could be used
+		// for other purposes eg. sending mail notifications or upload file to 
+		// remote host.
+		// 
+		var queListener = null; //If on client
+		//Init queListener for fileHandling at the server
+		if (Meteor.isServer) {
+			Meteor.startup(function () {
+				//Ensure index on files_id and n
+				self.chunks._ensureIndex({ files_id: 1, n: 1 }, { unique: true });
+				//Spawn que listener
+				self.queListener = new _queListener(self);
+			});
 		}
-	});//EO queListener extend
+		if (Meteor.isClient) {
+			//check server _fileHandlersSupported
+			//self.queListener.fsOk
+			Meteor.startup(function () {
+				Meteor.call('returnFileHandlerSupport', function(err, res) {
+					Session.set('_fileHandlersSupported', (res._fileHandlersFileWrite && res._fileHandlersSymlinks));
+					Session.set('_fileHandlersSymlinks', res._fileHandlersSymlinks);
+					Session.set('_fileHandlersFileWrite', res._fileHandlersFileWrite);					
+				}); //EO call
+			}); //EO startup 
+		}
 
+	}; //EO collectionFS
+
+	if (Meteor.isServer) {
+		Meteor.methods({
+		  returnFileHandlerSupport: function () {
+		    return {_fileHandlersSupported: _fileHandlersSupported, _fileHandlersSymlinks: _fileHandlersSymlinks, _fileHandlersFileWrite:_fileHandlersFileWrite};
+		  }
+		});
+	}
+	_queCollectionFS = function(name) {
+		var self = this;
+		self._name = name;
+		self.que = {};
+		self.fileDeps  = new Deps.Dependency;
+		self.connection = (Meteor.isClient)?Meteor.connect(Meteor.default_connection._stream.rawUrl):null;
+		self.queLastTime = {};			//Deprecate
+		self.queLastTimeNr = 0;			//Deprecate
+		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
+		self.spawns = 30;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
+		self.paused = false;
+		self.listeners = {};			//Deprecate
+		self.lastTimeUpload = null;		//Deprecate
+		self.lastCountUpload = 0;		//Deprecate
+		self.lastTimeDownload = null;	//Deprecate
+		self.lastCountDownload = 0;		//Deprecate
+		self.myCounter = 0;				//Deprecate
+		self.mySize = 0;				//Deprecate
+	};
+
+	_.extend(CollectionFS.prototype, {
+		find: function(arguments, options) { return this.files.find(arguments, options); },
+		findOne: function(arguments, options) { return this.files.findOne(arguments, options); },
+		allow: function(arguments) { return this.files.allow(arguments); },
+		deny: function(arguments) { return this.files.deny(arguments); },
+		fileHandlers: function(options) {
+			var self = this;
+			self._fileHandlers = options; // fileHandlers({ handler['name']: function() {}, ... });
+		}
+	});
+
+
+	_.extend(_queCollectionFS.prototype, {
+
+		compareFile: function(fileRecordA, fileRecordB) {
+			var errors = 0;
+			var leaveOutField = {'_id':true, 'uploadDate':true, 'currentChunk':true, 'fileURL': true };
+			for (var fieldName in fileRecordA) {
+				if (!leaveOutField[fieldName]) {
+					if (fileRecordA[fieldName] != fileRecordB[fieldName]) {
+						errors++; 
+						console.log(fieldName);
+					}
+				}
+			} //EO for
+			return (errors == 0);
+		},
+		makeGridFSFileRecord: function(file, options) {
+			var self = this;
+			var countChunks = Math.ceil(file.size / self.chunkSize);
+			return {
+			  chunkSize : self.chunkSize,
+			  uploadDate : Date.now(),
+			  handledAt: null, //set by server when handled
+			  fileURL:[], //filled with file links - if fileHandler supply any
+			  md5 : null,
+			  complete : false,
+			  currentChunk: -1,
+			  owner: Meteor.userId(),
+			  countChunks: countChunks,
+			  filename : file.name,
+			  length: ''+file.size, //Issue in Meteor, when solved dont use ''+
+//			  len: file.size,
+			  contentType : file.type,
+			  metadata : (options) ? options : null
+			};
+			//TODO:
+			//XXX: Implement md5 later, guess every chunk should have a md5...
+			//XXX:checkup on gridFS date format
+			//ERROR: Minimongo error/memory leak? when adding attr. length to insert object
+			//length : Meteor _.each replaced with for in, in set function livedata server
+		} //EO makeGridFSFileRecord
+	});

@@ -214,7 +214,25 @@ Template.fileTable.helpers({
   },
   isDownloading: function() { 
     return Filesystem.que.isDownloading(this._id);
+  },
+  filehanderSupported: function() {
+    return __meteor_runtime_config__.FILEHANDLER_SUPPORTED;
   }
+});
+
+Template.supportInfo.helpers({
+  filehandlerSupported: function() {
+    return __meteor_runtime_config__.FILEHANDLER_SUPPORTED;
+  },
+  filehandlerSymlinks: function() {
+    return Filesystem.filehandlerSupport.symlinks;
+  },
+  filehandlerFilewrites: function() {
+    return Filesystem.filehandlerSupport.filewrites;
+  },
+  filehandlerBundle: function() {
+    return __meteor_runtime_config__.FILEHANDLER_BUNDLE;
+  }  
 });
 
 Template.stats.helpers({
