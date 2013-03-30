@@ -11,7 +11,7 @@ Using Meteor and gridFS priciples we get:
 * Reactive data, the collectionFS's methods should all be reactive
 * Abillity for the user to resume upload after connection loss, browser crash or cola in keyboard
 * At the moment files are loaded into the client as Blob universal way of handling large binary data
-* Create multiple cached versions, sizes or formats of your files and get an url to the file
+* Create multiple cached versions, sizes or formats of your files and get an url to the file - or upload files to another service / server
 
 ##How to use?
 
@@ -43,6 +43,42 @@ Using Meteor and gridFS priciples we get:
 ```
 *The collectionFS supports functions ```.allow```, ```.deny```, ```.find```, ```findOne``` used when subscribing/ publishing from server* 
 *It's here you can add restrictions eg. on content-types, filesizes etc.*
+
+
+####4. Disabling autopublish: 
+* If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published *
+#####[server]
+```js
+    // do NOT autopublish
+    ContactsFS = new CollectionFS('contacts', { autopublish: false });
+
+    // example #1 - manually publish with an optional param
+    Meteor.publish('contacts.files', function(complete) {
+      // sort by handedAt time and only return the filename, handledAt and _id fields
+      return ContactsFS.find({ complete: complete }, {
+              sort:{ handledAt: 1 }, 
+              fields: { _id: 1, filename: 1, handledAt: 1}
+      })
+    });
+
+    // example #2 - limit results and only show users files they own
+    Meteor.publish('contacts.files', function() {
+      if (this.userId) {
+        return ContactsFS.find({ owner: this.userId }, { limit: 30 });
+      }
+    });    
+```
+#####[client]
+```js
+    // do NOT autosubscribe
+    ContactsFS = new CollectionFS('contacts', { autosubscribe: false});
+
+    // example #1 - manually subscribe and show completed only 
+    // (goes with example #1 above)
+
+    var showCompleteOnly = true;
+    Meteor.subscribe('contacts.files', showCompleteOnly);
+```
 
 ##Uploading file
 ####1. Adding the view:
@@ -124,13 +160,37 @@ Filesystem.fileHandlers({
   },
   size40x40: function(options) {
     return null;
-    /*var im = __meteor_bootstrap__.require('imagemagick');
+    // Use Future.wrap for handling async
+    /*var im = npm.require('imagemagick'); // Add imagemagick package
     im.resize({
                 srcData: options.blob,
                 width: 40
            });*/
     console.log('I am handling: '+options.fileRecord.filename+' to...');
     return { extension: 'jpg', blob: options.blob, fileRecord: options.fileRecord }; //or just 'options'...
+  },
+  size100x100gm: function(options) {
+    if (options.fileRecord.contentType != 'image/jpeg')
+      return null; // jpeg files only  
+
+    // Use Future.wrap for handling async
+    /*
+    var dest = options.destination('jpg').serverPath; // Set optional extension
+
+    var gm = npm.require('gm'); // GraphicsMagick required need Meteor package
+    gm( options.blob, dest).resize(100,100).quality(90).write(dest, function(err) {
+        if(err) {
+          // console.log 'GraphicsMagick error ' + err;
+          return null;
+        }
+        else {
+          // console.log 'Finished writing image.';
+          return destination('jpg').fileURL; // We only return the path for the file, no blob to save since we took care of it
+        }
+      });
+    */
+    // I failed to deliver a fileUrl for this, 
+    return null;
   }
 });
 ```
@@ -139,12 +199,10 @@ Filesystem.fileHandlers({
 ###Future:
 * Handlebar helpers? ```{{fileProgress}}```, ```{{fileInQue}}```, ```{{fileAsURL}}```, ```{{fileURL _id}}``` etc.
 * Test server side handling image size etc.
-* Only one can upload at the moment, but really multiple instances and users could be supported ```(TODO in code)```
-* When code hot deploy the que halts, not sure how to address this, maybe a listener on connection status?
-* Deviates from gridFS by using files.len istead of files.length (as in gridFS, using .length creates error in Meteor, confirmed)
-* Speed, it sends data via Meteor.apply, this lags big time, therefore multiple workers are spawned to compensate
-* Current version is set to autosubscribe, this needs to be addressed in future
+* When code hot deploy the que halts, could be tackled in future version of Meteor
+* Deviates from gridFS by using string based files.length (Meteor are working on this issue)
 * Prepare abillity for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
+* Make Meteor packages for `GraphicsMagick` etc.
 ###Notes:
 * This is made as ```Make it work, make it fast```, well it's not fast - yet
 * No test suite - any good ones for Meteor?
