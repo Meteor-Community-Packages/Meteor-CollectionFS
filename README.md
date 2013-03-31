@@ -68,6 +68,8 @@ Using Meteor and gridFS priciples we get:
       }
     });    
 ```
+*Note: It's possible to set one more option serverside: `ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });` - This will set max simultane filehandlers in total on the server, dispite collection*
+
 #####[client]
 ```js
     // do NOT autosubscribe
