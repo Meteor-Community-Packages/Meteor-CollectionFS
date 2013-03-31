@@ -127,7 +127,9 @@ Filesystem.fileHandlers({
 
 <template name="imageList">
   {{#each fileURL}}
-    <a href="#myModal" data-toggle="modal" class="showImage"><img src="{{path}}" alt="{{filename}}" width="20px"/></a>
+    {{#constant}}
+      <a href="#myModal" data-toggle="modal" class="showImage"><img src="{{path}}" alt="{{filename}}" width="20px"/></a>
+    {{/constant}}
   {{else}}
     No cache
   {{/each}}
@@ -150,6 +152,9 @@ Filesystem.fileHandlers({
         {{#if needToResumeUpload}}
           {{#if isOwner}}
             <input name="files" type="file" class="btnResumeFile" style="width:60px;">
+            {{#if isOwner}}
+              <a class="btn btn-danger btn-mini btnFileDelete">Delete</a>
+            {{/if}}
           {{else}}
             <span class="label label-info">
               Waiting
@@ -168,6 +173,9 @@ Filesystem.fileHandlers({
             {{/if}}
           {{else}}
             <a class="btn btn-primary btn-mini btnFileSaveAs">Save as</a>
+            {{#if isOwner}}
+              <a class="btn btn-danger btn-mini btnFileDelete">Delete</a>
+            {{/if}}
           {{/if}}
         {{/if}}
       </td>

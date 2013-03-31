@@ -5,14 +5,22 @@ Filesystem = new CollectionFS("filesystem");
 Filesystem.allow({
   insert: function(userId, myFile) { return userId && myFile.owner === userId; },
   update: function(userId, files, fields, modifier) {
-  	return true;
-        return _.all(files, function (myFile) {
-          return (userId == myFile.owner);
+	return _.all(files, function (myFile) {
+	  return (userId == myFile.owner);
 
     });  //EO interate through files
   },
-  remove: function(userId, files) { return false; }
+  remove: function(userId, file) { 
+	return (userId == file.owner);
+  }
 });
+
+if (Meteor.isServer) {
+	// Rerun filehanders on all files - this is just for testing!
+	Filesystem.find({}).forEach(function(doc) {
+		Filesystem.update({ _id: doc._id}, { $set: { handledAt: null, fileURL: [] }});
+	});
+}
 
 Filesystem.fileHandlers({
 	default1: function(options) { //Options contains blob and fileRecord - same is expected in return if should be saved on filesytem, can be modified

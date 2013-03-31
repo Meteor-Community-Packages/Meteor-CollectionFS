@@ -10,7 +10,7 @@
 		var self = this;
 		self._name = name;
 		self.files = new Meteor.Collection(self._name+'.files'); //TODO: Add change listener?
-		self.chunks = new Meteor.Collection(self._name+'.chunks');
+		//self.chunks = new Meteor.Collection(self._name+'.chunks');
 		self.que = new _queCollectionFS(name);
 		self._options = { autosubscribe: true };
 		_.extend(self._options, options);
@@ -21,14 +21,7 @@
 
 		//var queListener = null; //If on client
 
-		// Filehandlers flags supported
-		self.filehandlerSupport = {	};
-
-		if (typeof __meteor_runtime_config__ !== "undefined") {
-			self.filehandlerSupport.supported = __meteor_runtime_config__.FILEHANDLER_SUPPORTED;//(__meteor_runtime_config__.FILEHANDLER_SYMLINKS && __meteor_runtime_config__.FILEHANDLER_FILEWRITE);
-			self.filehandlerSupport.symlinks = __meteor_runtime_config__.FILEHANDLER_SYMLINKS;
-			self.filehandlerSupport.filewrites = __meteor_runtime_config__.FILEHANDLER_FILEWRITE;
-		}
+		// __meteor_runtime_config__.FILEHANDLER_SUPPORTED;
 
 	}; //EO collectionFS
 
@@ -37,11 +30,11 @@
 		self._name = name;
 		self.que = {};
 		self.fileDeps  = new Deps.Dependency;
-		self.connection = (Meteor.isClient)?Meteor.connect(Meteor.default_connection._stream.rawUrl):null;
+		self.connection = Meteor.connect(Meteor.default_connection._stream.rawUrl);
 		self.queLastTime = {};			//Deprecate
 		self.queLastTimeNr = 0;			//Deprecate
 		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
-		self.spawns = 0;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
+		self.spawns = 10;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
 		self.paused = false;
 		self.listeners = {};			//Deprecate
 		self.lastTimeUpload = null;		//Deprecate

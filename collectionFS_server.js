@@ -10,7 +10,6 @@
 		self._name = name;
 		self.files = new Meteor.Collection(self._name+'.files'); //TODO: Add change listener?
 		self.chunks = new Meteor.Collection(self._name+'.chunks');
-		self.que = new _queCollectionFS(name);
 		self._fileHandlers = null; //Set by function fileHandlers({});
 		
 		myLog('CollectionFS: ' + name);
@@ -22,7 +21,7 @@
 
 		if (self._options.autopublish) {
 		  Meteor.publish(self._name+'.files', function () {
-		    return self.files.find({});
+		    return self.find({});
 		  }, {is_auto: true});		
 		} //EO Autopublish
 
@@ -91,7 +90,7 @@
 		}; //EO saveChunck+name
 
 		methodFunc['getMissingChunk'+self._name] = function(fileId) {
-			console.log('getMissingChunk: '+fileRecord._id);
+			//console.log('getMissingChunk: '+fileRecord._id);
 			var self = this;
 			var fileRecord = self.files.findOne({_id: fileId});
 			if (!fileRecord)
@@ -133,105 +132,57 @@
 		// 
 		var queListener = null; //If on client
 		//Init queListener for fileHandling at the server
-		if (Meteor.isServer) {
-			Meteor.startup(function () {
-				//Ensure index on files_id and n
-				self.chunks._ensureIndex({ files_id: 1, n: 1 }, { unique: true });
-				//Spawn que listener
-				self.queListener = new _queListener(self);
-			});
-		}
-		if (Meteor.isClient) {
-			//check server _fileHandlersSupported
-			//self.queListener.fsOk
-			Meteor.startup(function () {
-				Meteor.call('returnFileHandlerSupport', function(err, res) {
-					Session.set('_fileHandlersSupported', (res._fileHandlersFileWrite && res._fileHandlersSymlinks));
-					Session.set('_fileHandlersSymlinks', res._fileHandlersSymlinks);
-					Session.set('_fileHandlersFileWrite', res._fileHandlersFileWrite);					
-				}); //EO call
-			}); //EO startup 
-		}
+		Meteor.startup(function () {
+			//Ensure index on files_id and n
+			self.chunks._ensureIndex({ files_id: 1, n: 1 }, { unique: true });
+			//Spawn que listener
+			self.queListener = new _queListener(self);
+		});
 
 	}; //EO collectionFS
 
-	if (Meteor.isServer) {
-		Meteor.methods({
-		  returnFileHandlerSupport: function () {
-		    return {_fileHandlersSupported: _fileHandlersSupported, _fileHandlersSymlinks: _fileHandlersSymlinks, _fileHandlersFileWrite:_fileHandlersFileWrite};
-		  }
-		});
-	}
-	_queCollectionFS = function(name) {
-		var self = this;
-		self._name = name;
-		self.que = {};
-		self.fileDeps  = new Deps.Dependency;
-		self.connection = (Meteor.isClient)?Meteor.connect(Meteor.default_connection._stream.rawUrl):null;
-		self.queLastTime = {};			//Deprecate
-		self.queLastTimeNr = 0;			//Deprecate
-		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
-		self.spawns = 30;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
-		self.paused = false;
-		self.listeners = {};			//Deprecate
-		self.lastTimeUpload = null;		//Deprecate
-		self.lastCountUpload = 0;		//Deprecate
-		self.lastTimeDownload = null;	//Deprecate
-		self.lastCountDownload = 0;		//Deprecate
-		self.myCounter = 0;				//Deprecate
-		self.mySize = 0;				//Deprecate
-	};
+	Meteor.methods({
+	  returnFileHandlerSupport: function () {
+	    return {_fileHandlersSupported: _fileHandlersSupported, _fileHandlersSymlinks: _fileHandlersSymlinks, _fileHandlersFileWrite:_fileHandlersFileWrite};
+	  }
+	});
 
 	_.extend(CollectionFS.prototype, {
-		find: function(arguments, options) { return this.files.find(arguments, options); },
+		find: function(arguments, options) { 
+			var self = this;
+		    var query = self.files.find(arguments, options);
+		    var handle = query.observe({
+		        removed: function(doc) {
+		        	//console.log('Removing: '+doc.filename);
+		            // remove all chunks
+		            self.chunks.remove({ files_id: doc._id });
+		            // remove all files related *( delete each fileUrl path begins with '/' )*
+		            if (doc.fileURL.length > 0) {
+		            	var fs = npm.require('fs');
+			            _.each(doc.fileURL, function(fileURL) {
+				        	//console.log('Remove cache: '+fileURL.path);
+			            	if (fileURL.path && fileURL.path.substr(0, 1) == '/') {
+			            		var myServerPath = __filehandlers.rootDir + '' + fileURL.path.substr(1);
+			            		if (!!fs.existsSync(myServerPath) ){
+				            		try {
+				            			fs.unlinkSync(myServerPath);
+				            		} catch(e) { /* NOP */ }
+				            	} // EO fileexists
+			            	} // Local file
+			            }); // EO each
+			        } // EO fileURL's found
+		        } // EO removed
+		    }); // EO Observer
+	        handle.stop;
+		    return query;
+		},
 		findOne: function(arguments, options) { return this.files.findOne(arguments, options); },
+		update: function(selector, modifier, options) { return this.files.update(selector, modifier, options); },
+    	remove: function(selector) { return this.files.remove(selector); },
 		allow: function(arguments) { return this.files.allow(arguments); },
 		deny: function(arguments) { return this.files.deny(arguments); },
 		fileHandlers: function(options) {
 			var self = this;
 			self._fileHandlers = options; // fileHandlers({ handler['name']: function() {}, ... });
 		}
-	});
-
-
-	_.extend(_queCollectionFS.prototype, {
-
-		compareFile: function(fileRecordA, fileRecordB) {
-			var errors = 0;
-			var leaveOutField = {'_id':true, 'uploadDate':true, 'currentChunk':true, 'fileURL': true };
-			for (var fieldName in fileRecordA) {
-				if (!leaveOutField[fieldName]) {
-					if (fileRecordA[fieldName] != fileRecordB[fieldName]) {
-						errors++; 
-						console.log(fieldName);
-					}
-				}
-			} //EO for
-			return (errors == 0);
-		},
-		makeGridFSFileRecord: function(file, options) {
-			var self = this;
-			var countChunks = Math.ceil(file.size / self.chunkSize);
-			return {
-			  chunkSize : self.chunkSize,
-			  uploadDate : Date.now(),
-			  handledAt: null, //set by server when handled
-			  fileURL:[], //filled with file links - if fileHandler supply any
-			  md5 : null,
-			  complete : false,
-			  currentChunk: -1,
-			  owner: Meteor.userId(),
-			  countChunks: countChunks,
-			  filename : file.name,
-			  length: ''+file.size, //Issue in Meteor, when solved dont use ''+
-//			  len: file.size,
-			  contentType : file.type,
-			  metadata : (options) ? options : null
-			};
-			//TODO:
-			//XXX: Implement md5 later, guess every chunk should have a md5...
-			//XXX:checkup on gridFS date format
-			//ERROR: Minimongo error/memory leak? when adding attr. length to insert object
-			//length : Meteor _.each replaced with for in, in set function livedata server
-		} //EO makeGridFSFileRecord
 	});

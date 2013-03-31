@@ -13,23 +13,24 @@ __filehandlers = {
   serverPath: '',
   bundlePath: '',
   url: '/cfs',
+  rootDir: '',
+  bundleRoot: '',
   created: false
 };
 
 
 (function() {
-	fs = npm.require('fs');
+	var fs = npm.require('fs');
 
 	var path = npm.require('path');
 
-  var bundleRoot = path.dirname(npm.require.main.filename);
-  var rootDir = '';
-  var splitDir = bundleRoot.split('/');
+  __filehandlers.bundleRoot = path.dirname(npm.require.main.filename);
+  var splitDir = __filehandlers.bundleRoot.split('/');
   for (var i = 0; i < splitDir.length - 1; i++)
-    rootDir += splitDir[i] + '/';
+    __filehandlers.rootDir += splitDir[i] + '/';
   
-  __filehandlers.bundlePath = bundleRoot + '/static/' + __filehandlers.folder;
-  __filehandlers.serverPath = rootDir + '' + __filehandlers.folder;
+  __filehandlers.bundlePath = __filehandlers.bundleRoot + '/static/' + __filehandlers.folder;
+  __filehandlers.serverPath = __filehandlers.rootDir + '' + __filehandlers.folder;
 
   myLog('bundlePath: '+__filehandlers.bundlePath);
   myLog('serverPath: '+__filehandlers.serverPath);
@@ -39,7 +40,7 @@ __filehandlers = {
   } catch(e) { /* NOP */}
 
   try {
-    fs.rmSync(__filehandlers.bundlePath);
+    fs.unlinkSync(__filehandlers.bundlePath);
   } catch(e) { /* NOP  */}
 
   if (!fs.existsSync(__filehandlers.serverPath))

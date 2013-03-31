@@ -4,40 +4,29 @@
 		storeFile: function(file, options) {
 			var self = this;
 			var fileId = null;
-			if (Meteor.isClient) {
-				var record = self.que.makeGridFSFileRecord(file, options);
-				fileId = self.files.insert(record);	
-				if (!fileId)
-					return null;		
-				//Put file in upload que
-				self.que.addFile(fileId, file);
-			}
-			if (Meteor.isServer) {
-				throw new Error("collectionFS server storeFile not implemented");
-				//TODO: guess gridFS would work?
-				//Java ex.
-				//GridFS myFS = new GridFS(myDatabase);            // returns a default GridFS (e.g. "fs" bucket collection)
-				//myFS.storeFile(new File("/tmp/largething.mpg")); // saves the file into the "fs" GridFS store
-			}
+			var record = self.que.makeGridFSFileRecord(file, options);
+			fileId = self.files.insert(record);	
+			if (!fileId)
+				return null;		
+			//Put file in upload que
+			self.que.addFile(fileId, file);
 			return fileId;
 		}, //EO storeFile
 		//callback(fileItem)
 		retrieveBlob: function(fileId, callback) {
 			//console.log('retrieveBlob');
 			var self = this;
-			if (Meteor.isClient) {
-				var fileItem = self.que._getItem(fileId);
-				//if file blob in que, then use the file instead of downloading...
-				if (fileItem &&(fileItem.file||fileItem.blob)) {
-					//if file if blob
-					callback(fileItem);		
-				} else {	
-					var fileRecord = self.files.findOne({ _id: fileId});
-					//download into que file blob
-					self.que.getFile(fileRecord, callback);
-				}
-				//return blob
-			} //EO isClient	
+			var fileItem = self.que._getItem(fileId);
+			//if file blob in que, then use the file instead of downloading...
+			if (fileItem &&(fileItem.file||fileItem.blob)) {
+				//if file if blob
+				callback(fileItem);		
+			} else {	
+				var fileRecord = self.files.findOne({ _id: fileId});
+				//download into que file blob
+				self.que.getFile(fileRecord, callback);
+			}
+			//return blob
 		}, //EO retrieveBlob
 		//getBlobAsUrl - seems to be the only way getting images into html via db - and files via <a download>
 		getBlobAsUrl: function(fileId, callback) {}, //EO getBlobAsUrl
@@ -110,8 +99,13 @@
 			var fileItem = self._getItem(fileId);
 			if (!fileItem)
 				return false;
+
+			if (fileItem.complete)
+				return 100;
+
 			var pointerChunk = (onlyBuffer)?fileItem.currentChunk:fileItem.currentChunkServer; //TODO:
 			Deps.depend(self.fileDeps);
+
 			if (fileItem)
 				return Math.round(pointerChunk / (fileItem.countChunks) * 100)
 			else
@@ -447,7 +441,7 @@
 	//self.que[fileId].countChunks = 1; //Uncomment for debugging
 			self.que[fileId].complete = (self.que[fileId].currentChunk == self.que[fileId].countChunks);
 			//Que progressed
-			if (self.que[fileId].currentChunk % 1 == 0 || self.que[fileId].complete)
+//			if (self.que[fileId].currentChunk % 1 == 0 || self.que[fileId].complete)
 				self.fileDeps.changed();
 			if (self.que[fileId].complete) {
 				//done

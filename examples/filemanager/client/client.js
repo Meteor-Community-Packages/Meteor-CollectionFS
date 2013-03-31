@@ -67,6 +67,10 @@ Template.fileTable.events({
       //alert('Blob landed...'+fileItem._id+' '+self._id);
     });
   }, //EO saveAs
+  'click .btnFileDelete': function() {
+    if (confirm('Are you sure you want to delete the file: \n"'+this.filename+'"?'))
+      Filesystem.remove(this._id);
+  },
   'click .showImage': function(e) {
     document.getElementById('previewImage').src = this.path;
     document.getElementById('myModalLabel').innerHTML = 'Created by fileHandler "'+this.func+'"';
@@ -104,7 +108,7 @@ Template.fileTable.helpers({
       if (fileInQue) {
         if (Filesystem.que.isPaused()) {
           if (queProgress == 100) {
-            return { barAStyle: 'bar-success', barBStyle:'progress-info', progressA: queProgress, progressB: 100-queProgress};
+            return { barAStyle: 'bar-success', barBStyle:'progress-info', progressA: 100, progressB: 0};
           } else { 
             return { barAStyle: 'bar-warning', barBStyle:'progress-info', progressA: queProgress, progressB: 100-queProgress};
           }

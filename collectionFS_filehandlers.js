@@ -53,10 +53,10 @@ __filehandlersRunning = 0;
 		self.path = __filehandlers.serverPath + '/' + self.collectionFS._name;  // Server path
 		self.pathURL = __filehandlers.url + '/' + self.collectionFS._name;   // Url path
 
-		if (!fs.existsSync(self.path))
-			fs.mkdirSync(self.path);
+		if (!self.fs.existsSync(self.path))
+			self.fs.mkdirSync(self.path);
 
-		self.pathCreated = (!!fs.existsSync(self.path));		
+		self.pathCreated = (!!self.fs.existsSync(self.path));		
 
 		//Spawn worker:
 		Meteor.setTimeout(function() { self.checkQue(); }, 0); //Initiate worker process
@@ -99,19 +99,21 @@ __filehandlersRunning = 0;
 
 			if (query.count() == 0) {
 				// Somethings wrong, we'll update and skip 
-				self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-					fileURL: { error: 'Filehandlers failed, no chunks in file', handledAt: Date.now() }
-				}}); //EO Update
+				self.collectionFS.files.update({ _id: fileRecord._id }, {
+					$push: { fileURL: { error: 'Filehandlers failed, no chunks in file' } },
+					$set: { handledAt: Date.now() }
+					}); //EO Update
 				return;
 			}
-			query.rewind(); // TODO: Necessary?
-
+			query.rewind();
+			
 			query.forEach(function(chunk){
 				if (! chunk.data){
 					// Somethings wrong, we'll update and skip 
-					self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-						fileURL: { error: 'Filehandlers failed, empty chunk data', handledAt: Date.now() }
-					}}); //EO Update
+					self.collectionFS.files.update({ _id: fileRecord._id }, {
+						$push: { fileURL: { error: 'Filehandlers failed, empty chunk data' } },
+						$set: { handledAt: Date.now() }
+						}); //EO Update
 					return;
 				}
 

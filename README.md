@@ -46,7 +46,7 @@ Using Meteor and gridFS priciples we get:
 
 
 ####4. Disabling autopublish: 
-* If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published *
+*If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published*
 #####[server]
 ```js
     // do NOT autopublish
@@ -145,7 +145,61 @@ Filehandlers are serverside functions that makes caching versions easier. The fu
 * If null returned then only filehandler name and a date is saved in database.
 * If false returned the filehandler failed and it will be resumed later
 
-Further details in server/collectionFS.server.js
+####Options
+*Each filehandler is handed a options object*
+```js
+options: {
+  blob,              // Type of node.js Buffer() 
+  fileRecord: {
+    chunkSize : self.chunkSize,
+    uploadDate : Date.now(),
+    handledAt: null, //datetime set by server when handled
+    fileURL:[], //filled with file links - if fileHandler supply any
+    md5 : null,
+    complete : false,
+    currentChunk: -1,
+    owner: Meteor.userId(),
+    countChunks: countChunks,
+    filename : file.name,
+    length: ''+file.size, //Issue in Meteor
+    contentType : file.type,
+      metadata : (options) ? options : null
+  },
+  destination: function
+}
+```
+####options.destination - function
+*filehandlers are presented with a helper function for handling paths - all paths can be custom, but it's recommended to use those returned by `destination()`*
+`options.destination( [extension] )` takes an optional `extension` eg.:
+```js
+  var dest = options.destination('jpg'); // otherwise orginal extension is used
+```
+Object returned:
+```js
+  dest == {
+    serverPath: '/absolute/path/uniqname.jpg',
+    fileURL: {
+      path: '/web/url/uniqname.jpg',
+      extension: 'jpg'
+    }
+  }
+```
+The `destination` helper gets handy eg. when manually saving an image from within the filehandler.
+```js
+  Filesystem.fileHandlers({
+    soundToWav: function(options) {
+      // Manipulate file, convert it to wav
+      var dest = options.destination('wav');
+      writeFileToDisk(dest, blob);
+
+      // Save correct reference to database by returning path and extension - but no blob
+      return options.destination('wav').fileURL;
+    }
+  });
+```
+
+More examples follows, converters are to come:
+
 ```js
 Filesystem.fileHandlers({
   default1: function(options) { //Options contains blob and fileRecord - same is expected in return if should be saved on filesytem, can be modified
