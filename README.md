@@ -3,6 +3,8 @@ Is a simple way of handling files on the web in the Meteor environment
 
 Have a look at [Live example](http://collectionfs.meteor.com/)
 
+It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stabillity and speed
+
 CollectionFS is a mix of both Meteor.Collection and GridFS mongoDB.
 Using Meteor and gridFS priciples we get:
 * Security handling
@@ -13,22 +15,50 @@ Using Meteor and gridFS priciples we get:
 * At the moment files are loaded into the client as Blob universal way of handling large binary data
 * Create multiple cached versions, sizes or formats of your files and get an url to the file - or upload files to another service / server
 
+Design overview:
+```js
+        app
+-------->|
+|      __|________        <-| Adds a connection for each CollectionFS
+|      |     | | |
+*******************       <-| Internet 
+|      |     | | |
+|      |     | | |--- 1.  <-| DDP Connections dedicated CollectionFS
+|   Meteor   | |----- 2.  <-| for up/downloading chunks / binary data
+|   (DDP)    #              | Using EJSON for transport wrapper of
+|      |     |------- n.  <-| $binary data
+|      |     #####
+|      |       |
+|      Mongodb-|
+|      (gridFS)   
+|          |_______##     <-| Filehandlers running autonom scanning
+|                   |       | new files to handle, default max one
+|                   |
+|--- Remote files <-|     <-| Filehandlers specified by the user
+|--- Local files  <-|       | transform / handle uploaded files. 
+       (http)               | Eg. Uploading to remote services,
+                            | resizing images, converting sound,
+                            | video, generating tts or just making
+                            | cached versions of db files to the
+                            | filesystem.
+```
+
 ##How to use?
 
 ####1. Install:
 ```
     mrt add collectionFS
 ```
-*Requires ```Meteorite``` get it at [atmosphere.meteor.com](https://atmosphere.meteor.com)*
+*Requires `Meteorite` get it at [atmosphere.meteor.com](https://atmosphere.meteor.com)*
 
 ####2. Create model: [client, server]
 ```js
     ContactsFS = new CollectionFS('contacts');
 ```
-*You can still create a ```Contacts = new Meteor.Collection('contacts')``` since gridFS maps on eg. ```contacts.files``` and ```contacts.chunks```*
+*You can still create a `Contacts = new Meteor.Collection('contacts')` since gridFS maps on eg. `contacts.files` and `contacts.chunks`*
 
 ####3. Adding security in model: [client, server]
-*Only needed when using ```accounts-...``` (eg. removed the ```insecure``` package)*
+*Only needed when using `accounts-...` (eg. removed the `insecure` package)*
 ```js
     ContactsFS.allow({
       insert: function(userId, myFile) { return userId && myFile.owner === userId; },
@@ -41,28 +71,35 @@ Using Meteor and gridFS priciples we get:
       remove: function(userId, files) { return false; }
     });
 ```
-*The collectionFS supports functions ```.allow```, ```.deny```, ```.find```, ```findOne``` used when subscribing/ publishing from server* 
+*The collectionFS supports functions `.allow`, `.deny`, `.find`, `findOne` used when subscribing/ publishing from server* 
 *It's here you can add restrictions eg. on content-types, filesizes etc.*
+*`.update`, `.remove` are also supported, `remove` removes all chunks and files related to the file removed*
 
 
 ####4. Disabling autopublish: 
 *If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published*
-#####[server]
+
+#####Disabling autopublish: [client, server]
 ```js
-    // do NOT autopublish
+  ContactsFS = new CollectionFS('contacts', { autopublish: false });
+```
+#####Example [server]
+```js
+    // Disable autopublish
     ContactsFS = new CollectionFS('contacts', { autopublish: false });
 
     // example #1 - manually publish with an optional param
-    Meteor.publish('contacts.files', function(complete) {
+    Meteor.publish('listContactsFiles', function(filter) {
       // sort by handedAt time and only return the filename, handledAt and _id fields
-      return ContactsFS.find({ complete: complete }, {
+      return ContactsFS.find({ complete: filter.completed }, {
               sort:{ handledAt: 1 }, 
-              fields: { _id: 1, filename: 1, handledAt: 1}
+              fields: { _id: 1, filename: 1, handledAt: 1},
+              limit: filter.limit
       })
     });
 
     // example #2 - limit results and only show users files they own
-    Meteor.publish('contacts.files', function() {
+    Meteor.publish('myContactsFiles', function() {
       if (this.userId) {
         return ContactsFS.find({ owner: this.userId }, { limit: 30 });
       }
@@ -70,16 +107,22 @@ Using Meteor and gridFS priciples we get:
 ```
 *Note: It's possible to set one more option serverside: `ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });` - This will set max simultane filehandlers in total on the server, dispite collection*
 
-#####[client]
+#####Example [client]
 ```js
-    // do NOT autosubscribe
-    ContactsFS = new CollectionFS('contacts', { autosubscribe: false});
+    // Disable autopublish / autosubscribe
+    ContactsFS = new CollectionFS('contacts', { autopublish: false});
 
     // example #1 - manually subscribe and show completed only 
     // (goes with example #1 above)
 
-    var showCompleteOnly = true;
-    Meteor.subscribe('contacts.files', showCompleteOnly);
+    // Use session for setting filter options
+    Session.setDefault('myFilter', { completed: true, limit: 30 });
+
+    // Make subscription depend on the current filter
+    Deps.autorun(function() {
+      var filter = Session.get('myFilter');
+      Meteor.subscribe('listContactsFiles', filter);
+    });
 ```
 
 ##Uploading file
@@ -102,7 +145,7 @@ Using Meteor and gridFS priciples we get:
       }
     });
 ```
-*ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as threads. It's possible to add metadata: ```storeFile(file, {})``` - callback or eventlisteners are on the todo*
+*ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as "threads". It's possible to add metadata: `storeFile(file, {})` - callback or eventlisteners are on the todo*
 
 ##Downloading file
 ####1. Adding the view:
@@ -253,13 +296,14 @@ Filesystem.fileHandlers({
 *This is brand new on the testbed, future brings easy image handling shortcuts to imagemagic, maybe som sound/video converting and some integration for uploading to eg. google drive, dropbox etc.*
 
 ###Future:
-* Handlebar helpers? ```{{fileProgress}}```, ```{{fileInQue}}```, ```{{fileAsURL}}```, ```{{fileURL _id}}``` etc.
+* Handlebar helpers? `{{fileProgress}}`, `{{fileInQue}}`, `{{fileAsURL}}`, `{{fileURL _id}}` etc.
 * Test server side handling image size etc.
 * When code hot deploy the que halts, could be tackled in future version of Meteor
 * Deviates from gridFS by using string based files.length (Meteor are working on this issue)
 * Prepare abillity for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
 * Make Meteor packages for `GraphicsMagick` etc.
+
 ###Notes:
-* This is made as ```Make it work, make it fast```, well it's not fast - yet
+* This is made as `Make it work, make it fast`, well it's not fast - yet
 * No test suite - any good ones for Meteor?
-* Current code contains relics in form of logs and timers used in the example ```statistics``` and for debuggin
+* Current code contains relics in form of logs and timers used in the example `statistics` and for debuggin

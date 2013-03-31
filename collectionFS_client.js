@@ -12,11 +12,11 @@
 		self.files = new Meteor.Collection(self._name+'.files'); //TODO: Add change listener?
 		//self.chunks = new Meteor.Collection(self._name+'.chunks');
 		self.que = new _queCollectionFS(name);
-		self._options = { autosubscribe: true };
+		self._options = { autopublish: true };
 		_.extend(self._options, options);
 
 		//Auto subscribe
-		if (self._options.autosubscribe)
+		if (self._options.autopublish)
 			Meteor.subscribe(self._name+'.files');
 
 		//var queListener = null; //If on client

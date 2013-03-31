@@ -17,9 +17,9 @@ Filesystem.allow({
 
 if (Meteor.isServer) {
 	// Rerun filehanders on all files - this is just for testing!
-	Filesystem.find({}).forEach(function(doc) {
-		Filesystem.update({ _id: doc._id}, { $set: { handledAt: null, fileURL: [] }});
-	});
+//	Filesystem.find({}).forEach(function(doc) {
+//		Filesystem.update({ _id: doc._id}, { $set: { handledAt: null, fileURL: [] }});
+//	});
 }
 
 Filesystem.fileHandlers({
