@@ -61,7 +61,8 @@ Filesystem.fileHandlers({
   }
 });</pre>
         <br/>
-        <i>Well, it's just a test, really speed etc. not that optimized working on it, Nice job Meteor guys!</i>     
+        Do check out the readme on Git, more details on design and usage.
+        <i>Well, got a bit optimized and runs in 0.6.0, Nice job Meteor guys!</i>     
       </td>
    </tr>
   </table> 
@@ -200,7 +201,11 @@ Filesystem.fileHandlers({
   {{#if filehandlerSupported}}
     <div class="alert alert-success">
       <button type="button" class="close" data-dismiss="alert">&times;</button>
-      Congrats! Filehandlers are supported in bundles, enjoy!
+      Congrats! Filehandlers are supported in bundles, enjoy!<br/>
+      <small>
+        Got fast! and now supports Meteor 0.6.0! <br/>
+        <i>Currently working on storeFile serverside and maybe a "server, fetch remote file for the client" + test GraphicsMagick</i>
+      </small>
     </div>
   {{else}}
     <div class="alert alert-error">

@@ -68,9 +68,19 @@ Template.fileTable.events({
       Filesystem.remove(this._id);
   },
   'click .showImage': function(e) {
-    document.getElementById('previewImage').src = this.path;
-    document.getElementById('myModalLabel').innerHTML = 'Created by fileHandler "'+this.func+'"';
-    document.getElementById('description').innerHTML = 'Url: <a hre="'+this.path+'">'+this.path+'</a>';
+    function extrudeFilehandler(url) {
+      // Could prop do something clever with reg.ex
+      var splitString = url.split('/');
+      splitString = splitString[splitString.length-1].split('.')[0].split('_');
+      var result = '';
+      for (var i = 1; i < splitString.length; i++)
+        result += (i == 1)?splitString[i]:'_'+splitString[i];
+      return result;
+    }
+
+    document.getElementById('previewImage').src = this.url;
+    document.getElementById('myModalLabel').innerHTML = 'By fileHandler "'+extrudeFilehandler(this.url)+'"';
+    document.getElementById('description').innerHTML = 'Url: <a href="'+this.url+'">'+this.url+'</a>';
   }
 });
 

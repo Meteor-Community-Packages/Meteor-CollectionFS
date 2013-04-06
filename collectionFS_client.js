@@ -75,6 +75,7 @@
 			  currentChunk: -1,
 			  owner: Meteor.userId(),
 			  countChunks: countChunks,
+			  numChunks: 0,
 			  filename : file.name,
 			  length: ''+file.size, //Issue in Meteor, when solved dont use ''+
 //			  len: file.size,

@@ -3,21 +3,21 @@ Is a simple way of handling files on the web in the Meteor environment
 
 Have a look at [Live example](http://collectionfs.meteor.com/)
 
-It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stabillity and speed
+It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stability and speed
 
 CollectionFS is a mix of both Meteor.Collection and GridFS mongoDB.
-Using Meteor and gridFS priciples we get:
+Using Meteor and gridFS principles we get:
 * Security handling
 * Handling sharing
 * Restrictions eg. only allow certain content types, fields, users etc.
 * Reactive data, the collectionFS's methods should all be reactive
-* Abillity for the user to resume upload after connection loss, browser crash or cola in keyboard
+* Ability for the user to resume upload after connection loss, browser crash or cola in keyboard
 * At the moment files are loaded into the client as Blob universal way of handling large binary data
 * Create multiple cached versions, sizes or formats of your files and get an url to the file - or upload files to another service / server
 
 Design overview:
 ```js
-        app
+        App               <-| Can retrieve files via DDP and HTTP
 -------->|
 |      __|________        <-| Adds a connection for each CollectionFS
 |      |     | | |
@@ -29,10 +29,12 @@ Design overview:
 |      |     |------- n.  <-| $binary data
 |      |     #####
 |      |       |
-|      Mongodb-|
-|      (gridFS)   
+|      Mongodb-|<- Server <-| TODO: *Server can add files pr. auto
+|      (gridFS)             | or on request from client*
+|          |
 |          |_______##     <-| Filehandlers running autonom scanning
-|                   |       | new files to handle, default max one
+|                   |       | new files to handle, new filehandlers,
+|                   |       | retries failed ones *default 1 worker*
 |                   |
 |--- Remote files <-|     <-| Filehandlers specified by the user
 |--- Local files  <-|       | transform / handle uploaded files. 
@@ -182,6 +184,7 @@ Design overview:
       }
     });
 ```
+*There are some in the works for `widgets` / `components` eg. gui elements for uploading files, ex. via drag & drop*
 
 ###Create server cache/versions of files and get an url reference
 Filehandlers are serverside functions that makes caching versions easier. The functions are run and handled a file record and a blob / ```Buffer``` containing all the bytes.
@@ -196,21 +199,27 @@ Filehandlers are serverside functions that makes caching versions easier. The fu
 options: {
   blob,              // Type of node.js Buffer() 
   fileRecord: {
-    chunkSize : self.chunkSize,
-    uploadDate : Date.now(),
-    handledAt: null, //datetime set by server when handled
-    fileURL:[], //filled with file links - if fileHandler supply any
-    md5 : null,
-    complete : false,
-    currentChunk: -1,
+    chunkSize : self.chunkSize, // Default 256kb ~ 262.144 bytes
+    uploadDate : Date.now(),  // Client set date
+    handledAt: null,          // datetime set by Server when handled
+    fileHandler:{},           // fileHandler supplied data if any
+    md5 : null,               // Not yet implemented
+    complete : false,         // countChunks == numChunks
+    currentChunk: -1,         // Used to coordinate clients
     owner: Meteor.userId(),
-    countChunks: countChunks,
-    filename : file.name,
-    length: ''+file.size, //Issue in Meteor
+    countChunks: countChunks, // Expected number of chunks
+    numChunks: 0,             // number of chunks in database
+    filename : file.name,     // Original filename
+    length: ''+file.size,     // Issue in Meteor
     contentType : file.type,
-      metadata : (options) ? options : null
+    metadata : (options) ? options : null,  // Custom data
+    /* TODO:
+    startedAt: null,          // Start timer for upload start
+    endedAt: null,          // Stop timer for upload ended
+    */
   },
-  destination: function
+  destination: function, // Check below
+  sumFailes: 0..3 (times filehandler failed in this recovery session)
 }
 ```
 ####options.destination - function
@@ -222,9 +231,9 @@ options: {
 Object returned:
 ```js
   dest == {
-    serverPath: '/absolute/path/uniqname.jpg',
-    fileURL: {
-      path: '/web/url/uniqname.jpg',
+    serverFilename: '/absolute/path/uniqname.jpg', // Unix based
+    fileData: {
+      url: '/web/url/uniqname.jpg',
       extension: 'jpg'
     }
   }
@@ -235,10 +244,10 @@ The `destination` helper gets handy eg. when manually saving an image from withi
     soundToWav: function(options) {
       // Manipulate file, convert it to wav
       var dest = options.destination('wav');
-      writeFileToDisk(dest, blob);
+      writeFileToDisk(dest.serverFilename, blob);
 
-      // Save correct reference to database by returning path and extension - but no blob
-      return options.destination('wav').fileURL;
+      // Save correct reference to database by returning url and extension - but no blob
+      return dest.fileData;
     }
   });
 ```
@@ -249,7 +258,7 @@ More examples follows, converters are to come:
 Filesystem.fileHandlers({
   default1: function(options) { //Options contains blob and fileRecord - same is expected in return if should be saved on filesytem, can be modified
     console.log('I am handling 1: '+options.fileRecord.filename);
-    return { blob: options.blob, fileRecord: options.fileRecord }; //if no blob then save result in fileURL (added createdAt)
+    return { blob: options.blob, fileRecord: options.fileRecord }; //if no blob then save result in fileHandle (added createdAt)
   },
   default2: function(options) {
     if (options.fileRecord.len > 5000000 || options.fileRecord.contentType != 'image/jpeg') //Save som space, only make cache if less than 1Mb
@@ -274,21 +283,24 @@ Filesystem.fileHandlers({
 
     // Use Future.wrap for handling async
     /*
-    var dest = options.destination('jpg').serverPath; // Set optional extension
+    var dest = options.destination('jpg').serverFilename; // Set optional extension
 
     var gm = npm.require('gm'); // GraphicsMagick required need Meteor package
     gm( options.blob, dest).resize(100,100).quality(90).write(dest, function(err) {
         if(err) {
           // console.log 'GraphicsMagick error ' + err;
-          return null;
+          return false; 
+          // False will trigger rerun, could check options.sumFailes
+          // if we only want to rerun 2 times (default limit is 3,
+          // but sumFailes is reset at server idle + wait period)
         }
         else {
           // console.log 'Finished writing image.';
-          return destination('jpg').fileURL; // We only return the path for the file, no blob to save since we took care of it
+          return destination('jpg').fileData; // We only return the url for the file, no blob to save since we took care of it
         }
       });
     */
-    // I failed to deliver a fileUrl for this, 
+    // I failed to deliver a url for this, but don't try again
     return null;
   }
 });
@@ -296,14 +308,14 @@ Filesystem.fileHandlers({
 *This is brand new on the testbed, future brings easy image handling shortcuts to imagemagic, maybe som sound/video converting and some integration for uploading to eg. google drive, dropbox etc.*
 
 ###Future:
-* Handlebar helpers? `{{fileProgress}}`, `{{fileInQue}}`, `{{fileAsURL}}`, `{{fileURL _id}}` etc.
+* Handlebar helpers? `{{fileProgress}}`, `{{fileInQue}}` etc.
 * Test server side handling image size etc.
 * When code hot deploy the que halts, could be tackled in future version of Meteor
 * Deviates from gridFS by using string based files.length (Meteor are working on this issue)
-* Prepare abillity for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
+* Prepare ability for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
 * Make Meteor packages for `GraphicsMagick` etc.
 
 ###Notes:
-* This is made as `Make it work, make it fast`, well it just got fast!
+* This is made as `Make it work, make it fast`, well it just got very fast! *need to test if it's actually faster than regular upload*
 * No test suite - any good ones for Meteor?
-* Current code contains relics in form of logs and timers used in the example `statistics` and for debuggin
+* Current code client side contains relics and will have a makeover one of these days

@@ -40,8 +40,8 @@
 
 //var queueListener = new _queueListener();
 
-var fs = npm.require('fs');
-var path = npm.require('path');
+var fs = Npm.require('fs');
+var path = Npm.require('path');
 
 
  _queueListener = function(collectionFS) {
@@ -233,7 +233,7 @@ _.extend(_queueListener.prototype, {
 
 				var result = false;
 				try {
-					result = fileHandlers[func]({ fileRecord: fileRecord, blob: blob, destination: destination });
+					result = fileHandlers[func]({ fileRecord: fileRecord, blob: blob, destination: destination, sumFailes: sumFailes });
 				} catch(e) {
 					throw new Error('Error in filehandler: "' + func + '" ' + (e.trace || e.message));
 				}

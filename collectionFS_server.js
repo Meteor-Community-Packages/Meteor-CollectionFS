@@ -6,8 +6,8 @@
  * 
  */
 
-var fs = npm.require('fs');
-var path = npm.require('path');
+var fs = Npm.require('fs');
+var path = Npm.require('path');
 
 CollectionFS = function(name, options) {
 	var self = this;
@@ -17,7 +17,7 @@ CollectionFS = function(name, options) {
 	self._fileHandlers = null; 									// Set by function fileHandlers({});
 	var methodFunc = {};										// Server methods
 	
-	myLog('CollectionFS: ' + name);
+	serverConsole.log('CollectionFS: ' + name);
 
 	// Extend _options
 	self._options = { autopublish: true, maxFilehandlers: __filehandlers.MaxRunning };

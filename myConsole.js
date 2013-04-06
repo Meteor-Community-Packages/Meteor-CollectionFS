@@ -2,9 +2,11 @@
 
 var myConsole = new Meteor.Collection('_console');
 
-function myLog(message) {
-	myConsole.insert({ message: message, createdAt: Date.now() });
-}
+serverConsole = {
+	log: function (message) {
+		myConsole.insert({ message: message, createdAt: Date.now() });
+	}
+};
 
 (function() {
 
@@ -13,7 +15,7 @@ function myLog(message) {
 	// Set true to get all logs from server start
 	var getAllLogs = false;
 	// Enable / disable logging
-	var debug = true;
+	var debug = false;
 
 	if (Meteor.isClient && debug) {
 		Meteor.call('getTime', function(error, result) {
@@ -44,7 +46,7 @@ function myLog(message) {
 
 		Meteor.methods({
 			getTime: function() {
-				myLog('getTime');
+				serverConsole.log('getTime');
 				return (getAllLogs)? 0 : Date.now()-6000; // Just add a little slack
 			}
 		});

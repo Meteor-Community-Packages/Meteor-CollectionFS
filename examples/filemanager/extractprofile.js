@@ -12,7 +12,7 @@
 // tested with facebook, twitter, google, password
 // TODO: add picture / profile photo
 
-var _extractProfile = function (userObjId) {
+_extractProfile = function (userObjId) {
   if (!userObjId)
     return null;
     //Check if an _id isset otherwise assume input as being _id
