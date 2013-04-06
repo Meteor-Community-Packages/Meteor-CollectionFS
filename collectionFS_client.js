@@ -11,7 +11,7 @@
 		self._name = name;
 		self.files = new Meteor.Collection(self._name+'.files'); //TODO: Add change listener?
 		//self.chunks = new Meteor.Collection(self._name+'.chunks');
-		self.que = new _queCollectionFS(name);
+		self.queue = new _queueCollectionFS(name);
 		self._options = { autopublish: true };
 		_.extend(self._options, options);
 
@@ -19,30 +19,21 @@
 		if (self._options.autopublish)
 			Meteor.subscribe(self._name+'.files');
 
-		//var queListener = null; //If on client
+		//var queueListener = null; //If on client
 
 		// __meteor_runtime_config__.FILEHANDLER_SUPPORTED;
 
 	}; //EO collectionFS
 
-	_queCollectionFS = function(name) {
+	_queueCollectionFS = function(name) {
 		var self = this;
 		self._name = name;
-		self.que = {};
-		self.fileDeps  = new Deps.Dependency;
+		self.queue = {};
+		self.fileDeps  = new Deps.Dependency; // TODO: These deps could be finetuned to single files
 		self.connection = Meteor.connect(Meteor.default_connection._stream.rawUrl);
-		self.queLastTime = {};			//Deprecate
-		self.queLastTimeNr = 0;			//Deprecate
-		self.chunkSize = 1024; //256; //gridFS default is 256 1024 works better
-		self.spawns = 10;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
+		self.chunkSize = 256 * 1024;    //gridFS default is 256kb = 262.144bytes
+		self.spawns = 0;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
 		self.paused = false;
-		self.listeners = {};			//Deprecate
-		self.lastTimeUpload = null;		//Deprecate
-		self.lastCountUpload = 0;		//Deprecate
-		self.lastTimeDownload = null;	//Deprecate
-		self.lastCountDownload = 0;		//Deprecate
-		self.myCounter = 0;				//Deprecate
-		self.mySize = 0;				//Deprecate
 	};
 
 	_.extend(CollectionFS.prototype, {
@@ -52,15 +43,15 @@
     	remove: function(selector) { return this.files.remove(selector); },
 		allow: function(arguments) { return this.files.allow(arguments); },
 		deny: function(arguments) { return this.files.deny(arguments); },
-		fileHandlers: function(options) { /* NOP */}
+		fileHandlers: function(options) { /* NOP */ }
 	});
 
 
-	_.extend(_queCollectionFS.prototype, {
+	_.extend(_queueCollectionFS.prototype, {
 
 		compareFile: function(fileRecordA, fileRecordB) {
 			var errors = 0;
-			var leaveOutField = {'_id':true, 'uploadDate':true, 'currentChunk':true, 'fileURL': true };
+			var leaveOutField = {'_id':true, 'uploadDate':true, 'currentChunk':true, 'fileHandler': true };
 			for (var fieldName in fileRecordA) {
 				if (!leaveOutField[fieldName]) {
 					if (fileRecordA[fieldName] != fileRecordB[fieldName]) {
@@ -78,7 +69,7 @@
 			  chunkSize : self.chunkSize,
 			  uploadDate : Date.now(),
 			  handledAt: null, //set by server when handled
-			  fileURL:[], //filled with file links - if fileHandler supply any
+			  fileHandler: {}, //filled with -> filehandlerName : { fileHandler custom result data }
 			  md5 : null,
 			  complete : false,
 			  currentChunk: -1,

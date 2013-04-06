@@ -42,39 +42,6 @@
 {{> viewImage}}
 </body>
 
-<template name="stats">
-  {{#if statToggleStats}}
-  <table class="table-bordered" width="100%">
-    {{#with statistics}}
-    <tr>
-      <td colspan="2">
-        TimerQue Length: {{timeQueLength}}
-      </td>
-      <td colspan="2">
-        
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4">Download statistics kbit/sec: {{bitPrSecDownload}}</td>
-    </tr>
-    <tr>
-      <td>Total</td><td>append to Blob</td><td>MeteorCall total</td><td>MeteorCall server</td>
-    </tr><tr>
-      <td>{{downloadTotal}}</td><td>{{downloadFileReader}}</td><td>{{downloadMeteorCall}}</td><td>{{downloadMeteorCallServer}}</td>
-    </tr>
-    <tr>
-      <td colspan="4">Upload statistics kbit/sec: {{bitPrSecUpload}}</td>
-    </tr>
-    <tr>
-      <td>Total</td><td>read file slice</td><td>MeteorCall total</td><td>MeteorCall server</td>
-    </tr><tr>
-      <td>{{uploadTotal}}</td><td>{{uploadFileReader}}</td><td>{{uploadMeteorCall}}</td><td>{{uploadMeteorCallServer}}</td>
-    </tr>
-   {{/with}}
-  </table>  
-  {{/if}}
-</template>
-
 <template name="loginInto">
   <table class="table-bordered" width="100%">
     <tr>
@@ -100,7 +67,7 @@ Filesystem.fileHandlers({
   </table> 
 </template>
 
-<template name="queControl">
+<template name="queueControl">
   <table class="table-bordered" width="100%">
     <tr>
       <td colspan="2">
@@ -119,17 +86,19 @@ Filesystem.fileHandlers({
         {{/if}}
       </td>
       <td>
-        <a href="#" class="btn btnToggleStats"><i class="icon-list-alt"></i>Toggle Stats</a>
+
       </td>
    </tr>
   </table> 
 </template>
 
 <template name="imageList">
-  {{#each fileURL}}
-    {{#constant}}
-      <a href="#myModal" data-toggle="modal" class="showImage"><img src="{{path}}" alt="{{filename}}" width="20px"/></a>
-    {{/constant}}
+  {{#each fileHandler}}
+    {{#if url}}
+      {{#constant}}
+        <a href="#myModal" data-toggle="modal" class="showImage"><img src="{{this.url}}" alt="{{filename}}" width="20px"/></a>
+      {{/constant}}
+    {{/if}}
   {{else}}
     No cache
   {{/each}}
@@ -245,13 +214,11 @@ Filesystem.fileHandlers({
 <template name="uploadTest">
   {{#if currentUser}}
     {{> supportInfo}}
-    {{> queControl}} 
+    {{> queueControl}} 
   {{else}}
     {{> loginInto}}
     {{> supportInfo}}
   {{/if}}
-  <br/>
-  {{> stats}}  
   <br/>
   {{> fileTable}}
 </template>

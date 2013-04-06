@@ -304,6 +304,6 @@ Filesystem.fileHandlers({
 * Make Meteor packages for `GraphicsMagick` etc.
 
 ###Notes:
-* This is made as `Make it work, make it fast`, well it's not fast - yet
+* This is made as `Make it work, make it fast`, well it just got fast!
 * No test suite - any good ones for Meteor?
 * Current code contains relics in form of logs and timers used in the example `statistics` and for debuggin

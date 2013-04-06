@@ -40,19 +40,19 @@ Filesystem.fileHandlers({
 	default3: function(options) { 
 		if (options.fileRecord.length > 5000000 || options.fileRecord.contentType != 'image/jpeg')
 			return null;
-		myLog('I am handling 2: '+options.fileRecord.filename);
+		myLog('I am handling 3: '+options.fileRecord.filename);
 		return { blob: options.blob, fileRecord: options.fileRecord }; 
 	},
 	default4: function(options) { 
 		if (options.fileRecord.length > 5000000 || options.fileRecord.contentType != 'image/jpeg')
 			return null;
-		myLog('I am handling 2: '+options.fileRecord.filename);
+		myLog('I am handling 4: '+options.fileRecord.filename);
 		return { blob: options.blob, fileRecord: options.fileRecord }; 
 	},
 	default5: function(options) { 
 		if (options.fileRecord.length > 5000000 || options.fileRecord.contentType != 'image/jpeg')
 			return null;
-		myLog('I am handling 2: '+options.fileRecord.filename);
+		myLog('I am handling 5: '+options.fileRecord.filename);
 		return { blob: options.blob, fileRecord: options.fileRecord }; 
 	},
 	size40x40: function(options) {
@@ -64,5 +64,11 @@ Filesystem.fileHandlers({
            });*/
 		myLog('I am handling: '+options.fileRecord.filename+' to...');
 		return { extension: 'bmp', blob: options.blob, fileRecord: options.fileRecord }; //or just 'options'...
+	},
+	defaultFailing4: function(options) { 
+		if (options.fileRecord.length > 5000000 || options.fileRecord.contentType != 'image/jpeg')
+			return null;
+		myLog('I am handling Fail: '+options.fileRecord.filename+' but failing');
+		return false; 
 	}
 });

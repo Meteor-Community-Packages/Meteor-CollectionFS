@@ -27,114 +27,208 @@
 // });
 //
 // Server:
-// on startup queListener spawned if needed by collectionFS - one queListener pr collectionFS
-// queListener spawns fileHandlers pr. item in fileHandlerQue as setTimeout(, 0) and delete item from que
-// if empty que then die and wait, spawn by interval
-// server sets .handledAt = Date.now(), .fileURL[]
+// on startup queueListener spawned if needed by collectionFS - one queueListener pr collectionFS
+// queueListener spawns fileHandlers pr. item in fileHandlerQue as setTimeout(, 0) and delete item from queue
+// if empty queue then die and wait, spawn by interval
+// server sets .handledAt = Date.now(), .fileHandler[]
 // fileHandlers die after ended
-// Filehandlers respect __filehandlersMax on server, set to 1 pr. default for throttling the server.
+// Filehandlers respect __filehandlers.MaxRunning on server, set to 1 pr. default for throttling the server.
 // 
 // Client:
 // When upload confirmed complete, set fs.files.complete and add _id to collectionFS.fileHandlerQue (wich triggers a worker at interval)
 // 
 
-//var queListener = new _queListener();
+//var queueListener = new _queueListener();
 
-// Maximum number of filehandlers allowed
-__filehandlersMax = 1;
-__filehandlersRunning = 0;
+var fs = npm.require('fs');
+var path = npm.require('path');
 
- _queListener = function(collectionFS) {
+
+ _queueListener = function(collectionFS) {
+	var self = this;
+	self.collectionFS = collectionFS;
+
+    // Init directory for collection
+	self.serverPath = path.join(__filehandlers.serverPath, self.collectionFS._name);  // Server path
+	self.pathURL = __filehandlers.url + '/' + self.collectionFS._name;   // Url path
+
+	if (!fs.existsSync(self.serverPath))
+		fs.mkdirSync(self.serverPath);
+
+	self.pathCreated = (!!fs.existsSync(self.serverPath));		
+
+	//Spawn worker:
+	Meteor.setTimeout(function() { self.checkQueue(); }, 0); //Initiate worker process
+
+};//EO queueListener
+
+_.extend(_queueListener.prototype, {
+	checkQueue: function() {
 		var self = this;
-		self.collectionFS = collectionFS;
-	    self.fs = npm.require('fs');
+		//check items in queue and init workers for conversion
+		if (self.collectionFS) {
+			if (self.collectionFS._fileHandlers) {
+				//ok got filehandler object, spawn worker?
+				if (__filehandlers.Running < __filehandlers.MaxRunning) {
+					__filehandlers.Running++;
 
-	    // Init directory for collection
-		self.path = __filehandlers.serverPath + '/' + self.collectionFS._name;  // Server path
-		self.pathURL = __filehandlers.url + '/' + self.collectionFS._name;   // Url path
+					// First, Try to find new unhandled files					
+					var fileRecord = self.collectionFS.findOne({ handledAt: null, complete: true }); //test sumChunk == countChunks in mongo?
 
-		if (!self.fs.existsSync(self.path))
-			self.fs.mkdirSync(self.path);
-
-		self.pathCreated = (!!self.fs.existsSync(self.path));		
-
-		//Spawn worker:
-		Meteor.setTimeout(function() { self.checkQue(); }, 0); //Initiate worker process
-
-	};//EO queListener
-
-	_.extend(_queListener.prototype, {
-		checkQue: function() {
-			var self = this;
-			//check items in que and init workers for conversion
-			if (self.collectionFS) {
-				if (self.collectionFS._fileHandlers) {
-					//ok got filehandler object, spawn worker?
-					if (__filehandlersRunning < __filehandlersMax) {
-						__filehandlersRunning++;
-						//Now, any news?					
-						var fileRecord = self.collectionFS.findOne({ handledAt: null, complete: true }); //test currentChunk == countChunks in mongo?
-
-						if (fileRecord) { //Handle file, spawn worker
-							self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
+					// Second, Try to find new filehandlers, not yet applied
+					if (!fileRecord) {
+						// Create a query array from filehandlers
+						var queryFilehandlersExists = [];
+						for (var func in self.collectionFS._fileHandlers) {
+							var queryExists = {};
+							queryExists['fileHandler.'+func] = { $exists: false };
+							queryFilehandlersExists.push(queryExists);
 						}
-						__filehandlersRunning--;
-					} // EO Filehandler
 
-					Meteor.setTimeout(function() { self.checkQue(); }, 1000); //Wait a second 1000	
-				} else {
-					Meteor.setTimeout(function() { self.checkQue(); }, 5000); //Wait 5 second 5000	
-				}
-			} //No collection?? cant go on..
-		}, //EO checkQue
+						//	Where one of the fileHandlers are missing
+						fileRecord = self.collectionFS.findOne({ $or: queryFilehandlersExists });
+					} // EO Try to find new filehandlers
 
-		workFileHandlers: function(fileRecord, fileHandlers) {
-			var self = this;
-			var fileURL = [];
-			//Retrive blob
-			var fileSize = ( fileRecord['len']||fileRecord['length']); //Due to Meteor issue
-			var blob = new Buffer(1*fileSize); //Allocate mem *1 due to Meteor issue
-			//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
-			var query = self.collectionFS.chunks.find({files_id: fileRecord._id}, { $sort: {n:1} });
+					// Last, Try to find failed filehanders
+					if (!fileRecord) {
+						// Create a query array from filehandlers
+						var queryFilehandlersFailed = [];
+						for (var func in self.collectionFS._fileHandlers) {
+							var queryFailed = {};
+							queryFailed['fileHandler.' + func + '.failed'] = { $exists: true, $lt: __filehandlers.MaxFailes };
+							queryFilehandlersFailed.push(queryFailed);
+						}
 
-			if (query.count() == 0) {
-				// Somethings wrong, we'll update and skip 
+						//	Where the fileHandler contains an element with a failed set less than __filehandlers.MaxFailes
+						fileRecord = self.collectionFS.findOne({ $or: queryFilehandlersFailed });
+					}
+
+					// Handle file, spawn worker
+					if (fileRecord) {					
+						self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
+						__filehandlers._AllowFailesRetryLastTime = Date.now();
+					} else {
+						// We shouldn't get bored, are we going to retry failed filehandlers or sleep a bit or eight?
+						if (__filehandlers.AllowFailesRetry ) {
+							var waitedEnough = ((__filehandlers._AllowFailesRetryLastTime+__filehandlers.AllowFailesRetry) < Date.now());
+							// We wait a period before retrying
+							if ( waitedEnough )
+								for (var func in self.collectionFS._fileHandlers) {
+									// reset failed to 1 on all failed filehandlers, triggering a restart of failed retry
+									var queryFailed = {};
+									var querySetFailed = {};
+									queryFailed['fileHandler.' + func + '.failed'] = { $exists: true };
+									querySetFailed['fileHandler.' + func + '.failed'] = 1;
+									// We do reset pr. filehandler
+									self.collectionFS.update(queryFailed, { $set: querySetFailed });
+								}
+						} // EO restart handling failed handlers?
+					} // EO No fileRecord found
+
+					__filehandlers.Running--;
+				} // EO Filehandler
+
+				if (__filehandlers.waitBeforeCheckingQueue)
+					Meteor.setTimeout(function() { self.checkQueue(); }, __filehandlers.waitBeforeCheckingQueue); //Wait a second 1000	
+			} else {
+				if (__filehandlers.waitBeforeCheckingQueueWhenNoFilehandlers)
+					Meteor.setTimeout(function() { self.checkQueue(); }, __filehandlers.waitBeforeCheckingQueueWhenNoFilehandlers); //Wait 5 second 5000	
+			}
+		} //No collection?? cant go on..
+	}, //EO checkQueue
+
+	workFileHandlers: function(fileRecord, fileHandlers) {
+		var self = this;
+		//Retrive blob
+		var fileSize = +( fileRecord['len']||fileRecord['length']); //Due to Meteor issue, backwards compabillity, TODO: deprecate
+		//var fileSize = +fileRecord['length']; //Add '+' due to Meteor issue
+		
+		var blob = new Buffer(fileSize); //Allocate mem
+		//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
+		var query = self.collectionFS.chunks.find({ files_id: fileRecord._id}, { $sort: {n: 1} });
+
+		if (query.count() == 0) {
+			// TODO: Implement serverside fetch remote file
+			// This could be triggered if client requests server to go fetch to file...
+			// We should check if remoteUrl isset
+			// Check if we should set headers for retrieving file? eg. login
+			// Maybe introduce "remoteFilehandlers" for fetching remote files?
+			
+			if (fileRecord.remoteUrl) {
+				//     goFetchRemoteFileToDatabase - use the server side storeFile
+				throw new Error('Serverside file fetching not implemented');
+			} else {
+				// Guess we got an error?, we'll update and skip 
 				self.collectionFS.files.update({ _id: fileRecord._id }, {
-					$push: { fileURL: { error: 'Filehandlers failed, no chunks in file' } },
+					$push: { fileHandler: { error: 'Filehandlers failed, no chunks in file' } },
 					$set: { handledAt: Date.now() }
 					}); //EO Update
-				return;
 			}
-			query.rewind();
-			
-			query.forEach(function(chunk){
-				if (! chunk.data){
-					// Somethings wrong, we'll update and skip 
-					self.collectionFS.files.update({ _id: fileRecord._id }, {
-						$push: { fileURL: { error: 'Filehandlers failed, empty chunk data' } },
-						$set: { handledAt: Date.now() }
-						}); //EO Update
-					return;
-				}
 
-				for (var i=0; i < chunk.data.length; i++) {
-					blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
-					//blob.writeUInt8( ((chunk.n * fileRecord.chunkSize) + i), chunk.data.charCodeAt(i) );
-				}
-			}); //EO find chunks
+			return;
+		} // EO No chunks in file
 
-			//do some work, execute user defined functions
-			for (var func in fileHandlers) {
-				//TODO: check if func in fileRecord.fileURL...if so then skip 
-				//if (func in fileRecord.fileURL[].func) next?
+		query.rewind();
+		
+		// Create the file blob for the filehandlers to use
+		query.forEach(function(chunk){
+			if (! chunk.data) {
+				// Somethings wrong, we'll throw an error
+				throw new Error('Filehandlers for file id: ' + fileRecord._id + ' got empty data chunk.n:' + chunk.n);
+			}
+			// Finally do the data appending
+			for (var i = 0; i < chunk.data.length; i++) {
+				blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
+				//blob.writeUInt8( ((chunk.n * fileRecord.chunkSize) + i), chunk.data.charCodeAt(i) );
+			}
+		}); //EO find chunks
 
-				// Add a helper for the filehandlers
+		//do some work, execute user defined functions
+		for (var func in fileHandlers) {
+
+			// Is filehandler allready found?
+			var filehandlerFound = (fileRecord.fileHandler && fileRecord.fileHandler[func]);
+
+			// Set sum of filehandler failures - if not found the default to 0
+			var sumFailes = (filehandlerFound && fileRecord.fileHandler[func].failed)?
+							fileRecord.fileHandler[func].failed : 0;
+
+			// if not filehandler or filehandler found in fileRecord.fileHandlers then check if failed
+			if (! filehandlerFound || ( sumFailes && sumFailes < __filehandlers.MaxFailes) ) {
+
+				// destination - a helper for the filehandlers
+				// [newExtension] is optional and with/without a leading '.'
+				// Returns
+				// 		serverFilename - where the filehandler can write the file if wanted
+				// 		fileData - contains future url reference and extension for the database
+				// 		
 				var destination = function(newExtension) {
-					var extension = (newExtension)? newExtension : fileRecord.filename.substr(-3).toLowerCase();
-					var myFilename = fileRecord._id+'_'+func+'.'+extension;
-					var myPathURL = self.pathURL;
+					// Make newExtension optional, fallback to fileRecord.filename
+					var extension = (newExtension)? newExtension : path.extname(fileRecord.filename);
+					// Remove optional leading '.' from extension name
+					extension = (extension.substr(0, 1) == '.')? extension.substr(1) : extension;
+					// Construct filename from '_id' filehandler name and extension
+					var myFilename = fileRecord._id + '_' + func + '.' + extension;
+					// Construct url TODO: Should URL encode (could cause trouble in the remove observer)
+					var myUrl = self.pathURL + '/' + myFilename;
 
-					return { serverPath: self.path+'/'+myFilename, fileURL: { path: myPathURL+'/'+myFilename, extension: extension} };
+					return { 
+						serverFilename: path.join(self.serverPath, myFilename), 
+						fileData: { 
+							url: myUrl,							 
+							extension: extension.toLowerCase()
+						} 
+					};
+				}; // EO destination
+
+				// We normalize filehandler data preparing it for the database
+				// func is the filehandler eg. "resize256"
+				// fileData is the data to return from the file handler, eg. url and extension
+				var normalizeFilehandle = function(func, fileData) {
+					var myData = {};
+					myData['fileHandler.'+func] = (fileData)?fileData:{};
+					myData['fileHandler.'+func].createdAt = Date.now();
+					return myData;
 				};
 
 				var result = false;
@@ -147,52 +241,55 @@ __filehandlersRunning = 0;
 				if (result) { //A result means do something for user defined function...
 					//Save on filesystem
 					if (result.blob) {
-						//save the file and update fileURL
-						var extension = (result.extension)?result.extension:result.fileRecord.filename.substr(-3).toLowerCase();
-						var myFilename = result.fileRecord._id+'_'+func+'.'+extension;
-						var myPathURL = self.pathURL;
+						//save the file and update fileHandler
 	
-						self.fs.writeFileSync(self.path+'/'+myFilename, result.blob, 'binary')
-						//Add to fileURL array
-						if (self.fs.existsSync(self.path+'/'+myFilename)) {
-							self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-								fileURL: { path: myPathURL+'/'+myFilename, extension: extension, createdAt: Date.now(), func: func }
-							}}); //EO Update
-						} //EO does exist						
+						fs.writeFileSync(destination(result.extension).serverFilename, result.blob, 'binary')
+						//Add to fileHandler array
+						if (fs.existsSync(destination(result.extension).serverFilename)) {
+							self.collectionFS.files.update({ _id: fileRecord._id }, { 
+								$set: normalizeFilehandle(func, destination(result.extension).fileData)
+							}); //EO Update
+						} else {
+							// File could not be written to filesystem? Don't try this filehandler again
+							self.collectionFS.files.update({ _id: fileRecord._id }, {
+								$set: normalizeFilehandle(func, { error: 'Filehandler could not write to filesystem' })
+							}); //EO Update
+
+							throw new Error('Filehandler "' + func + '" could not write to filesystem');
+						}
+
 					} else {
-						//no blob? Just save result as an option?
-						result.createdAt = Date.now();
-						result.func = func;
-						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-							fileURL: result
-						}}); //EO Update
+
+						//no blob? Just save result as filehandler data
+						self.collectionFS.files.update({ _id: fileRecord._id }, {
+							$set: normalizeFilehandle(func, result)
+						}); //EO Update
+
 					} //EO no blob
-				} else {  //Otherwise guess user did something else eg. upload to remote server
-					if (result === null) { //if null returned then ok, but if false then error - handled by crawler 
-						self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-							fileURL: { createdAt: Date.now(), func: func }
-						}}); //EO Update
-					} else {
-						//Do nothing, handled by crawler
-					//	self.collectionFS.files.update({ _id: fileRecord._id }, { $push: { 
-					//		fileURL: { error: 'User function '+func+' failed' }
-					//	}}); //EO Update
+				} else {  //Otherwise guess filehandler wants something else?
+					if (result === null) {
+
+						//if null returned then ok, dont run again - we update the db
+						self.collectionFS.files.update({ _id: fileRecord._id }, {
+							$set: normalizeFilehandle(func)
+						}); //EO Update
+
+					} else { // But if false then we got an error - handled by the queue		
+
+						// Do nothing, try again sometime later defined by config policy
+						self.collectionFS.files.update({ _id: fileRecord._id }, {
+							$set: normalizeFilehandle(func, { failed: (sumFailes+1) })
+						}); //EO Update
+				
 					}//EO filehandling failed
 				} //EO no result
-				//console.log('function: '+func);
-			} //EO Loop through fileHandler functions
 
-			//TODO: Set handledAt: Date.Now() on files //maybe in the beginning of function?
-	        //Update fileURL in db
-	        self.collectionFS.files.update({ _id: fileRecord._id }, { $set: { handledAt: Date.now() } });
-	        //TODO: maybe make some recovery / try again if a user defined handler fails - or force rerun from date. I'm thinking maybe just at followup interval function crawling a collection finding errors...
+			} // EO if allready found or max failures reached
+		} //EO Loop through fileHandler functions
 
-		}, //EO
-		crawlAndRunFailedHandlersAgain: function() {
-			//Do something smart, check up if fileURL contains createdAt && func = handlers (could be a new one that should be used on all or one that failed)
-			//When fix error delete error from fileURL
-			//self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
-			//Repeat
-		}
-	});//EO queListener extend
+        //Update fileHandler in db
+        self.collectionFS.files.update({ _id: fileRecord._id }, { $set: { handledAt: Date.now() } });
+	} //EO workFileHandlers
+
+});//EO queueListener extend
 
