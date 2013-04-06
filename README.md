@@ -215,7 +215,7 @@ options: {
     metadata : (options) ? options : null,  // Custom data
     /* TODO:
     startedAt: null,          // Start timer for upload start
-    endedAt: null,          // Stop timer for upload ended
+    endedAt: null,            // Stop timer for upload ended
     */
   },
   destination: function, // Check below
@@ -231,7 +231,7 @@ options: {
 Object returned:
 ```js
   dest == {
-    serverFilename: '/absolute/path/uniqname.jpg', // Unix based
+    serverFilename: '/absolute/path/uniqname.jpg', // Unix or windows based
     fileData: {
       url: '/web/url/uniqname.jpg',
       extension: 'jpg'
