@@ -15,7 +15,7 @@ serverConsole = {
 	// Set true to get all logs from server start
 	var getAllLogs = false;
 	// Enable / disable logging
-	var debug = false;
+	var debug = true;
 
 	if (Meteor.isClient && debug) {
 		Meteor.call('getTime', function(error, result) {
@@ -47,7 +47,7 @@ serverConsole = {
 		Meteor.methods({
 			getTime: function() {
 				serverConsole.log('getTime');
-				return (getAllLogs)? 0 : Date.now()-6000; // Just add a little slack
+				return (getAllLogs)? 0 : Date.now()-20000; // Just add a little slack
 			}
 		});
 	}

@@ -19,20 +19,79 @@ if (typeof Handlebars !== 'undefined') {
   Handlebars.registerHelper('getSession', function (key) {
     return Session.get(key);
   });
+
+  Handlebars.registerHelper('isSelected', function (a, b) {
+    return (a == b)?' selected': '';
+  });
+
+  Handlebars.registerHelper('isChecked', function (a, b) {
+    return (a == b)?' checked': '';
+  });
+
+  Handlebars.registerHelper('isEqual', function (a, b) {
+    return (a == b);
+  });
+
+  Handlebars.registerHelper('orEqual', function (a, b, c, d) {
+    return ( a == b || a == c || a == d);
+  });
+
+
 }
 
 Template.queueControl.events({
   'change .fileUploader': function (e) {
-    var files = e.target.files;
-    for (var i = 0, f; f = files[i]; i++) {
-      Filesystem.storeFile(f);
-    }
+    uploadFiles(e.target.files, Filesystem); // Test
   },
   'click .btnPause': function(e) {
     Filesystem.queue.pause();
   },
   'click .btnResume': function(e) {
     Filesystem.queue.resume();
+  },
+  'click .btnResetFilehandlers': function(e, temp) {
+    // Reset view to watch reset in action
+    Session.set('filter', { completed: true, reversed: false, owner: false, sortBy: 'handledAt', limit: 10 });
+    Meteor.call('resetFilehandlers', function() { /* NOP */});
+  },
+  'change #limit': function(e, temp) {
+    var value = temp.find('#limit').value;
+    if (value == +value) {
+      var filter = Session.get('filter');
+      filter.limit = value;
+      Session.set('filter', filter);
+    }
+  },
+  'change #completed': function(e, temp) {
+    var value = temp.find('#completed').value;
+    var filter = Session.get('filter');
+    filter.completed = '';
+    if ( value == '1') filter.completed = true;
+    if ( value == '0') filter.completed = false;
+    Session.set('filter', filter);
+  },
+  'change #owner': function(e, temp) {
+    var value = temp.find('#owner').value;
+    var filter = Session.get('filter');
+    filter.owner = '';
+    if ( value == '1') filter.owner = true;
+    if ( value == '0') filter.owner = false;
+    Session.set('filter', filter);
+  },
+  'change #reversed': function(e, temp) {
+    var value = temp.find('#reversed').checked;
+    var filter = Session.get('filter');
+    if ( value == true) filter.reversed = true;
+    if ( value == false) filter.reversed = false;
+    Session.set('filter', filter);    
+  },
+  'change #sortby': function(e, temp) {
+    var value = temp.find('#sortby').value;
+    if (value == ''+value) {
+      var filter = Session.get('filter');
+      filter.sortBy = value;
+      Session.set('filter', filter);
+    }
   }
 });
 
@@ -41,6 +100,16 @@ Template.queueControl.helpers({
     return Filesystem.queue.isPaused();
   }
 });
+
+Template.dropzone.rendered = function() {
+  // We set the #dropzone element to be a drop zone for filesystem files
+  // TODO: Check if listeners should be removed by ".destroyed"
+  dropfile('dropzone', Filesystem);
+};
+
+Template.dropzone.destroyed = function() {
+};
+
 
 Template.fileTable.events({
   'change .btnResumeFile': function(e) {
@@ -68,7 +137,7 @@ Template.fileTable.events({
       Filesystem.remove(this._id);
   },
   'click .showImage': function(e) {
-    function extrudeFilehandler(url) {
+    function extractFilehandler(url) {
       // Could prop do something clever with reg.ex
       var splitString = url.split('/');
       splitString = splitString[splitString.length-1].split('.')[0].split('_');
@@ -79,14 +148,23 @@ Template.fileTable.events({
     }
 
     document.getElementById('previewImage').src = this.url;
-    document.getElementById('myModalLabel').innerHTML = 'By fileHandler "'+extrudeFilehandler(this.url)+'"';
+    document.getElementById('myModalLabel').innerHTML = 'By fileHandler "'+extractFilehandler(this.url)+'"';
     document.getElementById('description').innerHTML = 'Url: <a href="'+this.url+'">'+this.url+'</a>';
   }
 });
 
 Template.fileTable.helpers({
   Files: function() {
-    return Filesystem.find({}, { sort: { uploadDate:-1 } });
+    var filterOptions = {};
+    var filter = Session.get('filter');
+
+    if ( filter.sortBy && filter.sortBy == ''+filter.sortBy && filter.sortBy != '') {
+      var query = {};
+      query[filter.sortBy] = (filter.reversed)? 1 : -1;
+      filterOptions.sort = query;
+    }
+
+    return Filesystem.find({}, filterOptions); // We have to sort on client to..
   },
   isPaused: function() {
     return Filesystem.queue.isPaused();

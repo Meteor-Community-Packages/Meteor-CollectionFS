@@ -86,7 +86,9 @@ _.extend(_queueListener.prototype, {
 						}
 
 						//	Where one of the fileHandlers are missing
-						fileRecord = self.collectionFS.findOne({ complete: true, $or: queryFilehandlersExists });
+						fileRecord = self.collectionFS.findOne({ complete: true, 
+																 $or: queryFilehandlersExists, 
+																 'fileHandler.error': { $exists: false } });
 					} // EO Try to find new filehandlers
 
 					// Last, Try to find failed filehanders
@@ -95,12 +97,15 @@ _.extend(_queueListener.prototype, {
 						var queryFilehandlersFailed = [];
 						for (var func in self.collectionFS._fileHandlers) {
 							var queryFailed = {};
-							queryFailed['fileHandler.' + func + '.failed'] = { $exists: true, $lt: __filehandlers.MaxFailes };
+							queryFailed['fileHandler.' + func + '.failed'] = { $exists: true, 
+																			   $lt: __filehandlers.MaxFailes, 
+																			   'fileHandler.error': { $exists: false } };
 							queryFilehandlersFailed.push(queryFailed);
 						}
 
 						//	Where the fileHandler contains an element with a failed set less than __filehandlers.MaxFailes
-						fileRecord = self.collectionFS.findOne({ complete: true, $or: queryFilehandlersFailed });
+						fileRecord = self.collectionFS.findOne({ complete: true, 
+																 $or: queryFilehandlersFailed });
 					}
 
 					// Handle file, spawn worker
@@ -140,12 +145,11 @@ _.extend(_queueListener.prototype, {
 	workFileHandlers: function(fileRecord, fileHandlers) {
 		var self = this;
 		//Retrive blob
-		var fileSize = +( fileRecord['len']||fileRecord['length']); //Due to Meteor issue, backwards compabillity, TODO: deprecate
-		//var fileSize = +fileRecord['length']; //Add '+' due to Meteor issue
-		
-		var blob = new Buffer(fileSize); //Allocate mem
+		var fileSize = +fileRecord['length']; //+ Due to Meteor issue
+		//Allocate mem
+		var blob = new Buffer(fileSize);
 		//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
-		var query = self.collectionFS.chunks.find({ files_id: fileRecord._id}, { $sort: {n: 1} });
+		var query = self.collectionFS.chunks.find({ files_id: fileRecord._id}, { sort: {n: 1} }); // Deleted $sort
 
 		if (query.count() == 0) {
 			// TODO: Implement serverside fetch remote file
@@ -157,15 +161,14 @@ _.extend(_queueListener.prototype, {
 			if (fileRecord.remoteUrl) {
 				//     goFetchRemoteFileToDatabase - use the server side storeFile
 				throw new Error('Serverside file fetching not implemented');
+				return;
 			} else {
-				// Guess we got an error?, we'll update and skip 
-				self.collectionFS.files.update({ _id: fileRecord._id }, {
-					$push: { fileHandler: { error: 'Filehandlers failed, no chunks in file' } },
-					$set: { handledAt: Date.now() }
-					}); //EO Update
+				// A completed file with no chunks or a remoteUrl set is corrupted, remove
+				if ( fileRecord.complete && fileRecord._id )
+					self.collectionFS.remove({ _id: fileRecord._id });
+				return;
 			}
 
-			return;
 		} // EO No chunks in file
 
 		query.rewind();
@@ -192,7 +195,6 @@ _.extend(_queueListener.prototype, {
 			// Set sum of filehandler failures - if not found the default to 0
 			var sumFailes = (filehandlerFound && fileRecord.fileHandler[func].failed)?
 							fileRecord.fileHandler[func].failed : 0;
-
 			// if not filehandler or filehandler found in fileRecord.fileHandlers then check if failed
 			if (! filehandlerFound || ( sumFailes && sumFailes < __filehandlers.MaxFailes) ) {
 

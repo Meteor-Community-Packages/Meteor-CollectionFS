@@ -68,37 +68,93 @@ Filesystem.fileHandlers({
   </table> 
 </template>
 
+<template name="dropzone">
+  <div id="dropzone" class="dropzone">
+    <div style="text-align: center; color: gray;">Drop file to upload</div>
+  </div>
+</template>
+
 <template name="queueControl">
   <table class="table-bordered" width="100%">
     <tr>
-      <td colspan="2">
-        <br/>
-        <h3>Select file(s) to upload:</h3>
+      <td colspan="1" style="vertical-align: top;">
+        <h4>Upload file</h4>
         <input name="files" type="file" class="fileUploader" multiple>
+      </td><td colspan="2">
+        {{> dropzone}}
         <br/>
       </td>
     </tr>
     <tr>
-      <td>
+      <td style="vertical-align: top;">
+        <h4>Queue</h4>
         {{#if isPaused}}
           <a href="#" class="btn btnResume"><i class="icon-play"></i>Resume</a>
         {{else}}
           <a href="#" class="btn btnPause"><i class="icon-pause"></i>Pause</a>
         {{/if}}
+        <h4>Reset filehandlers</h4>
+        <a href="#" class="btn btn-danger btnResetFilehandlers"><i class="icon-refresh icon-white"></i>Reset</a><br/>
+        <small>This will trigger a complete rerun of filehandlers</small>
       </td>
       <td>
-
+        {{#with getSession 'filter'}}
+          <h4>Filter options</h4>
+          <select id="sortby" class=".sortby">
+            <option value=""{{isSelected sortBy ''}}>No sorting</option>
+            <option value="uploadDate"{{isSelected sortBy 'uploadDate'}}>Sort by uploadDate</option>
+            <option value="filename"{{isSelected sortBy 'filename'}}>Sort by filename</option>
+            <option value="handledAt"{{isSelected sortBy 'handledAt'}}>Sort by handledAt</option>
+            <option value="complete"{{isSelected sortBy 'complete'}}>Sort by complete</option>
+            <option value="currentChunk"{{isSelected sortBy 'currentChunk'}}>Sort by currentChunk</option>
+            <option value="countChunks"{{isSelected sortBy 'countChunks'}}>Sort by countChunks</option>
+            <option value="numChunks"{{isSelected sortBy 'numChunks'}}>Sort by numChunks</option>
+            <option value="length"{{isSelected sortBy 'length'}}>Sort by length</option>
+            <option value="contentType"{{isSelected sortBy 'contentType'}}>Sort by contentType</option>
+            <option value="owner"{{isSelected sortBy 'owner'}}>Sort by owner id</option>
+            <option value="_id"{{isSelected sortBy '_id'}}>Sort by hash id</option>
+          </select>
+          <input id="reversed" type="checkbox"{{isChecked reversed true}}/> Reverse
+          <br/>
+          <select id="limit" class=".limit">
+            <option value="0"{{isSelected limit 0}}>No limit</option>
+            <option value="5"{{isSelected limit 5}}>Limit to 5</option>
+            <option value="10"{{isSelected limit 10}}>Limit to 10</option>
+            <option value="25"{{isSelected limit 25}}>Limit to 25</option>
+            <option value="50"{{isSelected limit 50}}>Limit to 50</option>
+          </select>
+        {{/with}}
+        </td><td>
+        {{#with getSession 'filter'}}
+          <h4>Show</h4>
+          <select id="owner" class=".owner">
+            <option value="0"{{isSelected owner false}}>All files</option>
+            <option value="1"{{isSelected owner true}}>Only my files</option>
+          </select>
+          <br/>
+          <select id="completed" class=".completed">
+            <option value=""{{isSelected completed ''}}>All</option>
+            <option value="1"{{isSelected completed true}}>Completed</option>
+            <option value="0"{{isSelected completed flase}}>Uncompleted</option>
+          </select>
+        {{/with}}
       </td>
    </tr>
   </table> 
+  <i>There are 5 test filehandlers, each just makes a copy of db file onto the filesystem. In this demo the custom rule is: 4 of them only run if size not bigger than 5Mb and mime-type is 'image/jpeg'</i><br/>
 </template>
 
 <template name="imageList">
   {{#each fileHandler}}
     {{#if url}}
-      {{#constant}}
-        <a href="#myModal" data-toggle="modal" class="showImage"><img src="{{this.url}}" alt="{{filename}}" width="20px"/></a>
-      {{/constant}}
+      {{#if orEqual extension 'jpg' 'jpeg'}}
+        {{#constant}}
+          <a href="#myModal" data-toggle="modal" class="showImage"><img src="{{../../../../fileHandler.default1.url}}"
+            title="{{../../../../filename}}" width="20px"/></a>
+        {{/constant}}
+      {{else}}
+          <a href="#myModal" data-toggle="modal" class="btn showImage" title="{{../../../filename}}">Open</a>
+      {{/if}}
     {{/if}}
   {{else}}
     No cache
@@ -108,7 +164,7 @@ Filesystem.fileHandlers({
 <template name="fileTable">
   <table class="table-hover table-bordered" width="100%">
     <tr>
-      <th>From url <i>(5 images)</i></th><th>Action</th><th>Size</th><th>Status</th><th>Name</th><th>Progress</th><th>Owner</th>
+      <th>Filehandlers<br/><i><small>http</small></i></th><th>Action<br/><i><small>ddp</small></i></th><th>Size</th><th>Status</th><th>Name</th><th>Progress</th><th>Owner</th>
     </tr>
 
     {{#each Files}}

@@ -14,6 +14,7 @@ CollectionFS = function(name, options) {
 	self._name = name;
 	self.files = new Meteor.Collection(self._name+'.files'); 	// TODO: Add change listener?
 	self.chunks = new Meteor.Collection(self._name+'.chunks');
+	self.queue = new _queueCollectionFS(name);
 	self._fileHandlers = null; 									// Set by function fileHandlers({});
 	var methodFunc = {};										// Server methods
 	
@@ -92,7 +93,7 @@ CollectionFS = function(name, options) {
 			if (fileRecord.currentChunk == fileRecord.countChunks) { //Ok
 				for (var cnr = 0; cnr < fileRecord.countChunks; cnr++) {
 					//Really? loop though all chunks? cant mongo or gridFS do this better? TODO: Readup specs/docs
-					if (!self.chunks.findOne({ n: cnr}, { fields: { data:0 }})) {
+					if (!self.chunks.findOne({ files_id: fileRecord._id, n: cnr}, { fields: { data:0 }})) {
 						//File error - missing chunks..
 						return cnr; //Return cnr that is missing
 					}
@@ -107,36 +108,34 @@ CollectionFS = function(name, options) {
 		}
 	}; //EO getMissingChunk
 
-	Meteor.methods(methodFunc); //EO Meteor.methods
+	// Add object specific server methods
+	Meteor.methods(methodFunc);
 
 	//Init queueListener for fileHandling at the server
 	Meteor.startup(function () {
-		//Ensure index on files_id and n
+		//Ensure chunks index on files_id and n
 		self.chunks._ensureIndex({ files_id: 1, n: 1 }, { unique: true });
 		//Spawn queue listener
 		self.queueListener = new _queueListener(self);
-	});
 
-}; //EO collectionFS
-
-_.extend(CollectionFS.prototype, {
-	find: function(arguments, options) { 
-		var self = this;
-	    var query = self.files.find(arguments, options);
-	    var handle = query.observe({
+		// Add observer removed
+	    self.files.find(arguments, options).observe({
 	        removed: function(doc) {
-	        	//console.log('Removing: '+doc.filename);
-	            // remove all chunks
-	            self.chunks.remove({ files_id: doc._id });
-	            // remove all files related *( delete each fileUrl path begins with '/' )*
-	            if (doc.fileHandler.length > 0) {
-
-		            _.each(doc.fileHandler, function(fileHandler) {
-			        	//console.log('Remove cache: '+fileHandler.path);
+	            // remove all chunks, make sure _id isset, don't mess up
+	            if (doc._id)
+	            	self.chunks.remove({ files_id: doc._id });
+	            // Check to se if any filehandlers worked the file
+	            if (Object.keys(doc.fileHandler).length > 0) {
+	            	// Walk through the filehandlers
+		            _.each(doc.fileHandler, function(fileHandler, func) {
+		            	// If url isset and beginning with '/' we have a local file?
 		            	if (fileHandler.url && fileHandler.url.substr(0, 1) == '/') {
+		            		// Reconstruct local absolute path to file
 		            		var myServerPath = path.join(__filehandlers.rootDir, fileHandler.url.substr(1));
+		            		// If file exists then
 		            		if (!!fs.existsSync(myServerPath) ){
 			            		try {
+			            			// Remove the file
 			            			fs.unlinkSync(myServerPath);
 			            		} catch(e) { /* NOP */ }
 			            	} // EO fileexists
@@ -145,16 +144,15 @@ _.extend(CollectionFS.prototype, {
 		        } // EO fileHandler's found
 	        } // EO removed
 	    }); // EO Observer
-        handle.stop;
-	    return query;
-	},
-	findOne: function(arguments, options) { return this.files.findOne(arguments, options); },
-	update: function(selector, modifier, options) { return this.files.update(selector, modifier, options); },
-	remove: function(selector) { return this.files.remove(selector); },
-	allow: function(arguments) { return this.files.allow(arguments); },
-	deny: function(arguments) { return this.files.deny(arguments); },
-	fileHandlers: function(options) {
-		var self = this;
-		self._fileHandlers = options; // fileHandlers({ handler['name']: function() {}, ... });
-	}
-});
+
+	}); // Startup
+
+}; //EO collectionFS
+
+
+_queueCollectionFS = function(name) {
+	var self = this;
+	self._name = name;
+};
+
+

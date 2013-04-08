@@ -3,6 +3,18 @@ body {
 	/*padding-top: 40px;*/
 }
 
+.dropzone {
+	border: 2px dashed silver; 
+	height: 5em;
+	padding-top: 3em;
+
+	-webkit-border-radius: 8px;
+	-moz-border-radius: 8px;
+	-ms-border-radius: 8px;
+	-o-border-radius: 8px;
+	border-radius: 8px;
+}
+
 #login-buttons {
 	float: right;
 	padding: 10px 15px 10px;
