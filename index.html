@@ -71,8 +71,8 @@ Using Meteor and gridFS principles we get:</p>
 <span class="o">|</span>      <span class="o">|</span>     <span class="o">|-------</span> <span class="nx">n</span><span class="p">.</span>  <span class="o">&lt;-|</span> <span class="nx">$binary</span> <span class="nx">data</span>
 <span class="o">|</span>      <span class="o">|</span>     <span class="err">#####</span>
 <span class="o">|</span>      <span class="o">|</span>       <span class="o">|</span>
-<span class="o">|</span>      <span class="nx">Mongodb</span><span class="o">-|&lt;-</span> <span class="nx">Server</span> <span class="o">&lt;-|</span> <span class="nx">TODO</span><span class="o">:</span> <span class="o">*</span><span class="nx">Server</span> <span class="nx">can</span> <span class="nx">add</span> <span class="nx">files</span> <span class="nx">pr</span><span class="p">.</span> <span class="nx">auto</span>
-<span class="o">|</span>      <span class="p">(</span><span class="nx">gridFS</span><span class="p">)</span>             <span class="o">|</span> <span class="nx">or</span> <span class="nx">on</span> <span class="nx">request</span> <span class="nx">from</span> <span class="nx">client</span><span class="o">*</span>
+<span class="o">|</span>      <span class="nx">Mongodb</span><span class="o">-|&lt;-</span> <span class="nx">Server</span> <span class="o">&lt;-|</span> <span class="nx">Server</span> <span class="nx">can</span> <span class="nx">add</span> <span class="nx">files</span> <span class="nx">pr</span><span class="p">.</span> <span class="nx">auto</span>
+<span class="o">|</span>      <span class="p">(</span><span class="nx">gridFS</span><span class="p">)</span>             <span class="o">|</span> <span class="nx">or</span> <span class="nx">on</span> <span class="nx">request</span> <span class="nx">from</span> <span class="nx">client</span>
 <span class="o">|</span>          <span class="o">|</span>
 <span class="o">|</span>          <span class="o">|</span><span class="nx">_______</span><span class="err">##</span>     <span class="o">&lt;-|</span> <span class="nx">Filehandlers</span> <span class="nx">running</span> <span class="nx">autonom</span> <span class="nx">scanning</span>
 <span class="o">|</span>                   <span class="o">|</span>       <span class="o">|</span> <span class="k">new</span> <span class="nx">files</span> <span class="nx">to</span> <span class="nx">handle</span><span class="p">,</span> <span class="k">new</span> <span class="nx">filehandlers</span><span class="p">,</span>
@@ -238,6 +238,36 @@ Using Meteor and gridFS principles we get:</p>
 </pre></div>
 
 <p><em>There are some in the works for <code>widgets</code> / <code>components</code> eg. gui elements for uploading files, ex. via drag &amp; drop</em></p>
+
+<h4>4. Store a file serverside</h4>
+
+<div class="highlight"><pre><span class="kd">var</span> <span class="nx">myText</span> <span class="o">=</span> <span class="s1">'Hello world, I wrote this..:)'</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">buffer</span> <span class="o">=</span> <span class="nx">Buffer</span><span class="p">(</span><span class="nx">myText</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">myText</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="nx">buffer</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">myText</span><span class="p">.</span><span class="nx">charCodeAt</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
+
+<span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">storeBuffer</span><span class="p">(</span><span class="s1">'My server uploaded file.txt'</span><span class="p">,</span> <span class="nx">buffer</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="c1">// Set a contentType (optional)</span>
+  <span class="nx">contentType</span><span class="o">:</span> <span class="s1">'text/plain'</span><span class="p">,</span>
+  <span class="c1">// Set a user id (optional)</span>
+  <span class="nx">owner</span><span class="o">:</span> <span class="s1">'WAaPHfyfgHGaeJ5kK'</span><span class="p">,</span>
+  <span class="c1">// Stop live update of progress (optional default to false)     </span>
+  <span class="nx">noProgress</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="c1">// Attach custom data to the file  </span>
+  <span class="nx">metadata</span><span class="o">:</span> <span class="p">{</span> <span class="nx">text</span><span class="o">:</span> <span class="s1">'some stuff'</span> <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p><em>A rough example to illustrate the api</em></p>
+
+<h4>5. Retrieve a file serverside</h4>
+
+<div class="highlight"><pre><span class="kd">var</span> <span class="nx">blob</span> <span class="o">=</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">retrieveBuffer</span><span class="p">(</span><span class="nx">fileId</span><span class="p">);</span> <span class="c1">// Returns a Buffer</span>
+
+<span class="c1">// Get additional info from the file record</span>
+<span class="kd">var</span> <span class="nx">fileRecord</span> <span class="o">=</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">findOne</span><span class="p">(</span><span class="nx">fileId</span><span class="p">);</span>
+</pre></div>
 
 <h3>Create server cache/versions of files and get an url reference</h3>
 
