@@ -29,8 +29,8 @@ Design overview:
 |      |     |------- n.  <-| $binary data
 |      |     #####
 |      |       |
-|      Mongodb-|<- Server <-| TODO: *Server can add files pr. auto
-|      (gridFS)             | or on request from client*
+|      Mongodb-|<- Server <-| Server can add files pr. auto
+|      (gridFS)             | or on request from client
 |          |
 |          |_______##     <-| Filehandlers running autonom scanning
 |                   |       | new files to handle, new filehandlers,
@@ -185,6 +185,35 @@ Design overview:
     });
 ```
 *There are some in the works for `widgets` / `components` eg. gui elements for uploading files, ex. via drag & drop*
+
+####4. Store a file serverside
+```js
+var myText = 'Hello world, I wrote this..:)';
+var buffer = Buffer(myText.length);
+
+for (var i = 0; i < myText.length; i++)
+  buffer[i] = myText.charCodeAt(i);
+
+ContactsFS.storeBuffer('My server uploaded file.txt', buffer, { 
+  // Set a contentType (optional)
+  contentType: 'text/plain',
+  // Set a user id (optional)
+  owner: 'WAaPHfyfgHGaeJ5kK',
+  // Stop live update of progress (optional default to false)     
+  noProgress: true,
+  // Attach custom data to the file  
+  metadata: { text: 'some stuff' }
+});
+```
+*A rough example to illustrate the api*
+
+####5. Retrieve a file serverside
+```js
+var blob = ContactsFS.retrieveBuffer(fileId); // Returns a Buffer
+
+// Get additional info from the file record
+var fileRecord = ContactsFS.findOne(fileId);
+```
 
 ###Create server cache/versions of files and get an url reference
 Filehandlers are serverside functions that makes caching versions easier. The functions are run and handled a file record and a blob / ```Buffer``` containing all the bytes.

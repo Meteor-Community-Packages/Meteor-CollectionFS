@@ -28,10 +28,6 @@
 			}
 			//return blob
 		}, //EO retrieveBlob
-		//getBlobAsUrl - seems to be the only way getting images into html via db - and files via <a download>
-		getBlobAsUrl: function(fileId, callback) {}, //EO getBlobAsUrl
-		retrieveImage: function(fileId, callback) {}, //EO retrieveImage
-		retrieveText: function(fileId, callback) {}, //EO retrieveText
 		retrieveFile: function(fileId, callback) {
 			//check if found locally - then use directly
 			//fetch from server, via methods call - dont want the chunks collection

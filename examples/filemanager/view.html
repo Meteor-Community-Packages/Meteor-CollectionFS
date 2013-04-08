@@ -19,7 +19,6 @@
         {{loginButtons}}
 
         {{> mainMenu}}
-
       </div> <!-- container -->  
     </div> <!-- EO navbar inner -->
   </div> <!-- EO navbar top -->
@@ -39,7 +38,10 @@
     </div> <!-- EO row -->
   </div> <!-- EO container fluid -->
 
-{{> viewImage}}
+  {{> viewImage}}
+  <br/>
+  <br/>
+
 </body>
 
 <template name="loginInto">
@@ -80,6 +82,11 @@ Filesystem.fileHandlers({
       <td colspan="1" style="vertical-align: top;">
         <h4>Upload file</h4>
         <input name="files" type="file" class="fileUploader" multiple>
+        <br/>
+        <br/>
+        
+        <a href="#" class="btn btn-success btnCreateServerFile"><i class="icon-plus icon-white"></i>Create</a><br/>
+        <small>Created a text file on the server</small>
       </td><td colspan="2">
         {{> dropzone}}
         <br/>
@@ -260,7 +267,8 @@ Filesystem.fileHandlers({
       Congrats! Filehandlers are supported in bundles, enjoy!<br/>
       <small>
         Got fast! and now supports Meteor 0.6.0! <br/>
-        <i>Currently working on storeFile serverside and maybe a "server, fetch remote file for the client" + test GraphicsMagick</i>
+        <i>Sorry I had to remove all the files due to deprecation of '.len'<br/>
+          Currently thinking about "server, fetch remote file for the client" + test GraphicsMagick</i>
       </small>
     </div>
   {{else}}

@@ -15,7 +15,7 @@ serverConsole = {
 	// Set true to get all logs from server start
 	var getAllLogs = false;
 	// Enable / disable logging
-	var debug = true;
+	var debug = false;
 
 	if (Meteor.isClient && debug) {
 		Meteor.call('getTime', function(error, result) {

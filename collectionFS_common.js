@@ -25,9 +25,12 @@ _.extend(_queueCollectionFS.prototype, {
 		} //EO for
 		return (errors == 0);
 	},
-	makeGridFSFileRecord: function(file, options) {
+	makeGridFSFileRecord: function(file, metadata) {
 		var self = this;
 		var countChunks = Math.ceil(file.size / self.chunkSize);
+		var userId = (Meteor.isClient)?
+						( (this.userId)?this.userId: Meteor.userId() ): file.owner;
+
 		return {
 		  chunkSize : self.chunkSize,	// Default 256kb ~ 262.144 bytes
 		  uploadDate : Date.now(),		// Client/Server set date
@@ -36,13 +39,13 @@ _.extend(_queueCollectionFS.prototype, {
 		  md5 : null,					// Not yet implemented
 		  complete : false,				// countChunks == numChunks
 		  currentChunk: -1,				// Used to coordinate clients
-		  owner: Meteor.userId(),
+		  owner: userId,
 		  countChunks: countChunks,		// Expected number of chunks
 		  numChunks: 0,					// number of chunks in database
 		  filename : file.name,			// Original filename
 		  length: ''+file.size, 		// Issue in Meteor, when solved dont use ''+
 		  contentType : file.type,
-		  metadata : (options) ? options : null // Custom data
+		  metadata : (metadata) ? metadata : null // Custom data
 		/* TODO:
 		    startedAt: null,          // Start timer for upload start
 		    endedAt: null,            // Stop timer for upload ended

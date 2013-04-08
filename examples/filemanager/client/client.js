@@ -14,7 +14,7 @@ if (typeof Handlebars !== 'undefined') {
       if (user.twitterUsername)
         return user.twitterUsername;
     }
-    return '';
+    return '[ Server ]';
   });
   Handlebars.registerHelper('getSession', function (key) {
     return Session.get(key);
@@ -42,6 +42,10 @@ if (typeof Handlebars !== 'undefined') {
 Template.queueControl.events({
   'change .fileUploader': function (e) {
     uploadFiles(e.target.files, Filesystem); // Test
+  },
+  'click .btnCreateServerFile': function() {
+    if (Meteor.userId())
+      Meteor.call('createServerFile');
   },
   'click .btnPause': function(e) {
     Filesystem.queue.pause();

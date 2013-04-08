@@ -73,9 +73,15 @@ _.extend(_queueListener.prototype, {
 					__filehandlers.Running++;
 
 					// First, Try to find new unhandled files					
-					var fileRecord = self.collectionFS.findOne({ handledAt: null, complete: true }); //test sumChunk == countChunks in mongo?
+					var fileRecord = self.collectionFS.findOne({ handledAt: null, 
+																 complete: true }); //test sumChunk == countChunks in mongo?
 
-					// Second, Try to find new filehandlers, not yet applied
+					// Second, check if not complete and remoteFile is set then we have an load file order
+					if (!fileRecord)
+						fileRecord = self.collectionFS.findOne({ $exists: { remoteFile: true }, 
+																 complete: false }); //test sumChunk == countChunks in mongo?
+
+					// Third, Try to find new filehandlers, not yet applied
 					if (!fileRecord) {
 						// Create a query array from filehandlers
 						var queryFilehandlersExists = [];
@@ -109,8 +115,15 @@ _.extend(_queueListener.prototype, {
 					}
 
 					// Handle file, spawn worker
-					if (fileRecord) {					
-						self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
+					if (fileRecord) {
+						
+						// Test if remoteFile isset
+						if (fileRecord.remoteFile)				
+							self.workLoadRemoteFile(fileRecord)
+						else
+							self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
+
+						// Update idle
 						__filehandlers._AllowFailesRetryLastTime = Date.now();
 					} else {
 						// We shouldn't get bored, are we going to retry failed filehandlers or sleep a bit or eight?
@@ -144,154 +157,121 @@ _.extend(_queueListener.prototype, {
 
 	workFileHandlers: function(fileRecord, fileHandlers) {
 		var self = this;
+
 		//Retrive blob
-		var fileSize = +fileRecord['length']; //+ Due to Meteor issue
-		//Allocate mem
-		var blob = new Buffer(fileSize);
-		//var blob = new Buffer(fileRecord['length'], { type: fileRecord.contentType}); //Allocate mem
-		var query = self.collectionFS.chunks.find({ files_id: fileRecord._id}, { sort: {n: 1} }); // Deleted $sort
+		var blob = self.collectionFS.retrieveBuffer(fileRecord._id);
 
-		if (query.count() == 0) {
-			// TODO: Implement serverside fetch remote file
-			// This could be triggered if client requests server to go fetch to file...
-			// We should check if remoteUrl isset
-			// Check if we should set headers for retrieving file? eg. login
-			// Maybe introduce "remoteFilehandlers" for fetching remote files?
-			
-			if (fileRecord.remoteUrl) {
-				//     goFetchRemoteFileToDatabase - use the server side storeFile
-				throw new Error('Serverside file fetching not implemented');
-				return;
-			} else {
-				// A completed file with no chunks or a remoteUrl set is corrupted, remove
-				if ( fileRecord.complete && fileRecord._id )
-					self.collectionFS.remove({ _id: fileRecord._id });
-				return;
-			}
+		// If file is ready
+		if (blob && blob.length > 0)
+			//do some work, execute user defined functions
+			for (var func in fileHandlers) {
+				// Is filehandler allready found?
+				var filehandlerFound = (fileRecord.fileHandler && fileRecord.fileHandler[func]);
 
-		} // EO No chunks in file
+				// Set sum of filehandler failures - if not found the default to 0
+				var sumFailes = (filehandlerFound && fileRecord.fileHandler[func].failed)?
+								fileRecord.fileHandler[func].failed : 0;
+				// if not filehandler or filehandler found in fileRecord.fileHandlers then check if failed
+				if (! filehandlerFound || ( sumFailes && sumFailes < __filehandlers.MaxFailes) ) {
 
-		query.rewind();
-		
-		// Create the file blob for the filehandlers to use
-		query.forEach(function(chunk){
-			if (! chunk.data) {
-				// Somethings wrong, we'll throw an error
-				throw new Error('Filehandlers for file id: ' + fileRecord._id + ' got empty data chunk.n:' + chunk.n);
-			}
-			// Finally do the data appending
-			for (var i = 0; i < chunk.data.length; i++) {
-				blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
-				//blob.writeUInt8( ((chunk.n * fileRecord.chunkSize) + i), chunk.data.charCodeAt(i) );
-			}
-		}); //EO find chunks
+					// destination - a helper for the filehandlers
+					// [newExtension] is optional and with/without a leading '.'
+					// Returns
+					// 		serverFilename - where the filehandler can write the file if wanted
+					// 		fileData - contains future url reference and extension for the database
+					// 		
+					var destination = function(newExtension) {
+						// Make newExtension optional, fallback to fileRecord.filename
+						var extension = (newExtension)? newExtension : path.extname(fileRecord.filename);
+						// Remove optional leading '.' from extension name
+						extension = (extension.substr(0, 1) == '.')? extension.substr(1) : extension;
+						// Construct filename from '_id' filehandler name and extension
+						var myFilename = fileRecord._id + '_' + func + '.' + extension;
+						// Construct url TODO: Should URL encode (could cause trouble in the remove observer)
+						var myUrl = self.pathURL + '/' + myFilename;
 
-		//do some work, execute user defined functions
-		for (var func in fileHandlers) {
+						return { 
+							serverFilename: path.join(self.serverPath, myFilename), 
+							fileData: { 
+								url: myUrl,							 
+								extension: extension.toLowerCase()
+							} 
+						};
+					}; // EO destination
 
-			// Is filehandler allready found?
-			var filehandlerFound = (fileRecord.fileHandler && fileRecord.fileHandler[func]);
-
-			// Set sum of filehandler failures - if not found the default to 0
-			var sumFailes = (filehandlerFound && fileRecord.fileHandler[func].failed)?
-							fileRecord.fileHandler[func].failed : 0;
-			// if not filehandler or filehandler found in fileRecord.fileHandlers then check if failed
-			if (! filehandlerFound || ( sumFailes && sumFailes < __filehandlers.MaxFailes) ) {
-
-				// destination - a helper for the filehandlers
-				// [newExtension] is optional and with/without a leading '.'
-				// Returns
-				// 		serverFilename - where the filehandler can write the file if wanted
-				// 		fileData - contains future url reference and extension for the database
-				// 		
-				var destination = function(newExtension) {
-					// Make newExtension optional, fallback to fileRecord.filename
-					var extension = (newExtension)? newExtension : path.extname(fileRecord.filename);
-					// Remove optional leading '.' from extension name
-					extension = (extension.substr(0, 1) == '.')? extension.substr(1) : extension;
-					// Construct filename from '_id' filehandler name and extension
-					var myFilename = fileRecord._id + '_' + func + '.' + extension;
-					// Construct url TODO: Should URL encode (could cause trouble in the remove observer)
-					var myUrl = self.pathURL + '/' + myFilename;
-
-					return { 
-						serverFilename: path.join(self.serverPath, myFilename), 
-						fileData: { 
-							url: myUrl,							 
-							extension: extension.toLowerCase()
-						} 
+					// We normalize filehandler data preparing it for the database
+					// func is the filehandler eg. "resize256"
+					// fileData is the data to return from the file handler, eg. url and extension
+					var normalizeFilehandle = function(func, fileData) {
+						var myData = {};
+						myData['fileHandler.'+func] = (fileData)?fileData:{};
+						myData['fileHandler.'+func].createdAt = Date.now();
+						return myData;
 					};
-				}; // EO destination
 
-				// We normalize filehandler data preparing it for the database
-				// func is the filehandler eg. "resize256"
-				// fileData is the data to return from the file handler, eg. url and extension
-				var normalizeFilehandle = function(func, fileData) {
-					var myData = {};
-					myData['fileHandler.'+func] = (fileData)?fileData:{};
-					myData['fileHandler.'+func].createdAt = Date.now();
-					return myData;
-				};
+					var result = false;
+					try {
+						result = fileHandlers[func]({ fileRecord: fileRecord, blob: blob, destination: destination, sumFailes: sumFailes });
+					} catch(e) {
+						throw new Error('Error in filehandler: "' + func + '" ' + (e.trace || e.message));
+					}
 
-				var result = false;
-				try {
-					result = fileHandlers[func]({ fileRecord: fileRecord, blob: blob, destination: destination, sumFailes: sumFailes });
-				} catch(e) {
-					throw new Error('Error in filehandler: "' + func + '" ' + (e.trace || e.message));
-				}
+					if (result) { //A result means do something for user defined function...
+						//Save on filesystem
+						if (result.blob) {
+							//save the file and update fileHandler
+		
+							fs.writeFileSync(destination(result.extension).serverFilename, result.blob, 'binary')
+							//Add to fileHandler array
+							if (fs.existsSync(destination(result.extension).serverFilename)) {
+								self.collectionFS.files.update({ _id: fileRecord._id }, { 
+									$set: normalizeFilehandle(func, destination(result.extension).fileData)
+								}); //EO Update
+							} else {
+								// File could not be written to filesystem? Don't try this filehandler again
+								self.collectionFS.files.update({ _id: fileRecord._id }, {
+									$set: normalizeFilehandle(func, { error: 'Filehandler could not write to filesystem' })
+								}); //EO Update
 
-				if (result) { //A result means do something for user defined function...
-					//Save on filesystem
-					if (result.blob) {
-						//save the file and update fileHandler
-	
-						fs.writeFileSync(destination(result.extension).serverFilename, result.blob, 'binary')
-						//Add to fileHandler array
-						if (fs.existsSync(destination(result.extension).serverFilename)) {
-							self.collectionFS.files.update({ _id: fileRecord._id }, { 
-								$set: normalizeFilehandle(func, destination(result.extension).fileData)
-							}); //EO Update
+								throw new Error('Filehandler "' + func + '" could not write to filesystem');
+							}
+
 						} else {
-							// File could not be written to filesystem? Don't try this filehandler again
+
+							//no blob? Just save result as filehandler data
 							self.collectionFS.files.update({ _id: fileRecord._id }, {
-								$set: normalizeFilehandle(func, { error: 'Filehandler could not write to filesystem' })
+								$set: normalizeFilehandle(func, result)
 							}); //EO Update
 
-							throw new Error('Filehandler "' + func + '" could not write to filesystem');
-						}
+						} //EO no blob
+					} else {  //Otherwise guess filehandler wants something else?
+						if (result === null) {
 
-					} else {
+							//if null returned then ok, dont run again - we update the db
+							self.collectionFS.files.update({ _id: fileRecord._id }, {
+								$set: normalizeFilehandle(func)
+							}); //EO Update
 
-						//no blob? Just save result as filehandler data
-						self.collectionFS.files.update({ _id: fileRecord._id }, {
-							$set: normalizeFilehandle(func, result)
-						}); //EO Update
+						} else { // But if false then we got an error - handled by the queue		
 
-					} //EO no blob
-				} else {  //Otherwise guess filehandler wants something else?
-					if (result === null) {
+							// Do nothing, try again sometime later defined by config policy
+							self.collectionFS.files.update({ _id: fileRecord._id }, {
+								$set: normalizeFilehandle(func, { failed: (sumFailes+1) })
+							}); //EO Update
+					
+						}//EO filehandling failed
+					} //EO no result
 
-						//if null returned then ok, dont run again - we update the db
-						self.collectionFS.files.update({ _id: fileRecord._id }, {
-							$set: normalizeFilehandle(func)
-						}); //EO Update
-
-					} else { // But if false then we got an error - handled by the queue		
-
-						// Do nothing, try again sometime later defined by config policy
-						self.collectionFS.files.update({ _id: fileRecord._id }, {
-							$set: normalizeFilehandle(func, { failed: (sumFailes+1) })
-						}); //EO Update
-				
-					}//EO filehandling failed
-				} //EO no result
-
-			} // EO if allready found or max failures reached
-		} //EO Loop through fileHandler functions
+				} // EO if allready found or max failures reached
+			} //EO Loop through fileHandler functions
 
         //Update fileHandler in db
         self.collectionFS.files.update({ _id: fileRecord._id }, { $set: { handledAt: Date.now() } });
-	} //EO workFileHandlers
-
+	}, //EO workFileHandlers
+	workLoadRemoteFile: function(fileRecord) {
+		// Read remoteFile address and go fetch the remote file...
+		// TODO: Maybe allow for setting of a header / auth etc. ?
+		throw new Error('Serverside file fetching not implemented');
+	}
 });//EO queueListener extend
 
