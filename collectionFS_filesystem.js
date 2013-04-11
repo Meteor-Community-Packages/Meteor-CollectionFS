@@ -1,6 +1,7 @@
 // REMOVE: When engien branche is merged with master in Meteor v0.6.0 ?
-if (!Npm) {
+if (typeof Npm === 'undefined') {
   // Polyfill for Npm
+  var path = __meteor_bootstrap__.require('path');
   Npm = {
     require: __meteor_bootstrap__.require,
     bundleRoot: path.dirname(__meteor_bootstrap__.require.main.filename)
