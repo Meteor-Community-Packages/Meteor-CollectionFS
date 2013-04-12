@@ -1,5 +1,9 @@
 _.extend(CollectionFS.prototype, {
-	storeBuffer: function(filename, buffer, options) {
+	storeBuffer: function(filename, buffer, encoding, options) {
+
+		// Default encoding is 'utf8'
+		encoding = encoding || 'utf8';
+
 		// Check filename
 		if (!filename || filename != ''+filename )
 			throw new Error('storeBuffer requires filename string as first parametre');
@@ -19,6 +23,7 @@ _.extend(CollectionFS.prototype, {
 			owner: (options && options.owner)? options.owner : ''
 		};
 		var metadata = (options && options.metadata)?options.metadata : null;
+
 		// Generate new fileRecord
 		var fileRecord = self.queue.makeGridFSFileRecord(file, metadata);
 
@@ -34,14 +39,15 @@ _.extend(CollectionFS.prototype, {
 		for (var n = 0; n < fileRecord.countChunks; n++) {
 
 			// Handle each chunk
-			var data = buffer.toString('utf8', (n * fileRecord.chunkSize), 
+			var data = buffer.toString(encoding, (n * fileRecord.chunkSize), 
 											   ( (n * fileRecord.chunkSize) + (fileRecord.chunkSize)) );
 
 			// Save data chunk into database		
 			var cId = self.chunks.insert({
 				"files_id" : fileId,    	// _id of the corresponding files collection entry
-				"n" : n,          // chunks are numbered in order, starting with 0
-				"data" : data          		// the chunk's payload as a BSON binary type			
+				"n" : n,          			// chunks are numbered in order, starting with 0
+				"data" : data,          	// the chunk's payload as a BSON binary type
+				"encoding" : encoding 		// the encoding for the chunk		
 			});
 
 			// Check that we are okay
@@ -100,10 +106,10 @@ _.extend(CollectionFS.prototype, {
 				// Somethings wrong, we'll throw an error
 				throw new Error('Filehandlers for file id: ' + fileId + ' got empty data chunk.n:' + chunk.n);
 			}
-			// Finally do the data appending
-			for (var i = 0; i < chunk.data.length; i++) {
-				blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
-				//blob.writeUInt8( ((chunk.n * fileRecord.chunkSize) + i), chunk.data.charCodeAt(i) );
+
+			// Write chunk data to blob using the given encoding
+			if(chunk.data.length > 0) {
+				blob.write(chunk.data, (chunk.n * fileRecord.chunkSize), chunk.data.length, chunk.encoding);
 			}
 		}); //EO find chunks
 
