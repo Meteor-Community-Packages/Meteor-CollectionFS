@@ -1,19 +1,21 @@
 #CollectionFS
-Is a simple way of handling files on the web in the Meteor environment
+Is a simple way of handling files on the web in the Meteor environment.
 
-Have a look at [Live example](http://collectionfs.meteor.com/)
+Have a look at [Live example](http://collectionfs.meteor.com/).
 
-It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stability and speed
+It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stability and speed.
 
-CollectionFS is a mix of both Meteor.Collection and GridFS mongoDB.
-Using Meteor and gridFS principles we get:
-* Security handling
-* Handling sharing
-* Restrictions eg. only allow certain content types, fields, users etc.
-* Reactive data, the collectionFS's methods should all be reactive
-* Ability for the user to resume upload after connection loss, browser crash or cola in keyboard
-* At the moment files are loaded into the client as Blob universal way of handling large binary data
-* Create multiple cached versions, sizes or formats of your files and get an url to the file - or upload files to another service / server
+CollectionFS is a mix of both [Meteor.Collection](http://docs.meteor.com/#meteor_collection) and MongoDB's [GridFS](http://docs.mongodb.org/manual/core/gridfs/).
+
+Using Meteor and GridFS principles we get:
+
+* Security
+* Sharing
+* Restrictions (e.g. only allow certain content types, fields, users, etc.)
+* Reactive data — CollectionFS's methods should all be reactive
+* Ability to resume uploads after connection loss, browser crash or cola in keyboard
+* At the moment, files are loaded into the client as a Blob — a universal way of handling large binary data
+* Create multiple cached versions, sizes or formats of your files, with an url to the file — or upload files to another service / server
 
 Design overview:
 ```js
@@ -51,16 +53,16 @@ Design overview:
 ```
     mrt add collectionFS
 ```
-*Requires `Meteorite` get it at [atmosphere.meteor.com](https://atmosphere.meteor.com)*
+*Requires `Meteorite` from [atmosphere.meteor.com](https://atmosphere.meteor.com)*
 
 ####2. Create model: [client, server]
 ```js
     ContactsFS = new CollectionFS('contacts');
 ```
-*You can still create a `Contacts = new Meteor.Collection('contacts')` since gridFS maps on eg. `contacts.files` and `contacts.chunks`*
+*You can still create a `Contacts = new Meteor.Collection('contacts')` since GridFS maps on `contacts.files` and `contacts.chunks`*
 
-####3. Adding security in model: [client, server]
-*Only needed when using `accounts-...` (eg. removed the `insecure` package)*
+####3. Adding security to model: [client, server]
+*This is only needed when using `accounts-...` and you have removed the `insecure` package.*
 ```js
     ContactsFS.allow({
       insert: function(userId, myFile) { return userId && myFile.owner === userId; },
@@ -68,18 +70,18 @@ Design overview:
             return _.all(files, function (myFile) {
               return (userId == myFile.owner);
 
-        });  //EO interate through files
+        });  //EO iterate through files
       },
       remove: function(userId, files) { return false; }
     });
 ```
-*The collectionFS supports functions `.allow`, `.deny`, `.find`, `findOne` used when subscribing/ publishing from server* 
-*It's here you can add restrictions eg. on content-types, filesizes etc.*
-*`.update`, `.remove` are also supported, `remove` removes all chunks and files related to the file removed*
+*The collectionFS supports functions `.allow`, `.deny`, `.find`, `findOne` used when subscribing/ publishing from server.* 
+*It's here you can add restrictions, for example allowed content-types, file sizes, etc.*
+*`.update`, `.remove` are also supported, `remove` removes all chunks and versions related to the original file.*
 
 
 ####4. Disabling autopublish: 
-*If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published*
+*If you would rather not autopublish all files, you can turn off the autopublish option. This is useful if you want to limit the number of published documents or the fields that get published.*
 
 #####Disabling autopublish: [client, server]
 ```js
@@ -90,7 +92,7 @@ Design overview:
     // Disable autopublish
     ContactsFS = new CollectionFS('contacts', { autopublish: false });
 
-    // example #1 - manually publish with an optional param
+    // Example #1 - manually publish with an optional param
     Meteor.publish('listContactsFiles', function(filter) {
       // sort by handedAt time and only return the filename, handledAt and _id fields
       return ContactsFS.find({ complete: filter.completed }, {
@@ -100,22 +102,22 @@ Design overview:
       })
     });
 
-    // example #2 - limit results and only show users files they own
+    // Example #2 - limit results and only show users files they own
     Meteor.publish('myContactsFiles', function() {
       if (this.userId) {
         return ContactsFS.find({ owner: this.userId }, { limit: 30 });
       }
     });    
 ```
-*Note: It's possible to set one more option serverside: `ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });` - This will set max simultane filehandlers in total on the server, dispite collection*
+*Note: It's possible to set one more option server-side: `ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });` - This will set the maximum simultaneous file handlers on the server, in total, despite number of collections.*
 
 #####Example [client]
 ```js
     // Disable autopublish / autosubscribe
     ContactsFS = new CollectionFS('contacts', { autopublish: false});
 
-    // example #1 - manually subscribe and show completed only 
-    // (goes with example #1 above)
+    // Example #1 - manually subscribe and show completed only 
+    // (goes with server example #1 above)
 
     // Use session for setting filter options
     Session.setDefault('myFilter', { completed: true, limit: 30 });
@@ -127,7 +129,7 @@ Design overview:
     });
 ```
 
-##Uploading file
+##Uploading files
 ####1. Adding the view:
 ```html
     <template name="queControl">
@@ -147,9 +149,9 @@ Design overview:
       }
     });
 ```
-*ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as "threads". It's possible to add metadata: `storeFile(file, {})` - callback or eventlisteners are on the todo*
+*ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as "threads". It's possible to add metadata: `storeFile(file, {})` — callback or event listeners are on the todo*.
 
-##Downloading file
+##Downloading files
 ####1. Adding the view:
 ```html
     <template name="fileTable">
@@ -174,7 +176,7 @@ Design overview:
       } //EO saveAs
     });
 ```
-*In future only a blob will be returned, this will return local file if available. The `Save as` calls the Filesaver.js by Eli Grey, http://eligrey.com - It doesn't work on iPad*
+*In the future only a blob will be returned, this will return local file if available. The `Save as` calls [Filesaver.js](https://github.com/eligrey/FileSaver.js) by [Eli Grey](http://eligrey.com). It doesn't work on iPad.*
 
 ####3. Adding controller helper: [client]
 ```js
@@ -184,9 +186,9 @@ Design overview:
       }
     });
 ```
-*There are some in the works for `widgets` / `components` eg. gui elements for uploading files, ex. via drag & drop*
+*There are some `widgets` / `components` (e.g. gui elements for uploading files, via drag & drop) in the works.*
 
-####4. Store a file serverside
+####4. Store a file server-side
 ```js
 var myText = 'Hello world, I wrote this..:)';
 var buffer = Buffer(myText.length);
@@ -199,15 +201,15 @@ ContactsFS.storeBuffer('My server uploaded file.txt', buffer, {
   contentType: 'text/plain',
   // Set a user id (optional)
   owner: 'WAaPHfyfgHGaeJ5kK',
-  // Stop live update of progress (optional default to false)     
+  // Stop live update of progress (optional, defaults to false)     
   noProgress: true,
   // Attach custom data to the file  
   metadata: { text: 'some stuff' }
 });
 ```
-*A rough example to illustrate the api*
+*A rough example to illustrate the API.*
 
-####5. Retrieve a file serverside
+####5. Retrieve a file server-side
 ```js
 var blob = ContactsFS.retrieveBuffer(fileId); // Returns a Buffer
 
@@ -216,14 +218,15 @@ var fileRecord = ContactsFS.findOne(fileId);
 ```
 
 ###Create server cache/versions of files and get an url reference
-Filehandlers are serverside functions that makes caching versions easier. The functions are run and handled a file record and a blob / ```Buffer``` containing all the bytes.
-* Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file - all done reactivly live.
+Filehandlers are server-side functions that makes caching versions easier. The functions are run and handed a file record and a blob / ```Buffer``` containing all the bytes.
+
+* Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file — all done reactively live.
 * If only custom metadata is returned without a blob / Buffer then no files saved but metadata is saved in database.
 * If null returned then only filehandler name and a date is saved in database.
 * If false returned the filehandler failed and it will be resumed later
 
 ####Options
-*Each filehandler is handed a options object*
+*Each filehandler is handed a options object.*
 ```js
 options: {
   blob,              // Type of node.js Buffer() 
@@ -254,21 +257,21 @@ options: {
 ```
 ####options.destination - function
 *filehandlers are presented with a helper function for handling paths - all paths can be custom, but it's recommended to use those returned by `destination()`*
-`options.destination( [extension] )` takes an optional `extension` eg.:
+`options.destination( [extension] )` takes an optional `extension` e.g.:
 ```js
-  var dest = options.destination('jpg'); // otherwise orginal extension is used
+  var dest = options.destination('jpg'); // otherwise original extension is used
 ```
 Object returned:
 ```js
   dest == {
-    serverFilename: '/absolute/path/uniqname.jpg', // Unix or windows based
+    serverFilename: '/absolute/path/uniqename.jpg', // Unix or windows based
     fileData: {
-      url: '/web/url/uniqname.jpg',
+      url: '/web/url/uniqename.jpg',
       extension: 'jpg'
     }
   }
 ```
-The `destination` helper gets handy eg. when manually saving an image from within the filehandler.
+The `destination` helper gets handy e.g. when manually saving an image from within the filehandler.
 ```js
   Filesystem.fileHandlers({
     soundToWav: function(options) {
@@ -286,7 +289,7 @@ More examples follows, converters are to come:
 
 ```js
 Filesystem.fileHandlers({
-  default1: function(options) { //Options contains blob and fileRecord - same is expected in return if should be saved on filesytem, can be modified
+  default1: function(options) { //Options contains blob and fileRecord — same is expected in return if should be saved on filesytem, can be modified
     console.log('I am handling 1: '+options.fileRecord.filename);
     return { blob: options.blob, fileRecord: options.fileRecord }; //if no blob then save result in fileHandle (added createdAt)
   },
@@ -299,7 +302,7 @@ Filesystem.fileHandlers({
   size40x40: function(options) {
     return null;
     // Use Future.wrap for handling async
-    /*var im = npm.require('imagemagick'); // Add imagemagick package
+    /*var im = Npm.require('imagemagick'); // Add imagemagick package
     im.resize({
                 srcData: options.blob,
                 width: 40
@@ -315,17 +318,17 @@ Filesystem.fileHandlers({
     /*
     var dest = options.destination('jpg').serverFilename; // Set optional extension
 
-    var gm = npm.require('gm'); // GraphicsMagick required need Meteor package
-    gm( options.blob, dest).resize(100,100).quality(90).write(dest, function(err) {
+    var gm = Npm.require('gm'); // GraphicsMagick required need Meteor package
+    gm(options.blob, dest).resize(100,100).quality(90).write(dest, function(err) {
         if(err) {
-          // console.log 'GraphicsMagick error ' + err;
+          // console.log('GraphicsMagick error ' + err);
           return false; 
           // False will trigger rerun, could check options.sumFailes
           // if we only want to rerun 2 times (default limit is 3,
           // but sumFailes is reset at server idle + wait period)
         }
         else {
-          // console.log 'Finished writing image.';
+          // console.log('Finished writing image.');
           return destination('jpg').fileData; // We only return the url for the file, no blob to save since we took care of it
         }
       });
@@ -335,17 +338,17 @@ Filesystem.fileHandlers({
   }
 });
 ```
-*This is brand new on the testbed, future brings easy image handling shortcuts to imagemagic, maybe som sound/video converting and some integration for uploading to eg. google drive, dropbox etc.*
+*This is brand new on the testbed. The future brings easy image handling shortcuts to Imagemagick and maybe some sound/video conversion and integrated uploads to Google Drive, Dropbox, etc.*
 
 ###Future:
 * Handlebar helpers? `{{fileProgress}}`, `{{fileInQue}}` etc.
-* Test server side handling image size etc.
-* When code hot deploy the que halts, could be tackled in future version of Meteor
-* Deviates from gridFS by using string based files.length (Meteor are working on this issue)
+* Test server-side handling of image size, etc.
+* When there is a hot code deploy the queue halts, which could be tackled in future version of Meteor.
+* CollectionFS deviates from GridFS by using string-based files.length (Meteor are working on this issue).
 * Prepare ability for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
-* Make Meteor packages for `GraphicsMagick` etc.
+* Make Meteor packages for `GraphicsMagick`, etc.
 
 ###Notes:
-* This is made as `Make it work, make it fast`, well it just got very fast! *need to test if it's actually faster than regular upload*
-* No test suite - any good ones for Meteor?
-* Current code client side contains relics and will have a makeover one of these days
+* This is made as `Make it work, make it fast`, well it just got very fast! *Need to test if it's actually faster than regular upload.*
+* No test suite — any good ones for Meteor?
+* Current code client side contains relics and will have a make-over one of these days.
