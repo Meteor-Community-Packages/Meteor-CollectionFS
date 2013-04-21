@@ -51,7 +51,7 @@ Design overview:
 Do you have idears, issues, documentation, fixes or pull requests? All is wellcome for making collectionFS faster, more versatile and easier to use.
 
 ###A special thanks and credit goes to code contributors
-__@nhibner, @mitar, @petrocket__  
+__@emgee3, @nhibner, @mitar, @petrocket__  
 *Ranked by last commit, are you missing from the list? file it as an issue or make a PR :)*
 
 
@@ -199,7 +199,7 @@ __@nhibner, @mitar, @petrocket__
 
 ##API for storing and retrieving files
 
-###Clientside
+###Client-side
 
 ####Store a file
 ```js
