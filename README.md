@@ -61,7 +61,7 @@ Design overview:
 ```
 *You can still create a `Contacts = new Meteor.Collection('contacts')` since GridFS maps on `contacts.files` and `contacts.chunks`*
 
-####3. Adding security to model: [client, server]
+####3. Add security to model: [client, server]
 *This is only needed when using `accounts-...` and you have removed the `insecure` package.*
 ```js
     ContactsFS.allow({
@@ -80,10 +80,10 @@ Design overview:
 *`.update`, `.remove` are also supported, `remove` removes all chunks and versions related to the original file.*
 
 
-####4. Disabling autopublish: 
+####4. Disable autopublish: 
 *If you would rather not autopublish all files, you can turn off the autopublish option. This is useful if you want to limit the number of published documents or the fields that get published.*
 
-#####Disabling autopublish: [client, server]
+#####Disable autopublish: [client, server]
 ```js
   ContactsFS = new CollectionFS('contacts', { autopublish: false });
 ```
@@ -94,11 +94,11 @@ Design overview:
 
     // Example #1 - manually publish with an optional param
     Meteor.publish('listContactsFiles', function(filter) {
-      // sort by handedAt time and only return the filename, handledAt and _id fields
+      // sort by handledAt time and only return the filename, handledAt and _id fields
       return ContactsFS.find({ complete: filter.completed }, {
-              sort:{ handledAt: 1 }, 
+              sort:   { handledAt: 1 }, 
               fields: { _id: 1, filename: 1, handledAt: 1},
-              limit: filter.limit
+              limit:  filter.limit
       })
     });
 
@@ -109,14 +109,14 @@ Design overview:
       }
     });    
 ```
-*Note: It's possible to set one more option server-side: `ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });` - This will set the maximum simultaneous file handlers on the server, in total, despite number of collections.*
+*Note: It's possible to set one more option server-side: `ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });`. This will set the maximum simultaneous file handlers on the server, in total, despite number of collections.*
 
 #####Example [client]
 ```js
     // Disable autopublish / autosubscribe
     ContactsFS = new CollectionFS('contacts', { autopublish: false});
 
-    // Example #1 - manually subscribe and show completed only 
+    // Example #1 — manually subscribe and show completed only 
     // (goes with server example #1 above)
 
     // Use session for setting filter options
@@ -129,18 +129,18 @@ Design overview:
     });
 ```
 
-##Uploading files
+##Upload files
 ####1. Adding the view:
 ```html
-    <template name="queControl">
+    <template name="queueControl">
       <h3>Select file(s) to upload:</h3>
       <input name="files" type="file" class="fileUploader" multiple>
     </template>
 ```
 
-####2. Adding the controller: [client]
+####2. Add the controller: [client]
 ```js
-    Template.queControl.events({
+    Template.queueControl.events({
       'change .fileUploader': function (e) {
          var files = e.target.files;
          for (var i = 0, f; f = files[i]; i++) {
@@ -149,36 +149,37 @@ Design overview:
       }
     });
 ```
-*ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as "threads". It's possible to add metadata: `storeFile(file, {})` — callback or event listeners are on the todo*.
+*ContactsFS.storeFile(f) returns `fileId` or `null`. Actual downloads are spawned as "threads". It's also possible to add metadata: `storeFile(file, {})` — callback or event listeners are on the todo*.
 
-##Downloading files
-####1. Adding the view:
+##Download files
+####1. Add the view:
 ```html
     <template name="fileTable">
       {{#each Files}}
         <a class="btn btn-primary btn-mini btnFileSaveAs">Save as</a>{{filename}}<br/>
       {{else}}
-        No files uploaded
+        No files uploaded.
       {{/each}}
     </template>
 ```
 
-####2. Adding the controller: [client]
+####2. Add the controller: [client]
 ```js
     Template.fileTable.events({
       'click .btnFileSaveAs': function() {
         ContactsFS.retrieveBlob(this._id, function(fileItem) {
-          if (fileItem.blob)
-            saveAs(fileItem.blob, fileItem.filename)
-          else
+          if (fileItem.blob) {
+            saveAs(fileItem.blob, fileItem.filename);
+          } else {
             saveAs(fileItem.file, fileItem.filename);
+          }
         });
       } //EO saveAs
     });
 ```
 *In the future only a blob will be returned, this will return local file if available. The `Save as` calls [Filesaver.js](https://github.com/eligrey/FileSaver.js) by [Eli Grey](http://eligrey.com). It doesn't work on iPad.*
 
-####3. Adding controller helper: [client]
+####3. Add controller helper: [client]
 ```js
     Template.fileTable.helpers({
       Files: function() {
@@ -217,7 +218,7 @@ var blob = ContactsFS.retrieveBuffer(fileId); // Returns a Buffer
 var fileRecord = ContactsFS.findOne(fileId);
 ```
 
-###Create server cache/versions of files and get an url reference
+###Create cache/versions of files and get an url reference on the server
 Filehandlers are server-side functions that makes caching versions easier. The functions are run and handed a file record and a blob / ```Buffer``` containing all the bytes.
 
 * Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file — all done reactively live.
@@ -256,17 +257,17 @@ options: {
 }
 ```
 ####options.destination - function
-*filehandlers are presented with a helper function for handling paths - all paths can be custom, but it's recommended to use those returned by `destination()`*
+*Filehandlers are presented with a helper function for handling paths — all paths can be custom, but it's recommended to use those returned by `destination()`.*
 `options.destination( [extension] )` takes an optional `extension` e.g.:
 ```js
   var dest = options.destination('jpg'); // otherwise original extension is used
 ```
 Object returned:
 ```js
-  dest == {
-    serverFilename: '/absolute/path/uniqename.jpg', // Unix or windows based
+  dest = {
+    serverFilename: '/absolute/path/uniquename.jpg', // Unix or windows based
     fileData: {
-      url: '/web/url/uniqename.jpg',
+      url: '/web/url/uniquename.jpg',
       extension: 'jpg'
     }
   }
@@ -279,35 +280,35 @@ The `destination` helper gets handy e.g. when manually saving an image from with
       var dest = options.destination('wav');
       writeFileToDisk(dest.serverFilename, blob);
 
-      // Save correct reference to database by returning url and extension - but no blob
+      // Save correct reference to database by returning url and extension — but no blob
       return dest.fileData;
     }
   });
 ```
 
-More examples follows, converters are to come:
+More examples follow, converters are to come:
 
 ```js
 Filesystem.fileHandlers({
-  default1: function(options) { //Options contains blob and fileRecord — same is expected in return if should be saved on filesytem, can be modified
-    console.log('I am handling 1: '+options.fileRecord.filename);
-    return { blob: options.blob, fileRecord: options.fileRecord }; //if no blob then save result in fileHandle (added createdAt)
+  default1: function(options) { // Options contains blob and fileRecord — same is expected in return if should be saved on filesytem, can be modified
+    console.log('I am handling default1: ' + options.fileRecord.filename);
+    return { blob: options.blob, fileRecord: options.fileRecord }; // if no blob then save result in fileHandle (added createdAt)
   },
   default2: function(options) {
-    if (options.fileRecord.len > 5000000 || options.fileRecord.contentType != 'image/jpeg') //Save som space, only make cache if less than 1Mb
-      return null; //Not an error as if returning false, false would be tried again later...
-    console.log('I am handling 2: '+options.fileRecord.filename);
+    if (options.fileRecord.len > 5000000 || options.fileRecord.contentType != 'image/jpeg') //Save some space, only make cache if less than 5MB
+      return null; // Not an error as if returning false, false would be tried again later...
+    console.log('I am handling default2: ' + options.fileRecord.filename);
     return options; 
   },
   size40x40: function(options) {
     return null;
     // Use Future.wrap for handling async
-    /*var im = Npm.require('imagemagick'); // Add imagemagick package
+    /* var im = Npm.require('imagemagick'); // Add Imagemagick package
     im.resize({
                 srcData: options.blob,
                 width: 40
-           });*/
-    console.log('I am handling: '+options.fileRecord.filename+' to...');
+           }); */
+    console.log('I am handling: ' + options.fileRecord.filename + ' to...');
     return { extension: 'jpg', blob: options.blob, fileRecord: options.fileRecord }; //or just 'options'...
   },
   size100x100gm: function(options) {
@@ -320,7 +321,7 @@ Filesystem.fileHandlers({
 
     var gm = Npm.require('gm'); // GraphicsMagick required need Meteor package
     gm(options.blob, dest).resize(100,100).quality(90).write(dest, function(err) {
-        if(err) {
+        if (err) {
           // console.log('GraphicsMagick error ' + err);
           return false; 
           // False will trigger rerun, could check options.sumFailes
