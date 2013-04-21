@@ -29,7 +29,8 @@ _.extend(_queueCollectionFS.prototype, {
 		var self = this;
 		var countChunks = Math.ceil(file.size / self.chunkSize);
 		var userId = (Meteor.isClient)?
-						( (this.userId)?this.userId: Meteor.userId() ): file.owner;
+						( (this.userId) ? this.userId: Meteor.userId() ): file.owner;
+		var encoding = (file.encoding && file.encoding != '') ? file.encoding : 'utf-8';
 
 		return {
 		  chunkSize : self.chunkSize,	// Default 256kb ~ 262.144 bytes
@@ -45,6 +46,7 @@ _.extend(_queueCollectionFS.prototype, {
 		  filename : file.name,			// Original filename
 		  length: ''+file.size, 		// Issue in Meteor, when solved dont use ''+
 		  contentType : file.type,
+		  encoding: encoding,			// Default 'utf-8'
 		  metadata : (metadata) ? metadata : null // Custom data
 		/* TODO:
 		    startedAt: null,          // Start timer for upload start

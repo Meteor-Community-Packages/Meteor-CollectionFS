@@ -1,5 +1,6 @@
 _.extend(CollectionFS.prototype, {
 	storeBuffer: function(filename, buffer, options) {
+
 		// Check filename
 		if (!filename || filename != ''+filename )
 			throw new Error('storeBuffer requires filename string as first parametre');
@@ -11,14 +12,19 @@ _.extend(CollectionFS.prototype, {
 		var self = this;
 		var fileId = null;
 
+		// Set encoding for file
+		var encoding = (options && options.encoding) ? options.encoding : 'utf-8';
+
 		// Simulate clienside file keys
 		var file = {
 			name: filename,
 			size: buffer.length,
+			encoding: encoding,
 			type: (options && options.contentType)? options.contentType : '',
 			owner: (options && options.owner)? options.owner : ''
 		};
 		var metadata = (options && options.metadata)?options.metadata : null;
+
 		// Generate new fileRecord
 		var fileRecord = self.queue.makeGridFSFileRecord(file, metadata);
 
@@ -27,21 +33,20 @@ _.extend(CollectionFS.prototype, {
 		
 		// Check that we are ok
 		if (!fileId)
-			throw new Error('storeBuffer could not create file "' + filename + '" in database');		
-
+			throw new Error('storeBuffer could not create file "' + filename + '" in database');
 
 		//Put file in upload queue
 		for (var n = 0; n < fileRecord.countChunks; n++) {
 
 			// Handle each chunk
-			var data = buffer.toString('utf8', (n * fileRecord.chunkSize), 
+			var data = buffer.toString(encoding, (n * fileRecord.chunkSize), 
 											   ( (n * fileRecord.chunkSize) + (fileRecord.chunkSize)) );
 
 			// Save data chunk into database		
 			var cId = self.chunks.insert({
 				"files_id" : fileId,    	// _id of the corresponding files collection entry
-				"n" : n,          // chunks are numbered in order, starting with 0
-				"data" : data          		// the chunk's payload as a BSON binary type			
+				"n" : n,          			// chunks are numbered in order, starting with 0
+				"data" : data         		// the chunk's payload as a BSON binary type	
 			});
 
 			// Check that we are okay
@@ -94,16 +99,20 @@ _.extend(CollectionFS.prototype, {
 
 		query.rewind();
 
+		// Note: Newer fileRecords should have an encoding specified
+		// but this helps maintain backward compatibility
+		var encoding = (fileRecord.encoding) ? fileRecord.encoding : 'utf-8';
+
 		// Create the file blob for the filehandlers to use
 		query.forEach(function(chunk){
 			if (! chunk.data ) {
 				// Somethings wrong, we'll throw an error
 				throw new Error('Filehandlers for file id: ' + fileId + ' got empty data chunk.n:' + chunk.n);
 			}
-			// Finally do the data appending
-			for (var i = 0; i < chunk.data.length; i++) {
-				blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
-				//blob.writeUInt8( ((chunk.n * fileRecord.chunkSize) + i), chunk.data.charCodeAt(i) );
+
+			// Write chunk data to blob using the given encoding
+			if(chunk.data.length > 0) {
+				blob.write(chunk.data, (chunk.n * fileRecord.chunkSize), chunk.data.length, encoding);
 			}
 		}); //EO find chunks
 

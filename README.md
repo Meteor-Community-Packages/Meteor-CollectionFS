@@ -241,6 +241,7 @@ options: {
     filename : file.name,     // Original filename
     length: ''+file.size,     // Issue in Meteor
     contentType : file.type,
+    encoding: encoding,       // Default 'utf-8'
     metadata : (options) ? options : null,  // Custom data
     /* TODO:
     startedAt: null,          // Start timer for upload start
