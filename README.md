@@ -194,7 +194,38 @@ __@nhibner, @mitar, @petrocket__
 ```
 *There are some in the works for `widgets` / `components` eg. gui elements for uploading files, ex. via drag & drop*
 
-####4. Store a file serverside
+##Api for storing and retrieving files
+
+###Clientside
+
+####Store a file
+```js
+  Contacts.storeFile(file, metadata);
+```
+*The file is the browser filehandle, and metadata is custom data to save in the file record for later use*
+
+####Retrieve a file
+```js
+  Contacts.retrieveBlob: function(fileId, callback);
+```
+Example:
+```js
+  Contacts.retrieveBlob: function(fileId, function(fileItem) {
+    // eiter fileItem.blob or fileItem.file is returned (in future a blob should allways be available)
+    // fileItem._id
+    // fileItem.countChunks
+    // fileItem.length   
+  });
+```
+
+####TODO:
+The clientside code is going for a rewrite, for a better and more versatile api
+* More options for storing and retrieving data
+* More control over the queue eg. trottling the queue
+* Make a dropbox like example of it
+
+###Serverside
+####Store a file
 ```js
 var myText = 'Hello world, I wrote this..:)';
 var buffer = Buffer(myText.length);
@@ -210,18 +241,22 @@ ContactsFS.storeBuffer('My server uploaded file.txt', buffer, {
   // Stop live update of progress (optional default to false)     
   noProgress: true,
   // Attach custom data to the file  
-  metadata: { text: 'some stuff' }
+  metadata: { text: 'some stuff' },
+  // Set encoding (optional default 'utf-8')
+  encoding: 'utf-8'
 });
 ```
 *A rough example to illustrate the api*
 
-####5. Retrieve a file serverside
+####Retrieve a file serverside
 ```js
 var blob = ContactsFS.retrieveBuffer(fileId); // Returns a Buffer
 
 // Get additional info from the file record
 var fileRecord = ContactsFS.findOne(fileId);
 ```
+
+##Filehandlers
 
 ###Create server cache/versions of files and get an url reference
 Filehandlers are serverside functions that makes caching versions easier. The functions are run and handled a file record and a blob / ```Buffer``` containing all the bytes.
