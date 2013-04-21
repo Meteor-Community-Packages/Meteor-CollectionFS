@@ -33,7 +33,7 @@ _.extend(CollectionFS.prototype, {
 		
 		// Check that we are ok
 		if (!fileId)
-			throw new Error('storeBuffer could not create file "' + filename + '" in database');)
+			throw new Error('storeBuffer could not create file "' + filename + '" in database');
 
 		//Put file in upload queue
 		for (var n = 0; n < fileRecord.countChunks; n++) {
