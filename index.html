@@ -40,23 +40,24 @@
 
         <h1>CollectionFS</h1>
 
-<p>Is a simple way of handling files on the web in the Meteor environment</p>
+<p>Is a simple way of handling files on the web in the Meteor environment.</p>
 
-<p>Have a look at <a href="http://collectionfs.meteor.com/">Live example</a></p>
+<p>Have a look at <a href="http://collectionfs.meteor.com/">Live example</a>.</p>
 
-<p>It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stability and speed</p>
+<p>It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stability and speed.</p>
 
-<p>CollectionFS is a mix of both Meteor.Collection and GridFS mongoDB.
-Using Meteor and gridFS principles we get:</p>
+<p>CollectionFS is a mix of both <a href="http://docs.meteor.com/#meteor_collection">Meteor.Collection</a> and MongoDB's <a href="http://docs.mongodb.org/manual/core/gridfs/">GridFS</a>.</p>
+
+<p>Using Meteor and GridFS principles we get:</p>
 
 <ul>
-<li>Security handling</li>
-<li>Handling sharing</li>
-<li>Restrictions eg. only allow certain content types, fields, users etc.</li>
-<li>Reactive data, the collectionFS's methods should all be reactive</li>
-<li>Ability for the user to resume upload after connection loss, browser crash or cola in keyboard</li>
-<li>At the moment files are loaded into the client as Blob universal way of handling large binary data</li>
-<li>Create multiple cached versions, sizes or formats of your files and get an url to the file - or upload files to another service / server</li>
+<li>Security</li>
+<li>Sharing</li>
+<li>Restrictions (e.g. only allow certain content types, fields, users, etc.)</li>
+<li>Reactive data — CollectionFS's methods should all be reactive</li>
+<li>Ability to resume uploads after connection loss, browser crash or cola in keyboard</li>
+<li>At the moment, files are loaded into the client as a Blob — a universal way of handling large binary data</li>
+<li>Create multiple cached versions, sizes or formats of your files, with an url to the file — or upload files to another service / server</li>
 </ul><p>Design overview:</p>
 
 <div class="highlight"><pre>        <span class="nx">App</span>               <span class="o">&lt;-|</span> <span class="nx">Can</span> <span class="nx">retrieve</span> <span class="nx">files</span> <span class="nx">via</span> <span class="nx">DDP</span> <span class="nx">and</span> <span class="nx">HTTP</span>
@@ -87,6 +88,14 @@ Using Meteor and gridFS principles we get:</p>
                             <span class="o">|</span> <span class="nx">filesystem</span><span class="p">.</span>
 </pre></div>
 
+<h2>Contributions</h2>
+
+<p>Do you have idears, issues, documentation, fixes or pull requests? All is wellcome for making collectionFS faster, more versatile and easier to use.</p>
+
+<h3>A special thanks and credit goes to code contributors</h3>
+
+<p><strong><a href="https://github.com/emgee3" class="user-mention">@emgee3</a>, <a href="https://github.com/nhibner" class="user-mention">@nhibner</a>, <a href="https://github.com/mitar" class="user-mention">@mitar</a>, <a href="https://github.com/petrocket" class="user-mention">@petrocket</a></strong><br><em>Ranked by last commit, are you missing from the list? file it as an issue or make a PR :)</em></p>
+
 <h2>How to use?</h2>
 
 <h4>1. Install:</h4>
@@ -94,18 +103,18 @@ Using Meteor and gridFS principles we get:</p>
 <pre><code>    mrt add collectionFS
 </code></pre>
 
-<p><em>Requires <code>Meteorite</code> get it at <a href="https://atmosphere.meteor.com">atmosphere.meteor.com</a></em></p>
+<p><em>Requires <code>Meteorite</code> from <a href="https://atmosphere.meteor.com">atmosphere.meteor.com</a></em></p>
 
 <h4>2. Create model: [client, server]</h4>
 
 <div class="highlight"><pre>    <span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">);</span>
 </pre></div>
 
-<p><em>You can still create a <code>Contacts = new Meteor.Collection('contacts')</code> since gridFS maps on eg. <code>contacts.files</code> and <code>contacts.chunks</code></em></p>
+<p><em>You can still create a <code>Contacts = new Meteor.Collection('contacts')</code> since GridFS maps on <code>contacts.files</code> and <code>contacts.chunks</code></em></p>
 
-<h4>3. Adding security in model: [client, server]</h4>
+<h4>3. Add security to model: [client, server]</h4>
 
-<p><em>Only needed when using <code>accounts-...</code> (eg. removed the <code>insecure</code> package)</em></p>
+<p><em>This is only needed when using <code>accounts-...</code> and you have removed the <code>insecure</code> package.</em></p>
 
 <div class="highlight"><pre>    <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">allow</span><span class="p">({</span>
       <span class="nx">insert</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="nx">myFile</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">userId</span> <span class="o">&amp;&amp;</span> <span class="nx">myFile</span><span class="p">.</span><span class="nx">owner</span> <span class="o">===</span> <span class="nx">userId</span><span class="p">;</span> <span class="p">},</span>
@@ -113,21 +122,21 @@ Using Meteor and gridFS principles we get:</p>
             <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">all</span><span class="p">(</span><span class="nx">files</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">myFile</span><span class="p">)</span> <span class="p">{</span>
               <span class="k">return</span> <span class="p">(</span><span class="nx">userId</span> <span class="o">==</span> <span class="nx">myFile</span><span class="p">.</span><span class="nx">owner</span><span class="p">);</span>
 
-        <span class="p">});</span>  <span class="c1">//EO interate through files</span>
+        <span class="p">});</span>  <span class="c1">//EO iterate through files</span>
       <span class="p">},</span>
       <span class="nx">remove</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="nx">files</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> <span class="p">}</span>
     <span class="p">});</span>
 </pre></div>
 
-<p><em>The collectionFS supports functions <code>.allow</code>, <code>.deny</code>, <code>.find</code>, <code>findOne</code> used when subscribing/ publishing from server</em> 
-<em>It's here you can add restrictions eg. on content-types, filesizes etc.</em>
-<em><code>.update</code>, <code>.remove</code> are also supported, <code>remove</code> removes all chunks and files related to the file removed</em></p>
+<p><em>The collectionFS supports functions <code>.allow</code>, <code>.deny</code>, <code>.find</code>, <code>findOne</code> used when subscribing/ publishing from server.</em> 
+<em>It's here you can add restrictions, for example allowed content-types, file sizes, etc.</em>
+<em><code>.update</code>, <code>.remove</code> are also supported, <code>remove</code> removes all chunks and versions related to the original file.</em></p>
 
-<h4>4. Disabling autopublish:</h4>
+<h4>4. Disable autopublish:</h4>
 
-<p><em>If you would rather not autopublish all files, you can turn off the autopublish option.  This is useful if you want to limit the number of published documents or the fields that get published</em></p>
+<p><em>If you would rather not autopublish all files, you can turn off the autopublish option. This is useful if you want to limit the number of published documents or the fields that get published.</em></p>
 
-<h5>Disabling autopublish: [client, server]</h5>
+<h5>Disable autopublish: [client, server]</h5>
 
 <div class="highlight"><pre>  <span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">autopublish</span><span class="o">:</span> <span class="kc">false</span> <span class="p">});</span>
 </pre></div>
@@ -137,17 +146,17 @@ Using Meteor and gridFS principles we get:</p>
 <div class="highlight"><pre>    <span class="c1">// Disable autopublish</span>
     <span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">autopublish</span><span class="o">:</span> <span class="kc">false</span> <span class="p">});</span>
 
-    <span class="c1">// example #1 - manually publish with an optional param</span>
+    <span class="c1">// Example #1 - manually publish with an optional param</span>
     <span class="nx">Meteor</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'listContactsFiles'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">filter</span><span class="p">)</span> <span class="p">{</span>
-      <span class="c1">// sort by handedAt time and only return the filename, handledAt and _id fields</span>
+      <span class="c1">// sort by handledAt time and only return the filename, handledAt and _id fields</span>
       <span class="k">return</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span> <span class="nx">complete</span><span class="o">:</span> <span class="nx">filter</span><span class="p">.</span><span class="nx">completed</span> <span class="p">},</span> <span class="p">{</span>
-              <span class="nx">sort</span><span class="o">:</span><span class="p">{</span> <span class="nx">handledAt</span><span class="o">:</span> <span class="mi">1</span> <span class="p">},</span> 
+              <span class="nx">sort</span><span class="o">:</span>   <span class="p">{</span> <span class="nx">handledAt</span><span class="o">:</span> <span class="mi">1</span> <span class="p">},</span> 
               <span class="nx">fields</span><span class="o">:</span> <span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">filename</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">handledAt</span><span class="o">:</span> <span class="mi">1</span><span class="p">},</span>
-              <span class="nx">limit</span><span class="o">:</span> <span class="nx">filter</span><span class="p">.</span><span class="nx">limit</span>
+              <span class="nx">limit</span><span class="o">:</span>  <span class="nx">filter</span><span class="p">.</span><span class="nx">limit</span>
       <span class="p">})</span>
     <span class="p">});</span>
 
-    <span class="c1">// example #2 - limit results and only show users files they own</span>
+    <span class="c1">// Example #2 - limit results and only show users files they own</span>
     <span class="nx">Meteor</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'myContactsFiles'</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
       <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">userId</span><span class="p">)</span> <span class="p">{</span>
         <span class="k">return</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span> <span class="nx">owner</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">userId</span> <span class="p">},</span> <span class="p">{</span> <span class="nx">limit</span><span class="o">:</span> <span class="mi">30</span> <span class="p">});</span>
@@ -155,15 +164,15 @@ Using Meteor and gridFS principles we get:</p>
     <span class="p">});</span>    
 </pre></div>
 
-<p><em>Note: It's possible to set one more option serverside: <code>ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });</code> - This will set max simultane filehandlers in total on the server, dispite collection</em></p>
+<p><em>Note: It's possible to set one more option server-side: <code>ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });</code>. This will set the maximum simultaneous file handlers on the server, in total, despite number of collections.</em></p>
 
 <h5>Example [client]</h5>
 
 <div class="highlight"><pre>    <span class="c1">// Disable autopublish / autosubscribe</span>
     <span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">autopublish</span><span class="o">:</span> <span class="kc">false</span><span class="p">});</span>
 
-    <span class="c1">// example #1 - manually subscribe and show completed only </span>
-    <span class="c1">// (goes with example #1 above)</span>
+    <span class="c1">// Example #1 — manually subscribe and show completed only </span>
+    <span class="c1">// (goes with server example #1 above)</span>
 
     <span class="c1">// Use session for setting filter options</span>
     <span class="nx">Session</span><span class="p">.</span><span class="nx">setDefault</span><span class="p">(</span><span class="s1">'myFilter'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">completed</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">limit</span><span class="o">:</span> <span class="mi">30</span> <span class="p">});</span>
@@ -175,19 +184,19 @@ Using Meteor and gridFS principles we get:</p>
     <span class="p">});</span>
 </pre></div>
 
-<h2>Uploading file</h2>
+<h2>Upload files</h2>
 
 <h4>1. Adding the view:</h4>
 
-<div class="highlight"><pre>    <span class="nt">&lt;template</span> <span class="na">name=</span><span class="s">"queControl"</span><span class="nt">&gt;</span>
+<div class="highlight"><pre>    <span class="nt">&lt;template</span> <span class="na">name=</span><span class="s">"queueControl"</span><span class="nt">&gt;</span>
       <span class="nt">&lt;h3&gt;</span>Select file(s) to upload:<span class="nt">&lt;/h3&gt;</span>
       <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"files"</span> <span class="na">type=</span><span class="s">"file"</span> <span class="na">class=</span><span class="s">"fileUploader"</span> <span class="na">multiple</span><span class="nt">&gt;</span>
     <span class="nt">&lt;/template&gt;</span>
 </pre></div>
 
-<h4>2. Adding the controller: [client]</h4>
+<h4>2. Add the controller: [client]</h4>
 
-<div class="highlight"><pre>    <span class="nx">Template</span><span class="p">.</span><span class="nx">queControl</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
+<div class="highlight"><pre>    <span class="nx">Template</span><span class="p">.</span><span class="nx">queueControl</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
       <span class="s1">'change .fileUploader'</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
          <span class="kd">var</span> <span class="nx">files</span> <span class="o">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">files</span><span class="p">;</span>
          <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">f</span><span class="p">;</span> <span class="nx">f</span> <span class="o">=</span> <span class="nx">files</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
@@ -197,38 +206,39 @@ Using Meteor and gridFS principles we get:</p>
     <span class="p">});</span>
 </pre></div>
 
-<p><em>ContactsFS.storeFile(f) returns fileId or null, actual downloads are spawned as "threads". It's possible to add metadata: <code>storeFile(file, {})</code> - callback or eventlisteners are on the todo</em></p>
+<p><em>ContactsFS.storeFile(f) returns <code>fileId</code> or <code>null</code>. Actual downloads are spawned as "threads". It's also possible to add metadata: <code>storeFile(file, {})</code> — callback or event listeners are on the todo</em>.</p>
 
-<h2>Downloading file</h2>
+<h2>Download files</h2>
 
-<h4>1. Adding the view:</h4>
+<h4>1. Add the view:</h4>
 
 <div class="highlight"><pre>    <span class="nt">&lt;template</span> <span class="na">name=</span><span class="s">"fileTable"</span><span class="nt">&gt;</span>
       {{#each Files}}
         <span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">"btn btn-primary btn-mini btnFileSaveAs"</span><span class="nt">&gt;</span>Save as<span class="nt">&lt;/a&gt;</span>{{filename}}<span class="nt">&lt;br/&gt;</span>
       {{else}}
-        No files uploaded
+        No files uploaded.
       {{/each}}
     <span class="nt">&lt;/template&gt;</span>
 </pre></div>
 
-<h4>2. Adding the controller: [client]</h4>
+<h4>2. Add the controller: [client]</h4>
 
 <div class="highlight"><pre>    <span class="nx">Template</span><span class="p">.</span><span class="nx">fileTable</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
       <span class="s1">'click .btnFileSaveAs'</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
         <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">retrieveBlob</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_id</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">)</span> <span class="p">{</span>
-          <span class="k">if</span> <span class="p">(</span><span class="nx">fileItem</span><span class="p">.</span><span class="nx">blob</span><span class="p">)</span>
-            <span class="nx">saveAs</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span> <span class="nx">fileItem</span><span class="p">.</span><span class="nx">filename</span><span class="p">)</span>
-          <span class="k">else</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">fileItem</span><span class="p">.</span><span class="nx">blob</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">saveAs</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span> <span class="nx">fileItem</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
+          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
             <span class="nx">saveAs</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">.</span><span class="nx">file</span><span class="p">,</span> <span class="nx">fileItem</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
+          <span class="p">}</span>
         <span class="p">});</span>
       <span class="p">}</span> <span class="c1">//EO saveAs</span>
     <span class="p">});</span>
 </pre></div>
 
-<p><em>In future only a blob will be returned, this will return local file if available. The <code>Save as</code> calls the Filesaver.js by Eli Grey, <a href="http://eligrey.com">http://eligrey.com</a> - It doesn't work on iPad</em></p>
+<p><em>In the future only a blob will be returned, this will return local file if available. The <code>Save as</code> calls <a href="https://github.com/eligrey/FileSaver.js">Filesaver.js</a> by <a href="http://eligrey.com">Eli Grey</a>. It doesn't work on iPad.</em></p>
 
-<h4>3. Adding controller helper: [client]</h4>
+<h4>3. Add controller helper: [client]</h4>
 
 <div class="highlight"><pre>    <span class="nx">Template</span><span class="p">.</span><span class="nx">fileTable</span><span class="p">.</span><span class="nx">helpers</span><span class="p">({</span>
       <span class="nx">Files</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
@@ -237,9 +247,45 @@ Using Meteor and gridFS principles we get:</p>
     <span class="p">});</span>
 </pre></div>
 
-<p><em>There are some in the works for <code>widgets</code> / <code>components</code> eg. gui elements for uploading files, ex. via drag &amp; drop</em></p>
+<p><em>There are some <code>widgets</code> / <code>components</code> (e.g. gui elements for uploading files, via drag &amp; drop) in the works.</em></p>
 
-<h4>4. Store a file serverside</h4>
+<h2>API for storing and retrieving files</h2>
+
+<h3>Client-side</h3>
+
+<h4>Store a file</h4>
+
+<div class="highlight"><pre>  <span class="nx">Contacts</span><span class="p">.</span><span class="nx">storeFile</span><span class="p">(</span><span class="nx">file</span><span class="p">,</span> <span class="nx">metadata</span><span class="p">);</span>
+</pre></div>
+
+<p><em>The file is the browser filehandle, and metadata is custom data to save in the file record for later use</em></p>
+
+<h4>Retrieve a file</h4>
+
+<div class="highlight"><pre>  <span class="nx">Contacts</span><span class="p">.</span><span class="nx">retrieveBlob</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fileId</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+</pre></div>
+
+<p>Example:</p>
+
+<div class="highlight"><pre>  <span class="nx">Contacts</span><span class="p">.</span><span class="nx">retrieveBlob</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fileId</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// eiter fileItem.blob or fileItem.file is returned (in future a blob should allways be available)</span>
+    <span class="c1">// fileItem._id</span>
+    <span class="c1">// fileItem.countChunks</span>
+    <span class="c1">// fileItem.length   </span>
+  <span class="p">});</span>
+</pre></div>
+
+<h4>TODO:</h4>
+
+<p>The client-side code is going for a rewrite, for a better and more versatile api</p>
+
+<ul>
+<li>More options for storing and retrieving data</li>
+<li>More control over the queue eg. trottling the queue</li>
+<li>Make a dropbox like example of it</li>
+</ul><h3>Server-side</h3>
+
+<h4>Store a file</h4>
 
 <div class="highlight"><pre><span class="kd">var</span> <span class="nx">myText</span> <span class="o">=</span> <span class="s1">'Hello world, I wrote this..:)'</span><span class="p">;</span>
 <span class="kd">var</span> <span class="nx">buffer</span> <span class="o">=</span> <span class="nx">Buffer</span><span class="p">(</span><span class="nx">myText</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
@@ -252,16 +298,18 @@ Using Meteor and gridFS principles we get:</p>
   <span class="nx">contentType</span><span class="o">:</span> <span class="s1">'text/plain'</span><span class="p">,</span>
   <span class="c1">// Set a user id (optional)</span>
   <span class="nx">owner</span><span class="o">:</span> <span class="s1">'WAaPHfyfgHGaeJ5kK'</span><span class="p">,</span>
-  <span class="c1">// Stop live update of progress (optional default to false)     </span>
+  <span class="c1">// Stop live update of progress (optional, defaults to false)     </span>
   <span class="nx">noProgress</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
   <span class="c1">// Attach custom data to the file  </span>
-  <span class="nx">metadata</span><span class="o">:</span> <span class="p">{</span> <span class="nx">text</span><span class="o">:</span> <span class="s1">'some stuff'</span> <span class="p">}</span>
+  <span class="nx">metadata</span><span class="o">:</span> <span class="p">{</span> <span class="nx">text</span><span class="o">:</span> <span class="s1">'some stuff'</span> <span class="p">},</span>
+  <span class="c1">// Set encoding (optional default 'utf-8')</span>
+  <span class="nx">encoding</span><span class="o">:</span> <span class="s1">'utf-8'</span>
 <span class="p">});</span>
 </pre></div>
 
-<p><em>A rough example to illustrate the api</em></p>
+<p><em>A rough example to illustrate the API.</em></p>
 
-<h4>5. Retrieve a file serverside</h4>
+<h4>Retrieve a file server-side</h4>
 
 <div class="highlight"><pre><span class="kd">var</span> <span class="nx">blob</span> <span class="o">=</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">retrieveBuffer</span><span class="p">(</span><span class="nx">fileId</span><span class="p">);</span> <span class="c1">// Returns a Buffer</span>
 
@@ -269,18 +317,20 @@ Using Meteor and gridFS principles we get:</p>
 <span class="kd">var</span> <span class="nx">fileRecord</span> <span class="o">=</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">findOne</span><span class="p">(</span><span class="nx">fileId</span><span class="p">);</span>
 </pre></div>
 
-<h3>Create server cache/versions of files and get an url reference</h3>
+<h2>Filehandlers</h2>
 
-<p>Filehandlers are serverside functions that makes caching versions easier. The functions are run and handled a file record and a blob / <code>Buffer</code> containing all the bytes.</p>
+<h3>Create cache/versions of files and get an url reference on the server</h3>
+
+<p>Filehandlers are server-side functions that makes caching versions easier. The functions are run and handed a file record and a blob / <code>Buffer</code> containing all the bytes.</p>
 
 <ul>
-<li>Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file - all done reactivly live.</li>
+<li>Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file — all done reactively live.</li>
 <li>If only custom metadata is returned without a blob / Buffer then no files saved but metadata is saved in database.</li>
 <li>If null returned then only filehandler name and a date is saved in database.</li>
 <li>If false returned the filehandler failed and it will be resumed later</li>
 </ul><h4>Options</h4>
 
-<p><em>Each filehandler is handed a options object</em></p>
+<p><em>Each filehandler is handed a options object.</em></p>
 
 <div class="highlight"><pre><span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
   <span class="nx">blob</span><span class="p">,</span>              <span class="c1">// Type of node.js Buffer() </span>
@@ -298,6 +348,7 @@ Using Meteor and gridFS principles we get:</p>
     <span class="nx">filename</span> <span class="o">:</span> <span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>     <span class="c1">// Original filename</span>
     <span class="nx">length</span><span class="o">:</span> <span class="s1">''</span><span class="o">+</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">,</span>     <span class="c1">// Issue in Meteor</span>
     <span class="nx">contentType</span> <span class="o">:</span> <span class="nx">file</span><span class="p">.</span><span class="nx">type</span><span class="p">,</span>
+    <span class="nx">encoding</span><span class="o">:</span> <span class="nx">encoding</span><span class="p">,</span>       <span class="c1">// Default 'utf-8'</span>
     <span class="nx">metadata</span> <span class="o">:</span> <span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="o">?</span> <span class="nx">options</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>  <span class="c1">// Custom data</span>
     <span class="cm">/* TODO:</span>
 <span class="cm">    startedAt: null,          // Start timer for upload start</span>
@@ -311,24 +362,24 @@ Using Meteor and gridFS principles we get:</p>
 
 <h4>options.destination - function</h4>
 
-<p><em>filehandlers are presented with a helper function for handling paths - all paths can be custom, but it's recommended to use those returned by <code>destination()</code></em>
-<code>options.destination( [extension] )</code> takes an optional <code>extension</code> eg.:</p>
+<p><em>Filehandlers are presented with a helper function for handling paths — all paths can be custom, but it's recommended to use those returned by <code>destination()</code>.</em>
+<code>options.destination( [extension] )</code> takes an optional <code>extension</code> e.g.:</p>
 
-<div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">dest</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">destination</span><span class="p">(</span><span class="s1">'jpg'</span><span class="p">);</span> <span class="c1">// otherwise orginal extension is used</span>
+<div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">dest</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">destination</span><span class="p">(</span><span class="s1">'jpg'</span><span class="p">);</span> <span class="c1">// otherwise original extension is used</span>
 </pre></div>
 
 <p>Object returned:</p>
 
-<div class="highlight"><pre>  <span class="nx">dest</span> <span class="o">==</span> <span class="p">{</span>
-    <span class="nx">serverFilename</span><span class="o">:</span> <span class="s1">'/absolute/path/uniqname.jpg'</span><span class="p">,</span> <span class="c1">// Unix or windows based</span>
+<div class="highlight"><pre>  <span class="nx">dest</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">serverFilename</span><span class="o">:</span> <span class="s1">'/absolute/path/uniquename.jpg'</span><span class="p">,</span> <span class="c1">// Unix or windows based</span>
     <span class="nx">fileData</span><span class="o">:</span> <span class="p">{</span>
-      <span class="nx">url</span><span class="o">:</span> <span class="s1">'/web/url/uniqname.jpg'</span><span class="p">,</span>
+      <span class="nx">url</span><span class="o">:</span> <span class="s1">'/web/url/uniquename.jpg'</span><span class="p">,</span>
       <span class="nx">extension</span><span class="o">:</span> <span class="s1">'jpg'</span>
     <span class="p">}</span>
   <span class="p">}</span>
 </pre></div>
 
-<p>The <code>destination</code> helper gets handy eg. when manually saving an image from within the filehandler.</p>
+<p>The <code>destination</code> helper gets handy e.g. when manually saving an image from within the filehandler.</p>
 
 <div class="highlight"><pre>  <span class="nx">Filesystem</span><span class="p">.</span><span class="nx">fileHandlers</span><span class="p">({</span>
     <span class="nx">soundToWav</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
@@ -336,34 +387,34 @@ Using Meteor and gridFS principles we get:</p>
       <span class="kd">var</span> <span class="nx">dest</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">destination</span><span class="p">(</span><span class="s1">'wav'</span><span class="p">);</span>
       <span class="nx">writeFileToDisk</span><span class="p">(</span><span class="nx">dest</span><span class="p">.</span><span class="nx">serverFilename</span><span class="p">,</span> <span class="nx">blob</span><span class="p">);</span>
 
-      <span class="c1">// Save correct reference to database by returning url and extension - but no blob</span>
+      <span class="c1">// Save correct reference to database by returning url and extension — but no blob</span>
       <span class="k">return</span> <span class="nx">dest</span><span class="p">.</span><span class="nx">fileData</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">});</span>
 </pre></div>
 
-<p>More examples follows, converters are to come:</p>
+<p>More examples follow, converters are to come:</p>
 
 <div class="highlight"><pre><span class="nx">Filesystem</span><span class="p">.</span><span class="nx">fileHandlers</span><span class="p">({</span>
-  <span class="nx">default1</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//Options contains blob and fileRecord - same is expected in return if should be saved on filesytem, can be modified</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling 1: '</span><span class="o">+</span><span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
-    <span class="k">return</span> <span class="p">{</span> <span class="nx">blob</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span> <span class="nx">fileRecord</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span> <span class="p">};</span> <span class="c1">//if no blob then save result in fileHandle (added createdAt)</span>
+  <span class="nx">default1</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// Options contains blob and fileRecord — same is expected in return if should be saved on filesytem, can be modified</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling default1: '</span> <span class="o">+</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
+    <span class="k">return</span> <span class="p">{</span> <span class="nx">blob</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span> <span class="nx">fileRecord</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span> <span class="p">};</span> <span class="c1">// if no blob then save result in fileHandle (added createdAt)</span>
   <span class="p">},</span>
   <span class="nx">default2</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">len</span> <span class="o">&gt;</span> <span class="mi">5000000</span> <span class="o">||</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">contentType</span> <span class="o">!=</span> <span class="s1">'image/jpeg'</span><span class="p">)</span> <span class="c1">//Save som space, only make cache if less than 1Mb</span>
-      <span class="k">return</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">//Not an error as if returning false, false would be tried again later...</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling 2: '</span><span class="o">+</span><span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">len</span> <span class="o">&gt;</span> <span class="mi">5000000</span> <span class="o">||</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">contentType</span> <span class="o">!=</span> <span class="s1">'image/jpeg'</span><span class="p">)</span> <span class="c1">//Save some space, only make cache if less than 5MB</span>
+      <span class="k">return</span> <span class="kc">null</span><span class="p">;</span> <span class="c1">// Not an error as if returning false, false would be tried again later...</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling default2: '</span> <span class="o">+</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
     <span class="k">return</span> <span class="nx">options</span><span class="p">;</span> 
   <span class="p">},</span>
   <span class="nx">size40x40</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
     <span class="c1">// Use Future.wrap for handling async</span>
-    <span class="cm">/*var im = npm.require('imagemagick'); // Add imagemagick package</span>
+    <span class="cm">/* var im = Npm.require('imagemagick'); // Add Imagemagick package</span>
 <span class="cm">    im.resize({</span>
 <span class="cm">                srcData: options.blob,</span>
 <span class="cm">                width: 40</span>
-<span class="cm">           });*/</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling: '</span><span class="o">+</span><span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span><span class="o">+</span><span class="s1">' to...'</span><span class="p">);</span>
+<span class="cm">           }); */</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling: '</span> <span class="o">+</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span> <span class="o">+</span> <span class="s1">' to...'</span><span class="p">);</span>
     <span class="k">return</span> <span class="p">{</span> <span class="nx">extension</span><span class="o">:</span> <span class="s1">'jpg'</span><span class="p">,</span> <span class="nx">blob</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span> <span class="nx">fileRecord</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span> <span class="p">};</span> <span class="c1">//or just 'options'...</span>
   <span class="p">},</span>
   <span class="nx">size100x100gm</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
@@ -374,17 +425,17 @@ Using Meteor and gridFS principles we get:</p>
     <span class="cm">/*</span>
 <span class="cm">    var dest = options.destination('jpg').serverFilename; // Set optional extension</span>
 
-<span class="cm">    var gm = npm.require('gm'); // GraphicsMagick required need Meteor package</span>
-<span class="cm">    gm( options.blob, dest).resize(100,100).quality(90).write(dest, function(err) {</span>
-<span class="cm">        if(err) {</span>
-<span class="cm">          // console.log 'GraphicsMagick error ' + err;</span>
+<span class="cm">    var gm = Npm.require('gm'); // GraphicsMagick required need Meteor package</span>
+<span class="cm">    gm(options.blob, dest).resize(100,100).quality(90).write(dest, function(err) {</span>
+<span class="cm">        if (err) {</span>
+<span class="cm">          // console.log('GraphicsMagick error ' + err);</span>
 <span class="cm">          return false; </span>
 <span class="cm">          // False will trigger rerun, could check options.sumFailes</span>
 <span class="cm">          // if we only want to rerun 2 times (default limit is 3,</span>
 <span class="cm">          // but sumFailes is reset at server idle + wait period)</span>
 <span class="cm">        }</span>
 <span class="cm">        else {</span>
-<span class="cm">          // console.log 'Finished writing image.';</span>
+<span class="cm">          // console.log('Finished writing image.');</span>
 <span class="cm">          return destination('jpg').fileData; // We only return the url for the file, no blob to save since we took care of it</span>
 <span class="cm">        }</span>
 <span class="cm">      });</span>
@@ -395,24 +446,24 @@ Using Meteor and gridFS principles we get:</p>
 <span class="p">});</span>
 </pre></div>
 
-<p><em>This is brand new on the testbed, future brings easy image handling shortcuts to imagemagic, maybe som sound/video converting and some integration for uploading to eg. google drive, dropbox etc.</em></p>
+<p><em>This is brand new on the testbed. The future brings easy image handling shortcuts to Imagemagick and maybe some sound/video conversion and integrated uploads to Google Drive, Dropbox, etc.</em></p>
 
 <h3>Future:</h3>
 
 <ul>
 <li>Handlebar helpers? <code>{{fileProgress}}</code>, <code>{{fileInQue}}</code> etc.</li>
-<li>Test server side handling image size etc.</li>
-<li>When code hot deploy the que halts, could be tackled in future version of Meteor</li>
-<li>Deviates from gridFS by using string based files.length (Meteor are working on this issue)</li>
+<li>Test server-side handling of image size, etc.</li>
+<li>When there is a hot code deploy the queue halts, which could be tackled in future version of Meteor.</li>
+<li>CollectionFS deviates from GridFS by using string-based files.length (Meteor are working on this issue).</li>
 <li>Prepare ability for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.</li>
-<li>Make Meteor packages for <code>GraphicsMagick</code> etc.</li>
+<li>Make Meteor packages for <code>GraphicsMagick</code>, etc.</li>
 </ul><h3>Notes:</h3>
 
 <ul>
-<li>This is made as <code>Make it work, make it fast</code>, well it just got very fast! <em>need to test if it's actually faster than regular upload</em>
+<li>This is made as <code>Make it work, make it fast</code>, well it just got very fast! <em>Need to test if it's actually faster than regular upload.</em>
 </li>
-<li>No test suite - any good ones for Meteor?</li>
-<li>Current code client side contains relics and will have a makeover one of these days</li>
+<li>No test suite — any good ones for Meteor?</li>
+<li>Current code client side contains relics and will have a make-over one of these days.</li>
 </ul>
       </section>
 
