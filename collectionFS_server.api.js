@@ -1,8 +1,5 @@
 _.extend(CollectionFS.prototype, {
-	storeBuffer: function(filename, buffer, encoding, options) {
-
-		// Default encoding is 'utf8'
-		encoding = encoding || 'utf8';
+	storeBuffer: function(filename, buffer, options) {
 
 		// Check filename
 		if (!filename || filename != ''+filename )
@@ -15,10 +12,14 @@ _.extend(CollectionFS.prototype, {
 		var self = this;
 		var fileId = null;
 
+		// Set encoding for file
+		var encoding = (options && options.encoding) ? options.encoding : 'utf-8';
+
 		// Simulate clienside file keys
 		var file = {
 			name: filename,
 			size: buffer.length,
+			encoding: encoding,
 			type: (options && options.contentType)? options.contentType : '',
 			owner: (options && options.owner)? options.owner : ''
 		};
@@ -32,8 +33,7 @@ _.extend(CollectionFS.prototype, {
 		
 		// Check that we are ok
 		if (!fileId)
-			throw new Error('storeBuffer could not create file "' + filename + '" in database');		
-
+			throw new Error('storeBuffer could not create file "' + filename + '" in database');)
 
 		//Put file in upload queue
 		for (var n = 0; n < fileRecord.countChunks; n++) {
@@ -46,8 +46,7 @@ _.extend(CollectionFS.prototype, {
 			var cId = self.chunks.insert({
 				"files_id" : fileId,    	// _id of the corresponding files collection entry
 				"n" : n,          			// chunks are numbered in order, starting with 0
-				"data" : data,          	// the chunk's payload as a BSON binary type
-				"encoding" : encoding 		// the encoding for the chunk		
+				"data" : data         		// the chunk's payload as a BSON binary type	
 			});
 
 			// Check that we are okay
@@ -100,6 +99,10 @@ _.extend(CollectionFS.prototype, {
 
 		query.rewind();
 
+		// Note: Newer fileRecords should have an encoding specified
+		// but this helps maintain backward compatibility
+		var encoding = (fileRecord.encoding) ? fileRecord.encoding : 'utf-8';
+
 		// Create the file blob for the filehandlers to use
 		query.forEach(function(chunk){
 			if (! chunk.data ) {
@@ -109,7 +112,7 @@ _.extend(CollectionFS.prototype, {
 
 			// Write chunk data to blob using the given encoding
 			if(chunk.data.length > 0) {
-				blob.write(chunk.data, (chunk.n * fileRecord.chunkSize), chunk.data.length, chunk.encoding);
+				blob.write(chunk.data, (chunk.n * fileRecord.chunkSize), chunk.data.length, encoding);
 			}
 		}); //EO find chunks
 
