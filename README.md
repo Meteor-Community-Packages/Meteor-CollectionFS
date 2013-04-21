@@ -45,6 +45,14 @@ Design overview:
                             | filesystem.
 ```
 
+##Contributions
+Do you have idears, issues, documentation, fixes or pull requests? All is wellcome for making collectionFS faster, more versatile and easier to use.
+
+###A special thanks and credit goes to code contributors
+__@nhibner, @mitar, @petrocket__  
+*Ranked by last commit, are you missing from the list? file it as an issue or make a PR :)*
+
+
 ##How to use?
 
 ####1. Install:
