@@ -31,6 +31,7 @@ __filehandlers = {
   bundlePath: '',         // Auto
   url: '',                // Auto
   rootDir: '',            // Auto
+  bundleStaticPath: '',   // Auto
   bundleRoot: '',         // Auto
   created: false,         // Auto
 
@@ -56,12 +57,18 @@ __filehandlers = {
   __filehandlers.url = '/' + __filehandlers.folder;
   __filehandlers.bundleRoot = Npm.bundleRoot;
   __filehandlers.rootDir = path.join(__filehandlers.bundleRoot, '..') + path.sep;
-  __filehandlers.bundlePath = path.join(__filehandlers.bundleRoot, 'static', __filehandlers.folder);
+  __filehandlers.bundleStaticPath = path.join(__filehandlers.bundleRoot, 'static');
+  __filehandlers.bundlePath = path.join(__filehandlers.bundleStaticPath, __filehandlers.folder);
   __filehandlers.serverPath = path.join(__filehandlers.rootDir, __filehandlers.folder);
 
   serverConsole.log('bundlePath: '+__filehandlers.bundlePath);
   serverConsole.log('serverPath: '+__filehandlers.serverPath);
 
+  // Check if the bundle static folder exists, if not then create Issue #40
+  if (!fs.existsSync(__filehandlers.bundleStaticPath))
+    fs.mkdirSync(__filehandlers.bundleStaticPath);
+
+  // Remove symlink
   try {
     fs.rmdirSync(__filehandlers.bundlePath);
   } catch(e) { /* NOP */}
@@ -70,9 +77,11 @@ __filehandlers = {
     fs.unlinkSync(__filehandlers.bundlePath);
   } catch(e) { /* NOP  */}
 
+  // Check if server path exists, if not then create
   if (!fs.existsSync(__filehandlers.serverPath))
     fs.mkdirSync(__filehandlers.serverPath);
 
+  // Create symlink
   if (!!fs.existsSync(__filehandlers.serverPath)) {
     serverConsole.log('Create symlinkSync');
     fs.symlinkSync( __filehandlers.serverPath, __filehandlers.bundlePath );

@@ -4,6 +4,7 @@ var myConsole = new Meteor.Collection('_console');
 
 serverConsole = {
 	log: function (message) {
+		console.log(message);
 		myConsole.insert({ message: message, createdAt: Date.now() });
 	}
 };
