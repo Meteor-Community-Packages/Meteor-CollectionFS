@@ -80,11 +80,15 @@ _.extend(CollectionFS.prototype, {
 		if (!fileRecord.uploadDate || !fileRecord.countChunks || fileRecord.numChunks != fileRecord.countChunks)
 			return;
 
+		// Note: Newer fileRecords should have an encoding specified
+		// but this helps maintain backward compatibility
+		var encoding = (fileRecord.encoding) ? fileRecord.encoding : 'utf-8';
+
 		// Get size of blob
 		var fileSize = +fileRecord['length']; //+ Due to Meteor issue
 
 		//Allocate mem
-		var blob = new Buffer(fileSize);
+		var blob = new Buffer(fileSize, encoding);
 
 		// Try to get all the chunks
 		var query = self.chunks.find({ files_id: fileId }, { sort: {n: 1} });
@@ -99,10 +103,6 @@ _.extend(CollectionFS.prototype, {
 
 		query.rewind();
 
-		// Note: Newer fileRecords should have an encoding specified
-		// but this helps maintain backward compatibility
-		var encoding = (fileRecord.encoding) ? fileRecord.encoding : 'utf-8';
-
 		// Create the file blob for the filehandlers to use
 		query.forEach(function(chunk){
 			if (! chunk.data ) {
@@ -111,8 +111,13 @@ _.extend(CollectionFS.prototype, {
 			}
 
 			// Write chunk data to blob using the given encoding
-			if(chunk.data.length > 0) {
-				blob.write(chunk.data, (chunk.n * fileRecord.chunkSize), chunk.data.length, encoding);
+			// if(chunk.data.length > 0) {
+			// 	blob.write(chunk.data, (chunk.n * fileRecord.chunkSize), chunk.data.length, encoding);
+			// }
+			// Finally do the data appending
+			for (var i = 0; i < chunk.data.length; i++) {
+				blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
+				//blob.writeUInt8( ((chunk.n * fileRecord.chunkSize) + i), chunk.data.charCodeAt(i) );
 			}
 		}); //EO find chunks
 

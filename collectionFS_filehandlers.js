@@ -220,8 +220,9 @@ _.extend(_queueListener.prototype, {
 						//Save on filesystem
 						if (result.blob) {
 							//save the file and update fileHandler
-		
-							fs.writeFileSync(destination(result.extension).serverFilename, result.blob, 'binary')
+
+							fs.writeFileSync(destination(result.extension).serverFilename, result.blob);
+
 							//Add to fileHandler array
 							if (fs.existsSync(destination(result.extension).serverFilename)) {
 								self.collectionFS.files.update({ _id: fileRecord._id }, { 
