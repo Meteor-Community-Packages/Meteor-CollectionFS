@@ -176,7 +176,7 @@ Next, provide the data context.
 //in client.js
 Template.fileTable.files = function() {
     //show all files that have been published to the client, with most recently uploaded first
-    return ContactsFS.find({}, { sort: { uploadDate:-1 } }).fetch();
+    return ContactsFS.find({}, { sort: { uploadDate:-1 } });
 };
 ```
 Now define an event handler for when the link is clicked.
