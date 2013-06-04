@@ -1,24 +1,22 @@
 #CollectionFS
-Is a simple way of handling files on the web in the Meteor environment.
+CollectionFS adds simple yet robust file uploading and downloading abilities to your Meteor web app. It is a mix of [Meteor.Collection](http://docs.meteor.com/#meteor_collection) and MongoDB's [GridFS](http://docs.mongodb.org/manual/core/gridfs/). CollectionFS stores files in your MongoDB database but also provides the ability to easily store files on the server filesystem or a remote filesystem.
 
-Have a look at [Live example](http://collectionfs.meteor.com/).
-
-It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stability and speed.
-
-CollectionFS is a mix of both [Meteor.Collection](http://docs.meteor.com/#meteor_collection) and MongoDB's [GridFS](http://docs.mongodb.org/manual/core/gridfs/).
-
-Using Meteor and GridFS principles we get:
-
-* Security
+##Features
+* Authorizing uploads and downloads based on Meteor user accounts
 * Sharing
-* Restrictions (e.g. only allow certain content types, fields, users, etc.)
-* Reactive data — CollectionFS's methods should all be reactive
-* Ability to resume uploads after connection loss, browser crash or cola in keyboard
-* At the moment, files are loaded into the client as a Blob — a universal way of handling large binary data
-* Create multiple cached versions, sizes or formats of your files, with an url to the file — or upload files to another service / server
+* Restrictions (e.g., allow only certain content types, fields, users, etc.)
+* Reactive methods
+* Ability to resume uploads after connection loss, browser crash, or cola in keyboard
+* Files are loaded on the client as a BLOB, a universal way of handling large binary data
+* Supports custom file handlers that you can use to:
+    * create one or more cached files
+    * resize images
+    * convert files to another format
+    * transfer files to another service or server
+    * anything else you want to do!
 
-Design overview:
-```js
+##Design Overview
+```
         App               <-| Can retrieve files via DDP and HTTP
 -------->|
 |      __|________        <-| Adds a connection for each CollectionFS
@@ -40,297 +38,308 @@ Design overview:
 |                   |
 |--- Remote files <-|     <-| Filehandlers specified by the user
 |--- Local files  <-|       | transform / handle uploaded files. 
-       (http)               | Eg. Uploading to remote services,
+       (http)               | Eg. uploading to remote services,
                             | resizing images, converting sound,
                             | video, generating tts or just making
                             | cached versions of db files to the
                             | filesystem.
 ```
 
-##Contributions
-Do you have idears, issues, documentation, fixes or pull requests? All is wellcome for making collectionFS faster, more versatile and easier to use.
+##Example
+Here is a [live example](http://collectionfs.meteor.com/) of a file manager app implemented using CollectionFS.
 
-###A special thanks and credit goes to code contributors
-__@emgee3, @nhibner, @mitar, @petrocket__  
-*Ranked by last commit, are you missing from the list? file it as an issue or make a PR :)*
+##Getting Started
 
+###Step 1: Add CollectionFS to Your Project
+First, install Meteorite from [atmosphere.meteor.com](https://atmosphere.meteor.com) if you haven't already. Meteorite is a Meteor package manager that allows you to install many unofficial packages, including CollectionFS.
 
-##How to use?
-
-####1. Install:
+Then:
 ```
-    mrt add collectionFS
+mrt add collectionFS
 ```
-*Requires `Meteorite` from [atmosphere.meteor.com](https://atmosphere.meteor.com)*
 
-####2. Create model: [client, server]
+###Step 2: Create a CollectionFS Model (client and server)
+In the client/server Javascript file where you define the data model for your project, add the following line for each collection that needs to store files. In this example, you might be storing documents related to contacts.
 ```js
-    ContactsFS = new CollectionFS('contacts');
+ContactsFS = new CollectionFS('contacts');
 ```
-*You can still create a `Contacts = new Meteor.Collection('contacts')` since GridFS maps on `contacts.files` and `contacts.chunks`*
-
-####3. Add security to model: [client, server]
-*This is only needed when using `accounts-...` and you have removed the `insecure` package.*
+It's important to note that CollectionFS extends the collection (in this example, "contacts"), creating contacts.files and contacts.chunks. This means that you can also create a normal `Meteor.Collection` with the same name if necessary for your app. For example:
 ```js
-    ContactsFS.allow({
-      insert: function(userId, myFile) { return userId && myFile.owner === userId; },
-      update: function(userId, files, fields, modifier) {
-            return _.all(files, function (myFile) {
-              return (userId == myFile.owner);
+Contacts = new Meteor.Collection('contacts', { autopublish: false })
+```
+*Setting `autopublish` to false is not required, but you will usually want to do this to limit the number of published documents or define which fields should be published. If you have removed the `autopublish` Meteor package, you do not need to set this since nothing will be autopublished by default.*
 
+###Step 3: Configure Authorization (client and server)
+*This step is necessary only if you are using one of the `accounts- * ` packages and you have removed the `insecure` package.*
+
+In the client/server Javascript file where you define the data model for your project, use the `allow` and `deny` methods to define which users may insert, update, and remove files. This is no different from defining authorization for a normal `Meteor.Collection`.
+
+```js
+ContactsFS.allow({
+    insert: function(userId, myFile) { return userId && myFile.owner === userId; },
+    update: function(userId, files, fields, modifier) {
+        return _.all(files, function (myFile) {
+            return (userId == myFile.owner);
         });  //EO iterate through files
-      },
-      remove: function(userId, files) { return false; }
-    });
+    },
+    remove: function(userId, files) { return false; }
+});
 ```
-*The collectionFS supports functions `.allow`, `.deny`, `.find`, `findOne` used when subscribing/ publishing from server.* 
-*It's here you can add restrictions, for example allowed content-types, file sizes, etc.*
-*`.update`, `.remove` are also supported, `remove` removes all chunks and versions related to the original file.*
 
+This is also a good place to add other restrictions such as allowed content types and maximum file size.
 
-####4. Disable autopublish: 
-*If you would rather not autopublish all files, you can turn off the autopublish option. This is useful if you want to limit the number of published documents or the fields that get published.*
+###Step 4: Publish Files
+Assuming that you are not autopublishing CollectionFS documents (see step 2), you now need to define which documents and fields should be published to each client.
 
-#####Disable autopublish: [client, server]
+In a server Javascript file, you can write `publish` functions that return the results of `find` or `findOne` calls to determine which files will be visible on each client. Then in a client Javascript file, you can subscribe to those document sets.
+
+####Simple Example
 ```js
-  ContactsFS = new CollectionFS('contacts', { autopublish: false });
-```
-#####Example [server]
-```js
-    // Disable autopublish
-    ContactsFS = new CollectionFS('contacts', { autopublish: false });
-
-    // Example #1 - manually publish with an optional param
-    Meteor.publish('listContactsFiles', function(filter) {
-      // sort by handledAt time and only return the filename, handledAt and _id fields
-      return ContactsFS.find({ complete: filter.completed }, {
-              sort:   { handledAt: 1 }, 
-              fields: { _id: 1, filename: 1, handledAt: 1},
-              limit:  filter.limit
-      })
-    });
-
-    // Example #2 - limit results and only show users files they own
-    Meteor.publish('myContactsFiles', function() {
-      if (this.userId) {
+// in server.js
+// limit results and only show users files they own
+Meteor.publish('myContactsFiles', function() {
+    if (this.userId) {
         return ContactsFS.find({ owner: this.userId }, { limit: 30 });
-      }
-    });    
-```
-*Note: It's possible to set one more option server-side: `ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });`. This will set the maximum simultaneous file handlers on the server, in total, despite number of collections.*
+    }
+});
 
-#####Example [client]
+// in client.js
+Meteor.subscribe('myContactsFiles');
+```
+
+####Example With Client Side Filter Rules and Reactivity
 ```js
-    // Disable autopublish / autosubscribe
-    ContactsFS = new CollectionFS('contacts', { autopublish: false});
+// in server.js
+Meteor.publish('listContactsFiles', function(filter) {
+    return ContactsFS.find({ complete: filter.completed }, { // publish only complete or only incomplete, depending on client setting
+        sort:   { handledAt: 1 }, // sort by handledAt time
+        fields: { _id: 1, filename: 1, handledAt: 1}, // publish only the filename, handledAt, and _id fields
+        limit:  filter.limit // limit the number of files published, depending on client setting
+    })
+});
 
-    // Example #1 — manually subscribe and show completed only 
-    // (goes with server example #1 above)
+// in client.js
+// Use session for setting filter options
+Session.setDefault('myFilter', { completed: true, limit: 30 });
 
-    // Use session for setting filter options
-    Session.setDefault('myFilter', { completed: true, limit: 30 });
-
-    // Make subscription depend on the current filter
-    Deps.autorun(function() {
-      var filter = Session.get('myFilter');
-      Meteor.subscribe('listContactsFiles', filter);
-    });
+// Subscription will be updated whenever myFilter session value changes
+Deps.autorun(function() {
+    var filter = Session.get('myFilter');
+    Meteor.subscribe('listContactsFiles', filter);
+});
 ```
 
-##Upload files
-####1. Adding the view:
+##Common Tasks
+Now that you have everything set up, you're probably excited to start transferring some files. Here are examples of how to achieve the most common tasks.
+
+###Upload a File From the Client
+First, create a new template for the file upload input.
 ```html
-    <template name="queueControl">
-      <h3>Select file(s) to upload:</h3>
-      <input name="files" type="file" class="fileUploader" multiple>
-    </template>
+<template name="queueControl">
+    <h3>Select file(s) to upload:</h3>
+    <input name="files" type="file" class="fileUploader" multiple>
+</template>
 ```
-
-####2. Add the controller: [client]
+Next, define an event handler that stores the files after the user selects them.
 ```js
-    Template.queueControl.events({
-      'change .fileUploader': function (e) {
-         var files = e.target.files;
-         for (var i = 0, f; f = files[i]; i++) {
-           ContactsFS.storeFile(f);
-         }
-      }
-    });
+Template.queueControl.events({
+    'change .fileUploader': function (e) {
+        var files = e.target.files;
+        for (var i = 0, f; f = files[i]; i++) {
+            ContactsFS.storeFile(f);
+        }
+    }
+});
 ```
-*ContactsFS.storeFile(f) returns `fileId` or `null`. Actual downloads are spawned as "threads". It's also possible to add metadata: `storeFile(file, {})` — callback or event listeners are on the todo*.
+`storeFile` returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads. When an upload finishes, client templates that list files or file information are updated live through reactivity.
 
-##Download files
-####1. Add the view:
+If you want to store additional metadata for each file, provide the data in the second parameter.
+```js
+storeFile(file, {})
+```
+
+There are currently no available callbacks or event listeners for the upload process. These will be added in a future release.
+
+###Download a File to the Client
+First, create a new template for the file link.
 ```html
-    <template name="fileTable">
-      {{#each Files}}
-        <a class="btn btn-primary btn-mini btnFileSaveAs">Save as</a>{{filename}}<br/>
-      {{else}}
-        No files uploaded.
-      {{/each}}
-    </template>
+<template name="fileTable">
+    {{#each files}}
+    <a class="btn btn-primary btn-mini btnFileSaveAs">Save as</a>{{filename}}<br/>
+    {{else}}
+    No files uploaded.
+    {{/each}}
+</template>
 ```
-
-####2. Add the controller: [client]
+Next, provide the data context.
 ```js
-    Template.fileTable.events({
-      'click .btnFileSaveAs': function() {
+//in client.js
+Template.fileTable.files = function() {
+    //show all files that have been published to the client, with most recently uploaded first
+    return ContactsFS.find({}, { sort: { uploadDate:-1 } });
+};
+```
+Now define an event handler for when the link is clicked.
+```js
+//in client.js
+Template.fileTable.events({
+    'click .btnFileSaveAs': function(e) {
+        e.preventDefault();
         ContactsFS.retrieveBlob(this._id, function(fileItem) {
-          if (fileItem.blob) {
-            saveAs(fileItem.blob, fileItem.filename);
-          } else {
-            saveAs(fileItem.file, fileItem.filename);
-          }
+            if (fileItem.blob) {
+                saveAs(fileItem.blob, fileItem.filename);
+            } else {
+                saveAs(fileItem.file, fileItem.filename);
+            }
         });
-      } //EO saveAs
-    });
+    } //EO saveAs
+});
 ```
-*In the future only a blob will be returned, this will return local file if available. The `Save as` calls [Filesaver.js](https://github.com/eligrey/FileSaver.js) by [Eli Grey](http://eligrey.com). It doesn't work on iPad.*
+We are checking whether the fileItem is a BLOB or a file because the local file may be returned if it's available. In the future, only a BLOB will be returned.
 
-####3. Add controller helper: [client]
+`saveAs` calls [Filesaver.js](https://github.com/eligrey/FileSaver.js) by [Eli Grey](http://eligrey.com). It doesn't work on iPad.
+
+###Delete a File
+You can call `remove` on the client or server to remove all chunks and versions related to the original file from the database.
 ```js
-    Template.fileTable.helpers({
-      Files: function() {
-        return ContactsFS.find({}, { sort: { uploadDate:-1 } });
-      }
-    });
-```
-*There are some `widgets` / `components` (e.g. gui elements for uploading files, via drag & drop) in the works.*
-
-##API for storing and retrieving files
-
-###Client-side
-
-####Store a file
-```js
-  Contacts.storeFile(file, metadata);
-```
-*The file is the browser filehandle, and metadata is custom data to save in the file record for later use*
-
-####Retrieve a file
-```js
-  Contacts.retrieveBlob: function(fileId, callback);
-```
-Example:
-```js
-  Contacts.retrieveBlob: function(fileId, function(fileItem) {
-    // eiter fileItem.blob or fileItem.file is returned (in future a blob should allways be available)
-    // fileItem._id
-    // fileItem.countChunks
-    // fileItem.length   
-  });
+ContactsFS.remove(fileId);
 ```
 
-####TODO:
-The client-side code is going for a rewrite, for a better and more versatile api
-* More options for storing and retrieving data
-* More control over the queue eg. trottling the queue
-* Make a dropbox like example of it
-
-###Server-side
-####Store a file
-
+###Store a File From the Server
+You can also store files from the server side. You could, for example, retrieve a file from some external URL and save it to your database. Here is a rough example to illustrate:
 ```js
 var myText = 'Hello world, I wrote this..:)';
 var buffer = Buffer(myText.length);
 
-for (var i = 0; i < myText.length; i++)
-  buffer[i] = myText.charCodeAt(i);
+for (var i = 0; i < myText.length; i++) {
+    buffer[i] = myText.charCodeAt(i);
+}
 
-ContactsFS.storeBuffer('My server uploaded file.txt', buffer, { 
-  // Set a contentType (optional)
-  contentType: 'text/plain',
-  // Set a user id (optional)
-  owner: 'WAaPHfyfgHGaeJ5kK',
-  // Stop live update of progress (optional, defaults to false)     
-  noProgress: true,
-  // Attach custom data to the file  
-  metadata: { text: 'some stuff' },
-  // Set encoding (optional default 'utf-8')
-  encoding: 'utf-8'
+ContactsFS.storeBuffer('serverFile.txt', buffer, { 
+    // Set a contentType (optional)
+    contentType: 'text/plain',
+    // Set a user id (optional)
+    owner: 'WAaPHfyfgHGaeJ5kK',
+    // Stop live update of progress (optional, defaults to false)     
+    noProgress: true,
+    // Attach custom data to the file  
+    metadata: { text: 'some stuff' },
+    // Set encoding (optional default 'utf-8')
+    encoding: 'utf-8'
 });
 ```
-*A rough example to illustrate the API.*
 
-####Retrieve a file server-side
+###Retrieve a File From the Server
+You can also retrieve files from the server side. 
 ```js
-var blob = ContactsFS.retrieveBuffer(fileId); // Returns a Buffer
+// Get the file itself as a BLOB (Buffer)
+var blob = ContactsFS.retrieveBuffer(fileId);
 
 // Get additional info from the file record
 var fileRecord = ContactsFS.findOne(fileId);
 ```
 
+##API Reference
+
+###CollectionFS.storeFile(file, metadata)
+* **file**: (Required) The browser filehandle.
+* **metadata**: An object with any custom data you want to save in the file record for later use.
+
+`storeFile` returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads.
+
+###CollectionFS.retrieveBlob(fileId, callback)
+* **fileId**: (Required) The ID of the file
+* **callback**: (Required) A function to handle the file BLOB after it's downloaded.
+
+`callback` is passed one argument, `fileItem`, which is a container for the file. Either fileItem.blob or fileItem.file will be available. fileItem.file is used if the file is already stored locally. In the future, this will be improved so that fileItem.blob is always set.
+
+`fileItem` also has properties _id, countChunks, and length.
+
+###CollectionFS.storeBuffer(fileName, buffer, options)
+* **fileName**: (Required) The name of the file
+* **buffer**: (Required) The bufferred content of the file
+* **options**: All of these are optional.
+    * **contentType**: The content (MIME) type of the file
+    * **owner**: The user ID of the user who owns the document   
+    * **noProgress**: `true` to prevent live updating of progress; default is `false`
+    * **metadata**: An object containing any custom metadata you want to store with the file
+    * **encoding**: The file encoding; default is `utf-8`
+
+###CollectionFS.retrieveBuffer(fileId)
+* **fileId**: (Required) The ID of the file
+Returns a buffer.
+
 ##Filehandlers
+Filehandlers are custom server-side functions that take a file record and a BLOB and do something with them. You can use them to convert files to other formats, process and convert images, store copies of the file on the filesystem, or upload files to remote services.
 
-###Create cache/versions of files and get an url reference on the server
-Filehandlers are server-side functions that makes caching versions easier. The functions are run and handed a file record and a blob / ```Buffer``` containing all the bytes.
-
-* Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file — all done reactively live.
-* If only custom metadata is returned without a blob / Buffer then no files saved but metadata is saved in database.
-* If null returned then only filehandler name and a date is saved in database.
-* If false returned the filehandler failed and it will be resumed later
-
-####Options
-*Each filehandler is handed a options object.*
-```js
-options: {
-  blob,              // Type of node.js Buffer() 
-  fileRecord: {
-    chunkSize : self.chunkSize, // Default 256kb ~ 262.144 bytes
-    uploadDate : Date.now(),  // Client set date
-    handledAt: null,          // datetime set by Server when handled
-    fileHandler:{},           // fileHandler supplied data if any
-    md5 : null,               // Not yet implemented
-    complete : false,         // countChunks == numChunks
-    currentChunk: -1,         // Used to coordinate clients
-    owner: Meteor.userId(),
-    countChunks: countChunks, // Expected number of chunks
-    numChunks: 0,             // number of chunks in database
-    filename : file.name,     // Original filename
-    length: ''+file.size,     // Issue in Meteor
-    contentType : file.type,
-    encoding: encoding,       // Default 'utf-8'
-    metadata : (options) ? options : null,  // Custom data
-    /* TODO:
-    startedAt: null,          // Start timer for upload start
-    endedAt: null,            // Stop timer for upload ended
-    */
-  },
-  destination: function, // Check below
-  sumFailes: 0..3 (times filehandler failed in this recovery session)
-}
-```
-####options.destination - function
-*Filehandlers are presented with a helper function for handling paths — all paths can be custom, but it's recommended to use those returned by `destination()`.*
-`options.destination( [extension] )` takes an optional `extension` e.g.:
-```js
-  var dest = options.destination('jpg'); // otherwise original extension is used
-```
-Object returned:
-```js
-  dest = {
-    serverFilename: '/absolute/path/uniquename.jpg', // Unix or windows based
-    fileData: {
-      url: '/web/url/uniquename.jpg',
-      extension: 'jpg'
-    }
-  }
-```
-The `destination` helper gets handy e.g. when manually saving an image from within the filehandler.
+###Defining Filehandlers
+To define a filehandler, use the `fileHandlers` function.
 ```js
   Filesystem.fileHandlers({
-    soundToWav: function(options) {
-      // Manipulate file, convert it to wav
-      var dest = options.destination('wav');
-      writeFileToDisk(dest.serverFilename, blob);
-
-      // Save correct reference to database by returning url and extension — but no blob
-      return dest.fileData;
+    fileHandler1: function(options) {
+      //manipulate the file, save to disk, etc.
+      return something;
     }
   });
 ```
+###Possible Return Values
+Depending on what the filehandler is doing, you can return different values.
+* If you return a BLOB: It is named, saved, and stored in database while the user can continue. After the file is successfully stored, the client data and template is updated live.
+* If you return metadata without a BLOB: The metadata is saved in the database without the file data.
+* If you return null: Only the filehandler name and a date is saved in the database.
+* If you return false: This means the filehandler failed temporarily. It will be tried again later.
 
-More examples follow, converters are to come:
+###Options
+Each filehandler should accept one `options` argument. This contains the file data, information about the file, a `destination` helper function, and more.
+```js
+options: {
+    blob,              // Type of node.js Buffer() 
+    fileRecord: {
+        chunkSize : self.chunkSize, // Default 256kb ~ 262.144 bytes
+        uploadDate : Date.now(),  // Client set date
+        handledAt: null,          // datetime set by Server when handled
+        fileHandler:{},           // fileHandler supplied data if any
+        md5 : null,               // Not yet implemented
+        complete : false,         // countChunks == numChunks
+        currentChunk: -1,         // Used to coordinate clients
+        owner: Meteor.userId(),
+        countChunks: countChunks, // Expected number of chunks
+        numChunks: 0,             // number of chunks in database
+        filename : file.name,     // Original filename
+        length: ''+file.size,     // Issue in Meteor
+        contentType : file.type,
+        encoding: encoding,       // Default 'utf-8'
+        metadata : (options) ? options : null,  // Custom data
+    },
+    destination: function,
+    sumFailes: 0..3 (times filehandler failed in this recovery session)
+}
+```
+####options.destination(extension)
+This function returns the correct file path for saving the current file to the local filesystem. While you can use custom paths to store files, it's easiest and safest to use the path returned by this function.
+
+If you want the file path to use a file extension that is different from the original file extension, pass the optional `extension` argument to `options.destination()`. For example:
+```js
+var dest = options.destination('jpg');
+```
+In this example, dest might be returned as
+```js
+dest = {
+    serverFilename: '/absolute/path/uniquename.jpg', // Unix or Windows is supported
+    fileData: {
+        url: '/web/url/uniquename.jpg',
+        extension: 'jpg'
+    }
+}
+```
+
+###Limiting Filehandlers
+When defining your CollectionFS collection, you can optionally specify the maximum number of simultaneous file handlers you want on the server, in total, regardless of the number of collections.
+```js
+ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });
+```
+
+###Filehandler Examples
 
 ```js
 Filesystem.fileHandlers({
@@ -380,20 +389,37 @@ Filesystem.fileHandlers({
     */
     // I failed to deliver a url for this, but don't try again
     return null;
+  },
+  soundToWav: function(options) {
+    // Manipulate file, convert it to wav
+    var dest = options.destination('wav');
+    writeFileToDisk(dest.serverFilename, blob);
+    
+    // Save correct reference to database by returning url and extension — but no blob
+    return dest.fileData;
   }
 });
 ```
-*This is brand new on the testbed. The future brings easy image handling shortcuts to Imagemagick and maybe some sound/video conversion and integrated uploads to Google Drive, Dropbox, etc.*
 
-###Future:
+##Upcoming Features
+An overhaul and many fixes and new features will hopefully be completed by July 2013.
 * Handlebar helpers? `{{fileProgress}}`, `{{fileInQue}}` etc.
 * Test server-side handling of image size, etc.
 * When there is a hot code deploy the queue halts, which could be tackled in future version of Meteor.
 * CollectionFS deviates from GridFS by using string-based files.length (Meteor are working on this issue).
 * Prepare ability for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.
+* Integrated uploads to Google Drive, Dropbox, etc.
 * Make Meteor packages for `GraphicsMagick`, etc.
-
-###Notes:
-* This is made as `Make it work, make it fast`, well it just got very fast! *Need to test if it's actually faster than regular upload.*
-* No test suite — any good ones for Meteor?
+* More options for storing and retrieving data
+* More control over the queue eg. trottling the queue
+* Make a dropbox like example of client side
+* Test suite — any good ones for Meteor?
 * Current code client side contains relics and will have a make-over one of these days.
+
+##Contributing
+Do you have ideas, issues, documentation, fixes, or pull requests? Anyone is welcome to help make CollectionFS faster, more versatile, and easier to use.
+
+###Special Thanks to Code Contributors
+__@aldeed, @emgee3, @nhibner, @mitar, @petrocket__  
+*ranked by last commit*
+(Are you missing from the list? File it as an issue or submit a pull request.)
