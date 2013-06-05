@@ -61,13 +61,14 @@ mrt add collectionFS
 ###Step 2: Create a CollectionFS Model (client and server)
 In the client/server Javascript file where you define the data model for your project, add the following line for each collection that needs to store files. In this example, you might be storing documents related to contacts.
 ```js
-ContactsFS = new CollectionFS('contacts');
-```
-It's important to note that CollectionFS extends the collection (in this example, "contacts"), creating contacts.files and contacts.chunks. This means that you can also create a normal `Meteor.Collection` with the same name if necessary for your app. For example:
-```js
-Contacts = new Meteor.Collection('contacts', { autopublish: false })
+ContactsFS = new CollectionFS('contacts', { autopublish: false });
 ```
 *Setting `autopublish` to false is not required, but you will usually want to do this to limit the number of published documents or define which fields should be published. If you have removed the `autopublish` Meteor package, you do not need to set this since nothing will be autopublished by default.*
+
+It's important to note that CollectionFS extends the collection (in this example, "contacts"), creating contacts.files and contacts.chunks. This means that you can also create a normal `Meteor.Collection` with the same name if necessary for your app. For example:
+```js
+Contacts = new Meteor.Collection('contacts');
+```
 
 ###Step 3: Configure Authorization (client and server)
 *This step is necessary only if you are using one of the `accounts- * ` packages and you have removed the `insecure` package.*
