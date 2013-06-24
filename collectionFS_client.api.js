@@ -5,13 +5,31 @@
 			var self = this;
 			var fileId = null;
 			var record = self.queue.makeGridFSFileRecord(file, options);
+                        if (!self.fileIsAllowed(record)) {
+                            return null;
+                        }
 			fileId = self.files.insert(record);	
-			if (!fileId)
-				return null;		
+			if (!fileId) {
+                            return null;
+                        }
 			//Put file in upload queue
 			self.queue.addFile(fileId, file);
 			return fileId;
 		}, //EO storeFile
+                storeFiles: function(files, callback) {
+                        var self = this, fileId, fileIds = [], file;
+                        if (files && files.length) {
+                            for (var i = 0, ln = files.length; i < ln; i++) {
+                                file = files[i];
+                                fileId = self.storeFile(file);
+                                if (fileId) {
+                                    fileIds.push(fileId);
+                                }
+                                callback(file, fileId);
+                            }
+                        }
+                        return fileIds;
+                }, //EO storeFiles
 		//callback(fileItem)
 		retrieveBlob: function(fileId, callback) {
 			//console.log('retrieveBlob');
@@ -31,8 +49,31 @@
 		retrieveFile: function(fileId, callback) {
 			//check if found locally - then use directly
 			//fetch from server, via methods call - dont want the chunks collection
-		} //EO retriveFile
+		}, //EO retriveFile
+                acceptDropsOn: function(elements, callback) {
+                        var self = this, elem;
+                        // Prevent default drag and drop
+                        function noopHandler(evt) {
+                            evt.stopPropagation();
+                            evt.preventDefault();
+                        }
 
+                        // Handle file dropped
+                        function dropped(evt) {
+                            noopHandler(evt);
+                            self.storeFiles(evt.dataTransfer.files, callback);
+                        }
+
+                        // init event handlers
+                        for (var i = 0, ln = elements.length; i < ln; i++) {
+                            elem = elements[i];
+                            elem.addEventListener("dragenter", noopHandler, false);
+                            elem.addEventListener("dragexit", noopHandler, false);
+                            elem.addEventListener("dragover", noopHandler, false);
+                            elem.addEventListener("dragend", noopHandler, false);
+                            elem.addEventListener("drop", dropped, false);
+                        }
+                }
 	}); //EO extend collection
 
 
@@ -44,67 +85,92 @@
 
 		getItem: function(fileId) {
 			var self = this;
-			Deps.depend(self.fileDeps);
+			self.fileDeps.depend();
 			return self._getItem(fileId);
 		}, //EO getItem	
 
-		//_getItem is privat function, not reactive
+		//_getItem is private function, not reactive
 		_getItem: function(fileId) {
 			var self = this;
 			return self.queue[fileId];
 		}, //EO _getItem
+                
+                //_getProgress is private function, not reactive
+                _getProgress: function(fileId, onlyBuffer) {
+                        var self = this;
+                        var fileItem = self._getItem(fileId);
+                        if (!fileItem) {
+                            return false;
+                        }
+
+                        if (fileItem.complete) {
+                            return 100;
+                        }
+
+                        var pointerChunk = (onlyBuffer) ? fileItem.currentChunk : fileItem.currentChunkServer; //TODO:
+
+                        if (fileItem) {
+                            return Math.round(pointerChunk / fileItem.countChunks * 100);
+                        } else {
+                            return 0;
+                        }
+                }, //EO _getProgress
 
 		progress: function(fileId, onlyBuffer) {
 			var self = this;
-			var fileItem = self._getItem(fileId);
-			if (!fileItem)
-				return false;
-
-			if (fileItem.complete)
-				return 100;
-
-			var pointerChunk = (onlyBuffer)?fileItem.currentChunk:fileItem.currentChunkServer; //TODO:
-			Deps.depend(self.fileDeps);
-
-			if (fileItem)
-				return Math.round(pointerChunk / (fileItem.countChunks) * 100)
-			else
-				return 0;
-		},
+                        self.fileDeps.depend();
+                        return self._getProgress(fileId, onlyBuffer);
+		}, //EO progress
 
 		isComplete: function(fileId) {
-			var self = this;
-			Deps.depend(self.fileDeps);
-			return self._getItem(fileId).complete;
+                        var self = this;
+                        self.fileDeps.depend();
+                        var fileItem = self._getItem(fileId);
+                        if (!fileItem) {
+                            return true;
+                        }
+                        return fileItem.complete;
 		}, //EO isComplete
+                
+                isUploading: function(fileId) {
+                        var self = this;
+                        self.fileDeps.depend();
+                        var fileItem = self._getItem(fileId);
+                        if (!fileItem || fileItem.download) {
+                            return false;
+                        }
+                        var progress = self._getProgress(fileId);
+                        return (progress && progress > 0 && progress < 100);
+                }, //EO isUploading
 
 		isDownloading: function(fileId) {
 			var self = this;
+                        self.fileDeps.depend();
 			var fileItem = self._getItem(fileId);
-			if (!fileItem)
-				return false;
-	    	var myProgress1 = Filesystem.queue.progress(fileId);
-	    	var myProgress2 = Math.round(fileItem.currentChunk / (fileItem.countChunks - 1) * 100);
-		    return (Math.max(myProgress1, myProgress2) > 0 && Math.min(myProgress1, myProgress2) < 100 && !fileItem.file);
-		},
+			if (!fileItem || !fileItem.download) {
+                            return false;
+                        }
+                        var progress = self._getProgress(fileId);
+                        return (progress && progress > 0 && progress < 100);
+		}, //EO isDownloading
 
 		isDownloaded: function(fileId) {
 			var self = this;
-			Deps.depend(self.fileDeps);
+			self.fileDeps.depend();
 			var fileItem = self._getItem(fileId);
 			if (fileItem.file)
 				return true;
 			if (fileItem.download) {
-				return (fileItem.currentChunk == fileItem.countChunks-1);
+				return (fileItem.currentChunk === fileItem.countChunks-1);
 			}
 			return false;
-		},
+		}, //EO isDownloaded
 
 		isPaused: function() {
 			var self = this;
-			Deps.depend(self.fileDeps);
+			self.fileDeps.depend();
 			return self.paused;
-		},
+		}, //EO isPaused
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////
@@ -384,7 +450,7 @@
 			if (self.isPaused())
 				return false;
 	//self.queue[fileId].countChunks = 1; //Uncomment for debugging
-			self.queue[fileId].complete = (self.queue[fileId].currentChunk == self.queue[fileId].countChunks);
+			self.queue[fileId].complete = (self.queue[fileId].currentChunk === self.queue[fileId].countChunks);
 			//Que progressed
 //			if (self.queue[fileId].currentChunk % 1 == 0 || self.queue[fileId].complete)
 				self.fileDeps.changed();
