@@ -1,12 +1,35 @@
 // Make files basic functions available in CollectionFS
 _.extend(CollectionFS.prototype, {
-	find: function(arguments, options) { return this.files.find(arguments, options); },
-	findOne: function(arguments, options) { return this.files.findOne(arguments, options); },
-	update: function(selector, modifier, options) { return this.files.update(selector, modifier, options); },
-	remove: function(selector) { return this.files.remove(selector); },
-	allow: function(arguments) { return this.files.allow(arguments); },
-	deny: function(arguments) { return this.files.deny(arguments); },
-	fileHandlers: function(options) { this._fileHandlers = options; }
+	find: function() { return this.files.find.apply(this.files, arguments); },
+	findOne: function() { return this.files.findOne.apply(this.files, arguments); },
+	update: function() { return this.files.update.apply(this.files, arguments); },
+	remove: function() { return this.files.remove.apply(this.files, arguments); },
+	allow: function() { return this.files.allow.apply(this.files, arguments); },
+	deny: function() { return this.files.deny.apply(this.files, arguments); },
+	fileHandlers: function(options) { _.extend(this._fileHandlers, options); },
+        fileFilter: function(options) {
+            options = cleanOptions(options);
+            this._fileFilter = options;
+        },
+        fileIsAllowed: function(fileRecord) {
+            if (!this._fileFilter) {
+                return true;
+            }
+            if (!fileRecord || !fileRecord.contentType || !fileRecord.filename) {
+                return false;
+            }
+            var filter = this._fileFilter;
+            var saveAllFileExtensions = (filter.allow.extensions.length === 0);
+            var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
+            var ext = getFileExtension(fileRecord.filename);
+            var contentType = fileRecord.contentType;
+            return (
+                    (saveAllFileExtensions || _.indexOf(filter.allow.extensions, ext) !== -1) &&
+                    _.indexOf(filter.deny.extensions, ext) === -1 &&
+                    (saveAllContentTypes || contentTypeInList(filter.allow.contentTypes, contentType)) &&
+                    !contentTypeInList(filter.deny.contentTypes, contentType)
+                    );
+        }
 });
 
 _.extend(_queueCollectionFS.prototype, {
@@ -57,3 +80,94 @@ _.extend(_queueCollectionFS.prototype, {
 		// TODO: checkup on gridFS date format
 	} //EO makeGridFSFileRecord
 });
+
+//utility functions
+getFileExtension = function(name) {
+    var found = name.lastIndexOf('.') + 1;
+    return (found > 0 ? name.substr(found) : "");
+};
+
+contentTypeInList = function(list, contentType) {
+    var listType, found = false;
+    for (var i = 0, ln = list.length; i < 10; i++) {
+        listType = list[i];
+        if (listType === contentType) {
+            found = true;
+            break;
+        }
+        if (listType === "image/*" && contentType.indexOf("image/") === 0) {
+            found = true;
+            break;
+        }
+        if (listType === "audio/*" && contentType.indexOf("audio/") === 0) {
+            found = true;
+            break;
+        }
+        if (listType === "video/*" && contentType.indexOf("video/") === 0) {
+            found = true;
+            break;
+        }
+    }
+    return found;
+};
+
+setObjByString = function(obj, str, val) {
+    var keys, key;
+    //make sure str is a nonempty string
+    if (!isNonEmptyString(str)) {
+        return false;
+    }
+    if (!isObject(obj)) {
+        //if it's not an object, make it one
+        obj = {};
+    }
+    keys = str.split(".");
+    while (keys.length > 1) {
+        key = keys.shift();
+        if (obj !== Object(obj)) {
+            //if it's not an object, make it one
+            obj = {};
+        }
+        if (!(key in obj)) {
+            //if obj doesn't contain the key, add it and set it to an empty object
+            obj[key] = {};
+        }
+        obj = obj[key];
+    }
+    return obj[keys[0]] = val;
+};
+
+isString = function(str) {
+    return Object.prototype.toString.call(str) === "[object String]";
+};
+
+isNonEmptyString = function(str) {
+    return isString(str) && str.length;
+};
+
+isObject = function(obj) {
+    return obj === Object(obj);
+};
+
+var cleanOptions = function(options) {
+    //clean up fileFilter option values
+    if (!options.allow || !isObject(options.allow)) {
+        options.allow = {};
+    }
+    if (!options.deny || !isObject(options.deny)) {
+        options.deny = {};
+    }
+    if (!options.allow.extensions || !_.isArray(options.allow.extensions)) {
+        options.allow.extensions = [];
+    }
+    if (!options.allow.contentTypes || !_.isArray(options.allow.contentTypes)) {
+        options.allow.contentTypes = [];
+    }
+    if (!options.deny.extensions || !_.isArray(options.deny.extensions)) {
+        options.deny.extensions = [];
+    }
+    if (!options.deny.contentTypes || !_.isArray(options.deny.contentTypes)) {
+        options.deny.contentTypes = [];
+    }
+    return options;
+};

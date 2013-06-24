@@ -9,6 +9,7 @@
 CollectionFS = function(name, options) {
 	var self = this;
 	self._name = name;
+        self._fileFilter = null;
 	self.files = new Meteor.Collection(self._name+'.files'); //TODO: Add change listener?
 	//self.chunks = new Meteor.Collection(self._name+'.chunks');
 	self.queue = new _queueCollectionFS(name);
