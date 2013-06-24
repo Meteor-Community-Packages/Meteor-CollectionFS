@@ -1,0 +1,31 @@
+{
+  "meteor": {
+    "git": "https://github.com/meteor/meteor.git",
+    "branch": "master",
+    "commit": "9bb2b5447e845c4f483df5e9b42a2c1de5ab909b"
+  },
+  "dependencies": {
+    "basePackages": {
+      "bootstrap-3": {},
+      "collectionFS": {},
+      "handlebar-helpers": {}
+    },
+    "packages": {
+      "bootstrap-3": {
+        "git": "https://github.com/mangasocial/meteor-bootstrap-3.git",
+        "tag": "v0.2.5",
+        "commit": "739b15b41b6dc4bed2cdbe44f5fb2978b6f4a5d2"
+      },
+      "collectionFS": {
+        "git": "https://github.com/raix/Meteor-CollectionFS.git",
+        "tag": "v0.2.3",
+        "commit": "4a1b9298a7ce64269fd14be29d9c4797b9253103"
+      },
+      "handlebar-helpers": {
+        "git": "https://github.com/raix/Meteor-handlebar-helpers.git",
+        "tag": "v0.0.6",
+        "commit": "8ca9ab1edcbb7d1ef935d4ad8c7e32479ea70b24"
+      }
+    }
+  }
+}
