@@ -1,0 +1,41 @@
+body {
+
+}
+
+.container {
+    margin: 40px auto;
+    width: 90%;
+}
+
+.audioList, .imgList {
+    position: relative;
+    border: 2px solid #333;
+    margin-top: 12px;
+    margin-bottom: 50px;
+    height: 300px;
+    max-height: 300px;
+    min-height: 300px;
+    overflow: auto;
+}
+
+.audioList table, .imgList table {
+    width: 100%;
+}
+
+.imgItem {
+    height: auto;
+    width: 150px;
+    margin: 10px;
+}
+
+.noItems {
+    position: absolute;
+    top: 135px;
+    width: 100%;
+    text-align: center;
+}
+
+.modal {
+    /*bootstrap 3 override*/
+    display: block;
+}

@@ -15,7 +15,8 @@ CollectionFS = function(name, options) {
 	self.files = new Meteor.Collection(self._name+'.files'); 	// TODO: Add change listener?
 	self.chunks = new Meteor.Collection(self._name+'.chunks');
 	self.queue = new _queueCollectionFS(name);
-	self._fileHandlers = null; 									// Set by function fileHandlers({});
+	self._fileHandlers = {}; 									// Set by function fileHandlers({});
+        self._fileFilter = null; 									// Set by function fileFilter({});
 	var methodFunc = {};										// Server methods
 	
 	serverConsole.log('CollectionFS: ' + name);
@@ -149,10 +150,7 @@ CollectionFS = function(name, options) {
 
 }; //EO collectionFS
 
-
 _queueCollectionFS = function(name) {
 	var self = this;
 	self._name = name;
 };
-
-

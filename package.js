@@ -9,7 +9,8 @@ Package.on_use(function(api) {
 
   api.add_files([
           'collectionFS_client.js',
-  				'collectionFS_client.api.js'], 'client');
+          'collectionFS_client.api.js',
+          'collectionFS_handlebars.js'], 'client');
   
   api.add_files([
   				'collectionFS_filesystem.js',
@@ -18,6 +19,7 @@ Package.on_use(function(api) {
           'collectionFS_server.api.js'], 'server');
   
   api.add_files([
-          'collectionFS_common.js'], [ 'client', 'server' ]);
+          'collectionFS_common.js',
+          'numeral.js'], ['client', 'server']);
 
 });
