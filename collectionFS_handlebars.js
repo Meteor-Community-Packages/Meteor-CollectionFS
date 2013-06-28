@@ -106,10 +106,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{queueProgress "Collection"}} (with file as current context)
-    //(2) {{queueProgress "Collection" file=file}}
-    //(3) {{queueProgress "Collection" fileId=fileId}}
-    Handlebars.registerHelper('queueProgress', function(collection, opts) {
+    //(1) {{cfsQueueProgress "Collection"}} (with file as current context)
+    //(2) {{cfsQueueProgress "Collection" file=file}}
+    //(3) {{cfsQueueProgress "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsQueueProgress', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -125,6 +125,29 @@ if (typeof Handlebars !== 'undefined') {
             return false;
         }
         return CFS.queue.progress(fileId);
+    });
+
+    //Usage:
+    //(1) {{cfsQueueProgressBar "Collection"}} (with file as current context)
+    //(2) {{cfsQueueProgressBar "Collection" file=file}}
+    //(3) {{cfsQueueProgressBar "Collection" fileId=fileId}}
+    //Supported Options: id, class
+    Handlebars.registerHelper('cfsQueueProgressBar', function(collection, opts) {
+        var fileId, hash;
+        hash = opts && opts.hash ? opts.hash : {};
+        if (hash.file) {
+            fileId = hash.file._id;
+        } else {
+            fileId = hash.fileId || this._id;
+        }
+        if (!fileId) {
+            return false;
+        }
+        return new Handlebars.SafeString(Template._cfsQueueProgressBar({
+            collection: collection,
+            fileId: fileId,
+            attributes: (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '')
+        }));
     });
 
     //Usage:
@@ -230,72 +253,106 @@ if (typeof Handlebars !== 'undefined') {
         return fh.url;
     });
 
-    //Usage: (TODO)
-    Handlebars.registerHelper('fileInput', function(options) {
-        var html = "", opt = options.hash, styles;
-        switch (opt.type) {
-            case "file":
-                html += '<input type="file" class="collectionFSFileInput' + (opt.class ? ' ' + opt.class : '') + '"' + (opt.id ? ' id="' + opt.id + '"' : '') + (opt.name ? ' name="' + opt.name + '"' : '') + (opt.multiple ? ' multiple' : '') + ' />';
-                if (opt.collection) {
-                    document.addEventListener('change', function(e) {
-                        var elem = e.target, files = elem.files;
-                        if (elem.classList.contains('collectionFSFileInput')) {
-                            if (files) {
-                                var path = opt.storeIdsIn, set = {}, collectionName, indexOfFirstDot;
-                                var ids = window[opt.collection].storeFile(files);
-                                if (path && path.length) {
-                                    indexOfFirstDot = path.indexOf('.');
-                                    if (indexOfFirstDot === -1) {
-                                        return;
-                                    }
-                                    collectionName = path.slice(0, indexOfFirstDot);
-                                    path = path.slice(indexOfFirstDot + 1);
+    //Usage:
+    //(1) {{cfsDownloadButton "Collection"}} (with file as current context)
+    //(2) {{cfsDownloadButton "Collection" file=file}}
+    //(3) {{cfsDownloadButton "Collection" fileId=fileId}}
+    //Supported Options: id, class, content
+    Handlebars.registerHelper('cfsDownloadButton', function(collection, opts) {
+        var fileId, hash, atts;
+        hash = opts && opts.hash ? opts.hash : {};
+        if (hash.file) {
+            fileId = hash.file._id;
+        } else {
+            fileId = hash.fileId || this._id;
+        }
+        if (!fileId) {
+            return false;
+        }
+        hash.class = hash.class ? hash.class + ' cfsDownloadButton' : 'cfsDownloadButton';
+        atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '');
+        return new Handlebars.SafeString(Template._cfsDownloadButton({
+            collection: collection,
+            fileId: fileId,
+            content: hash.content,
+            attributes: atts
+        }));
+    });
 
-                                    if (opt.multiple) {
-                                        setObjByString(set, path, ids);
-                                    } else {
-                                        if (ids.length) {
-                                            setObjByString(set, path, ids[0]);
-                                        } else {
-                                            setObjByString(set, path, null);
-                                        }
-                                    }
-                                    window[collectionName].update(opt.storeIdsFor, {$set: set});
-                                }
-                            }
-                        }
-                    }, false);
+    Template._cfsDownloadButton.events({
+        'click .cfsDownloadButton': function(event, template) {
+            var fileId = template.data.fileId,
+                    collection = template.data.collection, CFS;
+            if (!fileId || !collection) {
+                return false;
+            }
+            CFS = window[collection];
+            if (!CFS || !CFS.queue) {
+                return false;
+            }
+            CFS.retrieveBlob(fileId, function(fileItem) {
+                if (fileItem.blob) {
+                    window.saveAs(fileItem.blob, fileItem.filename);
+                } else {
+                    window.saveAs(fileItem.file, fileItem.filename);
                 }
+            });
+        }
+    });
+
+    //TODO make this work and test thoroughly
+    Template._cfsFileInput.events({
+        'change .cfsFileInput': function(event, template) {
+            var elem = event.target,
+                files = elem.files,
+                storeIdsFor = template.data.storeIdsFor,
+                path = template.data.storeIdsIn,
+                collection = template.data.collection,
+                multiple = template.data.multiple,
+                set = {},
+                collectionName, indexOfFirstDot;
+            if (files) {
+                var ids = window[collection].storeFiles(files);
+                if (path && path.length) {
+                    indexOfFirstDot = path.indexOf('.');
+                    if (indexOfFirstDot === -1) {
+                        return;
+                    }
+                    collectionName = path.slice(0, indexOfFirstDot);
+                    path = path.slice(indexOfFirstDot + 1);
+
+                    if (multiple) {
+                        setObjByString(set, path, ids);
+                    } else {
+                        if (ids.length) {
+                            setObjByString(set, path, ids[0]);
+                        } else {
+                            setObjByString(set, path, null);
+                        }
+                    }
+                    window[collectionName].update(storeIdsFor, {$set: set});
+                }
+            }
+        }
+    });
+
+    //Usage: (TODO)
+    Handlebars.registerHelper('cfsFileInput', function(collection, options) {
+        var html, hash = options.hash, styles, atts;
+        switch (hash.type) {
+            case "file":
+                hash.class = hash.class ? hash.class + ' cfsFileInput' : 'cfsFileInput';
+                atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '') + (hash.name ? ' name="' + hash.name + '"' : '') + (hash.multiple ? ' multiple' : '');
+                html = Template._cfsDownloadButton({
+                    collection: collection,
+                    multiple: hash.multiple,
+                    storeIdsIn: hash.storeIdsIn,
+                    storeIdsFor: hash.storeIdsFor,
+                    attributes: atts
+                });
                 break;
             case "image":
-                if (opt.style === "basic") {
-                    styles = "min-height: 200px; border: 1px solid #cccccc;";
-                }
-                html += '<div class="collectionFSImageFileInput' + (opt.class ? ' ' + opt.class : '') + '"' + (opt.id ? ' id="' + opt.id + '"' : '') + (opt.name ? ' name="' + opt.name + '"' : '') + (opt.styles ? ' style="' + opt.styles + '"' : '') + '></div>';
-                if (opt.collection) {
-                    if (typeof window.FileReader !== 'undefined') {
-                        document.addEventListener('drop', function(e) {
-                            var elem = e.target, files, f, reader;
-                            if (elem.classList.contains('collectionFSImageFileInput')) {
-                                e.preventDefault();
-                                files = e.dataTransfer.files;
-                                if (files) {
-                                    for (var i = 0, ln = files.length; i < ln; i++) {
-                                        f = files[i];
-                                        window[opt.collection].storeFile(f);
-                                        reader = new FileReader();
-                                        reader.onload = function(event) {
-                                            var div = document.createElement("div");
-                                            div.style.background = 'url(' + event.target.result + ') no-repeat center';
-                                            elem.appendChild(div);
-                                        };
-                                        reader.readAsDataURL(f);
-                                    }
-                                }
-                            }
-                        }, false);
-                    }
-                }
+                //TODO
                 break;
         }
         return new Handlebars.SafeString(html);
