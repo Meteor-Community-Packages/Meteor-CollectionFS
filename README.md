@@ -152,11 +152,24 @@ Template.queueControl.events({
     }
 });
 ```
+or
+```js
+Template.queueControl.events({
+    'change .fileUploader': function (e) {
+        var files = e.target.files;
+        ContactsFS.storeFiles(files);
+    }
+});
+```
 `storeFile` returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads. When an upload finishes, client templates that list files or file information are updated live through reactivity.
+
+`storeFiles` is a convenience method for storing multiple files at once and returns an array of fileIds.
 
 If you want to store additional metadata for each file, provide the data in the second parameter.
 ```js
-storeFile(file, {})
+storeFile(file, {
+   name: "My File"
+})
 ```
 
 There are currently no available callbacks or event listeners for the upload process. These will be added in a future release.
@@ -240,13 +253,19 @@ var blob = ContactsFS.retrieveBuffer(fileId);
 var fileRecord = ContactsFS.findOne(fileId);
 ```
 
-##API Reference
+##Client API Reference
 
 ###CollectionFS.storeFile(file, metadata)
 * **file**: (Required) The browser filehandle.
 * **metadata**: An object with any custom data you want to save in the file record for later use.
 
 `storeFile` returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads.
+
+###CollectionFS.storeFiles(files, callback)
+* **files**: (Required) The browser files array.
+* **callback**: (Optional) A function to be called after storing each file when looping over the files. This callback is passed two parameters, `file`, which is the browser file object, and `fileId`, which is the CollectionFS ID for that file.
+
+`storeFiles` returns immediately with an array of fileIds, or with null if there was a problem. The actual uploads are handled by pseudo-threads. This is a convenience function for calling `storeFile` multiple times; however, if you need to store metadata with each file, you will have to do the looping yourself and use `storeFile`.
 
 ###CollectionFS.retrieveBlob(fileId, callback)
 * **fileId**: (Required) The ID of the file
@@ -255,6 +274,49 @@ var fileRecord = ContactsFS.findOne(fileId);
 `callback` is passed one argument, `fileItem`, which is a container for the file. Either fileItem.blob or fileItem.file will be available. fileItem.file is used if the file is already stored locally. In the future, this will be improved so that fileItem.blob is always set.
 
 `fileItem` also has properties _id, countChunks, and length.
+
+###CollectionFS.acceptDropsOn(elements, callback)
+* **elements**: (Required) An array of DOMElements that you want to support file drag and drop for this CollectionFS.
+* **callback**: (Optional) A function to be called after storing each file when looping over the files that were dropped. This callback is passed two parameters, `file`, which is the browser file object, and `fileId`, which is the CollectionFS ID for that file.
+
+Sets up all of the elements to support dropping of one or more files onto them. As files are dropped onto these elements, they are automatically stored in the CollectionFS and then the callback is called for each one.
+
+For example:
+
+```html
+<div class=".audioList">
+   {{#if cfsHasFiles "Songs"}}
+   <table>
+      <thead>
+         <th>ID</th>
+         <th>Size</th>
+         <th>Filename</th>
+         <th>Content type</th>
+         <th>Owner</th>
+      </thead>
+      <tbody>
+         {{#each cfsFiles "Songs"}}
+         {{> song}}
+         {{/each}}
+      </tbody>
+   </table>
+   {{else}}
+   <div>You have not added any audio files.</div>
+   {{/if}}
+</div>
+```
+
+```js
+Songs = new CollectionFS("songs", {autopublish: false});
+if (Meteor.isClient) {
+    Meteor.startup(function() {   
+        var elem = $(".audioList").get(0); //use jQuery or any other method
+        Songs.acceptDropsOn([elem]);
+    });
+}
+```
+
+##Server API Reference
 
 ###CollectionFS.storeBuffer(fileName, buffer, options)
 * **fileName**: (Required) The name of the file
