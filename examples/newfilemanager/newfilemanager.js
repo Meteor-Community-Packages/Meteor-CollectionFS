@@ -34,29 +34,6 @@ if (Meteor.isClient) {
     Meteor.subscribe("songs");
     Meteor.subscribe("images");
 
-//    var dropfile = function(element, collection, callback) {
-//        // Prevent default drag and drop
-//        function noopHandler(evt) {
-//            evt.stopPropagation();
-//            evt.preventDefault();
-//        }
-//
-//        // Handle file dropped
-//        function dropped(evt) {
-//            noopHandler(evt);
-//            window[collection].storeFiles(evt.dataTransfer.files, callback);
-//        }
-//
-//        // init event handlers
-//        element.addEventListener("dragenter", noopHandler, false);
-//        element.addEventListener("dragexit", noopHandler, false);
-//        element.addEventListener("dragover", noopHandler, false);
-//        element.addEventListener("dragend", noopHandler, false);
-//        element.addEventListener("drop", dropped, false);
-//
-//        return element;
-//    };
-
     var imgAddCallback = function(file, fileId) {
         var img = document.createElement("img");
         $(img).addClass("imgItem").attr("data-cfs-collection", "Images").attr("data-cfs-id", fileId);
@@ -170,14 +147,6 @@ if (Meteor.isClient) {
         e.preventDefault();
         Session.set("visibleDialog", null);
     });
-
-    // prevent default behavior from changing page on dropped file
-//    window.ondragover = function() {
-//        return false;
-//    };
-//    window.ondrop = function() {
-//        return false;
-//    };
 
     Meteor.startup(function() {
         var elem = $(".imgList").get(0);
