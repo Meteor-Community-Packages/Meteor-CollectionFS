@@ -292,9 +292,9 @@ if (typeof Handlebars !== 'undefined') {
             }
             CFS.retrieveBlob(fileId, function(fileItem) {
                 if (fileItem.blob) {
-                    window.saveAs(fileItem.blob, fileItem.filename);
+                    saveAs(fileItem.blob, fileItem.filename);
                 } else {
-                    window.saveAs(fileItem.file, fileItem.filename);
+                    saveAs(fileItem.file, fileItem.filename);
                 }
             });
         }
@@ -343,7 +343,7 @@ if (typeof Handlebars !== 'undefined') {
             case "file":
                 hash.class = hash.class ? hash.class + ' cfsFileInput' : 'cfsFileInput';
                 atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '') + (hash.name ? ' name="' + hash.name + '"' : '') + (hash.multiple ? ' multiple' : '');
-                html = Template._cfsDownloadButton({
+                html = Template._cfsFileInput({
                     collection: collection,
                     multiple: hash.multiple,
                     storeIdsIn: hash.storeIdsIn,
