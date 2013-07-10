@@ -261,8 +261,9 @@ var fileRecord = ContactsFS.findOne(fileId);
 
 `storeFile` returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads.
 
-###CollectionFS.storeFiles(files, callback)
+###CollectionFS.storeFiles(files, metadata, callback)
 * **files**: (Required) The browser files array.
+* **metadata**: (Optional) An object with any custom data you want to save in the file record for later use, or a function that accepts one parameter, the file object, and returns the metadata object.
 * **callback**: (Optional) A function to be called after storing each file when looping over the files. This callback is passed two parameters, `file`, which is the browser file object, and `fileId`, which is the CollectionFS ID for that file.
 
 `storeFiles` returns immediately with an array of fileIds, or with null if there was a problem. The actual uploads are handled by pseudo-threads. This is a convenience function for calling `storeFile` multiple times; however, if you need to store metadata with each file, you will have to do the looping yourself and use `storeFile`.
@@ -275,44 +276,45 @@ var fileRecord = ContactsFS.findOne(fileId);
 
 `fileItem` also has properties _id, countChunks, and length.
 
-###CollectionFS.acceptDropsOn(elements, callback)
-* **elements**: (Required) An array of DOMElements that you want to support file drag and drop for this CollectionFS.
-* **callback**: (Optional) A function to be called after storing each file when looping over the files that were dropped. This callback is passed two parameters, `file`, which is the browser file object, and `fileId`, which is the CollectionFS ID for that file.
+###CollectionFS.acceptDropsOn(templateName, selector, metadata, callback)
+* **templateName**: (Required) The template in which the element that should accept file drops can be found.
+* **selector**: (Required) The CSS selector that matches the element that should accept file drops.
+* **metadata**: (Optional) Same as the `CollectionFS.storeFiles` metadata argument. Passed to `CollectionFS.storeFiles` for the files that are dropped.
+* **callback**: (Optional) Same as the `CollectionFS.storeFiles` callback argument. Passed to `CollectionFS.storeFiles` for the files that are dropped.
 
-Sets up all of the elements to support dropping of one or more files onto them. As files are dropped onto these elements, they are automatically stored in the CollectionFS and then the callback is called for each one.
+Sets up all of the elements matching `selector` to support dropping of one or more files onto them. As files are dropped onto these elements, they are automatically stored in the CollectionFS with the given metadata, and then the callback is called for each one.
 
 For example:
 
 ```html
-<div class=".audioList">
-   {{#if cfsHasFiles "Songs"}}
-   <table>
-      <thead>
-         <th>ID</th>
-         <th>Size</th>
-         <th>Filename</th>
-         <th>Content type</th>
-         <th>Owner</th>
-      </thead>
-      <tbody>
-         {{#each cfsFiles "Songs"}}
-         {{> song}}
-         {{/each}}
-      </tbody>
-   </table>
-   {{else}}
-   <div>You have not added any audio files.</div>
-   {{/if}}
-</div>
+<template name="audioList">
+   <div class="audioList">
+      {{#if cfsHasFiles "Songs"}}
+      <table>
+         <thead>
+            <th>ID</th>
+            <th>Size</th>
+            <th>Filename</th>
+            <th>Content type</th>
+            <th>Owner</th>
+         </thead>
+         <tbody>
+            {{#each cfsFiles "Songs"}}
+            {{> song}}
+            {{/each}}
+         </tbody>
+      </table>
+      {{else}}
+      <div>You have not added any audio files.</div>
+      {{/if}}
+   </div>
+</template>
 ```
 
 ```js
 Songs = new CollectionFS("songs", {autopublish: false});
 if (Meteor.isClient) {
-    Meteor.startup(function() {   
-        var elem = $(".audioList").get(0); //use jQuery or any other method
-        Songs.acceptDropsOn([elem]);
-    });
+  Songs.acceptDropsOn("audioList", ".audioList");
 }
 ```
 
