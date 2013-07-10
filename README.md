@@ -351,6 +351,7 @@ To define a filehandler, use the `fileHandlers` function.
 Depending on what the filehandler is doing, you can return different values.
 * If you return a BLOB: It is named, saved, and stored in database while the user can continue. After the file is successfully stored, the client data and template is updated live.
 * If you return metadata without a BLOB: The metadata is saved in the database without the file data.
+* If you return a String, it will be used as the URL for that document (usefull if you generated your own file -- see file handlers examples with ImageMagick)
 * If you return null: Only the filehandler name and a date is saved in the database.
 * If you return false: This means the filehandler failed temporarily. It will be tried again later.
 
@@ -419,15 +420,20 @@ Filesystem.fileHandlers({
     return options; 
   },
   size40x40: function(options) {
-    return null;
-    // Use Future.wrap for handling async
-    /* var im = Npm.require('imagemagick'); // Add Imagemagick package
-    im.resize({
-                srcData: options.blob,
-                width: 40
-           }); */
-    console.log('I am handling: ' + options.fileRecord.filename + ' to...');
-    return { extension: 'jpg', blob: options.blob, fileRecord: options.fileRecord }; //or just 'options'...
+    //... Test that it's an actual image...
+    
+    // Uses meteorite package imagemagick.
+    var destination = options.destination();
+    Imagemagick.resize({
+       srcData: options.blob,
+       dstPath: destination.serverFilename, // Imagemagick will create the file for us.
+       width: 40,
+       height: 40
+    });
+    console.log('I am handling: ' + options.fileRecord.filename + ' to '. destination.serverFilename);
+    
+    // Return the url
+    return destination.fileData;
   },
   size100x100gm: function(options) {
     if (options.fileRecord.contentType != 'image/jpeg')
@@ -485,6 +491,6 @@ An overhaul and many fixes and new features will hopefully be completed by July 
 Do you have ideas, issues, documentation, fixes, or pull requests? Anyone is welcome to help make CollectionFS faster, more versatile, and easier to use.
 
 ###Special Thanks to Code Contributors
-__@aldeed, @emgee3, @nhibner, @mitar, @petrocket__  
+__@aldeed, @eprochasson, @emgee3, @nhibner, @mitar, @petrocket__  
 *ranked by last commit*
 (Are you missing from the list? File it as an issue or submit a pull request.)
