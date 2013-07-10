@@ -191,7 +191,7 @@ First, create a new template for the file link.
 ```html
 <template name="fileTable">
     {{#each files}}
-    <a class="btn btn-primary btn-mini btnFileSaveAs">Save as</a>{{filename}}<br/>
+    {{cfsDownloadButton "ContactsFS" class="btn btn-primary btn-mini" content=filename}}
     {{else}}
     No files uploaded.
     {{/each}}
@@ -205,25 +205,11 @@ Template.fileTable.files = function() {
     return ContactsFS.find({}, { sort: { uploadDate:-1 } });
 };
 ```
-Now define an event handler for when the link is clicked.
-```js
-//in client.js
-Template.fileTable.events({
-    'click .btnFileSaveAs': function(e) {
-        e.preventDefault();
-        ContactsFS.retrieveBlob(this._id, function(fileItem) {
-            if (fileItem.blob) {
-                saveAs(fileItem.blob, fileItem.filename);
-            } else {
-                saveAs(fileItem.file, fileItem.filename);
-            }
-        });
-    } //EO saveAs
-});
-```
-We are checking whether the fileItem is a BLOB or a file because the local file may be returned if it's available. In the future, only a BLOB will be returned.
+And that's it! The button is created by the helper and wired up
+with the necessary click event to begin downloading the file to the browser.
 
-`saveAs` calls [Filesaver.js](https://github.com/eligrey/FileSaver.js) by [Eli Grey](http://eligrey.com). It doesn't work on iPad.
+For saving, the helper uses [FileSaver.js](https://github.com/eligrey/FileSaver.js) by [Eli Grey](http://eligrey.com). It doesn't work on iPad.
+If you prefer, you can call `CollectionFS.retrieveBlob()` yourself and use your own saving method with the result.
 
 ###Delete a File
 You can call `remove` on the client or server to remove all chunks and versions related to the original file from the database.
@@ -310,7 +296,7 @@ as long as they pass the tests in `allow()` and `deny()`.
 
 The file extensions must be specified without a leading period.
 
-###CollectionFS.onInvalid = function () {} (client or server)
+###CollectionFS.onInvalid = function (type, fileRecord) {} (client or server)
 
 Set `CollectionFS.onInvalid` to a function that will be called whenever a file fails the validation check defined
 by `fileFilters`. This function should accept two arguments:
