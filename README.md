@@ -427,6 +427,6 @@ An overhaul and many fixes and new features will hopefully be completed by July 
 Do you have ideas, issues, documentation, fixes, or pull requests? Anyone is welcome to help make CollectionFS faster, more versatile, and easier to use.
 
 ###Special Thanks to Code Contributors
-__@aldeed, @emgee3, @nhibner, @mitar, @petrocket__  
+__@aldeed, @eprochasson, @emgee3, @nhibner, @mitar, @petrocket__  
 *ranked by last commit*
 (Are you missing from the list? File it as an issue or submit a pull request.)
