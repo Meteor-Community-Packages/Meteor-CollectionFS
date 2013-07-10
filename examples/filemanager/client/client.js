@@ -1,4 +1,3 @@
-
 Meteor.subscribe("users");
 
 Accounts.ui.config({
@@ -309,6 +308,13 @@ Template.fileTable.helpers({
   },
   filehanderSupported: function() {
     return __meteor_runtime_config__.FILEHANDLER_SUPPORTED;
+  }
+});
+
+
+Template.imageList.helpers({
+  fileHandler: function(){
+    return _.toArray(this.fileHandler);
   }
 });
 
