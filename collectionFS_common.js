@@ -12,23 +12,33 @@ _.extend(CollectionFS.prototype, {
             this._fileFilter = options;
         },
         fileIsAllowed: function(fileRecord) {
-            if (!this._fileFilter) {
+            var self = this;
+            if (!self._fileFilter) {
                 return true;
             }
-            if (!fileRecord || !fileRecord.contentType || !fileRecord.filename) {
+            if (!fileRecord || !fileRecord.contentType || !fileRecord.filename || !fileRecord.size) {
                 return false;
             }
-            var filter = this._fileFilter;
+            var filter = self._fileFilter;
+            if (filter.maxSize && fileRecord.size > filter.maxSize) {
+                self.onInvalid && self.onInvalid('tooBig', fileRecord);
+                return false;
+            }
             var saveAllFileExtensions = (filter.allow.extensions.length === 0);
             var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
             var ext = getFileExtension(fileRecord.filename);
             var contentType = fileRecord.contentType;
-            return (
-                    (saveAllFileExtensions || _.indexOf(filter.allow.extensions, ext) !== -1) &&
-                    _.indexOf(filter.deny.extensions, ext) === -1 &&
-                    (saveAllContentTypes || contentTypeInList(filter.allow.contentTypes, contentType)) &&
-                    !contentTypeInList(filter.deny.contentTypes, contentType)
-                    );
+            if (!((saveAllFileExtensions || _.indexOf(filter.allow.extensions, ext) !== -1) &&
+                    _.indexOf(filter.deny.extensions, ext) === -1)) {
+                self.onInvalid && self.onInvalid('disallowedExtension', fileRecord);
+                return false;
+            }
+            if (!((saveAllContentTypes || contentTypeInList(filter.allow.contentTypes, contentType)) &&
+                    !contentTypeInList(filter.deny.contentTypes, contentType))) {
+                self.onInvalid && self.onInvalid('disallowedContentType', contentType);
+                return false;
+            }
+            return true;
         }
 });
 
@@ -157,6 +167,9 @@ var cleanOptions = function(options) {
     if (!options.deny || !isObject(options.deny)) {
         options.deny = {};
     }
+    if (!options.maxSize || !_.isNumber(options.maxSize)) {
+        options.maxSize = false;
+    }
     if (!options.allow.extensions || !_.isArray(options.allow.extensions)) {
         options.allow.extensions = [];
     }
@@ -169,5 +182,6 @@ var cleanOptions = function(options) {
     if (!options.deny.contentTypes || !_.isArray(options.deny.contentTypes)) {
         options.deny.contentTypes = [];
     }
+    
     return options;
 };

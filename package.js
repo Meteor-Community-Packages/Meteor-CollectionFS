@@ -8,11 +8,11 @@ Package.on_use(function(api) {
   api.add_files([ 'myConsole.js' ], [ 'client', 'server' ]);
 
   api.add_files([
+            'FileSaver.js',
           'collectionFS_templates.html',
           'collectionFS_client.js',
           'collectionFS_client.api.js',
-          'collectionFS_handlebars.js',
-          'FileSaver.min.js'], 'client');
+          'collectionFS_handlebars.js'], 'client');
   
   api.add_files([
   				'collectionFS_filesystem.js',

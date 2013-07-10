@@ -18,10 +18,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{isUploading "Collection"}} (with file as current context)
-    //(2) {{isUploading "Collection" file=file}}
-    //(3) {{isUploading "Collection" fileId=fileId}}
-    Handlebars.registerHelper('isUploading', function(collection, opts) {
+    //(1) {{cfsIsUploading "Collection"}} (with file as current context)
+    //(2) {{cfsIsUploading "Collection" file=file}}
+    //(3) {{cfsIsUploading "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsIsUploading', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -40,10 +40,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{isDownloading "Collection"}} (with file as current context)
-    //(2) {{isDownloading "Collection" file=file}}
-    //(3) {{isDownloading "Collection" fileId=fileId}}
-    Handlebars.registerHelper('isDownloading', function(collection, opts) {
+    //(1) {{cfsIsDownloading "Collection"}} (with file as current context)
+    //(2) {{cfsIsDownloading "Collection" file=file}}
+    //(3) {{cfsIsDownloading "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsIsDownloading', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -62,10 +62,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{isDownloaded "Collection"}} (with file as current context)
-    //(2) {{isDownloaded "Collection" file=file}}
-    //(3) {{isDownloaded "Collection" fileId=fileId}}
-    Handlebars.registerHelper('isDownloaded', function(collection, opts) {
+    //(1) {{cfsIsDownloaded "Collection"}} (with file as current context)
+    //(2) {{cfsIsDownloaded "Collection" file=file}}
+    //(3) {{cfsIsDownloaded "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsIsDownloaded', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -84,10 +84,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{isComplete "Collection"}} (with file as current context)
-    //(2) {{isComplete "Collection" file=file}}
-    //(3) {{isComplete "Collection" fileId=fileId}}
-    Handlebars.registerHelper('isComplete', function(collection, opts) {
+    //(1) {{cfsIsComplete "Collection"}} (with file as current context)
+    //(2) {{cfsIsComplete "Collection" file=file}}
+    //(3) {{cfsIsComplete "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsIsComplete', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -151,8 +151,8 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //{{isPaused "Collection"}}
-    Handlebars.registerHelper('isPaused', function(collection) {
+    //{{cfsIsPaused "Collection"}}
+    Handlebars.registerHelper('cfsIsPaused', function(collection) {
         var CFS = window[collection];
         if (!CFS || !CFS.queue) {
             return false;
@@ -161,14 +161,14 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage (Is current user the owner?):
-    //(1) {{isOwner}} (with file as current context)
-    //(2) {{isOwner file=file}}
-    //(3) {{isOwner fileId=fileId collection="Collection"}}
+    //(1) {{cfsIsOwner}} (with file as current context)
+    //(2) {{cfsIsOwner file=file}}
+    //(3) {{cfsIsOwner fileId=fileId collection="Collection"}}
     //Usage (Is user with userId the owner?):
-    //(1) {{isOwner userId=userId}} (with file as current context)
-    //(2) {{isOwner file=file userId=userId}}
-    //(3) {{isOwner fileId=fileId collection="Collection" userId=userId}}
-    Handlebars.registerHelper('isOwner', function(opts) {
+    //(1) {{cfsIsOwner userId=userId}} (with file as current context)
+    //(2) {{cfsIsOwner file=file userId=userId}}
+    //(3) {{cfsIsOwner fileId=fileId collection="Collection" userId=userId}}
+    Handlebars.registerHelper('cfsIsOwner', function(opts) {
         var file, hash, userId;
         hash = opts && opts.hash ? opts.hash : {};
         userId = hash.userId || Meteor.userId();
@@ -185,14 +185,14 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage (default format string):
-    //(1) {{formattedSize}} (with file as current context)
-    //(2) {{formattedSize file=file}}
-    //(3) {{formattedSize fileId=fileId collection="Collection"}}
+    //(1) {{cfsFormattedSize}} (with file as current context)
+    //(2) {{cfsFormattedSize file=file}}
+    //(3) {{cfsFormattedSize fileId=fileId collection="Collection"}}
     //Usage (any format string supported by numeral.format):
-    //(1) {{formattedSize formatString=formatString}} (with file as current context)
-    //(2) {{formattedSize file=file formatString=formatString}}
-    //(3) {{formattedSize fileId=fileId collection="Collection" formatString=formatString}}
-    Handlebars.registerHelper('formattedSize', function(opts) {
+    //(1) {{cfsFormattedSize formatString=formatString}} (with file as current context)
+    //(2) {{cfsFormattedSize file=file formatString=formatString}}
+    //(3) {{cfsFormattedSize fileId=fileId collection="Collection" formatString=formatString}}
+    Handlebars.registerHelper('cfsFormattedSize', function(opts) {
         var file, hash, formatString;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.fileId && hash.collection) {
@@ -209,10 +209,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{fileHandlers}} (with file as current context)
-    //(2) {{fileHandlers file=file}}
-    //(3) {{fileHandlers fileId=fileId collection="Collection"}}
-    Handlebars.registerHelper('fileHandlers', function(opts) {
+    //(1) {{cfsFileHandlers}} (with file as current context)
+    //(2) {{cfsFileHandlers file=file}}
+    //(3) {{cfsFileHandlers fileId=fileId collection="Collection"}}
+    Handlebars.registerHelper('cfsFileHandlers', function(opts) {
         var file, hash, fh, fId, fileHandlers = [];
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.fileId && hash.collection) {
@@ -231,10 +231,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{fileUrl "defaultHandler"}} (with file as current context)
-    //(2) {{fileUrl "defaultHandler" file=file}}
-    //(3) {{fileUrl "defaultHandler" fileId=fileId collection="Collection"}}
-    Handlebars.registerHelper('fileUrl', function(fileHandler, opts) {
+    //(1) {{cfsFileUrl "defaultHandler"}} (with file as current context)
+    //(2) {{cfsFileUrl "defaultHandler" file=file}}
+    //(3) {{cfsFileUrl "defaultHandler" fileId=fileId collection="Collection"}}
+    Handlebars.registerHelper('cfsFileUrl', function(fileHandler, opts) {
         var file, hash, fh;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.fileId && hash.collection) {
@@ -271,6 +271,7 @@ if (typeof Handlebars !== 'undefined') {
         }
         hash.class = hash.class ? hash.class + ' cfsDownloadButton' : 'cfsDownloadButton';
         atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '');
+        hash.content = hash.content || "Download";
         return new Handlebars.SafeString(Template._cfsDownloadButton({
             collection: collection,
             fileId: fileId,
@@ -292,9 +293,9 @@ if (typeof Handlebars !== 'undefined') {
             }
             CFS.retrieveBlob(fileId, function(fileItem) {
                 if (fileItem.blob) {
-                    saveAs(fileItem.blob, fileItem.filename);
+                    window.saveAs(fileItem.blob, fileItem.filename);
                 } else {
-                    saveAs(fileItem.file, fileItem.filename);
+                    window.saveAs(fileItem.file, fileItem.filename);
                 }
             });
         }

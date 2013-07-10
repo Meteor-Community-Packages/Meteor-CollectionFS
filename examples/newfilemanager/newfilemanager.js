@@ -20,31 +20,30 @@ Images.allow(allowRules);
 Songs.fileFilter({
     allow: {
         contentTypes: ['audio/*']
-    }
+    },
+    maxSize: 5242880 //5MB
 });
 
 Images.fileFilter({
     allow: {
         contentTypes: ['image/*']
-    }
+    },
+    maxSize: 1048576 //1MB
 });
 
 if (Meteor.isClient) {
+    var imgSelectionDep = new Deps.Dependency();
+    
+    Accounts.ui.config({
+        passwordSignupFields: 'USERNAME_ONLY'
+    });
+
     //data subscriptions
     Meteor.subscribe("songs");
     Meteor.subscribe("images");
 
-    var imgAddCallback = function(file, fileId) {
-        var img = document.createElement("img");
-        $(img).addClass("imgItem").attr("data-cfs-collection", "Images").attr("data-cfs-id", fileId);
-        $('div.imgList').append(img);
-        $(img).hide();
-        var fileReader = new FileReader();
-        fileReader.onload = function(oFREvent) {
-            $(img).attr("src", oFREvent.target.result).show();
-        };
-        fileReader.readAsDataURL(file);
-    };
+    Images.acceptDropsOn("imgListArea", ".imgList");
+    Songs.acceptDropsOn("audioListArea", ".audioList");
 
     //events
     Template.audioListArea.events({
@@ -58,12 +57,36 @@ if (Meteor.isClient) {
         'click #addImage': function(e) {
             e.preventDefault();
             Session.set("visibleDialog", "img.add");
+        },
+        'click #deleteImages': function(e) {
+            e.preventDefault();
+            $('.imgItem.selected').fadeOut(600, function() {
+                var fileId = $(this).attr("data-cfs-id");
+                Images.remove(fileId);
+                imgSelectionDep.changed();
+            });
         }
     });
 
-    var imgFilter = /^(?:image\/bmp|image\/cis\-cod|image\/gif|image\/ief|image\/jpeg|image\/jpeg|image\/jpeg|image\/pipeg|image\/png|image\/svg\+xml|image\/tiff|image\/x\-cmu\-raster|image\/x\-cmx|image\/x\-icon|image\/x\-portable\-anymap|image\/x\-portable\-bitmap|image\/x\-portable\-graymap|image\/x\-portable\-pixmap|image\/x\-rgb|image\/x\-xbitmap|image\/x\-xpixmap|image\/x\-xwindowdump)$/i;
+    var onInvalid = function(type, fileRecord) {
+        if (type === 'disallowedContentType' || type === 'disallowedExtension') {
+            $.gritter.add({
+                title: 'Wrong File Type',
+                text: "Sorry, " + fileRecord.filename + " is not the type of file we're looking for."
+            });
+        } else {
+            $.gritter.add({
+                title: 'Too Big',
+                text: "Sorry, " + fileRecord.filename + " is too big to upload."
+            });
+        }
+    };
+    Songs.onInvalid = onInvalid;
+    Images.onInvalid = onInvalid;
+
+    var dataUrlCache = {};
     Handlebars.registerHelper('fileImage', function(opts) {
-        var file, hash;
+        var file, hash, src = "", style = "";
         hash = opts && opts.hash ? opts.hash : {};
         if (!hash.collection) {
             return "";
@@ -74,22 +97,47 @@ if (Meteor.isClient) {
         if (!file) {
             file = hash.file || this;
         }
-        console.log(file);
-        if (!file || !imgFilter.test(file.contentType)) {
-            return "No image file";
+        if (!file) {
+            return "";
         }
-        window[hash.collection].retrieveBlob(file._id, function(fileItem) {
-            if (fileItem.blob) {
-                var fileReader = new FileReader();
-                fileReader.onload = function(oFREvent) {
-                    var elem = $("img[data-cfs-collection=" + hash.collection + "]").filter('[data-cfs-id=' + file._id + ']');
-                    elem.attr("src", oFREvent.target.result);
-                    elem.css("display", "");
-                };
-                fileReader.readAsDataURL(fileItem.blob);
-            }
-        });
-        return new Handlebars.SafeString('<img src="" data-cfs-collection="' + hash.collection + '" data-cfs-id="' + file._id + '" style="display: none;" class="' + (hash.class || '') + '" />');
+        if (dataUrlCache[file._id + "_" + file.length]) {
+            //we've already generated the URL, so just use it
+            src = dataUrlCache[file._id + "_" + file.length];
+        } else {
+            style = "display: none";
+            window[hash.collection].retrieveBlob(file._id, function(fileItem) {
+                if (fileItem.blob || fileItem.file) {
+                    var fileReader = new FileReader();
+                    fileReader.onload = function(oFREvent) {
+                        if (!dataUrlCache[file._id + "_" + file.length]) {
+                            dataUrlCache[file._id + "_" + file.length] = oFREvent.target.result;
+                        }
+                        var elem = $("img[data-cfs-collection=" + hash.collection + "]").filter('[data-cfs-id=' + file._id + ']');
+                        elem.attr("src", oFREvent.target.result);
+                        elem.css("display", "");
+                    };
+                    fileReader.readAsDataURL(fileItem.blob || fileItem.file);
+                }
+            });
+        }
+        return new Handlebars.SafeString('<img src="' + src + '" data-cfs-collection="' + hash.collection + '" data-cfs-id="' + file._id + '" style="' + style + '" class="' + (hash.class || '') + '" />');
+    });
+    
+    Template.image.events({
+        'click .imgItem': function(event) {
+            $(event.currentTarget).toggleClass("selected");
+            this.selected = $(event.currentTarget).hasClass("selected");
+            imgSelectionDep.changed();
+        }
+    });
+    
+    Template.imgListArea.deleteImagesButtonDisabled = function () {
+        imgSelectionDep.depend();
+        return $(".imgItem.selected").length ? "" : " disabled";
+    };
+
+    Handlebars.registerHelper("loggedIn", function() {
+        return !!Meteor.user();
     });
 
     //upload buttons
@@ -105,40 +153,16 @@ if (Meteor.isClient) {
         'click .save': function(e, template) {
             e.preventDefault();
             var files = template.find('input.fileSelect').files;
-            Images.storeFiles(files, imgAddCallback);
+            Images.storeFiles(files);
             Session.set("visibleDialog", null);
         }
     });
 
-    //download/delete buttons
+    //delete buttons
     Template.song.events({
-        'click .download': function(e) {
-            e.preventDefault();
-            var file = this;
-            Songs.retrieveBlob(file._id, function(fileItem) {
-                if (fileItem.blob) {
-                    window.saveAs(fileItem.blob, file.filename);
-                }
-            });
-        },
         'click .delete': function(e) {
             e.preventDefault();
             Songs.remove(this._id);
-        }
-    });
-    Template.image.events({
-        'click .download': function(e) {
-            e.preventDefault();
-            var file = this;
-            Images.retrieveBlob(file._id, function(fileItem) {
-                if (fileItem.blob) {
-                    window.saveAs(fileItem.blob, file.filename);
-                }
-            });
-        },
-        'click .delete': function(e) {
-            e.preventDefault();
-            Images.remove(this._id);
         }
     });
 
@@ -147,27 +171,17 @@ if (Meteor.isClient) {
         e.preventDefault();
         Session.set("visibleDialog", null);
     });
-
-    Meteor.startup(function() {
-        var elem = $(".imgList").get(0);
-        Images.acceptDropsOn([elem], imgAddCallback);
-
-        elem = $(".audioList").get(0);
-        Songs.acceptDropsOn([elem]);
-    });
 }
 
 if (Meteor.isServer) {
+    Accounts.config({
+        sendVerificationEmail: false
+    });
+
     Meteor.publish("songs", function() {
         return Songs.find({owner: this.userId}, {$sort: {uploadDate: -1}});
     });
     Meteor.publish("images", function() {
         return Images.find({owner: this.userId}, {$sort: {uploadDate: -1}});
-    });
-
-    Meteor.startup(function() {
-        // code to run on server at startup
-
-
     });
 }
