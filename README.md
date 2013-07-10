@@ -77,19 +77,31 @@ In the client/server Javascript file where you define the data model for your pr
 
 ```js
 ContactsFS.allow({
-    insert: function(userId, myFile) { return userId && myFile.owner === userId; },
+    insert: function(userId, file) { return userId && file.owner === userId; },
     update: function(userId, files, fields, modifier) {
-        return _.all(files, function (myFile) {
-            return (userId == myFile.owner);
+        return _.all(files, function (file) {
+            return (userId == file.owner);
         });  //EO iterate through files
     },
     remove: function(userId, files) { return false; }
 });
 ```
 
-This is also a good place to add other restrictions such as allowed content types and maximum file size.
+Using the file object that is passed to the insert function, you can also restrict based on file characteristics like content types and file size. Alternatively, you can use filters for this. (See the following step.)
 
-###Step 4: Publish Files
+###Step 4: Set Up Filters (client and server)
+
+To filter uploads to a CollectionFS so that only certain content types or extensions are allowed, you can use `CollectionFS.fileFilter()`. Refer to the API reference for details. Here's an example:
+
+```js
+ContactsFS.fileFilter({
+    allow: {
+        contentTypes: ['image/*']
+    }
+});
+```
+
+###Step 5: Publish Files
 Assuming that you are not autopublishing CollectionFS documents (see step 2), you now need to define which documents and fields should be published to each client.
 
 In a server Javascript file, you can write `publish` functions that return the results of `find` or `findOne` calls to determine which files will be visible on each client. Then in a client Javascript file, you can subscribe to those document sets.
@@ -252,6 +264,60 @@ var blob = ContactsFS.retrieveBuffer(fileId);
 // Get additional info from the file record
 var fileRecord = ContactsFS.findOne(fileId);
 ```
+
+##Common API Reference
+
+The following Meteor.Collection methods are supported, and work identically:
+* `find()`
+* `findOne()`
+* `update()`
+* `remove()`
+* `allow()`
+* `deny()`
+
+Instead of `insert()`, use `storeFile()` or `storeFiles()`.
+
+###CollectionFS.fileFilters(filters)
+* **filters**: (Required) An object defining file content types and/or extensions that should be allowed or denied, and optionally a maximum file size in bytes.
+
+Call this in a common javascript file. This is the format of the `filters` object:
+
+```js
+{
+    allow: {
+        extensions: [],
+        contentTypes: []
+    },
+    deny: {
+        extensions: [],
+        contentTypes: []
+    },
+    maxSize: 1048576
+}
+```
+
+You can mix and match filtering based on extension or content types.
+The contentTypes array also supports "image/*" and "audio/*" and "video/*" like
+the "accepts" attribute on the HTML5 file input element. `storeFile()` and 
+`storeFiles()` automatically check each file against these rules before uploading
+it, or you can call `CollectionFS.fileIsAllowed()`, passing in a file record object,
+if you need to check a file yourself.
+
+If a file extension or content type matches any of those listed in `allow`, it is allowed. If not,
+it is denied. If it matches both `allow` and `deny`, it is denied. Typically, you would
+use only `allow` or only `deny`, but not both. If you do not call `fileFilter()`, all files are allowed,
+as long as they pass the tests in `allow()` and `deny()`.
+
+The file extensions must be specified without a leading period.
+
+###CollectionFS.onInvalid = function () {} (client or server)
+
+Set `CollectionFS.onInvalid` to a function that will be called whenever a file fails the validation check defined
+by `fileFilters`. This function should accept two arguments:
+* **type**: One of "tooBig", "disallowedExtension", or "disallowedContentType", depending on which check the file failed.
+* **fileRecord**: The fileRecord object.
+
+Typically you might use this on the client to display an error message to the user, or on the server to log the failure.
 
 ##Client API Reference
 
@@ -472,9 +538,181 @@ Filesystem.fileHandlers({
 });
 ```
 
+##Built-In Handlebars Helpers
+
+A number of handlebar helpers are available to help you generate UI elements related to the files stored in a CollectionFS.
+
+###cfsFile
+
+```js
+{{cfsFile "Collection" fileId}}
+```
+
+Returns the file object with ID fileId in the "Collection" CFS.
+
+###cfsFiles
+
+```js
+{{cfsFile "Collection"}}
+```
+
+Returns a cursor for the CFS. Doesn't support any limiting, sorting, etc. except whatever you're doing in `Meteor.publish()`.
+
+###cfsHasFiles
+
+```js
+{{#if cfsHasFiles "Collection"}}
+```
+
+Returns true if the CFS has any files (as filtered by `Meteor.publish()`).
+
+###cfsIsUploading
+
+```js
+(1) {{cfsIsUploading "Collection"}} (with file as current context)
+(2) {{cfsIsUploading "Collection" file=file}}
+(3) {{cfsIsUploading "Collection" fileId=fileId}}
+```
+
+Returns true if the file is currently being uploaded to the specified CFS.
+
+###cfsIsDownloading
+
+```js
+(1) {{cfsIsDownloading "Collection"}} (with file as current context)
+(2) {{cfsIsDownloading "Collection" file=file}}
+(3) {{cfsIsDownloading "Collection" fileId=fileId}}
+```
+
+Returns true if the file is currently being downloaded from the specified CFS.
+
+###cfsIsDownloaded
+
+```js
+(1) {{cfsIsDownloaded "Collection"}} (with file as current context)
+(2) {{cfsIsDownloaded "Collection" file=file}}
+(3) {{cfsIsDownloaded "Collection" fileId=fileId}}
+```
+
+Returns true if the file has been downloaded from the specified CFS.
+
+###cfsIsComplete
+
+```js
+(1) {{cfsIsComplete "Collection"}} (with file as current context)
+(2) {{cfsIsComplete "Collection" file=file}}
+(3) {{cfsIsComplete "Collection" fileId=fileId}}
+```
+
+Returns true whenever neither a download nor an upload is happening for the given file.
+
+###cfsQueueProgress
+
+```js
+(1) {{cfsQueueProgress "Collection"}} (with file as current context)
+(2) {{cfsQueueProgress "Collection" file=file}}
+(3) {{cfsQueueProgress "Collection" fileId=fileId}}
+```
+
+Returns the percentage progress of the current operation for the file, either upload or download.
+
+###cfsQueueProgressBar
+
+```js
+(1) {{cfsQueueProgressBar "Collection"}} (with file as current context)
+(2) {{cfsQueueProgressBar "Collection" file=file}}
+(3) {{cfsQueueProgressBar "Collection" fileId=fileId}}
+```
+
+Creates an HTML5 `<progress>` element that shows the progress of the current operation for the file, either upload or download.
+You can optionally specify `id` or `class` attributes to help you style it. For example:
+
+```html
+{{#each cfsFiles "Songs"}}
+{{#if cfsIsUploading "Songs"}}
+{{cfsQueueProgressBar "Songs" class="uploadBar"}}<br/><em>Uploading...</em>
+{{/if}}
+{{#if cfsIsDownloading "Songs"}}
+{{cfsQueueProgressBar "Songs" class="downloadBar"}}<br/><em>Downloading...</em>
+{{/if}}
+{{/each}}
+```
+
+Older browsers will simply display the percentage.
+
+###cfsIsPaused
+
+```js
+{{cfsIsPaused "Collection"}}
+```
+
+Returns true if the queue for the CFS is paused.
+
+###cfsIsOwner
+
+Is current user the owner of the file?
+
+```js
+(1) {{cfsIsOwner}} (with file as current context)
+(2) {{cfsIsOwner file=file}}
+(3) {{cfsIsOwner fileId=fileId collection="Collection"}}
+```
+
+Is user with userId the owner of the file?
+
+```js
+(1) {{cfsIsOwner userId=userId}} (with file as current context)
+(2) {{cfsIsOwner file=file userId=userId}}
+(3) {{cfsIsOwner fileId=fileId collection="Collection" userId=userId}}
+```
+
+###cfsFormattedSize
+
+```js
+(1) {{cfsFormattedSize formatString=formatString}} (with file as current context)
+(2) {{cfsFormattedSize file=file formatString=formatString}}
+(3) {{cfsFormattedSize fileId=fileId collection="Collection" formatString=formatString}}
+```
+
+Formats the file size of the given file using any format string supported by numeral.js. If you don't specify formatString,
+a default format string `'0.00 b'` is used.
+
+###cfsFileHandlers
+
+```js
+(1) {{cfsFileHandlers}} (with file as current context)
+(2) {{cfsFileHandlers file=file}}
+(3) {{cfsFileHandlers fileId=fileId collection="Collection"}}
+```
+
+Returns an array of filehandlers for the file, suitable for use with `#each`.
+
+###cfsFileUrl
+
+```js
+(1) {{cfsFileUrl "defaultHandler"}} (with file as current context)
+(2) {{cfsFileUrl "defaultHandler" file=file}}
+(3) {{cfsFileUrl "defaultHandler" fileId=fileId collection="Collection"}}
+```
+
+Returns the file URL for the given file, as assigned by the given filehandler.
+
+###cfsDownloadButton
+
+```js
+(1) {{cfsDownloadButton "Collection"}} (with file as current context)
+(2) {{cfsDownloadButton "Collection" file=file}}
+(3) {{cfsDownloadButton "Collection" fileId=fileId}}
+```
+
+Creates an HTML `<button>` element for the given file which, when clicked, initiates downloading
+of the file by the browser. This uses a FileSaver shim which should support most modern browsers.
+
+You can optionally specify `id` or `class` attributes to help you style it, and a `content` attribute
+to use as the button element content. If you don't specify content, the button will say "Download".
+
 ##Upcoming Features
 An overhaul and many fixes and new features will hopefully be completed by July 2013.
-* Handlebar helpers? `{{fileProgress}}`, `{{fileInQue}}` etc.
 * Test server-side handling of image size, etc.
 * When there is a hot code deploy the queue halts, which could be tackled in future version of Meteor.
 * CollectionFS deviates from GridFS by using string-based files.length (Meteor are working on this issue).
