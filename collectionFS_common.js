@@ -7,21 +7,25 @@ _.extend(CollectionFS.prototype, {
 	allow: function() { return this.files.allow.apply(this.files, arguments); },
 	deny: function() { return this.files.deny.apply(this.files, arguments); },
 	fileHandlers: function(options) { _.extend(this._fileHandlers, options); },
-        fileFilter: function(options) {
+        filter: function(options) {
             options = cleanOptions(options);
-            this._fileFilter = options;
+            this._filter = options;
         },
         fileIsAllowed: function(fileRecord) {
             var self = this;
-            if (!self._fileFilter) {
+            if (!self._filter) {
                 return true;
             }
-            if (!fileRecord || !fileRecord.contentType || !fileRecord.filename || !fileRecord.size) {
-                return false;
+            if (!fileRecord || !fileRecord.contentType || !fileRecord.filename) {
+                throw new Error("invalid fileRecord:", fileRecord);
             }
-            var filter = self._fileFilter;
-            if (filter.maxSize && fileRecord.size > filter.maxSize) {
-                self.onInvalid && self.onInvalid('tooBig', fileRecord);
+            var fileSize = fileRecord.size || parseInt(fileRecord.length, 10);
+            if (!fileSize || isNaN(fileSize)) {
+                throw new Error("invalid fileRecord file size:", fileRecord);
+            }
+            var filter = self._filter;
+            if (filter.maxSize && fileSize > filter.maxSize) {
+                self.dispatch('invalid', CFSErrorType.maxFileSizeExceeded, fileRecord);
                 return false;
             }
             var saveAllFileExtensions = (filter.allow.extensions.length === 0);
@@ -30,15 +34,24 @@ _.extend(CollectionFS.prototype, {
             var contentType = fileRecord.contentType;
             if (!((saveAllFileExtensions || _.indexOf(filter.allow.extensions, ext) !== -1) &&
                     _.indexOf(filter.deny.extensions, ext) === -1)) {
-                self.onInvalid && self.onInvalid('disallowedExtension', fileRecord);
+                self.dispatch('invalid', CFSErrorType.disallowedExtension, fileRecord);
                 return false;
             }
             if (!((saveAllContentTypes || contentTypeInList(filter.allow.contentTypes, contentType)) &&
                     !contentTypeInList(filter.deny.contentTypes, contentType))) {
-                self.onInvalid && self.onInvalid('disallowedContentType', contentType);
+                self.dispatch('invalid', CFSErrorType.disallowedContentType, fileRecord);
                 return false;
             }
             return true;
+        },
+        events: function (events) {
+            var self = this;
+            _.extend(self._events, events);
+        },
+        dispatch: function (/* arguments */) {
+            var self = this, args = _.toArray(arguments);
+            var eventName = args.shift();
+            self._events[eventName].apply(self, args);
         }
 });
 
@@ -90,6 +103,12 @@ _.extend(_queueCollectionFS.prototype, {
 		// TODO: checkup on gridFS date format
 	} //EO makeGridFSFileRecord
 });
+
+CFSErrorType = {
+  maxFileSizeExceeded: 1,
+  disallowedExtension: 2,
+  disallowedContentType: 3
+};
 
 //utility functions
 getFileExtension = function(name) {
@@ -160,7 +179,7 @@ isObject = function(obj) {
 };
 
 var cleanOptions = function(options) {
-    //clean up fileFilter option values
+    //clean up filter option values
     if (!options.allow || !isObject(options.allow)) {
         options.allow = {};
     }

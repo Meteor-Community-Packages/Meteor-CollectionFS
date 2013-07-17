@@ -91,10 +91,10 @@ Using the file object that is passed to the insert function, you can also restri
 
 ###Step 4: Set Up Filters (client and server)
 
-To filter uploads to a CollectionFS so that only certain content types or extensions are allowed, you can use `CollectionFS.fileFilter()`. Refer to the API reference for details. Here's an example:
+To filter uploads to a CollectionFS so that only certain content types or extensions are allowed, you can use `CollectionFS.filter()`. Refer to the API reference for details. Here's an example:
 
 ```js
-ContactsFS.fileFilter({
+ContactsFS.filter({
     allow: {
         contentTypes: ['image/*']
     }
@@ -277,10 +277,10 @@ The following Meteor.Collection methods are supported, and work identically:
 
 Instead of `insert()`, use `storeFile()` or `storeFiles()`.
 
-###CollectionFS.fileFilters(filters)
-* **filters**: (Required) An object defining file content types and/or extensions that should be allowed or denied, and optionally a maximum file size in bytes.
+###CollectionFS.filter(filter)
+* **filter**: (Required) An object defining file content types and/or extensions that should be allowed or denied, and optionally a maximum file size in bytes.
 
-Call this in a common javascript file. This is the format of the `filters` object:
+Call this in a common javascript file. This is the format of the `filter` object:
 
 ```js
 {
@@ -305,19 +305,35 @@ if you need to check a file yourself.
 
 If a file extension or content type matches any of those listed in `allow`, it is allowed. If not,
 it is denied. If it matches both `allow` and `deny`, it is denied. Typically, you would
-use only `allow` or only `deny`, but not both. If you do not call `fileFilter()`, all files are allowed,
+use only `allow` or only `deny`, but not both. If you do not call `filter()`, all files are allowed,
 as long as they pass the tests in `allow()` and `deny()`.
 
 The file extensions must be specified without a leading period.
 
-###CollectionFS.onInvalid = function () {} (client or server)
+###Invalid Event (client or server)
 
-Set `CollectionFS.onInvalid` to a function that will be called whenever a file fails the validation check defined
-by `fileFilters`. This function should accept two arguments:
-* **type**: One of "tooBig", "disallowedExtension", or "disallowedContentType", depending on which check the file failed.
+You can define a function to be called whenever an "invalid" event is dispatched. This happens when a file fails the validation check defined
+by `CollectionFS.filter`.
+
+This function should accept two arguments:
+* **type**: One of the enums in CFSErrorType, depending on which check the file failed.
 * **fileRecord**: The fileRecord object.
 
 Typically you might use this on the client to display an error message to the user, or on the server to log the failure.
+
+For example:
+
+```javascript
+Songs.events({
+  'invalid': function(type, fileRecord) {
+    if (type === CFSErrorType.disallowedContentType || type === CFSErrorType.disallowedExtension) {
+      console.log("Sorry, " + fileRecord.filename + " is not the type of file we're looking for.");
+    } else if (type === CFSErrorType.maxFileSizeExceeded) {
+      console.log("Sorry, " + fileRecord.filename + " is too big to upload.");
+    }
+  } 
+});
+```
 
 ##Client API Reference
 

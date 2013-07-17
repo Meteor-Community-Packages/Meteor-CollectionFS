@@ -17,14 +17,14 @@ Songs.allow(allowRules);
 Images.allow(allowRules);
 
 //filters
-Songs.fileFilter({
+Songs.filter({
     allow: {
         contentTypes: ['audio/*']
     },
     maxSize: 5242880 //5MB
 });
 
-Images.fileFilter({
+Images.filter({
     allow: {
         contentTypes: ['image/*']
     },
@@ -67,22 +67,26 @@ if (Meteor.isClient) {
             });
         }
     });
-
+    
     var onInvalid = function(type, fileRecord) {
-        if (type === 'disallowedContentType' || type === 'disallowedExtension') {
+        if (type === CFSErrorType.disallowedContentType || type === CFSErrorType.disallowedExtension) {
             $.gritter.add({
                 title: 'Wrong File Type',
                 text: "Sorry, " + fileRecord.filename + " is not the type of file we're looking for."
             });
-        } else {
+        } else if (type === CFSErrorType.maxFileSizeExceeded) {
             $.gritter.add({
                 title: 'Too Big',
                 text: "Sorry, " + fileRecord.filename + " is too big to upload."
             });
         }
     };
-    Songs.onInvalid = onInvalid;
-    Images.onInvalid = onInvalid;
+    Songs.events({
+       'invalid': onInvalid 
+    });
+    Images.events({
+       'invalid': onInvalid 
+    });
 
     var dataUrlCache = {};
     Handlebars.registerHelper('fileImage', function(opts) {
