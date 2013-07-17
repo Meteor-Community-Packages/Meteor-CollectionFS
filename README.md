@@ -77,19 +77,31 @@ In the client/server Javascript file where you define the data model for your pr
 
 ```js
 ContactsFS.allow({
-    insert: function(userId, myFile) { return userId && myFile.owner === userId; },
+    insert: function(userId, file) { return userId && file.owner === userId; },
     update: function(userId, files, fields, modifier) {
-        return _.all(files, function (myFile) {
-            return (userId == myFile.owner);
+        return _.all(files, function (file) {
+            return (userId == file.owner);
         });  //EO iterate through files
     },
     remove: function(userId, files) { return false; }
 });
 ```
 
-This is also a good place to add other restrictions such as allowed content types and maximum file size.
+Using the file object that is passed to the insert function, you can also restrict based on file characteristics like content types and file size. Alternatively, you can use filters for this. (See the following step.)
 
-###Step 4: Publish Files
+###Step 4: Set Up Filters (client and server)
+
+To filter uploads to a CollectionFS so that only certain content types or extensions are allowed, you can use `CollectionFS.filter()`. Refer to the API reference for details. Here's an example:
+
+```js
+ContactsFS.filter({
+    allow: {
+        contentTypes: ['image/*']
+    }
+});
+```
+
+###Step 5: Publish Files
 Assuming that you are not autopublishing CollectionFS documents (see step 2), you now need to define which documents and fields should be published to each client.
 
 In a server Javascript file, you can write `publish` functions that return the results of `find` or `findOne` calls to determine which files will be visible on each client. Then in a client Javascript file, you can subscribe to those document sets.
@@ -152,11 +164,24 @@ Template.queueControl.events({
     }
 });
 ```
+or
+```js
+Template.queueControl.events({
+    'change .fileUploader': function (e) {
+        var files = e.target.files;
+        ContactsFS.storeFiles(files);
+    }
+});
+```
 `storeFile` returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads. When an upload finishes, client templates that list files or file information are updated live through reactivity.
+
+`storeFiles` is a convenience method for storing multiple files at once and returns an array of fileIds.
 
 If you want to store additional metadata for each file, provide the data in the second parameter.
 ```js
-storeFile(file, {})
+storeFile(file, {
+   name: "My File"
+})
 ```
 
 There are currently no available callbacks or event listeners for the upload process. These will be added in a future release.
@@ -166,7 +191,7 @@ First, create a new template for the file link.
 ```html
 <template name="fileTable">
     {{#each files}}
-    <a class="btn btn-primary btn-mini btnFileSaveAs">Save as</a>{{filename}}<br/>
+    {{cfsDownloadButton "ContactsFS" class="btn btn-primary btn-mini" content=filename}}
     {{else}}
     No files uploaded.
     {{/each}}
@@ -180,25 +205,11 @@ Template.fileTable.files = function() {
     return ContactsFS.find({}, { sort: { uploadDate:-1 } });
 };
 ```
-Now define an event handler for when the link is clicked.
-```js
-//in client.js
-Template.fileTable.events({
-    'click .btnFileSaveAs': function(e) {
-        e.preventDefault();
-        ContactsFS.retrieveBlob(this._id, function(fileItem) {
-            if (fileItem.blob) {
-                saveAs(fileItem.blob, fileItem.filename);
-            } else {
-                saveAs(fileItem.file, fileItem.filename);
-            }
-        });
-    } //EO saveAs
-});
-```
-We are checking whether the fileItem is a BLOB or a file because the local file may be returned if it's available. In the future, only a BLOB will be returned.
+And that's it! The button is created by the helper and wired up
+with the necessary click event to begin downloading the file to the browser.
 
-`saveAs` calls [Filesaver.js](https://github.com/eligrey/FileSaver.js) by [Eli Grey](http://eligrey.com). It doesn't work on iPad.
+For saving, the helper uses [FileSaver.js](https://github.com/eligrey/FileSaver.js) by [Eli Grey](http://eligrey.com). It doesn't work on iPad.
+If you prefer, you can call `CollectionFS.retrieveBlob()` yourself and use your own saving method with the result.
 
 ###Delete a File
 You can call `remove` on the client or server to remove all chunks and versions related to the original file from the database.
@@ -240,13 +251,90 @@ var blob = ContactsFS.retrieveBuffer(fileId);
 var fileRecord = ContactsFS.findOne(fileId);
 ```
 
-##API Reference
+##Common API Reference
+
+The following Meteor.Collection methods are supported, and work identically:
+* `find()`
+* `findOne()`
+* `update()`
+* `remove()`
+* `allow()`
+* `deny()`
+
+Instead of `insert()`, use `storeFile()` or `storeFiles()`.
+
+###CollectionFS.filter(filter)
+* **filter**: (Required) An object defining file content types and/or extensions that should be allowed or denied, and optionally a maximum file size in bytes.
+
+Call this in a common javascript file. This is the format of the `filter` object:
+
+```js
+{
+    allow: {
+        extensions: [],
+        contentTypes: []
+    },
+    deny: {
+        extensions: [],
+        contentTypes: []
+    },
+    maxSize: 1048576
+}
+```
+
+You can mix and match filtering based on extension or content types.
+The contentTypes array also supports "image/*" and "audio/*" and "video/*" like
+the "accepts" attribute on the HTML5 file input element. `storeFile()` and 
+`storeFiles()` automatically check each file against these rules before uploading
+it, or you can call `CollectionFS.fileIsAllowed()`, passing in a file record object,
+if you need to check a file yourself.
+
+If a file extension or content type matches any of those listed in `allow`, it is allowed. If not,
+it is denied. If it matches both `allow` and `deny`, it is denied. Typically, you would
+use only `allow` or only `deny`, but not both. If you do not call `filter()`, all files are allowed,
+as long as they pass the tests in `allow()` and `deny()`.
+
+The file extensions must be specified without a leading period.
+
+###Invalid Event (client or server)
+
+You can define a function to be called whenever an "invalid" event is dispatched. This happens when a file fails the validation check defined
+by `CollectionFS.filter`.
+
+This function should accept two arguments:
+* **type**: One of the enums in CFSErrorType, depending on which check the file failed.
+* **fileRecord**: The fileRecord object.
+
+Typically you might use this on the client to display an error message to the user, or on the server to log the failure.
+
+For example:
+
+```javascript
+Songs.events({
+  'invalid': function(type, fileRecord) {
+    if (type === CFSErrorType.disallowedContentType || type === CFSErrorType.disallowedExtension) {
+      console.log("Sorry, " + fileRecord.filename + " is not the type of file we're looking for.");
+    } else if (type === CFSErrorType.maxFileSizeExceeded) {
+      console.log("Sorry, " + fileRecord.filename + " is too big to upload.");
+    }
+  } 
+});
+```
+
+##Client API Reference
 
 ###CollectionFS.storeFile(file, metadata)
 * **file**: (Required) The browser filehandle.
 * **metadata**: An object with any custom data you want to save in the file record for later use.
 
 `storeFile` returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads.
+
+###CollectionFS.storeFiles(files, metadata, callback)
+* **files**: (Required) The browser files array.
+* **metadata**: (Optional) An object with any custom data you want to save in the file record for later use, or a function that accepts one parameter, the file object, and returns the metadata object.
+* **callback**: (Optional) A function to be called after storing each file when looping over the files. This callback is passed two parameters, `file`, which is the browser file object, and `fileId`, which is the CollectionFS ID for that file.
+
+`storeFiles` returns immediately with an array of fileIds, or with null if there was a problem. The actual uploads are handled by pseudo-threads. This is a convenience function for calling `storeFile` multiple times; however, if you need to store metadata with each file, you will have to do the looping yourself and use `storeFile`.
 
 ###CollectionFS.retrieveBlob(fileId, callback)
 * **fileId**: (Required) The ID of the file
@@ -255,6 +343,50 @@ var fileRecord = ContactsFS.findOne(fileId);
 `callback` is passed one argument, `fileItem`, which is a container for the file. Either fileItem.blob or fileItem.file will be available. fileItem.file is used if the file is already stored locally. In the future, this will be improved so that fileItem.blob is always set.
 
 `fileItem` also has properties _id, countChunks, and length.
+
+###CollectionFS.acceptDropsOn(templateName, selector, metadata, callback)
+* **templateName**: (Required) The template in which the element that should accept file drops can be found.
+* **selector**: (Required) The CSS selector that matches the element that should accept file drops.
+* **metadata**: (Optional) Same as the `CollectionFS.storeFiles` metadata argument. Passed to `CollectionFS.storeFiles` for the files that are dropped.
+* **callback**: (Optional) Same as the `CollectionFS.storeFiles` callback argument. Passed to `CollectionFS.storeFiles` for the files that are dropped.
+
+Sets up all of the elements matching `selector` to support dropping of one or more files onto them. As files are dropped onto these elements, they are automatically stored in the CollectionFS with the given metadata, and then the callback is called for each one.
+
+For example:
+
+```html
+<template name="audioList">
+   <div class="audioList">
+      {{#if cfsHasFiles "Songs"}}
+      <table>
+         <thead>
+            <th>ID</th>
+            <th>Size</th>
+            <th>Filename</th>
+            <th>Content type</th>
+            <th>Owner</th>
+         </thead>
+         <tbody>
+            {{#each cfsFiles "Songs"}}
+            {{> song}}
+            {{/each}}
+         </tbody>
+      </table>
+      {{else}}
+      <div>You have not added any audio files.</div>
+      {{/if}}
+   </div>
+</template>
+```
+
+```js
+Songs = new CollectionFS("songs", {autopublish: false});
+if (Meteor.isClient) {
+  Songs.acceptDropsOn("audioList", ".audioList");
+}
+```
+
+##Server API Reference
 
 ###CollectionFS.storeBuffer(fileName, buffer, options)
 * **fileName**: (Required) The name of the file
@@ -408,9 +540,181 @@ Filesystem.fileHandlers({
 });
 ```
 
+##Built-In Handlebars Helpers
+
+A number of handlebar helpers are available to help you generate UI elements related to the files stored in a CollectionFS.
+
+###cfsFile
+
+```js
+{{cfsFile "Collection" fileId}}
+```
+
+Returns the file object with ID fileId in the "Collection" CFS.
+
+###cfsFiles
+
+```js
+{{cfsFile "Collection"}}
+```
+
+Returns a cursor for the CFS. Doesn't support any limiting, sorting, etc. except whatever you're doing in `Meteor.publish()`.
+
+###cfsHasFiles
+
+```js
+{{#if cfsHasFiles "Collection"}}
+```
+
+Returns true if the CFS has any files (as filtered by `Meteor.publish()`).
+
+###cfsIsUploading
+
+```js
+(1) {{cfsIsUploading "Collection"}} (with file as current context)
+(2) {{cfsIsUploading "Collection" file=file}}
+(3) {{cfsIsUploading "Collection" fileId=fileId}}
+```
+
+Returns true if the file is currently being uploaded to the specified CFS.
+
+###cfsIsDownloading
+
+```js
+(1) {{cfsIsDownloading "Collection"}} (with file as current context)
+(2) {{cfsIsDownloading "Collection" file=file}}
+(3) {{cfsIsDownloading "Collection" fileId=fileId}}
+```
+
+Returns true if the file is currently being downloaded from the specified CFS.
+
+###cfsIsDownloaded
+
+```js
+(1) {{cfsIsDownloaded "Collection"}} (with file as current context)
+(2) {{cfsIsDownloaded "Collection" file=file}}
+(3) {{cfsIsDownloaded "Collection" fileId=fileId}}
+```
+
+Returns true if the file has been downloaded from the specified CFS.
+
+###cfsIsComplete
+
+```js
+(1) {{cfsIsComplete "Collection"}} (with file as current context)
+(2) {{cfsIsComplete "Collection" file=file}}
+(3) {{cfsIsComplete "Collection" fileId=fileId}}
+```
+
+Returns true whenever neither a download nor an upload is happening for the given file.
+
+###cfsQueueProgress
+
+```js
+(1) {{cfsQueueProgress "Collection"}} (with file as current context)
+(2) {{cfsQueueProgress "Collection" file=file}}
+(3) {{cfsQueueProgress "Collection" fileId=fileId}}
+```
+
+Returns the percentage progress of the current operation for the file, either upload or download.
+
+###cfsQueueProgressBar
+
+```js
+(1) {{cfsQueueProgressBar "Collection"}} (with file as current context)
+(2) {{cfsQueueProgressBar "Collection" file=file}}
+(3) {{cfsQueueProgressBar "Collection" fileId=fileId}}
+```
+
+Creates an HTML5 `<progress>` element that shows the progress of the current operation for the file, either upload or download.
+You can optionally specify `id` or `class` attributes to help you style it. For example:
+
+```html
+{{#each cfsFiles "Songs"}}
+{{#if cfsIsUploading "Songs"}}
+{{cfsQueueProgressBar "Songs" class="uploadBar"}}<br/><em>Uploading...</em>
+{{/if}}
+{{#if cfsIsDownloading "Songs"}}
+{{cfsQueueProgressBar "Songs" class="downloadBar"}}<br/><em>Downloading...</em>
+{{/if}}
+{{/each}}
+```
+
+Older browsers will simply display the percentage.
+
+###cfsIsPaused
+
+```js
+{{cfsIsPaused "Collection"}}
+```
+
+Returns true if the queue for the CFS is paused.
+
+###cfsIsOwner
+
+Is current user the owner of the file?
+
+```js
+(1) {{cfsIsOwner}} (with file as current context)
+(2) {{cfsIsOwner file=file}}
+(3) {{cfsIsOwner fileId=fileId collection="Collection"}}
+```
+
+Is user with userId the owner of the file?
+
+```js
+(1) {{cfsIsOwner userId=userId}} (with file as current context)
+(2) {{cfsIsOwner file=file userId=userId}}
+(3) {{cfsIsOwner fileId=fileId collection="Collection" userId=userId}}
+```
+
+###cfsFormattedSize
+
+```js
+(1) {{cfsFormattedSize formatString=formatString}} (with file as current context)
+(2) {{cfsFormattedSize file=file formatString=formatString}}
+(3) {{cfsFormattedSize fileId=fileId collection="Collection" formatString=formatString}}
+```
+
+Formats the file size of the given file using any format string supported by numeral.js. If you don't specify formatString,
+a default format string `'0.00 b'` is used.
+
+###cfsFileHandlers
+
+```js
+(1) {{cfsFileHandlers}} (with file as current context)
+(2) {{cfsFileHandlers file=file}}
+(3) {{cfsFileHandlers fileId=fileId collection="Collection"}}
+```
+
+Returns an array of filehandlers for the file, suitable for use with `#each`.
+
+###cfsFileUrl
+
+```js
+(1) {{cfsFileUrl "defaultHandler"}} (with file as current context)
+(2) {{cfsFileUrl "defaultHandler" file=file}}
+(3) {{cfsFileUrl "defaultHandler" fileId=fileId collection="Collection"}}
+```
+
+Returns the file URL for the given file, as assigned by the given filehandler.
+
+###cfsDownloadButton
+
+```js
+(1) {{cfsDownloadButton "Collection"}} (with file as current context)
+(2) {{cfsDownloadButton "Collection" file=file}}
+(3) {{cfsDownloadButton "Collection" fileId=fileId}}
+```
+
+Creates an HTML `<button>` element for the given file which, when clicked, initiates downloading
+of the file by the browser. This uses a FileSaver shim which should support most modern browsers.
+
+You can optionally specify `id` or `class` attributes to help you style it, and a `content` attribute
+to use as the button element content. If you don't specify content, the button will say "Download".
+
 ##Upcoming Features
 An overhaul and many fixes and new features will hopefully be completed by July 2013.
-* Handlebar helpers? `{{fileProgress}}`, `{{fileInQue}}` etc.
 * Test server-side handling of image size, etc.
 * When there is a hot code deploy the queue halts, which could be tackled in future version of Meteor.
 * CollectionFS deviates from GridFS by using string-based files.length (Meteor are working on this issue).

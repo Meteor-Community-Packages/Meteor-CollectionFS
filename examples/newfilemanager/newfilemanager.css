@@ -28,6 +28,10 @@ body {
     margin: 10px;
 }
 
+.imgItem.selected {
+    outline: 3px solid #990000;
+}
+
 .noItems {
     position: absolute;
     top: 135px;

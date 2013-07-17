@@ -16,7 +16,7 @@ CollectionFS = function(name, options) {
 	self.chunks = new Meteor.Collection(self._name+'.chunks');
 	self.queue = new _queueCollectionFS(name);
 	self._fileHandlers = {}; 									// Set by function fileHandlers({});
-        self._fileFilter = null; 									// Set by function fileFilter({});
+        self._filter = null; 									// Set by function filter({});
 	var methodFunc = {};										// Server methods
 	
 	serverConsole.log('CollectionFS: ' + name);
@@ -24,6 +24,16 @@ CollectionFS = function(name, options) {
 	// Extend _options
 	self._options = { autopublish: true, maxFilehandlers: __filehandlers.MaxRunning };
 	_.extend(self._options, options);
+        
+        //events
+        self._events = {
+          'ready': function() {},
+          'invalid': function() {}, //arg1 = CFSErrorType enum, arg2 = fileRecord
+          'progress': function() {}, //arg1 = progress percentage as integer
+          'start': function() {},
+          'stop': function() {},
+          'resume': function() {}
+        };
 
 	// User is able to set maxFilehandlers - could be other globals to if needed
 	__filehandlers.MaxRunning = self._options.maxFilehandlers;
@@ -51,7 +61,7 @@ CollectionFS = function(name, options) {
 
 				self.files.update({ _id: fileId }, { 
 					$set: { complete: (countChunks == numChunks), currentChunk: chunkNumber+1, numChunks: numChunks }
-				})
+				});
 
 				return { 
 					fileId: fileId, 
