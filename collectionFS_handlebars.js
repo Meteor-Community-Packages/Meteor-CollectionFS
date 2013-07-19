@@ -18,10 +18,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{isUploading "Collection"}} (with file as current context)
-    //(2) {{isUploading "Collection" file=file}}
-    //(3) {{isUploading "Collection" fileId=fileId}}
-    Handlebars.registerHelper('isUploading', function(collection, opts) {
+    //(1) {{cfsIsUploading "Collection"}} (with file as current context)
+    //(2) {{cfsIsUploading "Collection" file=file}}
+    //(3) {{cfsIsUploading "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsIsUploading', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -40,10 +40,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{isDownloading "Collection"}} (with file as current context)
-    //(2) {{isDownloading "Collection" file=file}}
-    //(3) {{isDownloading "Collection" fileId=fileId}}
-    Handlebars.registerHelper('isDownloading', function(collection, opts) {
+    //(1) {{cfsIsDownloading "Collection"}} (with file as current context)
+    //(2) {{cfsIsDownloading "Collection" file=file}}
+    //(3) {{cfsIsDownloading "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsIsDownloading', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -62,10 +62,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{isDownloaded "Collection"}} (with file as current context)
-    //(2) {{isDownloaded "Collection" file=file}}
-    //(3) {{isDownloaded "Collection" fileId=fileId}}
-    Handlebars.registerHelper('isDownloaded', function(collection, opts) {
+    //(1) {{cfsIsDownloaded "Collection"}} (with file as current context)
+    //(2) {{cfsIsDownloaded "Collection" file=file}}
+    //(3) {{cfsIsDownloaded "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsIsDownloaded', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -84,10 +84,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{isComplete "Collection"}} (with file as current context)
-    //(2) {{isComplete "Collection" file=file}}
-    //(3) {{isComplete "Collection" fileId=fileId}}
-    Handlebars.registerHelper('isComplete', function(collection, opts) {
+    //(1) {{cfsIsComplete "Collection"}} (with file as current context)
+    //(2) {{cfsIsComplete "Collection" file=file}}
+    //(3) {{cfsIsComplete "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsIsComplete', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -106,10 +106,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{queueProgress "Collection"}} (with file as current context)
-    //(2) {{queueProgress "Collection" file=file}}
-    //(3) {{queueProgress "Collection" fileId=fileId}}
-    Handlebars.registerHelper('queueProgress', function(collection, opts) {
+    //(1) {{cfsQueueProgress "Collection"}} (with file as current context)
+    //(2) {{cfsQueueProgress "Collection" file=file}}
+    //(3) {{cfsQueueProgress "Collection" fileId=fileId}}
+    Handlebars.registerHelper('cfsQueueProgress', function(collection, opts) {
         var fileId, hash, CFS;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.file) {
@@ -128,8 +128,31 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //{{isPaused "Collection"}}
-    Handlebars.registerHelper('isPaused', function(collection) {
+    //(1) {{cfsQueueProgressBar "Collection"}} (with file as current context)
+    //(2) {{cfsQueueProgressBar "Collection" file=file}}
+    //(3) {{cfsQueueProgressBar "Collection" fileId=fileId}}
+    //Supported Options: id, class
+    Handlebars.registerHelper('cfsQueueProgressBar', function(collection, opts) {
+        var fileId, hash;
+        hash = opts && opts.hash ? opts.hash : {};
+        if (hash.file) {
+            fileId = hash.file._id;
+        } else {
+            fileId = hash.fileId || this._id;
+        }
+        if (!fileId) {
+            return false;
+        }
+        return new Handlebars.SafeString(Template._cfsQueueProgressBar({
+            collection: collection,
+            fileId: fileId,
+            attributes: (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '')
+        }));
+    });
+
+    //Usage:
+    //{{cfsIsPaused "Collection"}}
+    Handlebars.registerHelper('cfsIsPaused', function(collection) {
         var CFS = window[collection];
         if (!CFS || !CFS.queue) {
             return false;
@@ -138,14 +161,14 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage (Is current user the owner?):
-    //(1) {{isOwner}} (with file as current context)
-    //(2) {{isOwner file=file}}
-    //(3) {{isOwner fileId=fileId collection="Collection"}}
+    //(1) {{cfsIsOwner}} (with file as current context)
+    //(2) {{cfsIsOwner file=file}}
+    //(3) {{cfsIsOwner fileId=fileId collection="Collection"}}
     //Usage (Is user with userId the owner?):
-    //(1) {{isOwner userId=userId}} (with file as current context)
-    //(2) {{isOwner file=file userId=userId}}
-    //(3) {{isOwner fileId=fileId collection="Collection" userId=userId}}
-    Handlebars.registerHelper('isOwner', function(opts) {
+    //(1) {{cfsIsOwner userId=userId}} (with file as current context)
+    //(2) {{cfsIsOwner file=file userId=userId}}
+    //(3) {{cfsIsOwner fileId=fileId collection="Collection" userId=userId}}
+    Handlebars.registerHelper('cfsIsOwner', function(opts) {
         var file, hash, userId;
         hash = opts && opts.hash ? opts.hash : {};
         userId = hash.userId || Meteor.userId();
@@ -162,14 +185,14 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage (default format string):
-    //(1) {{formattedSize}} (with file as current context)
-    //(2) {{formattedSize file=file}}
-    //(3) {{formattedSize fileId=fileId collection="Collection"}}
+    //(1) {{cfsFormattedSize}} (with file as current context)
+    //(2) {{cfsFormattedSize file=file}}
+    //(3) {{cfsFormattedSize fileId=fileId collection="Collection"}}
     //Usage (any format string supported by numeral.format):
-    //(1) {{formattedSize formatString=formatString}} (with file as current context)
-    //(2) {{formattedSize file=file formatString=formatString}}
-    //(3) {{formattedSize fileId=fileId collection="Collection" formatString=formatString}}
-    Handlebars.registerHelper('formattedSize', function(opts) {
+    //(1) {{cfsFormattedSize formatString=formatString}} (with file as current context)
+    //(2) {{cfsFormattedSize file=file formatString=formatString}}
+    //(3) {{cfsFormattedSize fileId=fileId collection="Collection" formatString=formatString}}
+    Handlebars.registerHelper('cfsFormattedSize', function(opts) {
         var file, hash, formatString;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.fileId && hash.collection) {
@@ -186,10 +209,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{fileHandlers}} (with file as current context)
-    //(2) {{fileHandlers file=file}}
-    //(3) {{fileHandlers fileId=fileId collection="Collection"}}
-    Handlebars.registerHelper('fileHandlers', function(opts) {
+    //(1) {{cfsFileHandlers}} (with file as current context)
+    //(2) {{cfsFileHandlers file=file}}
+    //(3) {{cfsFileHandlers fileId=fileId collection="Collection"}}
+    Handlebars.registerHelper('cfsFileHandlers', function(opts) {
         var file, hash, fh, fId, fileHandlers = [];
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.fileId && hash.collection) {
@@ -208,10 +231,10 @@ if (typeof Handlebars !== 'undefined') {
     });
 
     //Usage:
-    //(1) {{fileUrl "defaultHandler"}} (with file as current context)
-    //(2) {{fileUrl "defaultHandler" file=file}}
-    //(3) {{fileUrl "defaultHandler" fileId=fileId collection="Collection"}}
-    Handlebars.registerHelper('fileUrl', function(fileHandler, opts) {
+    //(1) {{cfsFileUrl "defaultHandler"}} (with file as current context)
+    //(2) {{cfsFileUrl "defaultHandler" file=file}}
+    //(3) {{cfsFileUrl "defaultHandler" fileId=fileId collection="Collection"}}
+    Handlebars.registerHelper('cfsFileUrl', function(fileHandler, opts) {
         var file, hash, fh;
         hash = opts && opts.hash ? opts.hash : {};
         if (hash.fileId && hash.collection) {
@@ -230,72 +253,107 @@ if (typeof Handlebars !== 'undefined') {
         return fh.url;
     });
 
-    //Usage: (TODO)
-    Handlebars.registerHelper('fileInput', function(options) {
-        var html = "", opt = options.hash, styles;
-        switch (opt.type) {
-            case "file":
-                html += '<input type="file" class="collectionFSFileInput' + (opt.class ? ' ' + opt.class : '') + '"' + (opt.id ? ' id="' + opt.id + '"' : '') + (opt.name ? ' name="' + opt.name + '"' : '') + (opt.multiple ? ' multiple' : '') + ' />';
-                if (opt.collection) {
-                    document.addEventListener('change', function(e) {
-                        var elem = e.target, files = elem.files;
-                        if (elem.classList.contains('collectionFSFileInput')) {
-                            if (files) {
-                                var path = opt.storeIdsIn, set = {}, collectionName, indexOfFirstDot;
-                                var ids = window[opt.collection].storeFile(files);
-                                if (path && path.length) {
-                                    indexOfFirstDot = path.indexOf('.');
-                                    if (indexOfFirstDot === -1) {
-                                        return;
-                                    }
-                                    collectionName = path.slice(0, indexOfFirstDot);
-                                    path = path.slice(indexOfFirstDot + 1);
+    //Usage:
+    //(1) {{cfsDownloadButton "Collection"}} (with file as current context)
+    //(2) {{cfsDownloadButton "Collection" file=file}}
+    //(3) {{cfsDownloadButton "Collection" fileId=fileId}}
+    //Supported Options: id, class, content
+    Handlebars.registerHelper('cfsDownloadButton', function(collection, opts) {
+        var fileId, hash, atts;
+        hash = opts && opts.hash ? opts.hash : {};
+        if (hash.file) {
+            fileId = hash.file._id;
+        } else {
+            fileId = hash.fileId || this._id;
+        }
+        if (!fileId) {
+            return false;
+        }
+        hash.class = hash.class ? hash.class + ' cfsDownloadButton' : 'cfsDownloadButton';
+        atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '');
+        hash.content = hash.content || "Download";
+        return new Handlebars.SafeString(Template._cfsDownloadButton({
+            collection: collection,
+            fileId: fileId,
+            content: hash.content,
+            attributes: atts
+        }));
+    });
 
-                                    if (opt.multiple) {
-                                        setObjByString(set, path, ids);
-                                    } else {
-                                        if (ids.length) {
-                                            setObjByString(set, path, ids[0]);
-                                        } else {
-                                            setObjByString(set, path, null);
-                                        }
-                                    }
-                                    window[collectionName].update(opt.storeIdsFor, {$set: set});
-                                }
-                            }
-                        }
-                    }, false);
+    Template._cfsDownloadButton.events({
+        'click .cfsDownloadButton': function(event, template) {
+            var fileId = template.data.fileId,
+                    collection = template.data.collection, CFS;
+            if (!fileId || !collection) {
+                return false;
+            }
+            CFS = window[collection];
+            if (!CFS || !CFS.queue) {
+                return false;
+            }
+            CFS.retrieveBlob(fileId, function(fileItem) {
+                if (fileItem.blob) {
+                    window.saveAs(fileItem.blob, fileItem.filename);
+                } else {
+                    window.saveAs(fileItem.file, fileItem.filename);
                 }
+            });
+        }
+    });
+
+    //TODO make this work and test thoroughly
+    Template._cfsFileInput.events({
+        'change .cfsFileInput': function(event, template) {
+            var elem = event.target,
+                files = elem.files,
+                storeIdsFor = template.data.storeIdsFor,
+                path = template.data.storeIdsIn,
+                collection = template.data.collection,
+                multiple = template.data.multiple,
+                set = {},
+                collectionName, indexOfFirstDot;
+            if (files) {
+                var ids = window[collection].storeFiles(files);
+                if (path && path.length) {
+                    indexOfFirstDot = path.indexOf('.');
+                    if (indexOfFirstDot === -1) {
+                        return;
+                    }
+                    collectionName = path.slice(0, indexOfFirstDot);
+                    path = path.slice(indexOfFirstDot + 1);
+
+                    if (multiple) {
+                        setObjByString(set, path, ids);
+                    } else {
+                        if (ids.length) {
+                            setObjByString(set, path, ids[0]);
+                        } else {
+                            setObjByString(set, path, null);
+                        }
+                    }
+                    window[collectionName].update(storeIdsFor, {$set: set});
+                }
+            }
+        }
+    });
+
+    //Usage: (TODO)
+    Handlebars.registerHelper('cfsFileInput', function(collection, options) {
+        var html, hash = options.hash, styles, atts;
+        switch (hash.type) {
+            case "file":
+                hash.class = hash.class ? hash.class + ' cfsFileInput' : 'cfsFileInput';
+                atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '') + (hash.name ? ' name="' + hash.name + '"' : '') + (hash.multiple ? ' multiple' : '');
+                html = Template._cfsFileInput({
+                    collection: collection,
+                    multiple: hash.multiple,
+                    storeIdsIn: hash.storeIdsIn,
+                    storeIdsFor: hash.storeIdsFor,
+                    attributes: atts
+                });
                 break;
             case "image":
-                if (opt.style === "basic") {
-                    styles = "min-height: 200px; border: 1px solid #cccccc;";
-                }
-                html += '<div class="collectionFSImageFileInput' + (opt.class ? ' ' + opt.class : '') + '"' + (opt.id ? ' id="' + opt.id + '"' : '') + (opt.name ? ' name="' + opt.name + '"' : '') + (opt.styles ? ' style="' + opt.styles + '"' : '') + '></div>';
-                if (opt.collection) {
-                    if (typeof window.FileReader !== 'undefined') {
-                        document.addEventListener('drop', function(e) {
-                            var elem = e.target, files, f, reader;
-                            if (elem.classList.contains('collectionFSImageFileInput')) {
-                                e.preventDefault();
-                                files = e.dataTransfer.files;
-                                if (files) {
-                                    for (var i = 0, ln = files.length; i < ln; i++) {
-                                        f = files[i];
-                                        window[opt.collection].storeFile(f);
-                                        reader = new FileReader();
-                                        reader.onload = function(event) {
-                                            var div = document.createElement("div");
-                                            div.style.background = 'url(' + event.target.result + ') no-repeat center';
-                                            elem.appendChild(div);
-                                        };
-                                        reader.readAsDataURL(f);
-                                    }
-                                }
-                            }
-                        }, false);
-                    }
-                }
+                //TODO
                 break;
         }
         return new Handlebars.SafeString(html);

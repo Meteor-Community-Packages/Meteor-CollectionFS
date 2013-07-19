@@ -6,19 +6,28 @@
     <div class="container">
         <div style="float: right;">{{loginButtons align="right"}}</div>
         <h1>Example File Manager Using CollectionFS</h1>
+        {{#if loggedIn}}
         <ul>
             <li>Select one or more files to upload them.</li>
             <li>Drag one or more files onto the list.</li>
         </ul>
         {{> audioListArea}}
         {{> imgListArea}}
+        {{else}}
+        <p>Welcome! Please create an account or log in to try out this example
+            CollectionFS app. Files that you upload are tied to your user
+            account, so you will not see anyone else's files, and they will not
+            see yours.</p>
+        {{/if}}
     </div>
     {{> dialogAddSong}}
     {{> dialogAddImg}}
 </body>
 
 <template name="audioListArea">
-    <button id="addAudio" type="button" class="btn btn-primary btn-large">Add Audio Files</button>
+    <button id="addAudio" type="button" class="btn btn-primary btn-large">
+        Add Audio File
+    </button>
     <div class="audioList">
         {{> audioList}}
     </div>
@@ -50,19 +59,19 @@
 <template name="song">
     <tr class="audioItem">
         <td>{{_id}}</td>
-        <td>{{formattedSize}}</td>
+        <td>{{cfsFormattedSize}}</td>
         <td>{{filename}}</td>
         <td>{{contentType}}</td>
-        {{#if isOwner}}
+        {{#if cfsIsOwner}}
         <td>You</td>
         {{else}}
         <td>Not You</td>
         {{/if}}
         <td>
-            {{#if fileHandlers}}
+            {{#if cfsFileHandlers}}
             <ul>
-                {{#each fileHandlers}}
-                <li>{{this}}: {{fileUrl this file=../this}}</li>
+                {{#each cfsFileHandlers}}
+                <li>{{this}}: {{cfsFileUrl this file=../this}}</li>
                 {{/each}}
             </ul>
             {{else}}
@@ -70,15 +79,17 @@
             {{/if}}
         </td>
         <td>
-            {{#if isComplete "Songs"}}
-            <button type="button" class="btn btn-primary btn-small download">Download</button>
-            <button type="button" class="btn btn-danger btn-small delete">Delete</button>
+            {{#if cfsIsComplete "Songs"}}
+            {{cfsDownloadButton "Songs" class="btn btn-primary btn-small" content="Download"}}
+            <button type="button" class="btn btn-danger btn-small delete">
+                Delete
+            </button>
             {{else}}
-            {{#if isUploading "Songs"}}
-            <progress value="{{queueProgress 'Songs'}}" max="100">{{queueProgress 'Songs'}}%</progress><br/><em>Uploading...</em>
+            {{#if cfsIsUploading "Songs"}}
+            {{cfsQueueProgressBar "Songs"}}<br/><em>Uploading...</em>
             {{/if}}
-            {{#if isDownloading "Songs"}}
-            <progress value="{{queueProgress 'Songs'}}" max="100">{{queueProgress 'Songs'}}%</progress><br/><em>Downloading...</em>
+            {{#if cfsIsDownloading "Songs"}}
+            {{cfsQueueProgressBar "Songs"}}<br/><em>Downloading...</em>
             {{/if}}
             {{/if}}
         </td>
@@ -86,7 +97,14 @@
 </template>
 
 <template name="imgListArea">
-    <button id="addImage" type="button" class="btn btn-primary btn-large">Add Images</button>
+    <button id="addImage" type="button" class="btn btn-primary btn-large">
+        Add Images
+    </button>
+    {{#isolate}}
+    <button id="deleteImages" type="button" class="btn btn-danger btn-large"{{deleteImagesButtonDisabled}}>
+        Delete Selected
+    </button>
+    {{/isolate}}
     <div class="imgList">
         {{> imgList}}
     </div>
@@ -103,7 +121,11 @@
 </template>
 
 <template name="image">
+    {{#if selected}}
+    {{fileImage collection="Images" class="imgItem selected"}}
+    {{else}}
     {{fileImage collection="Images" class="imgItem"}}
+    {{/if}}
 </template>
 
 <template name="dialogAddSong">

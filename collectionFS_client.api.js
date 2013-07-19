@@ -16,16 +16,23 @@
 			self.queue.addFile(fileId, file);
 			return fileId;
 		}, //EO storeFile
-                storeFiles: function(files, callback) {
-                        var self = this, fileId, fileIds = [], file;
+                storeFiles: function(files, metadata, callback) {
+                        var self = this, fileId, fileIds = [], file, temp_md;
                         if (files && files.length) {
                             for (var i = 0, ln = files.length; i < ln; i++) {
                                 file = files[i];
-                                fileId = self.storeFile(file);
+                                if (metadata !== undefined && typeof metadata === 'function') {
+                                    temp_md = metadata(file);
+                                } else {
+                                    temp_md = metadata;
+                                }
+                                fileId = self.storeFile(file, temp_md);
                                 if (fileId) {
                                     fileIds.push(fileId);
                                 }
-                                callback(file, fileId);
+                                if (callback !== undefined && typeof callback === 'function') {
+                                    callback(file, fileId);
+                                }
                             }
                         }
                         return fileIds;
@@ -50,8 +57,8 @@
 			//check if found locally - then use directly
 			//fetch from server, via methods call - dont want the chunks collection
 		}, //EO retriveFile
-                acceptDropsOn: function(elements, callback) {
-                        var self = this, elem;
+                acceptDropsOn: function(templateName, selector, metadata, callback) {
+                        var self = this, events = {};
                         // Prevent default drag and drop
                         function noopHandler(evt) {
                             evt.stopPropagation();
@@ -61,18 +68,16 @@
                         // Handle file dropped
                         function dropped(evt) {
                             noopHandler(evt);
-                            self.storeFiles(evt.dataTransfer.files, callback);
+                            self.storeFiles(evt.dataTransfer.files, metadata, callback);
                         }
-
-                        // init event handlers
-                        for (var i = 0, ln = elements.length; i < ln; i++) {
-                            elem = elements[i];
-                            elem.addEventListener("dragenter", noopHandler, false);
-                            elem.addEventListener("dragexit", noopHandler, false);
-                            elem.addEventListener("dragover", noopHandler, false);
-                            elem.addEventListener("dragend", noopHandler, false);
-                            elem.addEventListener("drop", dropped, false);
-                        }
+                        
+                        events['dragenter ' + selector] = noopHandler;
+                        events['dragexit ' + selector] = noopHandler;
+                        events['dragover ' + selector] = noopHandler;
+                        events['dragend ' + selector] = noopHandler;
+                        events['drop ' + selector] = dropped;
+                        
+                        Template[templateName].events(events);
                 }
 	}); //EO extend collection
 
@@ -314,6 +319,7 @@
 				blob: null,
 				queueChunks: [],
 				collectionName:self._name,
+                                filename: fileRecord.filename,
 				connection:self.connection,
 				contentType: fileRecord.contentType,
 				currentChunkServer: (currentChunk)?currentChunk:0,
@@ -347,11 +353,12 @@
 				download: false,
 				complete: false,
 				file: file,
+                                filename: file.name,
 				collectionName:self._name,
 				connection:self.connection,
 				currentChunkServer: (currentChunk)?currentChunk:0,
 				currentChunk: (currentChunk)?currentChunk:0, //current loaded chunk of countChunks-1  
-				countChunks: countChunks,
+				countChunks: countChunks
 				//filereader: new FileReader(),	
 			};
 			//Added upload request to the queue

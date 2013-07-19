@@ -1,0 +1,12 @@
+<template name="_cfsQueueProgressBar">
+    <progress value="{{cfsQueueProgress collection fileId=fileId}}" max="100"{{{attributes}}}>{{cfsQueueProgress collection fileId=fileId}}%</progress>
+</template>
+
+<template name="_cfsDownloadButton">
+    <button type="button"{{{attributes}}}>{{content}}</button>
+</template>
+
+<template name="_cfsFileInput">
+    <button type="button"{{{attributes}}}>{{content}}</button>
+    <input type="file"{{{attributes}}} />
+</template>
