@@ -13,6 +13,7 @@ Package.on_use(function(api) {
     'collectionFS_templates.html',
     'collectionFS_client.js',
     'collectionFS_client.api.js',
+    'collectionFS_client.api.fileobject.js',
     'collectionFS_handlebars.js'
   ], 'client');
 
@@ -27,6 +28,7 @@ Package.on_use(function(api) {
   api.add_files([
     'collectionFS_utillity.js',
     'collectionFS_common.js',
+    'collectionFS_common.api.fileobject.js',
     'numeral.js'
   ], ['client', 'server']);
 

@@ -31,7 +31,7 @@ _.extend(_fileObject.prototype, {
 
   // TODO: Add client file object api
   toDataUrl: function(callback) {
-    if (typeOf callback !== 'function') {
+    if (typeof callback !== 'function') {
       throw new Error("toDataUrl requires function as callback");
     }
 
@@ -42,7 +42,7 @@ _.extend(_fileObject.prototype, {
     callback(data);
   },
   toBlob: function(callback) {
-    if (typeOf callback !== 'function') {
+    if (typeof callback !== 'function') {
       throw new Error("toBlob requires function as callback");
     }
 
