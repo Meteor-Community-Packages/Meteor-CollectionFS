@@ -54,6 +54,23 @@
 var fs = Npm.require('fs');
 var path = Npm.require('path');
 
+_.extend(_fileObject.prototype, {
+  // Expect self to have the properties of fileRecord
+  // Added is self.collection for access to the collection the file belongs
+
+
+  filehandler: {  // TODO: Add filehandlers file object api
+    destination: function(newExtension) { // destination
+      // TODO: Refractor destination
+    },
+    push: function(filehandler, destinationObject) {
+      // TODO: Add / Update filehandler
+    },
+    pop: function(filehandler, destinationObject) {
+      // TODO: Remove filehandler
+    }
+  }
+});
 
 _queueListener = function(collectionFS) {
 	var self = this;
@@ -217,6 +234,8 @@ _.extend(_queueListener.prototype, {
 					// serverFilename - where the filehandler can write the file if wanted
 					// fileData - contains future url reference and extension for the
 					// database
+          // TODO: destination should somehow be added to server-side
+          // fileobject api - Look in top of this file
 					var destination = function(newExtension) {
 						// Make newExtension optional, fallback to fileRecord.filename
 						var extension = (newExtension)?
@@ -252,6 +271,7 @@ _.extend(_queueListener.prototype, {
 
           var result = false;
 					try {
+            // TODO: set `this` to file object
 						result = fileHandlers[func]({
               fileRecord: fileRecord,
               blob: blob,

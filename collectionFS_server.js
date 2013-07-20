@@ -10,11 +10,23 @@
 var fs = Npm.require('fs');
 var path = Npm.require('path');
 
+// Transform api onto file objects
+_fileObject = function(doc, collection) {
+  var self = this;
+  self.collection = collection;
+  _.extend(self, doc);
+};
+
 // @export CollectionFS
 CollectionFS = function(name, options) {
 	var self = this;
 	self._name = name;
-	self.files = new Meteor.Collection(self._name+'.files');
+  // Map server api as transformation
+	self.files = new Meteor.Collection(self._name+'.files', {
+    transform: function(doc) {
+      return new _fileObject(doc, self);
+    }
+  });
   // TODO: Add change listener?
   self.chunks = new Meteor.Collection(self._name+'.chunks');
 	self.queue = new _queueCollectionFS(name);
