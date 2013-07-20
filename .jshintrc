@@ -1,8 +1,9 @@
+//.jshintrc
 {
     // JSHint Meteor Configuration File
     // Match the Meteor Style Guide
     //
-    // By @raix with contributions from @aldeed
+    // By @raix with contributions from @aldeed and @awatson1978
     // Source https://github.com/raix/Meteor-jshintrc
     //
     // See http://jshint.com/docs/ for more details
@@ -97,6 +98,19 @@
         "Match",
         "Deps",
         "EJSON",
-        "Email"
+        "Email",
+        "Package",
+        "Npm",
+        "Assets",
+        "Packages",
+        "process",
+        "Tinytest",
+        "_",
+        "__meteor_runtime_config__",
+        "__filehandlers",
+        "CollectionFS",
+        "_queueCollectionFS",
+        "CFSErrorType",
+        "serverConsole" // Should deprecate
     ]       // additional predefined global variables
 }

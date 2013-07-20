@@ -5,7 +5,7 @@
 
 preserve-inputs
 underscore
-accounts-password
 collectionFS
 accounts-ui
 jquery
+accounts-password

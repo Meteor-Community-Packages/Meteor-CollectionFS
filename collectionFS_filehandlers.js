@@ -23,7 +23,7 @@
 //     //Some serverside imagick/file handling functions, user can define this
 //     return null;
 //   },
-//   
+//
 // });
 //
 // Server:
@@ -33,10 +33,10 @@
 // server sets .handledAt = Date.now(), .fileHandler[]
 // fileHandlers die after ended
 // Filehandlers respect __filehandlers.MaxRunning on server, set to 1 pr. default for throttling the server.
-// 
+//
 // Client:
 // When upload confirmed complete, set fs.files.complete and add _id to collectionFS.fileHandlerQue (wich triggers a worker at interval)
-// 
+//
 
 //var queueListener = new _queueListener();
 
@@ -55,7 +55,7 @@ var path = Npm.require('path');
 	if (!fs.existsSync(self.serverPath))
 		fs.mkdirSync(self.serverPath);
 
-	self.pathCreated = (!!fs.existsSync(self.serverPath));		
+	self.pathCreated = (!!fs.existsSync(self.serverPath));
 
 	//Spawn worker:
 	Meteor.setTimeout(function() { self.checkQueue(); }, 0); //Initiate worker process
@@ -72,13 +72,13 @@ _.extend(_queueListener.prototype, {
 				if (__filehandlers.Running < __filehandlers.MaxRunning) {
 					__filehandlers.Running++;
 
-					// First, Try to find new unhandled files					
-					var fileRecord = self.collectionFS.findOne({ handledAt: null, 
+					// First, Try to find new unhandled files
+					var fileRecord = self.collectionFS.findOne({ handledAt: null,
 																 complete: true }); //test sumChunk == countChunks in mongo?
 
 					// Second, check if not complete and remoteFile is set then we have an load file order
 					if (!fileRecord)
-						fileRecord = self.collectionFS.findOne({ $exists: { remoteFile: true }, 
+						fileRecord = self.collectionFS.findOne({ $exists: { remoteFile: true },
 																 complete: false }); //test sumChunk == countChunks in mongo?
 
 					// Third, Try to find new filehandlers, not yet applied
@@ -92,9 +92,11 @@ _.extend(_queueListener.prototype, {
 						}
 
 						//	Where one of the fileHandlers are missing
-						fileRecord = self.collectionFS.findOne({ complete: true, 
-																 $or: queryFilehandlersExists, 
-																 'fileHandler.error': { $exists: false } });
+            if (queryFilehandlersExists.length > 0) {
+              fileRecord = self.collectionFS.findOne({ complete: true,
+                                   $or: queryFilehandlersExists,
+                                   'fileHandler.error': { $exists: false } });
+            }
 					} // EO Try to find new filehandlers
 
 					// Last, Try to find failed filehanders
@@ -103,22 +105,24 @@ _.extend(_queueListener.prototype, {
 						var queryFilehandlersFailed = [];
 						for (var func in self.collectionFS._fileHandlers) {
 							var queryFailed = {};
-							queryFailed['fileHandler.' + func + '.failed'] = { $exists: true, 
-																			   $lt: __filehandlers.MaxFailes, 
+							queryFailed['fileHandler.' + func + '.failed'] = { $exists: true,
+																			   $lt: __filehandlers.MaxFailes,
 																			   'fileHandler.error': { $exists: false } };
 							queryFilehandlersFailed.push(queryFailed);
 						}
 
 						//	Where the fileHandler contains an element with a failed set less than __filehandlers.MaxFailes
-						fileRecord = self.collectionFS.findOne({ complete: true, 
-																 $or: queryFilehandlersFailed });
+            if (queryFilehandlersFailed.length > 0) {
+              fileRecord = self.collectionFS.findOne({ complete: true,
+                                   $or: queryFilehandlersFailed });
+            }
 					}
 
 					// Handle file, spawn worker
 					if (fileRecord) {
-						
+
 						// Test if remoteFile isset
-						if (fileRecord.remoteFile)				
+						if (fileRecord.remoteFile)
 							self.workLoadRemoteFile(fileRecord)
 						else
 							self.workFileHandlers(fileRecord, self.collectionFS._fileHandlers);
@@ -147,10 +151,10 @@ _.extend(_queueListener.prototype, {
 				} // EO Filehandler
 
 				if (__filehandlers.waitBeforeCheckingQueue)
-					Meteor.setTimeout(function() { self.checkQueue(); }, __filehandlers.waitBeforeCheckingQueue); //Wait a second 1000	
+					Meteor.setTimeout(function() { self.checkQueue(); }, __filehandlers.waitBeforeCheckingQueue); //Wait a second 1000
 			} else {
 				if (__filehandlers.waitBeforeCheckingQueueWhenNoFilehandlers)
-					Meteor.setTimeout(function() { self.checkQueue(); }, __filehandlers.waitBeforeCheckingQueueWhenNoFilehandlers); //Wait 5 second 5000	
+					Meteor.setTimeout(function() { self.checkQueue(); }, __filehandlers.waitBeforeCheckingQueueWhenNoFilehandlers); //Wait 5 second 5000
 			}
 		} //No collection?? cant go on..
 	}, //EO checkQueue
@@ -179,7 +183,7 @@ _.extend(_queueListener.prototype, {
 					// Returns
 					// 		serverFilename - where the filehandler can write the file if wanted
 					// 		fileData - contains future url reference and extension for the database
-					// 		
+					//
 					var destination = function(newExtension) {
 						// Make newExtension optional, fallback to fileRecord.filename
 						var extension = (newExtension)? newExtension : path.extname(fileRecord.filename);
@@ -190,12 +194,12 @@ _.extend(_queueListener.prototype, {
 						// Construct url TODO: Should URL encode (could cause trouble in the remove observer)
 						var myUrl = self.pathURL + '/' + myFilename;
 
-						return { 
-							serverFilename: path.join(self.serverPath, myFilename), 
-							fileData: { 
-								url: myUrl,							 
+						return {
+							serverFilename: path.join(self.serverPath, myFilename),
+							fileData: {
+								url: myUrl,
 								extension: extension.toLowerCase()
-							} 
+							}
 						};
 					}; // EO destination
 
@@ -225,7 +229,7 @@ _.extend(_queueListener.prototype, {
 
 							//Add to fileHandler array
 							if (fs.existsSync(destination(result.extension).serverFilename)) {
-								self.collectionFS.files.update({ _id: fileRecord._id }, { 
+								self.collectionFS.files.update({ _id: fileRecord._id }, {
 									$set: normalizeFilehandle(func, destination(result.extension).fileData)
 								}); //EO Update
 							} else {
@@ -253,13 +257,13 @@ _.extend(_queueListener.prototype, {
 								$set: normalizeFilehandle(func)
 							}); //EO Update
 
-						} else { // But if false then we got an error - handled by the queue		
+						} else { // But if false then we got an error - handled by the queue
 
 							// Do nothing, try again sometime later defined by config policy
 							self.collectionFS.files.update({ _id: fileRecord._id }, {
 								$set: normalizeFilehandle(func, { failed: (sumFailes+1) })
 							}); //EO Update
-					
+
 						}//EO filehandling failed
 					} //EO no result
 
