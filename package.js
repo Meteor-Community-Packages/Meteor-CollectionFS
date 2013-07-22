@@ -20,8 +20,7 @@ Package.on_use(function(api) {
     'collectionFS_filesystem.js',
     'collectionFS_server.js',
     'collectionFS_filehandlers.js',
-    'collectionFS_server.api.js',
-    'collectionFS_server.api.fileobject.js'
+    'collectionFS_server.api.js'
   ], 'server');
 
   api.add_files([

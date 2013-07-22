@@ -1,17 +1,10 @@
 /* CollectionFS.js
  * A gridFS kind implementation.
  * 2013-01-03
- *
+ * 
  * By Morten N.O. Henriksen, http://gi2.dk
- *
+ * 
  */
-
-// Transform api onto file objects
-_fileObject = function(doc, collection) {
-  var self = this;
-  self.collection = collection;
-  _.extend(self, doc);
-};
 
 // @export CollectionFS
 CollectionFS = function(name, options) {
@@ -19,18 +12,13 @@ CollectionFS = function(name, options) {
 	var self = this;
 	self._name = name;
 	self._filter = null;
-  // Map transformation client api
-	self.files = new Meteor.Collection(self._name+'.files', {
-    transform: function(doc) {
-      return new _fileObject(doc, self);
-    }
-  });
+	self.files = new Meteor.Collection(self._name+'.files');
 	//TODO: Add change listener?
 	//self.chunks = new Meteor.Collection(self._name+'.chunks');
 	self.queue = new _queueCollectionFS(name);
 	self._options = { autopublish: true };
 	_.extend(self._options, options);
-
+        
     //events
 	self._events = {
     'ready': function() {},
