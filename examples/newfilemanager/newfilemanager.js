@@ -33,7 +33,7 @@ Images.filter({
 
 if (Meteor.isClient) {
     var imgSelectionDep = new Deps.Dependency();
-
+    
     Accounts.ui.config({
         passwordSignupFields: 'USERNAME_ONLY'
     });
@@ -67,7 +67,7 @@ if (Meteor.isClient) {
             });
         }
     });
-
+    
     var onInvalid = function(type, fileRecord) {
         if (type === CFSErrorType.disallowedContentType || type === CFSErrorType.disallowedExtension) {
             $.gritter.add({
@@ -82,15 +82,14 @@ if (Meteor.isClient) {
         }
     };
     Songs.events({
-       'invalid': onInvalid
+       'invalid': onInvalid 
     });
     Images.events({
-       'invalid': onInvalid
+       'invalid': onInvalid 
     });
 
     var dataUrlCache = {};
-    Template.image.fileImage = function(opts) {
-      console.log(this);
+    Handlebars.registerHelper('fileImage', function(opts) {
         var file, hash, src = "", style = "";
         hash = opts && opts.hash ? opts.hash : {};
         if (!hash.collection) {
@@ -125,10 +124,9 @@ if (Meteor.isClient) {
                 }
             });
         }
-
-        return {src: src, collection: hash.collection, id: file._id, style: style, class: (hash.class || '') };
-    };
-
+        return new Handlebars.SafeString('<img src="' + src + '" data-cfs-collection="' + hash.collection + '" data-cfs-id="' + file._id + '" style="' + style + '" class="' + (hash.class || '') + '" />');
+    });
+    
     Template.image.events({
         'click .imgItem': function(event) {
             $(event.currentTarget).toggleClass("selected");
@@ -136,11 +134,15 @@ if (Meteor.isClient) {
             imgSelectionDep.changed();
         }
     });
-
+    
     Template.imgListArea.deleteImagesButtonDisabled = function () {
         imgSelectionDep.depend();
         return $(".imgItem.selected").length ? "" : " disabled";
     };
+
+    Handlebars.registerHelper("loggedIn", function() {
+        return !!Meteor.user();
+    });
 
     //upload buttons
     Template.dialogAddSong.events({

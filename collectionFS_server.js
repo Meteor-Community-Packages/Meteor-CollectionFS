@@ -1,15 +1,14 @@
 /* CollectionFS.js
  * A gridFS kind implementation.
  * 2013-01-03
- *
+ * 
  * By Morten N.O. Henriksen, http://gi2.dk
- *
+ * 
  */
 
 var fs = Npm.require('fs');
 var path = Npm.require('path');
 
-// @export CollectionFS
 CollectionFS = function(name, options) {
 	var self = this;
 	self._name = name;
@@ -19,13 +18,13 @@ CollectionFS = function(name, options) {
 	self._fileHandlers = {}; 									// Set by function fileHandlers({});
         self._filter = null; 									// Set by function filter({});
 	var methodFunc = {};										// Server methods
-
+	
 	serverConsole.log('CollectionFS: ' + name);
 
 	// Extend _options
 	self._options = { autopublish: true, maxFilehandlers: __filehandlers.MaxRunning };
 	_.extend(self._options, options);
-
+        
         //events
         self._events = {
           'ready': function() {},
@@ -43,7 +42,7 @@ CollectionFS = function(name, options) {
 	if (self._options.autopublish) {
 	  Meteor.publish(self._name+'.files', function () {
 	    return self.find({});
-	  }, {is_auto: true});
+	  }, {is_auto: true});		
 	} //EO Autopublish
 
 	// Save data into file in collection
@@ -54,20 +53,20 @@ CollectionFS = function(name, options) {
 			var cId = self.chunks.insert({
 				"files_id" : fileId,    	// _id of the corresponding files collection entry
 				"n" : chunkNumber,          // chunks are numbered in order, starting with 0
-				"data" : data          		// the chunk's payload as a BSON binary type
+				"data" : data          		// the chunk's payload as a BSON binary type			
 			});
 
 			if (cId) { //If chunk added successful
 				var numChunks = self.chunks.find({ "files_id": fileId }).count();
 
-				self.files.update({ _id: fileId }, {
+				self.files.update({ _id: fileId }, { 
 					$set: { complete: (countChunks == numChunks), currentChunk: chunkNumber+1, numChunks: numChunks }
 				});
 
-				return {
-					fileId: fileId,
-					chunkId: cId,
-					complete: (countChunks == numChunks),
+				return { 
+					fileId: fileId, 
+					chunkId: cId, 
+					complete: (countChunks == numChunks), 
 					currentChunk: chunkNumber+1
 				};
 
@@ -84,11 +83,11 @@ CollectionFS = function(name, options) {
 				"n" : chunkNumber          // chunks are numbered in order, starting with 0
 			});
 
-			return {
-				fileId: fileId,
-				chunkId: chunk._id,
-				currentChunk:chunkNumber,
-				complete: (chunkNumber == countChunks-1),
+			return { 
+				fileId: fileId, 
+				chunkId: chunk._id, 
+				currentChunk:chunkNumber, 
+				complete: (chunkNumber == countChunks-1), 
 				data: chunk.data
 			};
 		} //EO fileId

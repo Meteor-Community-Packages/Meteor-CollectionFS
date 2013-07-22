@@ -6,7 +6,7 @@
     <div class="container">
         <div style="float: right;">{{loginButtons align="right"}}</div>
         <h1>Example File Manager Using CollectionFS</h1>
-        {{#if currentUser}}
+        {{#if loggedIn}}
         <ul>
             <li>Select one or more files to upload them.</li>
             <li>Drag one or more files onto the list.</li>
@@ -120,20 +120,11 @@
     {{/if}}
 </template>
 
-<template name="fileImage">
-    <img src="{{src}}" data-cfs-collection="{{collection}}"
-        data-cfs-id="{{id}}" style="{{style}}" class="{{class}}" />
-</template>
-
 <template name="image">
     {{#if selected}}
-        {{#with fileImage collection="Images" class="imgItem selected"}}
-            {{> fileImage}}
-        {{/with}}
+    {{fileImage collection="Images" class="imgItem selected"}}
     {{else}}
-        {{#with fileImage collection="Images" class="imgItem"}}
-            {{> fileImage}}
-        {{/with}}
+    {{fileImage collection="Images" class="imgItem"}}
     {{/if}}
 </template>
 
