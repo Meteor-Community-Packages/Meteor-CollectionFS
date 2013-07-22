@@ -90,7 +90,6 @@
 
     // Custom Globals
     "predef"        : [
-        "Buffer",
         "Meteor",
         "Accounts",
         "Session",
@@ -111,8 +110,7 @@
         "__filehandlers",
         "CollectionFS",
         "_queueCollectionFS",
-        "_queueListener",
-        "CFSErrorType", // Should deprecate
+        "CFSErrorType",
         "serverConsole" // Should deprecate
     ]       // additional predefined global variables
 }
