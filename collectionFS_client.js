@@ -7,7 +7,7 @@
  */
 
 CollectionFS = function(name, options) {
-    var self = this;
+	var self = this;
 	self._name = name;
         self._filter = null;
 	self.files = new Meteor.Collection(self._name+'.files'); //TODO: Add change listener?
@@ -39,7 +39,4 @@ _queueCollectionFS = function(name) {
 	self.connection = Meteor.connect(Meteor.default_connection._stream.rawUrl);
 	self.spawns = 1;				//0 = we dont spawn into "threads", 1..n = we spawn multiple "threads"
 	self.paused = false;
-	self.queue = Array();
-	self.running = Array();
-	self.maxTransfers = 5;
 };

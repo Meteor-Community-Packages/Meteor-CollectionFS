@@ -1,6 +1,6 @@
 (function () {
 
-    _.extend(CollectionFS.prototype, {
+	_.extend(CollectionFS.prototype, {
 		storeFile: function(file, options) {
 			var self = this;
 			var fileId = null;
@@ -12,9 +12,8 @@
 			if (!fileId) {
                             return null;
                         }
-            file._id = fileId;
 			//Put file in upload queue
-			self.queue.addFile(file);
+			self.queue.addFile(fileId, file);
 			return fileId;
 		}, //EO storeFile
                 storeFiles: function(files, metadata, callback) {
@@ -40,6 +39,7 @@
                 }, //EO storeFiles
 		//callback(fileItem)
 		retrieveBlob: function(fileId, callback) {
+			//console.log('retrieveBlob');
 			var self = this;
 			var fileItem = self.queue._getItem(fileId);
 			//if file blob in queue, then use the file instead of downloading...
@@ -97,20 +97,7 @@
 		//_getItem is private function, not reactive
 		_getItem: function(fileId) {
 			var self = this;
-            var file;
-			for(var i in self.queue){
-                file = self.queue[i];
-				if(file._id === fileId){
-					return file;
-				}
-			}
-			for(var i in self.running){
-                file = self.running[i];
-				if(file._id === fileId){
-					return file;
-				}
-			}
-			return null;
+			return self.queue[fileId];
 		}, //EO _getItem
                 
                 //_getProgress is private function, not reactive
@@ -199,22 +186,23 @@
 			var self = this;
 			self.paused = false;
 			self.fileDeps.changed();
-			for (var file in self.queue) {
-				var fileItem = file;
+			//console.log('paused:'+self.paused);
+			for (var fileId in self.queue) {
+				var fileItem = self._getItem(fileId);
 				if (fileItem.download) {
 					//Spawn loaders
 					if (!self.spawns)
-						self.downloadChunk(file)
+						self.downloadChunk(fileId)
 					else
 						for (var i = 0; i < self.spawns; i++)
-							setTimeout(function() { self.downloadChunk(file); });
+							setTimeout(function() { self.downloadChunk(fileId); });
 				} else {
 					//Spawn loaders
 					if (!self.spawns)
-						self.getDataChunk(file)
+						self.getDataChunk(fileId)
 					else
 						for (var i = 0; i < self.spawns; i++)
-							setTimeout(function() { self.getDataChunk(file); });
+							setTimeout(function() { self.getDataChunk(fileId); });
 				}
 			}
 		}, //EO resume
@@ -232,43 +220,44 @@
 				self.addFile(fileRecord._id, file, fileRecord.currentChunk);
 				return true;
 			}
+			//console.log('resumeFile - files dont match');
 			return false; //Didnt compare - cant resumeFile
 		}, //EO function
 		//////////////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////// DOWNLOAD  ////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////////////////////////////////////////
-		addDataChunk: function(file, chunckNumber, data) {
+		addDataChunk: function(fileId, chunckNumber, data) {
 			var self = this;
-			var fileItem = file;
+			var fileItem = self._getItem(fileId);
 
 		    var carry = [];
 		    for(var i = 0; i < data.length; i++) {
 		        carry.push(data.charCodeAt(i));
 		    }
 
-			file.queueChunks[chunckNumber] = new Uint8Array(carry);//chunkBlob; TODO: use EJSON.binary()
+			self.queue[fileId].queueChunks[chunckNumber] = new Uint8Array(carry);//chunkBlob; TODO: use EJSON.binary()
 		},
 
-		unionChunkBlobs: function(file) {
+		unionChunkBlobs: function(fileId) {
 			var self = this;
-			var fileItem = file;
+			var fileItem = self._getItem(fileId);
 
 			if (fileItem.queueChunks.length == fileItem.countChunks) { //Last worker make chunks into blob
-				file.blob = new Blob(fileItem.queueChunks, { type: fileItem.contentType });
+				self.queue[fileId].blob = new Blob(fileItem.queueChunks, { type: fileItem.contentType });
 				var myCallback = fileItem.callback;
 				if (fileItem.callback) {
 					fileItem.callback = null; //Only do this once
-					myCallback(file);
+					myCallback(self._getItem(fileId));
 				}
 				//Now completed, trigger update
 				self.fileDeps.changed();
 			}	
 		},
 
-		downloadChunk: function(file, optChunkNumber) {
+		downloadChunk: function(fileId, optChunkNumber) {
 			var self = this;
-			var fileItem = file;
-			var myChunkNumber = optChunkNumber || self.nextChunk(file);
+			var fileItem = self._getItem(fileId);
+			var myChunkNumber = optChunkNumber || self.nextChunk(fileId);
 			if (myChunkNumber === false)
 				return false;
 
@@ -286,7 +275,7 @@
 			}
 
 			self.connection.apply('loadChunck'+fileItem.collectionName, [
-				fileId = file._id, 
+				fileId = fileId, 
 				chunkNumber = myChunkNumber, 
 				countChunks = fileItem.countChunks
 			],[
@@ -296,15 +285,23 @@
 					//Callback
 					if (result.chunkId) {
 
-						file.currentChunkServer = result.currentChunk+1;
-						self.addDataChunk(file, myChunkNumber, result.data);
-						var next = self.nextChunk(file);
+						self.queue[fileId].currentChunkServer = result.currentChunk+1;
+						self.addDataChunk(fileId, myChunkNumber, result.data);
+						var next = self.nextChunk(fileId);
+						//console.log('Got: '+myChunkNumber+' next:'+next);
 						if (next) {
-							self.downloadChunk(file, next);
+							self.downloadChunk(fileId, next);
 						} else {
-							if (file.queueChunks.length == file.countChunks) {
-								self.unionChunkBlobs(file);						
+							if (self.queue[fileId].queueChunks.length == self.queue[fileId].countChunks) {
+								self.unionChunkBlobs(fileId);						
+							} else {
+								//console.log('Waiting for last arrivals');
 							}
+							//update and notify listenters
+
+							/*if (self.queue[fileId].currentChunk % 1 == 0) {
+								self.fileDeps.changed();
+							}*/
 						}
 					} 
 				}//EO func
@@ -347,12 +344,12 @@
 		//////////////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////// UPLOAD ///////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////////////////////////////////////////
-
-		addFile: function(file, currentChunk) {
+		
+		addFile: function(fileId, file, currentChunk) {
 			var self = this;
 			var countChunks = Math.ceil(file.size / self.chunkSize);
-			self.queue.push({
-				_id: file._id,
+			self.queue[fileId] = {
+				_id: fileId,
 				download: false,
 				complete: false,
 				file: file,
@@ -363,39 +360,24 @@
 				currentChunk: (currentChunk)?currentChunk:0, //current loaded chunk of countChunks-1  
 				countChunks: countChunks
 				//filereader: new FileReader(),	
-			});
+			};
 			//Added upload request to the queue
 			self.fileDeps.changed();
-
+			
 			//Spawn loaders
-			setTimeout(function(){self.start();});
-			/* if (!self.spawns)
+			if (!self.spawns)
 				self.getDataChunk(fileId, 0)
 			else
 				for (var i = 0; i < self.spawns; i++)
-					setTimeout(function() { self.getDataChunk(fileId); }); */
+					setTimeout(function() { self.getDataChunk(fileId); });
 		}, //EO addFile
-		start: function(){
-			var self = this;
-			if(self.running.length >= self.maxTransfers){
-				setTimeout(function(){self.start();},1000);
-				return;
-			}
-			var file = self.queue.shift();
-			self.running.push(file);
-			if (!self.spawns)
-				self.getDataChunk(file, 0)
-			else
-				for (var i = 0; i < self.spawns; i++)
-					setTimeout(function() { self.getDataChunk(file); });
-		},
 
-		getDataChunk: function(file, optChunkNumber) {
+		getDataChunk: function(fileId, optChunkNumber) {
 			var self = this;
-			var myChunkNumber = optChunkNumber || self.nextChunk(file);
+			var myChunkNumber = optChunkNumber || self.nextChunk(fileId);
 			if (myChunkNumber === false)
 				return false;
-			var f = file.file;
+			var f = self.queue[fileId].file;
 			var myreader = new FileReader();
 			var start = myChunkNumber * self.chunkSize;
 			//make sure not to exeed boundaries
@@ -405,20 +387,20 @@
 
 			myreader.onloadend = function(evt) {
 				if (evt.target.readyState == FileReader.DONE) {
-					self.uploadChunk(file, myChunkNumber, evt.target.result);
+					self.uploadChunk(fileId, myChunkNumber, evt.target.result);
 				}
 			};
 
 			if (blob) {
 				myreader.readAsBinaryString(blob);
 			} else {
-				throw new Error('Slice function not supported, fileId:'+file._id);
+				throw new Error('Slice function not supported, fileId:'+fileId);
 			}
 		}, //EO get data chunk
 
-		uploadChunk: function(file, chunkNumber, data) {
+		uploadChunk: function(fileId, chunkNumber, data) {
 			var self = this;
-			var fileItem = file;
+			var fileItem = self._getItem(fileId);
 
 			self.lastCountUpload++;
 			if (self.lastTimeUpload) {
@@ -434,7 +416,7 @@
 			}
 
 			self.connection.apply('saveChunck'+fileItem.collectionName, [
-				fileId = file._id, 
+				fileId = fileId, 
 				currentChunk = chunkNumber, 
 				countChunks = fileItem.countChunks, 
 				data = data
@@ -446,7 +428,7 @@
 						console.log(error);
 
 					if (result.chunkId) {
-						file.currentChunkServer = result.currentChunk;
+						self.queue[fileId].currentChunkServer = result.currentChunk;
 
 						//TODO: Really, should the next function rule? or the result.currentChunk?
 						//The result could be async? multiple users
@@ -456,14 +438,13 @@
 						//
 						// var next = result.currentChunck;  //Chunck to download.. if not the save func gotta test fs.chunks index
 
-						var next = self.nextChunk(file); //or let server decide
+						var next = self.nextChunk(result.fileId); //or let server decide
 						//!result.complete && 
 						if (!result.complete) {
-							self.getDataChunk(file, next);
+							self.getDataChunk(result.fileId, next);
 						} else {
 							//Client or server check chunks..
-							var idx = self.running.indexOf(file);
-							self.running.splice(idx,1);
+
 						}									
 					} 
 				}
@@ -471,24 +452,23 @@
 			);
 		}, //uploadNextChunk
 		//nextChunk returns next chunkNumber
-		nextChunk: function(file) {
+		nextChunk: function(fileId) {
 			var self = this;
 			if (self.isPaused())
 				return false;
 	//self.queue[fileId].countChunks = 1; //Uncomment for debugging
-			file.complete = (file.currentChunk === file.countChunks);
-			//self.queue[fileId].complete = (self.queue[fileId].currentChunk === self.queue[fileId].countChunks);
+			self.queue[fileId].complete = (self.queue[fileId].currentChunk === self.queue[fileId].countChunks);
 			//Que progressed
 //			if (self.queue[fileId].currentChunk % 1 == 0 || self.queue[fileId].complete)
 				self.fileDeps.changed();
-			if (file.complete) {
+			if (self.queue[fileId].complete) {
 				//done
 				//XXX: Spawn complete event?
 				return false;
 			} else {
-				if (!file.complete) { file.currentChunk++; }
+				if (!self.queue[fileId].complete) { self.queue[fileId].currentChunk++; }
 				//XXX: Spawn progress event?
-				return file.currentChunk-1;
+				return self.queue[fileId].currentChunk-1;
 			}
 		} //EO nextChunk
 
