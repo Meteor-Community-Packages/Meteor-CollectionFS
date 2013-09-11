@@ -378,11 +378,19 @@
 			if (myChunkNumber === false)
 				return false;
 			var f = self.queue[fileId].file;
+      if (typeof f === 'undefined') {
+        throw new Error('CollectionFS: file pointer from queue is undefined - Error');
+      }
+
 			var myreader = new FileReader();
 			var start = myChunkNumber * self.chunkSize;
 			//make sure not to exeed boundaries
 			var stop = Math.min(start + self.chunkSize, f.size);
 			var slice = f.slice||f.webkitSlice||f.mozSlice;
+      
+      if (typeof slice === 'undefined') {
+        throw new Error('CollectionFS: file.slice not supported?');
+      }
 			var blob = slice.call(f, start, stop, f.contentType);
 
 			myreader.onloadend = function(evt) {
