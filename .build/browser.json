@@ -1,0 +1,78 @@
+{
+  "format": "unipackage-slice-pre1",
+  "packageVariables": [
+    {
+      "name": "CollectionFS",
+      "export": true
+    },
+    {
+      "name": "serverConsole"
+    },
+    {
+      "name": "_fileObject"
+    },
+    {
+      "name": "_queueCollectionFS"
+    },
+    {
+      "name": "chunkNumber"
+    },
+    {
+      "name": "countChunks"
+    },
+    {
+      "name": "wait"
+    },
+    {
+      "name": "currentChunk"
+    },
+    {
+      "name": "getFileExtension"
+    },
+    {
+      "name": "contentTypeInList"
+    },
+    {
+      "name": "setObjByString"
+    },
+    {
+      "name": "isString"
+    },
+    {
+      "name": "isNonEmptyString"
+    },
+    {
+      "name": "isObject"
+    }
+  ],
+  "uses": [
+    {
+      "package": "meteor"
+    },
+    {
+      "package": "deps"
+    },
+    {
+      "package": "underscore"
+    },
+    {
+      "package": "templating"
+    },
+    {
+      "package": "handlebars"
+    },
+    {
+      "package": "mongo-livedata"
+    }
+  ],
+  "resources": [
+    {
+      "type": "prelink",
+      "file": "browser/packages/collectionFS.js",
+      "length": 263489,
+      "offset": 0,
+      "servePath": "/packages/collectionFS.js",
+      "sourceMap": "browser/packages/collectionFS.js.map"
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "builtBy": "meteor/8",
+  "sliceDependencies": {
+    "browser.json": {
+      "files": {
+        "/Users/raix/meteor/packages/collectionFS/package.js": "80777a9f94d3bae624dabbcda09b8e122adb032a",
+        "/Users/raix/meteor/packages/collectionFS/myConsole.js": "f456709583eb4cbab0c1b3f243ae32b0955a2c77",
+        "/Users/raix/meteor/packages/collectionFS/FileSaver.js": "4e69ae256f8a423f59eabaa1c71565bf57101c53",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_templates.html": "7f4b3547a1924c2e41ce03cb7fede657ae3bcc5f",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_client.js": "bbd3d33b6f8451f8033969a8f5d158c5ac42a243",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_client.api.js": "08e26fe35ad4be8c82fd4a074ce5c3f9f091a1b5",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_client.api.fileobject.js": "3e2d78ee21b5be4b92dd996e9dc455985701a8ad",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_handlebars.js": "e0eada83708c329906964e18f69155d39eb72cda",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_utillity.js": "7fb5ccc98f839cc480fec19f935d737701c57b54",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_common.js": "f4c67df184b959ee16faed0202a268c91058e946",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_common.api.fileobject.js": "d4a96e53e6bf10f1030977ef92c6775548022642",
+        "/Users/raix/meteor/packages/collectionFS/numeral.js": "cbe3d280f10eb4db3b57b383ed145076e485668d",
+        "/Users/raix/meteor/packages/meteor/package.js": "994e95dac25fa351bc0ec7d121eec875482e79d2",
+        "/Users/raix/meteor/packages/meteor/plugin/basic-file-types.js": "711f7c01e3384ae8ed04ed823281ad2e16946119",
+        "/Users/raix/meteor/packages/deps/package.js": "d2058c9a1b3d0d369e30683e3bca61445f879cc7",
+        "/Users/raix/meteor/packages/underscore/package.js": "35bf77879b45cd61985bbbe2b0ee96d3c00eac53",
+        "/Users/raix/meteor/packages/templating/package.js": "64071d7076527652281cafedfe5f09c2d40c4f62",
+        "/Users/raix/meteor/packages/underscore/pre.js": "050e3237ba33a082abe000d8acf633562e55169e",
+        "/Users/raix/meteor/packages/underscore/underscore.js": "9ee15c1f1a84a258ba5f48de72da3538c8b7c375",
+        "/Users/raix/meteor/packages/underscore/post.js": "84756e71110b448c0cc19f4fa5ab84298323585d",
+        "/Users/raix/meteor/packages/meteor/server_environment.js": "d3a51e143ebb38d4d42d454129a7cf29ae82b5fb",
+        "/Users/raix/meteor/packages/meteor/helpers.js": "0daace1a341241a5cca3f842c935037114725f11",
+        "/Users/raix/meteor/packages/meteor/setimmediate.js": "8e17c7d4ae3622c215d875e970ad5d8eb67217d2",
+        "/Users/raix/meteor/packages/meteor/timers.js": "691ef5194f4cd4e6cb75b9f64c8d6803383842b6",
+        "/Users/raix/meteor/packages/meteor/errors.js": "528e74ecb5f81309f68aeb0d2b5928ff645498ee",
+        "/Users/raix/meteor/packages/meteor/fiber_helpers.js": "49614bdc79e3c92dff00266a0acc23dda6c7c78e",
+        "/Users/raix/meteor/packages/meteor/startup_server.js": "96d482c1f632bc2e9d7b7a2d6b897a2c7c8b46fa",
+        "/Users/raix/meteor/packages/meteor/debug.js": "c3ac52f2bf9e00fe953e0c90cf851f1eec88bd3b",
+        "/Users/raix/meteor/packages/meteor/dynamics_nodejs.js": "4fa2e22ce4b167bbfe02427b5e0f13d6ae4a3735",
+        "/Users/raix/meteor/packages/meteor/url_server.js": "04c1909f9cd09b21d980ee2b7e25fea7f4958f61",
+        "/Users/raix/meteor/packages/meteor/url_common.js": "086cd596b281aebd643a3a0b41f97e8ebc8c6d55",
+        "/Users/raix/meteor/packages/handlebars/package.js": "b2b681a87b96c5cf5d645541557eca411e9015f7",
+        "/Users/raix/meteor/packages/handlebars/parse-handlebars.js": "44b2d78b4b172ea5ee3505e9685817ae37e99960",
+        "/Users/raix/meteor/packages/templating/plugin/html_scanner.js": "1c2d2d5366a9b69cb98519fcb57d72bd5cdf0960",
+        "/Users/raix/meteor/packages/templating/plugin/compile-templates.js": "0fe5a7168fced60536282caa9873e9a8c8e682a1",
+        "/Users/raix/meteor/packages/mongo-livedata/package.js": "a422e2a9a5636223a08617c71a35e8ad8609dac2"
+      },
+      "directories": []
+    },
+    "os.json": {
+      "files": {
+        "/Users/raix/meteor/packages/collectionFS/package.js": "80777a9f94d3bae624dabbcda09b8e122adb032a",
+        "/Users/raix/meteor/packages/collectionFS/myConsole.js": "f456709583eb4cbab0c1b3f243ae32b0955a2c77",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_filesystem.js": "ccab1630415542e7e432c65aa0d6eda7a478c734",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_server.js": "1986c69a405a781070ed5c4158cdb503f400b157",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_filehandlers.js": "5644d2fe19a6511e95391d8f84bd74855892be66",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_server.api.js": "a20f39387be0993ee3910f6df09140c293714adb",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_server.api.fileobject.js": "a2b2e0d8973824f500b43a457c6456928a423f06",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_utillity.js": "7fb5ccc98f839cc480fec19f935d737701c57b54",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_common.js": "f4c67df184b959ee16faed0202a268c91058e946",
+        "/Users/raix/meteor/packages/collectionFS/collectionFS_common.api.fileobject.js": "d4a96e53e6bf10f1030977ef92c6775548022642",
+        "/Users/raix/meteor/packages/collectionFS/numeral.js": "cbe3d280f10eb4db3b57b383ed145076e485668d",
+        "/Users/raix/meteor/packages/meteor/package.js": "994e95dac25fa351bc0ec7d121eec875482e79d2",
+        "/Users/raix/meteor/packages/meteor/plugin/basic-file-types.js": "711f7c01e3384ae8ed04ed823281ad2e16946119",
+        "/Users/raix/meteor/packages/deps/package.js": "d2058c9a1b3d0d369e30683e3bca61445f879cc7",
+        "/Users/raix/meteor/packages/underscore/package.js": "35bf77879b45cd61985bbbe2b0ee96d3c00eac53",
+        "/Users/raix/meteor/packages/templating/package.js": "64071d7076527652281cafedfe5f09c2d40c4f62",
+        "/Users/raix/meteor/packages/underscore/pre.js": "050e3237ba33a082abe000d8acf633562e55169e",
+        "/Users/raix/meteor/packages/underscore/underscore.js": "9ee15c1f1a84a258ba5f48de72da3538c8b7c375",
+        "/Users/raix/meteor/packages/underscore/post.js": "84756e71110b448c0cc19f4fa5ab84298323585d",
+        "/Users/raix/meteor/packages/meteor/server_environment.js": "d3a51e143ebb38d4d42d454129a7cf29ae82b5fb",
+        "/Users/raix/meteor/packages/meteor/helpers.js": "0daace1a341241a5cca3f842c935037114725f11",
+        "/Users/raix/meteor/packages/meteor/setimmediate.js": "8e17c7d4ae3622c215d875e970ad5d8eb67217d2",
+        "/Users/raix/meteor/packages/meteor/timers.js": "691ef5194f4cd4e6cb75b9f64c8d6803383842b6",
+        "/Users/raix/meteor/packages/meteor/errors.js": "528e74ecb5f81309f68aeb0d2b5928ff645498ee",
+        "/Users/raix/meteor/packages/meteor/fiber_helpers.js": "49614bdc79e3c92dff00266a0acc23dda6c7c78e",
+        "/Users/raix/meteor/packages/meteor/startup_server.js": "96d482c1f632bc2e9d7b7a2d6b897a2c7c8b46fa",
+        "/Users/raix/meteor/packages/meteor/debug.js": "c3ac52f2bf9e00fe953e0c90cf851f1eec88bd3b",
+        "/Users/raix/meteor/packages/meteor/dynamics_nodejs.js": "4fa2e22ce4b167bbfe02427b5e0f13d6ae4a3735",
+        "/Users/raix/meteor/packages/meteor/url_server.js": "04c1909f9cd09b21d980ee2b7e25fea7f4958f61",
+        "/Users/raix/meteor/packages/meteor/url_common.js": "086cd596b281aebd643a3a0b41f97e8ebc8c6d55",
+        "/Users/raix/meteor/packages/handlebars/package.js": "b2b681a87b96c5cf5d645541557eca411e9015f7",
+        "/Users/raix/meteor/packages/handlebars/parse-handlebars.js": "44b2d78b4b172ea5ee3505e9685817ae37e99960",
+        "/Users/raix/meteor/packages/templating/plugin/html_scanner.js": "1c2d2d5366a9b69cb98519fcb57d72bd5cdf0960",
+        "/Users/raix/meteor/packages/templating/plugin/compile-templates.js": "0fe5a7168fced60536282caa9873e9a8c8e682a1",
+        "/Users/raix/meteor/packages/mongo-livedata/package.js": "a422e2a9a5636223a08617c71a35e8ad8609dac2"
+      },
+      "directories": []
+    },
+    "tests.browser.json": {
+      "files": {
+        "/Users/raix/meteor/packages/collectionFS/package.js": "80777a9f94d3bae624dabbcda09b8e122adb032a",
+        "/Users/raix/meteor/packages/meteor/package.js": "994e95dac25fa351bc0ec7d121eec875482e79d2",
+        "/Users/raix/meteor/packages/meteor/plugin/basic-file-types.js": "711f7c01e3384ae8ed04ed823281ad2e16946119"
+      },
+      "directories": []
+    },
+    "tests.os.json": {
+      "files": {
+        "/Users/raix/meteor/packages/collectionFS/package.js": "80777a9f94d3bae624dabbcda09b8e122adb032a",
+        "/Users/raix/meteor/packages/meteor/package.js": "994e95dac25fa351bc0ec7d121eec875482e79d2",
+        "/Users/raix/meteor/packages/meteor/plugin/basic-file-types.js": "711f7c01e3384ae8ed04ed823281ad2e16946119"
+      },
+      "directories": []
+    }
+  },
+  "pluginDependencies": {
+    "files": {
+      "/Users/raix/meteor/packages/collectionFS/package.js": "80777a9f94d3bae624dabbcda09b8e122adb032a"
+    },
+    "directories": []
+  },
+  "pluginProviderPackages": {
+    "collectionFS": "/Users/raix/meteor/packages/collectionFS",
+    "meteor": "/Users/raix/meteor/packages/meteor",
+    "deps": "/Users/raix/meteor/packages/deps",
+    "underscore": "/Users/raix/meteor/packages/underscore",
+    "templating": "/Users/raix/meteor/packages/templating",
+    "handlebars": "/Users/raix/meteor/packages/handlebars",
+    "mongo-livedata": "/Users/raix/meteor/packages/mongo-livedata"
+  },
+  "source": "/Users/raix/meteor/packages/collectionFS"
+}

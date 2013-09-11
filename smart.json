@@ -3,7 +3,8 @@
   "description": "Meteor filesystem based on gridFS, Meteor.collections and filehandlers",
   "homepage": "https://github.com/raix/Meteor-CollectionFS",
   "author": "Morten Henriksen  (http://gi-software.com)",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "git": "https://github.com/raix/Meteor-CollectionFS.git",
   "packages": {}
 }
+// 0.2.3 last mrt
