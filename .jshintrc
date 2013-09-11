@@ -97,6 +97,9 @@
         "Match",
         "Deps",
         "EJSON",
-        "Email"
+        "Email",
+        "Package",
+        "CollectionFS",
+        "CFSErrorType"
     ]       // additional predefined global variables
 }
