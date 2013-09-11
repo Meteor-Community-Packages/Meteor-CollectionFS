@@ -1,10 +1,16 @@
 Package.describe({
-  summary: "Filesystem for Meteor, collectionFS"
+    summary: "\u001b[32mv0.3.0 (under development)\n"+
+         "\u001b[33m-----------------------------------------\n"+
+         "\u001b[0m Filesystem for Meteor, collectionFS      \n"+
+         "\u001b[0m                                          \n"+
+         "\u001b[33m-------------------------------------RaiX\n"
 });
 
 Package.on_use(function(api) {
   "use strict";
-  api.use(['deps', 'underscore', 'templating', 'handlebars']);
+  api.use(['deps', 'underscore', 'templating', 'handlebars', 'mongo-livedata']);
+
+  api.export && api.export('CollectionFS');
 
   api.add_files([ 'myConsole.js' ], [ 'client', 'server' ]);
 

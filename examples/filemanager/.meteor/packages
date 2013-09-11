@@ -4,10 +4,11 @@
 # but you can also edit it by hand.
 
 preserve-inputs
-collectionFS
 accounts-ui
 accounts-password
 accounts-twitter
 accounts-google
 bootstrap
 madewith
+standard-app-packages
+collectionFS
