@@ -1,19 +1,23 @@
+var fs = Npm.require('fs');
+var path = Npm.require('path');
+
 // REMOVE: When engien branche is merged with master in Meteor v0.6.0 ?
 if (typeof Npm === 'undefined') {
   // Polyfill for Npm
-  var path = __meteor_bootstrap__.require('path');
-  Npm = {
-    require: __meteor_bootstrap__.require,
-    bundleRoot: path.dirname(__meteor_bootstrap__.require.main.filename)
-  };
+  //var path = __meteor_bootstrap__ && _meteor_bootstrap__.require('path');
+  // Npm = {
+  //   // require: __meteor_bootstrap__.require,
+  //   // bundleRoot: path.dirname(__meteor_bootstrap__.require.main.filename)
+  // };
 } else {
   // Cannot rely on __meteor_bootstrap__.require.main.filename so we try this:
   if (! Npm.bundleRoot )
     _.extend(Npm, {
-      bundleRoot: (__meteor_bootstrap__ && __meteor_bootstrap__.bundle.root)? __meteor_bootstrap__.bundle.root :
+      bundleRoot: (__meteor_bootstrap__ && __meteor_bootstrap__.bundle && __meteor_bootstrap__.bundle.root)? __meteor_bootstrap__.bundle.root :
               (process && process.mainModule && process.mainModule.filename)? path.join(process.mainModule.filename, '..') : ''
     });
 }
+
 
 // Test if we have found a bundleRoot
 if (! Npm.bundleRoot)
@@ -50,46 +54,39 @@ __filehandlers = {
 };
 
 
-(function() {
-	var fs = Npm.require('fs');
-	var path = Npm.require('path');
+__filehandlers.url = '/' + __filehandlers.folder;
+__filehandlers.bundleRoot = Npm.bundleRoot;
+__filehandlers.rootDir = path.join(__filehandlers.bundleRoot, '..') + path.sep;
+__filehandlers.bundleStaticPath = path.join(__filehandlers.bundleRoot, 'static');
+__filehandlers.bundlePath = path.join(__filehandlers.bundleStaticPath, __filehandlers.folder);
+__filehandlers.serverPath = path.join(__filehandlers.rootDir, __filehandlers.folder);
 
-  __filehandlers.url = '/' + __filehandlers.folder;
-  __filehandlers.bundleRoot = Npm.bundleRoot;
-  __filehandlers.rootDir = path.join(__filehandlers.bundleRoot, '..') + path.sep;
-  __filehandlers.bundleStaticPath = path.join(__filehandlers.bundleRoot, 'static');
-  __filehandlers.bundlePath = path.join(__filehandlers.bundleStaticPath, __filehandlers.folder);
-  __filehandlers.serverPath = path.join(__filehandlers.rootDir, __filehandlers.folder);
+serverConsole.log('bundlePath: '+__filehandlers.bundlePath);
+serverConsole.log('serverPath: '+__filehandlers.serverPath);
 
-  serverConsole.log('bundlePath: '+__filehandlers.bundlePath);
-  serverConsole.log('serverPath: '+__filehandlers.serverPath);
+// Check if the bundle static folder exists, if not then create Issue #40
+if (!fs.existsSync(__filehandlers.bundleStaticPath))
+  fs.mkdirSync(__filehandlers.bundleStaticPath);
 
-  // Check if the bundle static folder exists, if not then create Issue #40
-  if (!fs.existsSync(__filehandlers.bundleStaticPath))
-    fs.mkdirSync(__filehandlers.bundleStaticPath);
+// Remove symlink
+try {
+  fs.rmdirSync(__filehandlers.bundlePath);
+} catch(e) { /* NOP */}
 
-  // Remove symlink
-  try {
-    fs.rmdirSync(__filehandlers.bundlePath);
-  } catch(e) { /* NOP */}
+try {
+  fs.unlinkSync(__filehandlers.bundlePath);
+} catch(e) { /* NOP  */}
 
-  try {
-    fs.unlinkSync(__filehandlers.bundlePath);
-  } catch(e) { /* NOP  */}
+// Check if server path exists, if not then create
+if (!fs.existsSync(__filehandlers.serverPath))
+  fs.mkdirSync(__filehandlers.serverPath);
 
-  // Check if server path exists, if not then create
-  if (!fs.existsSync(__filehandlers.serverPath))
-    fs.mkdirSync(__filehandlers.serverPath);
+// Create symlink
+if (!!fs.existsSync(__filehandlers.serverPath)) {
+  serverConsole.log('Create symlinkSync');
+  fs.symlinkSync( __filehandlers.serverPath, __filehandlers.bundlePath );
+}
 
-  // Create symlink
-  if (!!fs.existsSync(__filehandlers.serverPath)) {
-    serverConsole.log('Create symlinkSync');
-    fs.symlinkSync( __filehandlers.serverPath, __filehandlers.bundlePath );
-  }
+__filehandlers.created = (!!fs.existsSync(__filehandlers.bundlePath));
 
-  __filehandlers.created = (!!fs.existsSync(__filehandlers.bundlePath));
-
-	__meteor_runtime_config__.FILEHANDLER_SUPPORTED = fs.existsSync(__filehandlers.serverPath); 
-
-})();
-
+__meteor_runtime_config__.FILEHANDLER_SUPPORTED = fs.existsSync(__filehandlers.serverPath); 
