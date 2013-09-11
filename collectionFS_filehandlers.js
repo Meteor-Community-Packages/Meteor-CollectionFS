@@ -92,9 +92,11 @@ _.extend(_queueListener.prototype, {
 						}
 
 						//	Where one of the fileHandlers are missing
-						fileRecord = self.collectionFS.findOne({ complete: true, 
-																 $or: queryFilehandlersExists, 
-																 'fileHandler.error': { $exists: false } });
+						if (queryFilehandlersExists.length) {
+							fileRecord = self.collectionFS.findOne({ complete: true, 
+																	 $or: queryFilehandlersExists, 
+																	 'fileHandler.error': { $exists: false } });
+						}
 					} // EO Try to find new filehandlers
 
 					// Last, Try to find failed filehanders
@@ -110,8 +112,10 @@ _.extend(_queueListener.prototype, {
 						}
 
 						//	Where the fileHandler contains an element with a failed set less than __filehandlers.MaxFailes
-						fileRecord = self.collectionFS.findOne({ complete: true, 
-																 $or: queryFilehandlersFailed });
+						if (queryFilehandlersFailed.length) {
+							fileRecord = self.collectionFS.findOne({ complete: true, 
+																	 $or: queryFilehandlersFailed });
+						}
 					}
 
 					// Handle file, spawn worker
