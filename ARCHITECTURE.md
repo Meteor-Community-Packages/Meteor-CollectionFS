@@ -52,6 +52,27 @@ Example of the `http-access package`:
   });
 ```
 
+##Files distribution interface
+The interface consists of basicly two main operators for uploading and downloading file chunks.
+`loadChunk` and `saveChunk` these are direct coupled to a storage adapter that handles the actual data storage.
+
+##File record distribution interface
+This interface is the `files` collection in a `CollectionFS` this contains the reactivity, creating/deleting files - It's the data definition and pointer to the datachunks.
+Basicly a normal `Meteor.Collection`.
+When using `ddp` handling `Meteor.Collections` are trivial - but to allow distribution on `HTTP` we have to create a `HTTP.publish` mechanisme for collections and a `CRUD` rest point for manipulating data in a collection.
+
+We should be able to have an interface like:
+```js
+  // Add access points for `GET`, `POST`, `PUT`, `DELETE`
+  HTTP.publish(myCollectionFS, function(data) {
+    // this.userId, this.query, this.params
+    return myCollectionFS.find({});
+  });
+
+  HTTP.unpublish('/cfs/files'); // This would remove the access
+```
+*The interface would support `json` but maybe also `xml` in time*
+
 ##Filehandlers
 The filehandlers part is super powerfull and makes life much easier when caching, handling and converting files to different instances of each file.
 File handlers is a external package that uses the file storage adapters to create multiple versions of the uploaded file.
