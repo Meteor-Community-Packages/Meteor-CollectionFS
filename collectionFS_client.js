@@ -16,15 +16,15 @@ CollectionFS = function(name, options) {
 	self._options = { autopublish: true };
 	_.extend(self._options, options);
         
-        //events
-        self._events = {
-          'ready': function() {},
-          'invalid': function() {}, //arg1 = CFSErrorType enum, arg2 = fileRecord
-          'progress': function() {}, //arg1 = progress percentage as integer
-          'start': function() {},
-          'stop': function() {},
-          'resume': function() {}
-        };
+  //events
+  self._events = {
+    'ready': function() {},
+    'invalid': function() {}, //arg1 = CFSErrorType enum, arg2 = fileRecord
+    'progress': function() {}, //arg1 = progress percentage as integer
+    'start': function() {},
+    'stop': function() {},
+    'resume': function() {}
+  };
 
 	//Auto subscribe
 	if (self._options.autopublish)
