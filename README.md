@@ -359,7 +359,7 @@ Songs.events({
 ###CollectionFS.acceptDropsOn(templateName, selector, metadata, callback)
 * **templateName**: (Required) The template in which the element that should accept file drops can be found.
 * **selector**: (Required) The CSS selector that matches the element that should accept file drops.
-* **metadata**: (Optional) Same as the `CollectionFS.storeFiles` metadata argument. Passed to `CollectionFS.storeFiles` for the files that are dropped.
+* **metadata**: (Optional) Same as the `CollectionFS.storeFiles` metadata argument. Passed to `CollectionFS.storeFiles` for the files that are dropped. Can be a getter function.
 * **callback**: (Optional) Same as the `CollectionFS.storeFiles` callback argument. Passed to `CollectionFS.storeFiles` for the files that are dropped.
 
 Sets up all of the elements matching `selector` to support dropping of one or more files onto them. As files are dropped onto these elements, they are automatically stored in the CollectionFS with the given metadata, and then the callback is called for each one.
@@ -396,6 +396,18 @@ Songs = new CollectionFS("songs", {autopublish: false});
 if (Meteor.isClient) {
   Songs.acceptDropsOn("audioList", ".audioList");
 }
+```
+
+####Example of a metadata getter function:
+```js
+  Songs.acceptDropsOn('audioList', '.audioList',
+    // Metadata getter
+    function(event, temp) {
+      // This function would be run with `this` from the template
+      // it would return the metadata containing the `audioListItemId`
+      return { audioListItemId: this._id }
+    }
+  );
 ```
 
 ##Server API Reference
