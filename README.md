@@ -1,4 +1,4 @@
-#This is the 0.3.0 dev preview!! [![Build Status](https://travis-ci.org/raix/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/raix/Meteor-CollectionFS)
+#This is the 0.3.x dev preview!! [![Build Status](https://travis-ci.org/raix/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/raix/Meteor-CollectionFS)
 It's rough on the edges, please checkout the milestones for progress indication.
 
 ## Where can I get the older versions?
