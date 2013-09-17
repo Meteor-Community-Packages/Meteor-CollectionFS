@@ -57,28 +57,39 @@
 			//check if found locally - then use directly
 			//fetch from server, via methods call - dont want the chunks collection
 		}, //EO retriveFile
-                acceptDropsOn: function(templateName, selector, metadata, callback) {
-                        var self = this, events = {};
-                        // Prevent default drag and drop
-                        function noopHandler(evt) {
-                            evt.stopPropagation();
-                            evt.preventDefault();
-                        }
+    acceptDropsOn: function(templateName, selector, metadata, callback) {
+      var self = this, events = {};
+      // Prevent default drag and drop
+      function noopHandler(evt) {
+          evt.stopPropagation();
+          evt.preventDefault();
+      }
 
-                        // Handle file dropped
-                        function dropped(evt) {
-                            noopHandler(evt);
-                            self.storeFiles(evt.dataTransfer.files, metadata, callback);
-                        }
-                        
-                        events['dragenter ' + selector] = noopHandler;
-                        events['dragexit ' + selector] = noopHandler;
-                        events['dragover ' + selector] = noopHandler;
-                        events['dragend ' + selector] = noopHandler;
-                        events['drop ' + selector] = dropped;
-                        
-                        Template[templateName].events(events);
-                }
+      // Handle file dropped
+      function dropped(evt, temp) {
+          noopHandler(evt);
+          // Check if the metadata is a getter / function
+          if (typeof metadata === 'function') {
+            try {
+              var myMetadata = metadata.apply(this, [evt, temp]);
+              self.storeFiles(evt.dataTransfer.files, myMetadata, callback);
+            } catch(err) {
+              throw new Error('acceptDropsOn error in metadata getter, Error: ' + (err.stack || err.message));
+            }
+          } else {
+            // TODO: Should check the metadata
+            self.storeFiles(evt.dataTransfer.files, metadata, callback);
+          }
+      }
+      
+      events['dragenter ' + selector] = noopHandler;
+      events['dragexit ' + selector] = noopHandler;
+      events['dragover ' + selector] = noopHandler;
+      events['dragend ' + selector] = noopHandler;
+      events['drop ' + selector] = dropped;
+      
+      Template[templateName].events(events);
+    }
 	}); //EO extend collection
 
 
