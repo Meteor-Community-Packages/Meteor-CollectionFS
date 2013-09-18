@@ -81,6 +81,9 @@ try {
 if (!fs.existsSync(__filehandlers.serverPath))
   fs.mkdirSync(__filehandlers.serverPath);
 
+
+console.log(__filehandlers.serverPath);
+console.log(__filehandlers.bundlePath);
 // Create symlink
 if (!!fs.existsSync(__filehandlers.serverPath)) {
   serverConsole.log('Create symlinkSync');
