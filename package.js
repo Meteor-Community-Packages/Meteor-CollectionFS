@@ -24,6 +24,7 @@ Package.on_use(function(api) {
 
   api.add_files([
     'collectionFS_filesystem.js',
+    'cfs-public-folder',
     'collectionFS_server.js',
     'collectionFS_filehandlers.js',
     'collectionFS_server.api.js'], 'server');

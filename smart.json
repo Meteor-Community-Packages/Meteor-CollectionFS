@@ -5,5 +5,9 @@
   "author": "Morten Henriksen  (http://gi-software.com)",
   "version": "0.3.3",
   "git": "https://github.com/raix/Meteor-CollectionFS.git",
-  "packages": {}
+  "packages": {
+    "cfs-public-folder": {
+      "git": "https://github.com/nooitaf/meteor-cfs-public-folder.git#v0.0.2"
+    }
+  }
 }

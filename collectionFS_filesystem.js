@@ -32,7 +32,7 @@ __filehandlers = {
   // Filesystem configuration
   folder: 'cfs',          // Main folder to place collectionFS filehandler folders in
   serverPath: '',         // Auto
-  bundlePath: '',         // Auto
+  bundlePath: '',         // Auto TODO: Deprecating
   url: '',                // Auto
   rootDir: '',            // Auto
   bundleStaticPath: '',   // Auto
@@ -58,38 +58,36 @@ __filehandlers.url = '/' + __filehandlers.folder;
 __filehandlers.bundleRoot = Npm.bundleRoot;
 __filehandlers.rootDir = path.join(__filehandlers.bundleRoot, '..') + path.sep;
 __filehandlers.bundleStaticPath = path.join(__filehandlers.bundleRoot, 'static');
-__filehandlers.bundlePath = path.join(__filehandlers.bundleStaticPath, __filehandlers.folder);
+//__filehandlers.bundlePath = path.join(__filehandlers.bundleStaticPath, __filehandlers.folder);
 __filehandlers.serverPath = path.join(__filehandlers.rootDir, __filehandlers.folder);
 
-serverConsole.log('bundlePath: '+__filehandlers.bundlePath);
-serverConsole.log('serverPath: '+__filehandlers.serverPath);
+// console.log('bundlePath: '+__filehandlers.bundlePath); // TODO: deprecating
+// console.log('serverPath: '+__filehandlers.serverPath);
 
 // Check if the bundle static folder exists, if not then create Issue #40
 if (!fs.existsSync(__filehandlers.bundleStaticPath))
   fs.mkdirSync(__filehandlers.bundleStaticPath);
 
-// Remove symlink
-try {
-  fs.rmdirSync(__filehandlers.bundlePath);
-} catch(e) { /* NOP */}
+// // Remove symlink
+// try {
+//   fs.rmdirSync(__filehandlers.bundlePath);
+// } catch(e) {  NOP }
 
-try {
-  fs.unlinkSync(__filehandlers.bundlePath);
-} catch(e) { /* NOP  */}
+// try {
+//   fs.unlinkSync(__filehandlers.bundlePath);
+// } catch(e) { /* NOP  */}
 
 // Check if server path exists, if not then create
 if (!fs.existsSync(__filehandlers.serverPath))
   fs.mkdirSync(__filehandlers.serverPath);
 
-
-console.log(__filehandlers.serverPath);
-console.log(__filehandlers.bundlePath);
+/*
 // Create symlink
 if (!!fs.existsSync(__filehandlers.serverPath)) {
-  serverConsole.log('Create symlinkSync');
+  console.log('Create symlinkSync');
   fs.symlinkSync( __filehandlers.serverPath, __filehandlers.bundlePath );
-}
+}*/
 
-__filehandlers.created = (!!fs.existsSync(__filehandlers.bundlePath));
+__filehandlers.created = true; // (!!fs.existsSync(__filehandlers.bundlePath));
 
 __meteor_runtime_config__.FILEHANDLER_SUPPORTED = fs.existsSync(__filehandlers.serverPath); 
