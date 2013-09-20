@@ -7,9 +7,14 @@ Package.describe({
          '\u001b[33m-------------------------------------RaiX\n'
 });
 
+Npm.depends({
+    "connect": "2.9.0"
+});
+
 Package.on_use(function(api) {
   'use strict';
   api.use(['deps', 'underscore', 'templating', 'handlebars', 'mongo-livedata']);
+  api.use(['routepolicy', 'webapp'], 'server');
 
   api.imply && api.imply('cfs-public-folder');
 
@@ -28,7 +33,8 @@ Package.on_use(function(api) {
     'collectionFS_filesystem.js',
     'collectionFS_server.js',
     'collectionFS_filehandlers.js',
-    'collectionFS_server.api.js'], 'server');
+    'collectionFS_server.api.js',
+    'cfs-file-server-insecure.js'], 'server');
 
   api.add_files([
     'collectionFS_common.js',
