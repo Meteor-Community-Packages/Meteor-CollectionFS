@@ -13,6 +13,13 @@ Kind regards Morten
 #CollectionFS
 CollectionFS adds simple yet robust file uploading and downloading abilities to your Meteor web app. It is a mix of [Meteor.Collection](http://docs.meteor.com/#meteor_collection) and MongoDB's [GridFS](http://docs.mongodb.org/manual/core/gridfs/). CollectionFS stores files in your MongoDB database but also provides the ability to easily store files on the server filesystem or a remote filesystem.
 
+##Example
+Here is a [live example](http://collectionfs.meteor.com/) of a file manager app implemented using CollectionFS.
+
+##Examples getting started
+* [Drag&drop with one filehandler](https://github.com/mxab/cfsfileurl-example) by @mxab
+* [Multiple filehandlers](https://github.com/mxab/cfs-multi-filehandler-example) by @mxab
+
 ##Features
 * Authorizing uploads and downloads based on Meteor user accounts
 * Sharing
@@ -56,9 +63,6 @@ CollectionFS adds simple yet robust file uploading and downloading abilities to 
                             | cached versions of db files to the
                             | filesystem.
 ```
-
-##Example
-Here is a [live example](http://collectionfs.meteor.com/) of a file manager app implemented using CollectionFS.
 
 ##Getting Started
 
