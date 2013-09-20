@@ -1,6 +1,6 @@
 Package.describe({
     summary: 'Filesystem for Meteor, collectionFS\n'+
-         '\u001b[32mv0.3.3 (under development)\n'+
+         '\u001b[32mv0.3.5 (under development)\n'+
          '\u001b[33m-----------------------------------------\n'+
          '\u001b[0m Filesystem for Meteor, collectionFS      \n'+
          '\u001b[0m                                          \n'+
@@ -10,6 +10,8 @@ Package.describe({
 Package.on_use(function(api) {
   'use strict';
   api.use(['deps', 'underscore', 'templating', 'handlebars', 'mongo-livedata']);
+
+  api.imply && api.imply('cfs-public-folder');
 
   api.export && api.export(['CollectionFS', 'CFSErrorType']);
 
@@ -24,7 +26,6 @@ Package.on_use(function(api) {
 
   api.add_files([
     'collectionFS_filesystem.js',
-    'cfs-public-folder',
     'collectionFS_server.js',
     'collectionFS_filehandlers.js',
     'collectionFS_server.api.js'], 'server');

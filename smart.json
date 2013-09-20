@@ -3,11 +3,12 @@
   "description": "Meteor filesystem based on gridFS, Meteor.collections and filehandlers",
   "homepage": "https://github.com/raix/Meteor-CollectionFS",
   "author": "Morten Henriksen  (http://gi-software.com)",
-  "version": "0.3.3",
+  "version": "0.3.5",
   "git": "https://github.com/raix/Meteor-CollectionFS.git",
   "packages": {
     "cfs-public-folder": {
-      "git": "https://github.com/nooitaf/meteor-cfs-public-folder.git#v0.0.2"
+      "git": "https://github.com/nooitaf/meteor-cfs-public-folder.git",
+      "tag": "v0.0.2"
     }
   }
 }
