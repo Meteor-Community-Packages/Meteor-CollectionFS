@@ -17,8 +17,9 @@ CollectionFS adds simple yet robust file uploading and downloading abilities to 
 Here is a [live example](http://collectionfs.meteor.com/) of a file manager app implemented using CollectionFS.
 
 ##Examples getting started
-* [Drag&drop with one filehandler](https://github.com/mxab/cfsfileurl-example) by @mxab
-* [Multiple filehandlers](https://github.com/mxab/cfs-multi-filehandler-example) by @mxab
+* [Drag&drop with one filehandler](https://github.com/mxab/cfsfileurl-example) by __@mxab__
+* [Multiple filehandlers](https://github.com/mxab/cfs-multi-filehandler-example) by __@mxab__
+* [Filemanager demo](https://github.com/raix/Meteor-cfs-example-filemanager) by __@raix__
 
 ##Features
 * Authorizing uploads and downloads based on Meteor user accounts
