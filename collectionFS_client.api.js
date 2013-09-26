@@ -250,7 +250,10 @@ _.extend(_queueCollectionFS.prototype, {
 
 		if (fileItem.queueChunks.length === fileItem.countChunks) {
       //Last worker make chunks into blob
-			self.queue[fileId].blob = new Blob(fileItem.queueChunks,
+			var buffers = fileItem.queueChunks.map( function(chunk) {
+			  return chunk.buffer;
+			});
+			self.queue[fileId].blob = new Blob(buffers,
               { type: fileItem.contentType });
 			var myCallback = fileItem.callback;
 			if (fileItem.callback) {
