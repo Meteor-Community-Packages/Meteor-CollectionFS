@@ -1,4 +1,4 @@
-#This is the 0.3.x dev preview!! [![Build Status](https://travis-ci.org/raix/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/raix/Meteor-CollectionFS)
+#This is the 0.3.x dev preview!! [![Build Status](https://travis-ci.org/raix/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/raix/Meteor-CollectionFS) [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UX67TUAP29SML)
 It's rough on the edges, please checkout the milestones for progress indication.
 
 ## Where can I get the older versions?

@@ -11,7 +11,7 @@ Package.on_use(function(api) {
   'use strict';
   api.use(['deps', 'underscore', 'templating', 'handlebars', 'mongo-livedata']);
 
-  api.imply && api.imply('cfs-public-folder');
+  api.use('cfs-public-folder', { weak: true });
 
   api.export && api.export(['CollectionFS', 'CFSErrorType']);
 
