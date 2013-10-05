@@ -86,3 +86,51 @@ File input adapter ––> | filehandlers |–––> Output adapter
                                               V   V   V
                                            (file versions)
 ```
+
+
+
+##Storage adapters
+A storage adapter is the core of `CFS` it's a file access object that provides a standard interface for filehandling. It consists of a reactive collection `files` also known as a `fileRecord`. The filerecord holds information about the files such as size, name and path.
+The file record is constant kept updated / syncronized with the actual storage. It may be challanging to write storage adapters since it would require hooks and watching for local or remote filesystems.
+Each type of storage handlers may require some options for configuration, some 
+
+###Setting storage adapters
+We have added the `filesystem` storage adapter as default dependency in `CFS` and `new CollectionsFS(name)` will naturally bind it self on the `filesystem` storage adapter unless another adapter is specified.
+All storage adapters installed are located in the `CFS.Storage` scope and will all be instance of `CFS.StorageAdapter`.
+
+```js
+  var pictures = new CollectionFS('mypictures', '~/www/pictures')
+or
+  var pictures = new CollectionFS('mypictures', {
+    storageAdapter: new CFS.Storage.Filesystem('~/www/pictures')
+  });
+```requires a path while others may require some authentication setup.
+
+##Filehandlers
+Filehandlers are run when a file and all its data is successfully added to it's storage adapter.
+The filehandler will intercept the fileupload for the purpose of creating a cached version of the file until its handled. *unless the storage adapter is of type Filesystem - since there would be no need for a cached version* 
+
+The filehandler engine is throttled to match the server usage - much like the current version and will resume failed filehandlers using the existing algoritme. *It could be made even more clever and self monitoring - but for the time being it would work and have the api be completed*
+
+When the filehandler engine has selected a file to handle it will check if its found in the filesystem or cache. If not found it would try to load the file from its storage adapter and into the cache. *if its using the filesystem - then the filerecord is not updated or syncronized*
+
+The engine will now rig the next missing file version user defined filehandler. It provides `this` as a transformed file object, the filehandler takes an option for adding storage adapters.
+
+```js
+  pictures.fileHandlers({
+    "s3": function() {
+      // this referes to a cached copy of the file to be modified / handled
+      this.resize(400);
+      // The storage adapter returns a reference to the stored file
+      return CFS.Storage.S3.storeFile(this, s3AccountInfoObject);
+    },
+    "dropbox": function() {
+      return CFS.Storage.Dropbox.storeFile(this, dbAccountInfoObject);
+    },
+    "localThumbnail": function() {
+      this.resize(50);
+      return CFS.Storage.Filesystem.storeFile(this, opts);
+    }
+  });
+```
+*The imagick api is a filehandler plugin package so its available when installed - but only if file is of type image?*
