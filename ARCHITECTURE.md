@@ -186,7 +186,13 @@ Surggested api:
 ##Queue
 Would be nice if we could have a general `Queue` object, in a package `queue`. It should be a lightweight package for both server and client.
 The api should be flexible and allow both `FIFO`, `LILO`, `FILO`, `LIFO` queues.
-Why? The tasks we do are asyncron but a queue is somewhat syncron - Thats the general problem to solve. The other issue is that some times we could allow a fixed number of tasks to run at the same time - so throttling is next.
+Why?
+* The tasks we do are asyncron but a queue is somewhat syncron
+* We some cases allow a fixed number of tasks to run at the same time
+* Throttling
+* Retry failed tasks
+* We could recycle failed tasks or want to discard the task
+* Persist the queue or have it in memory - In memory is default
 
 ###Design idea for `Queue`
 ```js
@@ -196,9 +202,12 @@ Why? The tasks we do are asyncron but a queue is somewhat syncron - Thats the ge
     type: 'fifo',
     // max number of tasks running at the same time
     maxThreads: 5,
-    // max allowed failures before the task is discarded
+    // max allowed failures before the task is paused
     maxFailures: 5,
-    // Persist the tasks in a Meteor.Collection
+    // Instead of pausing failed tasks we actually want to give up / discard
+    // the task
+    discard: true,
+    // Persist the tasks in a Meteor.Collection, default is in Memory
     collection: new Meteor.Collection('images.files.tasks')
   });
 
@@ -206,6 +215,7 @@ Why? The tasks we do are asyncron but a queue is somewhat syncron - Thats the ge
   // be JSON able.
   queue.addTask(taskObject);
 
+  // Define the task handler to execute an action
   queue.taskHandler = function(taskObject) {
     /* Stuff to run */
     // this.complete is our handle
@@ -214,5 +224,7 @@ Why? The tasks we do are asyncron but a queue is somewhat syncron - Thats the ge
   };
 ```
 
-The task objects could be persisted in a collection or be in memory (default)
+Usecases in the `CFS` project:
+* Filehandlers could be described as a queue with a special task handler
+* Client-side upload queue
 
