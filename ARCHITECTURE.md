@@ -76,11 +76,11 @@ As default we allow the parametre `?version=thumbnail` as a reference to filehan
 The fileserver class handles more abillities for serving the files. We might want to have runtime filehandlers for `/cfs/images/3?size=30x30&format=png`. *These runtime filehandlers could be handed a storage adapter if one wanted to cache the files.*
 
 ####Idea
-We should have `CFS.runtimeHandlers` where dynamic filehandler functions could be added by user and packages.
+We should have `CFS.serverHandlers` where dynamic filehandler functions could be added by user and packages.
 
 ```js
   // We register the handler by name, and a handler function to call
-  CFS.runtimeHandlers({
+  CFS.serverHandlers({
     'resize': function() {
       // We get a scope that resembles the normal filehandler scope, but it
       // might be a bit more limited and will have some extra runtime specific
