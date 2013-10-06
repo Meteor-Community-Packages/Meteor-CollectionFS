@@ -40,8 +40,8 @@ Client <––––––| DDP |––––––––|          |___________
 
 *Each of the `http` and `ddp` packages adds both `client api` and `server proxy adapters`*
 
-The `http` package uses a package called `http-access` this package can be used to publish data at rest points - this way the package could be used for serving collections in `json` or `xml` formats.
-Example of the `http-access package`:
+The `http` package uses a package called `http-methods` this package can be used to publish data at rest points - this way the package could be used for serving collections in `json` or `xml` formats.
+Example of the `http-methods package`:
 ```js
   HTTP.methods({
     '/cfs/files/list': function(query) {
@@ -51,6 +51,50 @@ Example of the `http-access package`:
     }
   });
 ```
+
+##Fileserver
+The `cfs-http-fileserver` is a package for managing the `HTTP` surface. We use the `CFS.Fileserver` to serve the actual file data - this will proxy data from the CollectionFS storage adapter.
+We have to specify a special publish function for the file server. It's not allways the same as the general publish since we could have functionallity like `shared links` that often only gives read access and can be revoked.
+
+```js
+  // Serve files to the owner
+  var imagesServer = new CFS.Fileserver('/cfs/images/:id', function() {
+    // We allow only owners to load this file
+    return image.findOne({ _id: this.params.id, owner: this.id });
+  });
+
+  // Serve files using a shared link
+  var imagesServerSharedLink = new CFS.Fileserver('/cfs/images/:id/:token', function() {
+    return image.findOne({ _id: this.params.id, share: this.params.token });
+  });
+```
+
+###Filehandler reference
+As default we allow the parametre `?version=thumbnail` as a reference to filehandler versions.
+
+###Filehandler dynamic
+The fileserver class handles more abillities for serving the files. We might want to have runtime filehandlers for `/cfs/images/3?size=30x30&format=png`. *These runtime filehandlers could be handed a storage adapter if one wanted to cache the files.*
+
+####Idea
+We should have `CFS.runtimeHandlers` where dynamic filehandler functions could be added by user and packages.
+
+```js
+  // We register the handler by name, and a handler function to call
+  CFS.runtimeHandlers.register('resize', function() {
+    // We get a scope that resembles the normal filehandler scope, but it
+    // might be a bit more limited and will have some extra runtime specific
+    // scope like params, data etc.
+    if (this.param.size) {
+      // Runtime filehandlers should be aware of speed and be fast to figure
+      // out if they are to be executed or not
+      if (this.mimeType === 'image/jpeg') {
+        /* handle the file */
+        return fileStream; // ?
+      }
+    }
+  });
+```
+*In general we have to figure out how files can be handled as streams to limit memory consumption*
 
 ##Files distribution interface
 The interface consists of basicly two main operators for uploading and downloading file chunks.
@@ -73,6 +117,23 @@ We should be able to have an interface like:
 ```
 *The interface would support `json` but maybe also `xml` in time*
 
+##Storage adapters
+A storage adapter is the core of `CFS` it's a file access object that provides a standard interface for filehandling. It consists of a reactive collection `files` also known as a `fileRecord`. The filerecord holds information about the files such as size, name and path.
+The file record is constant kept updated / syncronized with the actual storage. It may be challanging to write storage adapters since it would require hooks and watching for local or remote filesystems.
+Each type of storage handlers may require some options for configuration, some requires a path while others may require some authentication setup.
+
+###Setting storage adapters
+We have added the `filesystem` storage adapter as default dependency in `CFS` and `new CollectionsFS(name)` will naturally bind it self on the `filesystem` storage adapter unless another adapter is specified.
+All storage adapters installed are located in the `CFS.Storage` scope and will all be instance of `CFS.StorageAdapter`.
+
+```js
+  var pictures = new CollectionFS('mypictures', '~/www/pictures')
+or
+  var pictures = new CollectionFS('mypictures', {
+    storageAdapter: new CFS.Storage.Filesystem('~/www/pictures')
+  });
+```
+
 ##Filehandlers
 The filehandlers part is super powerfull and makes life much easier when caching, handling and converting files to different instances of each file.
 File handlers is a external package that uses the file storage adapters to create multiple versions of the uploaded file.
@@ -87,26 +148,7 @@ File input adapter ––> | filehandlers |–––> Output adapter
                                            (file versions)
 ```
 
-
-
-##Storage adapters
-A storage adapter is the core of `CFS` it's a file access object that provides a standard interface for filehandling. It consists of a reactive collection `files` also known as a `fileRecord`. The filerecord holds information about the files such as size, name and path.
-The file record is constant kept updated / syncronized with the actual storage. It may be challanging to write storage adapters since it would require hooks and watching for local or remote filesystems.
-Each type of storage handlers may require some options for configuration, some 
-
-###Setting storage adapters
-We have added the `filesystem` storage adapter as default dependency in `CFS` and `new CollectionsFS(name)` will naturally bind it self on the `filesystem` storage adapter unless another adapter is specified.
-All storage adapters installed are located in the `CFS.Storage` scope and will all be instance of `CFS.StorageAdapter`.
-
-```js
-  var pictures = new CollectionFS('mypictures', '~/www/pictures')
-or
-  var pictures = new CollectionFS('mypictures', {
-    storageAdapter: new CFS.Storage.Filesystem('~/www/pictures')
-  });
-```requires a path while others may require some authentication setup.
-
-##Filehandlers
+###Properties of Filehandlers
 Filehandlers are run when a file and all its data is successfully added to it's storage adapter.
 The filehandler will intercept the fileupload for the purpose of creating a cached version of the file until its handled. *unless the storage adapter is of type Filesystem - since there would be no need for a cached version* 
 
@@ -116,6 +158,7 @@ When the filehandler engine has selected a file to handle it will check if its f
 
 The engine will now rig the next missing file version user defined filehandler. It provides `this` as a transformed file object, the filehandler takes an option for adding storage adapters.
 
+Surggested api:
 ```js
   pictures.fileHandlers({
     "s3": function() {
