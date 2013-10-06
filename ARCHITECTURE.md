@@ -195,6 +195,12 @@ Why?
 * Persist the queue or have it in memory - In memory is default
 
 ###Design idea for `Queue`
+We describe the life of a general task
+* Added to queue
+* Execute task handler
+* If failed then retry or discard the task
+* If completed then start next task
+
 ```js
   // Create and start a FIFO queue
   var queue = new Queue({
