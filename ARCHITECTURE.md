@@ -85,7 +85,7 @@ We should have `CFS.runtimeHandlers` where dynamic filehandler functions could b
       // We get a scope that resembles the normal filehandler scope, but it
       // might be a bit more limited and will have some extra runtime specific
       // scope like params, data etc.
-      if (this.param.size) {
+      if (this.params.size) {
         // Runtime filehandlers should be aware of speed and be fast to figure
         // out if they are to be executed or not
         if (this.mimeType === 'image/jpeg') {
