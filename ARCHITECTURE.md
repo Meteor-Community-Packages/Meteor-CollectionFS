@@ -80,16 +80,18 @@ We should have `CFS.runtimeHandlers` where dynamic filehandler functions could b
 
 ```js
   // We register the handler by name, and a handler function to call
-  CFS.runtimeHandlers.register('resize', function() {
-    // We get a scope that resembles the normal filehandler scope, but it
-    // might be a bit more limited and will have some extra runtime specific
-    // scope like params, data etc.
-    if (this.param.size) {
-      // Runtime filehandlers should be aware of speed and be fast to figure
-      // out if they are to be executed or not
-      if (this.mimeType === 'image/jpeg') {
-        /* handle the file */
-        return fileStream; // ?
+  CFS.runtimeHandlers({
+    'resize': function() {
+      // We get a scope that resembles the normal filehandler scope, but it
+      // might be a bit more limited and will have some extra runtime specific
+      // scope like params, data etc.
+      if (this.param.size) {
+        // Runtime filehandlers should be aware of speed and be fast to figure
+        // out if they are to be executed or not
+        if (this.mimeType === 'image/jpeg') {
+          /* handle the file */
+          return fileStream; // ?
+        }
       }
     }
   });
