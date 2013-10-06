@@ -163,19 +163,56 @@ The engine will now rig the next missing file version user defined filehandler. 
 Surggested api:
 ```js
   pictures.fileHandlers({
-    "s3": function() {
+    's3': function() {
       // this referes to a cached copy of the file to be modified / handled
       this.resize(400);
       // The storage adapter returns a reference to the stored file
       return CFS.Storage.S3.storeFile(this, s3AccountInfoObject);
     },
-    "dropbox": function() {
+    'dropbox': function() {
       return CFS.Storage.Dropbox.storeFile(this, dbAccountInfoObject);
     },
-    "localThumbnail": function() {
+    'googledrive': function() {
+      return CFS.Storage.GoogleDrive.storeFile(this, dbAccountInfoObject);
+    },
+    'localThumbnail': function() {
       this.resize(50);
       return CFS.Storage.Filesystem.storeFile(this, opts);
     }
   });
 ```
 *The imagick api is a filehandler plugin package so its available when installed - but only if file is of type image?*
+
+##Queue
+Would be nice if we could have a general `Queue` object, in a package `queue`. It should be a lightweight package for both server and client.
+The api should be flexible and allow both `FIFO`, `LILO`, `FILO`, `LIFO` queues.
+Why? The tasks we do are asyncron but a queue is somewhat syncron - Thats the general problem to solve. The other issue is that some times we could allow a fixed number of tasks to run at the same time - so throttling is next.
+
+###Design idea for `Queue`
+```js
+  // Create and start a FIFO queue
+  var queue = new Queue({
+    // Default first in first out
+    type: 'fifo',
+    // max number of tasks running at the same time
+    maxThreads: 5,
+    // max allowed failures before the task is discarded
+    maxFailures: 5,
+    // Persist the tasks in a Meteor.Collection
+    collection: new Meteor.Collection('images.files.tasks')
+  });
+
+  // We add a task reference object - If persisted then the task object should
+  // be JSON able.
+  queue.addTask(taskObject);
+
+  queue.taskHandler = function(taskObject) {
+    /* Stuff to run */
+    // this.complete is our handle
+    this.completed();
+    // this.failed will mark the job as failed and will be rerun at idle
+  };
+```
+
+The task objects could be persisted in a collection or be in memory (default)
+
