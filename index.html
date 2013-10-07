@@ -35,367 +35,632 @@
           <p>Meteor filesystem based on gridFS, Meteor.collections and filehandlers</p>
           <hr>
           <span class="credits left">Project maintained by <a href="https://github.com/raix">raix</a></span>
-          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
         </div>
 
-        <h1>CollectionFS</h1>
+        <h1>
+<a name="this-is-the-03x-dev-preview--" class="anchor" href="#this-is-the-03x-dev-preview--"><span class="octicon octicon-link"></span></a>This is the 0.3.x dev preview!! <a href="https://travis-ci.org/raix/Meteor-CollectionFS"><img src="https://travis-ci.org/raix/Meteor-CollectionFS.png?branch=master" alt="Build Status"></a> <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=UX67TUAP29SML"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" alt="Donate"></a>
+</h1>
 
-<p>Is a simple way of handling files on the web in the Meteor environment.</p>
+<p>It's rough on the edges, please checkout the milestones for progress indication.</p>
 
-<p>Have a look at <a href="http://collectionfs.meteor.com/">Live example</a>.</p>
+<h2>
+<a name="where-can-i-get-the-older-versions" class="anchor" href="#where-can-i-get-the-older-versions"><span class="octicon octicon-link"></span></a>Where can I get the older versions?</h2>
 
-<p>It's work in progress, I'll take pull requests, feature requests and feedback for optimizing stability and speed.</p>
+<p>All versions are tagged but might not work with the latest version of Meteor.</p>
 
-<p>CollectionFS is a mix of both <a href="http://docs.meteor.com/#meteor_collection">Meteor.Collection</a> and MongoDB's <a href="http://docs.mongodb.org/manual/core/gridfs/">GridFS</a>.</p>
+<p>To use the version 1 of <code>collectionFS</code> please tryout <a href="https://github.com/aldeed/Meteor-CollectionFS">Eric's updated fork</a></p>
 
-<p>Using Meteor and GridFS principles we get:</p>
+<p>I'm working hard on the new version, primary focus is on the code at the moment so docs are somewhat limited.</p>
+
+<p>Kind regards Morten</p>
+
+<h1>
+<a name="collectionfs" class="anchor" href="#collectionfs"><span class="octicon octicon-link"></span></a>CollectionFS</h1>
+
+<p>CollectionFS adds simple yet robust file uploading and downloading abilities to your Meteor web app. It is a mix of <a href="http://docs.meteor.com/#meteor_collection">Meteor.Collection</a> and MongoDB's <a href="http://docs.mongodb.org/manual/core/gridfs/">GridFS</a>. CollectionFS stores files in your MongoDB database but also provides the ability to easily store files on the server filesystem or a remote filesystem.</p>
+
+<h2>
+<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example</h2>
+
+<p>Here is a <a href="http://collectionfs.meteor.com/">live example</a> of a file manager app implemented using CollectionFS.</p>
+
+<h2>
+<a name="examples-getting-started" class="anchor" href="#examples-getting-started"><span class="octicon octicon-link"></span></a>Examples getting started</h2>
 
 <ul>
-<li>Security</li>
+<li>
+<a href="https://github.com/mxab/cfsfileurl-example">Drag&amp;drop with one filehandler</a> by <strong><a href="https://github.com/mxab" class="user-mention">@mxab</a></strong>
+</li>
+<li>
+<a href="https://github.com/mxab/cfs-multi-filehandler-example">Multiple filehandlers</a> by <strong><a href="https://github.com/mxab" class="user-mention">@mxab</a></strong>
+</li>
+<li>
+<a href="https://github.com/raix/Meteor-cfs-example-filemanager">Filemanager demo</a> by <strong><a href="https://github.com/raix" class="user-mention">@raix</a></strong>
+</li>
+</ul><h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>Authorizing uploads and downloads based on Meteor user accounts</li>
 <li>Sharing</li>
-<li>Restrictions (e.g. only allow certain content types, fields, users, etc.)</li>
-<li>Reactive data — CollectionFS's methods should all be reactive</li>
-<li>Ability to resume uploads after connection loss, browser crash or cola in keyboard</li>
-<li>At the moment, files are loaded into the client as a Blob — a universal way of handling large binary data</li>
-<li>Create multiple cached versions, sizes or formats of your files, with an url to the file — or upload files to another service / server</li>
-</ul><p>Design overview:</p>
+<li>Restrictions (e.g., allow only certain content types, fields, users, etc.)</li>
+<li>Reactive methods</li>
+<li>Ability to resume uploads after connection loss, browser crash, or cola in keyboard</li>
+<li>Files are loaded on the client as a BLOB, a universal way of handling large binary data</li>
+<li>Supports custom file handlers that you can use to:
 
-<div class="highlight"><pre>        <span class="nx">App</span>               <span class="o">&lt;-|</span> <span class="nx">Can</span> <span class="nx">retrieve</span> <span class="nx">files</span> <span class="nx">via</span> <span class="nx">DDP</span> <span class="nx">and</span> <span class="nx">HTTP</span>
-<span class="o">--------&gt;|</span>
-<span class="o">|</span>      <span class="nx">__</span><span class="o">|</span><span class="nx">________</span>        <span class="o">&lt;-|</span> <span class="nx">Adds</span> <span class="nx">a</span> <span class="nx">connection</span> <span class="k">for</span> <span class="nx">each</span> <span class="nx">CollectionFS</span>
-<span class="o">|</span>      <span class="o">|</span>     <span class="o">|</span> <span class="o">|</span> <span class="o">|</span>
-<span class="o">*******************</span>       <span class="o">&lt;-|</span> <span class="nx">Internet</span> 
-<span class="o">|</span>      <span class="o">|</span>     <span class="o">|</span> <span class="o">|</span> <span class="o">|</span>
-<span class="o">|</span>      <span class="o">|</span>     <span class="o">|</span> <span class="o">|</span> <span class="o">|---</span> <span class="mi">1</span><span class="p">.</span>  <span class="o">&lt;-|</span> <span class="nx">DDP</span> <span class="nx">Connections</span> <span class="nx">dedicated</span> <span class="nx">CollectionFS</span>
-<span class="o">|</span>   <span class="nx">Meteor</span>   <span class="o">|</span> <span class="o">|-----</span> <span class="mi">2</span><span class="p">.</span>  <span class="o">&lt;-|</span> <span class="k">for</span> <span class="nx">up</span><span class="o">/</span><span class="nx">downloading</span> <span class="nx">chunks</span> <span class="o">/</span> <span class="nx">binary</span> <span class="nx">data</span>
-<span class="o">|</span>   <span class="p">(</span><span class="nx">DDP</span><span class="p">)</span>    <span class="err">#</span>              <span class="o">|</span> <span class="nx">Using</span> <span class="nx">EJSON</span> <span class="k">for</span> <span class="nx">transport</span> <span class="nx">wrapper</span> <span class="nx">of</span>
-<span class="o">|</span>      <span class="o">|</span>     <span class="o">|-------</span> <span class="nx">n</span><span class="p">.</span>  <span class="o">&lt;-|</span> <span class="nx">$binary</span> <span class="nx">data</span>
-<span class="o">|</span>      <span class="o">|</span>     <span class="err">#####</span>
-<span class="o">|</span>      <span class="o">|</span>       <span class="o">|</span>
-<span class="o">|</span>      <span class="nx">Mongodb</span><span class="o">-|&lt;-</span> <span class="nx">Server</span> <span class="o">&lt;-|</span> <span class="nx">Server</span> <span class="nx">can</span> <span class="nx">add</span> <span class="nx">files</span> <span class="nx">pr</span><span class="p">.</span> <span class="nx">auto</span>
-<span class="o">|</span>      <span class="p">(</span><span class="nx">gridFS</span><span class="p">)</span>             <span class="o">|</span> <span class="nx">or</span> <span class="nx">on</span> <span class="nx">request</span> <span class="nx">from</span> <span class="nx">client</span>
-<span class="o">|</span>          <span class="o">|</span>
-<span class="o">|</span>          <span class="o">|</span><span class="nx">_______</span><span class="err">##</span>     <span class="o">&lt;-|</span> <span class="nx">Filehandlers</span> <span class="nx">running</span> <span class="nx">autonom</span> <span class="nx">scanning</span>
-<span class="o">|</span>                   <span class="o">|</span>       <span class="o">|</span> <span class="k">new</span> <span class="nx">files</span> <span class="nx">to</span> <span class="nx">handle</span><span class="p">,</span> <span class="k">new</span> <span class="nx">filehandlers</span><span class="p">,</span>
-<span class="o">|</span>                   <span class="o">|</span>       <span class="o">|</span> <span class="nx">retries</span> <span class="nx">failed</span> <span class="nx">ones</span> <span class="o">*</span><span class="k">default</span> <span class="mi">1</span> <span class="nx">worker</span><span class="o">*</span>
-<span class="o">|</span>                   <span class="o">|</span>
-<span class="o">|---</span> <span class="nx">Remote</span> <span class="nx">files</span> <span class="o">&lt;-|</span>     <span class="o">&lt;-|</span> <span class="nx">Filehandlers</span> <span class="nx">specified</span> <span class="nx">by</span> <span class="nx">the</span> <span class="nx">user</span>
-<span class="o">|---</span> <span class="nx">Local</span> <span class="nx">files</span>  <span class="o">&lt;-|</span>       <span class="o">|</span> <span class="nx">transform</span> <span class="o">/</span> <span class="nx">handle</span> <span class="nx">uploaded</span> <span class="nx">files</span><span class="p">.</span> 
-       <span class="p">(</span><span class="nx">http</span><span class="p">)</span>               <span class="o">|</span> <span class="nx">Eg</span><span class="p">.</span> <span class="nx">Uploading</span> <span class="nx">to</span> <span class="nx">remote</span> <span class="nx">services</span><span class="p">,</span>
-                            <span class="o">|</span> <span class="nx">resizing</span> <span class="nx">images</span><span class="p">,</span> <span class="nx">converting</span> <span class="nx">sound</span><span class="p">,</span>
-                            <span class="o">|</span> <span class="nx">video</span><span class="p">,</span> <span class="nx">generating</span> <span class="nx">tts</span> <span class="nx">or</span> <span class="nx">just</span> <span class="nx">making</span>
-                            <span class="o">|</span> <span class="nx">cached</span> <span class="nx">versions</span> <span class="nx">of</span> <span class="nx">db</span> <span class="nx">files</span> <span class="nx">to</span> <span class="nx">the</span>
-                            <span class="o">|</span> <span class="nx">filesystem</span><span class="p">.</span>
-</pre></div>
+<ul>
+<li>create one or more cached files</li>
+<li>resize images</li>
+<li>convert files to another format</li>
+<li>transfer files to another service or server</li>
+<li>anything else you want to do!</li>
+</ul>
+</li>
+</ul><h2>
+<a name="design-overview" class="anchor" href="#design-overview"><span class="octicon octicon-link"></span></a>Design Overview</h2>
 
-<h2>Contributions</h2>
-
-<p>Do you have idears, issues, documentation, fixes or pull requests? All is wellcome for making collectionFS faster, more versatile and easier to use.</p>
-
-<h3>A special thanks and credit goes to code contributors</h3>
-
-<p><strong><a href="https://github.com/emgee3" class="user-mention">@emgee3</a>, <a href="https://github.com/nhibner" class="user-mention">@nhibner</a>, <a href="https://github.com/mitar" class="user-mention">@mitar</a>, <a href="https://github.com/petrocket" class="user-mention">@petrocket</a></strong><br><em>Ranked by last commit, are you missing from the list? file it as an issue or make a PR :)</em></p>
-
-<h2>How to use?</h2>
-
-<h4>1. Install:</h4>
-
-<pre><code>    mrt add collectionFS
+<pre><code>        App               &lt;-| Can retrieve files via DDP and HTTP
+--------&gt;|
+|      __|________        &lt;-| Adds a connection for each CollectionFS
+|      |     | | |
+*******************       &lt;-| Internet 
+|      |     | | |
+|      |     | | |--- 1.  &lt;-| DDP Connections dedicated CollectionFS
+|   Meteor   | |----- 2.  &lt;-| for up/downloading chunks / binary data
+|   (DDP)    #              | Using EJSON for transport wrapper of
+|      |     |------- n.  &lt;-| $binary data
+|      |     #####
+|      |       |
+|      Mongodb-|&lt;- Server &lt;-| Server can add files pr. auto
+|      (gridFS)             | or on request from client
+|          |
+|          |_______##     &lt;-| Filehandlers running autonom scanning
+|                   |       | new files to handle, new filehandlers,
+|                   |       | retries failed ones *default 1 worker*
+|                   |
+|--- Remote files &lt;-|     &lt;-| Filehandlers specified by the user
+|--- Local files  &lt;-|       | transform / handle uploaded files. 
+       (http)               | Eg. uploading to remote services,
+                            | resizing images, converting sound,
+                            | video, generating tts or just making
+                            | cached versions of db files to the
+                            | filesystem.
 </code></pre>
 
-<p><em>Requires <code>Meteorite</code> from <a href="https://atmosphere.meteor.com">atmosphere.meteor.com</a></em></p>
+<h2>
+<a name="getting-started" class="anchor" href="#getting-started"><span class="octicon octicon-link"></span></a>Getting Started</h2>
 
-<h4>2. Create model: [client, server]</h4>
+<h3>
+<a name="step-1-add-collectionfs-to-your-project" class="anchor" href="#step-1-add-collectionfs-to-your-project"><span class="octicon octicon-link"></span></a>Step 1: Add CollectionFS to Your Project</h3>
 
-<div class="highlight"><pre>    <span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">);</span>
+<p>First, install Meteorite from <a href="https://atmosphere.meteor.com">atmosphere.meteor.com</a> if you haven't already. Meteorite is a Meteor package manager that allows you to install many unofficial packages, including CollectionFS.</p>
+
+<p>Then:</p>
+
+<pre><code>mrt add collectionFS
+</code></pre>
+
+<h3>
+<a name="step-2-create-a-collectionfs-model-client-and-server" class="anchor" href="#step-2-create-a-collectionfs-model-client-and-server"><span class="octicon octicon-link"></span></a>Step 2: Create a CollectionFS Model (client and server)</h3>
+
+<p>In the client/server Javascript file where you define the data model for your project, add the following line for each collection that needs to store files. In this example, you might be storing documents related to contacts.</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">autopublish</span><span class="o">:</span> <span class="kc">false</span> <span class="p">});</span>
 </pre></div>
 
-<p><em>You can still create a <code>Contacts = new Meteor.Collection('contacts')</code> since GridFS maps on <code>contacts.files</code> and <code>contacts.chunks</code></em></p>
+<p><em>Setting <code>autopublish</code> to false is not required, but you will usually want to do this to limit the number of published documents or define which fields should be published. If you have removed the <code>autopublish</code> Meteor package, you do not need to set this since nothing will be autopublished by default.</em></p>
 
-<h4>3. Add security to model: [client, server]</h4>
+<p>It's important to note that CollectionFS extends the collection (in this example, "contacts"), creating contacts.files and contacts.chunks. This means that you can also create a normal <code>Meteor.Collection</code> with the same name if necessary for your app. For example:</p>
 
-<p><em>This is only needed when using <code>accounts-...</code> and you have removed the <code>insecure</code> package.</em></p>
+<div class="highlight highlight-js"><pre><span class="nx">Contacts</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Meteor</span><span class="p">.</span><span class="nx">Collection</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">);</span>
+</pre></div>
 
-<div class="highlight"><pre>    <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">allow</span><span class="p">({</span>
-      <span class="nx">insert</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="nx">myFile</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">userId</span> <span class="o">&amp;&amp;</span> <span class="nx">myFile</span><span class="p">.</span><span class="nx">owner</span> <span class="o">===</span> <span class="nx">userId</span><span class="p">;</span> <span class="p">},</span>
-      <span class="nx">update</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="nx">files</span><span class="p">,</span> <span class="nx">fields</span><span class="p">,</span> <span class="nx">modifier</span><span class="p">)</span> <span class="p">{</span>
-            <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">all</span><span class="p">(</span><span class="nx">files</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">myFile</span><span class="p">)</span> <span class="p">{</span>
-              <span class="k">return</span> <span class="p">(</span><span class="nx">userId</span> <span class="o">==</span> <span class="nx">myFile</span><span class="p">.</span><span class="nx">owner</span><span class="p">);</span>
+<h3>
+<a name="step-3-configure-authorization-client-and-server" class="anchor" href="#step-3-configure-authorization-client-and-server"><span class="octicon octicon-link"></span></a>Step 3: Configure Authorization (client and server)</h3>
 
+<p><em>This step is necessary only if you are using one of the <code>accounts- *</code> packages and you have removed the <code>insecure</code> package.</em></p>
+
+<p>In the client/server Javascript file where you define the data model for your project, use the <code>allow</code> and <code>deny</code> methods to define which users may insert, update, and remove files. This is no different from defining authorization for a normal <code>Meteor.Collection</code>.</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">allow</span><span class="p">({</span>
+    <span class="nx">insert</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="nx">file</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">userId</span> <span class="o">&amp;&amp;</span> <span class="nx">file</span><span class="p">.</span><span class="nx">owner</span> <span class="o">===</span> <span class="nx">userId</span><span class="p">;</span> <span class="p">},</span>
+    <span class="nx">update</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="nx">files</span><span class="p">,</span> <span class="nx">fields</span><span class="p">,</span> <span class="nx">modifier</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">all</span><span class="p">(</span><span class="nx">files</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">file</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="nx">userId</span> <span class="o">==</span> <span class="nx">file</span><span class="p">.</span><span class="nx">owner</span><span class="p">);</span>
         <span class="p">});</span>  <span class="c1">//EO iterate through files</span>
-      <span class="p">},</span>
-      <span class="nx">remove</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="nx">files</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> <span class="p">}</span>
-    <span class="p">});</span>
-</pre></div>
-
-<p><em>The collectionFS supports functions <code>.allow</code>, <code>.deny</code>, <code>.find</code>, <code>findOne</code> used when subscribing/ publishing from server.</em> 
-<em>It's here you can add restrictions, for example allowed content-types, file sizes, etc.</em>
-<em><code>.update</code>, <code>.remove</code> are also supported, <code>remove</code> removes all chunks and versions related to the original file.</em></p>
-
-<h4>4. Disable autopublish:</h4>
-
-<p><em>If you would rather not autopublish all files, you can turn off the autopublish option. This is useful if you want to limit the number of published documents or the fields that get published.</em></p>
-
-<h5>Disable autopublish: [client, server]</h5>
-
-<div class="highlight"><pre>  <span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">autopublish</span><span class="o">:</span> <span class="kc">false</span> <span class="p">});</span>
-</pre></div>
-
-<h5>Example [server]</h5>
-
-<div class="highlight"><pre>    <span class="c1">// Disable autopublish</span>
-    <span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">autopublish</span><span class="o">:</span> <span class="kc">false</span> <span class="p">});</span>
-
-    <span class="c1">// Example #1 - manually publish with an optional param</span>
-    <span class="nx">Meteor</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'listContactsFiles'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">filter</span><span class="p">)</span> <span class="p">{</span>
-      <span class="c1">// sort by handledAt time and only return the filename, handledAt and _id fields</span>
-      <span class="k">return</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span> <span class="nx">complete</span><span class="o">:</span> <span class="nx">filter</span><span class="p">.</span><span class="nx">completed</span> <span class="p">},</span> <span class="p">{</span>
-              <span class="nx">sort</span><span class="o">:</span>   <span class="p">{</span> <span class="nx">handledAt</span><span class="o">:</span> <span class="mi">1</span> <span class="p">},</span> 
-              <span class="nx">fields</span><span class="o">:</span> <span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">filename</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">handledAt</span><span class="o">:</span> <span class="mi">1</span><span class="p">},</span>
-              <span class="nx">limit</span><span class="o">:</span>  <span class="nx">filter</span><span class="p">.</span><span class="nx">limit</span>
-      <span class="p">})</span>
-    <span class="p">});</span>
-
-    <span class="c1">// Example #2 - limit results and only show users files they own</span>
-    <span class="nx">Meteor</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'myContactsFiles'</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-      <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">userId</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span> <span class="nx">owner</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">userId</span> <span class="p">},</span> <span class="p">{</span> <span class="nx">limit</span><span class="o">:</span> <span class="mi">30</span> <span class="p">});</span>
-      <span class="p">}</span>
-    <span class="p">});</span>    
-</pre></div>
-
-<p><em>Note: It's possible to set one more option server-side: <code>ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });</code>. This will set the maximum simultaneous file handlers on the server, in total, despite number of collections.</em></p>
-
-<h5>Example [client]</h5>
-
-<div class="highlight"><pre>    <span class="c1">// Disable autopublish / autosubscribe</span>
-    <span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">autopublish</span><span class="o">:</span> <span class="kc">false</span><span class="p">});</span>
-
-    <span class="c1">// Example #1 — manually subscribe and show completed only </span>
-    <span class="c1">// (goes with server example #1 above)</span>
-
-    <span class="c1">// Use session for setting filter options</span>
-    <span class="nx">Session</span><span class="p">.</span><span class="nx">setDefault</span><span class="p">(</span><span class="s1">'myFilter'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">completed</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">limit</span><span class="o">:</span> <span class="mi">30</span> <span class="p">});</span>
-
-    <span class="c1">// Make subscription depend on the current filter</span>
-    <span class="nx">Deps</span><span class="p">.</span><span class="nx">autorun</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-      <span class="kd">var</span> <span class="nx">filter</span> <span class="o">=</span> <span class="nx">Session</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'myFilter'</span><span class="p">);</span>
-      <span class="nx">Meteor</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(</span><span class="s1">'listContactsFiles'</span><span class="p">,</span> <span class="nx">filter</span><span class="p">);</span>
-    <span class="p">});</span>
-</pre></div>
-
-<h2>Upload files</h2>
-
-<h4>1. Adding the view:</h4>
-
-<div class="highlight"><pre>    <span class="nt">&lt;template</span> <span class="na">name=</span><span class="s">"queueControl"</span><span class="nt">&gt;</span>
-      <span class="nt">&lt;h3&gt;</span>Select file(s) to upload:<span class="nt">&lt;/h3&gt;</span>
-      <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"files"</span> <span class="na">type=</span><span class="s">"file"</span> <span class="na">class=</span><span class="s">"fileUploader"</span> <span class="na">multiple</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;/template&gt;</span>
-</pre></div>
-
-<h4>2. Add the controller: [client]</h4>
-
-<div class="highlight"><pre>    <span class="nx">Template</span><span class="p">.</span><span class="nx">queueControl</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
-      <span class="s1">'change .fileUploader'</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
-         <span class="kd">var</span> <span class="nx">files</span> <span class="o">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">files</span><span class="p">;</span>
-         <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">f</span><span class="p">;</span> <span class="nx">f</span> <span class="o">=</span> <span class="nx">files</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-           <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">storeFile</span><span class="p">(</span><span class="nx">f</span><span class="p">);</span>
-         <span class="p">}</span>
-      <span class="p">}</span>
-    <span class="p">});</span>
-</pre></div>
-
-<p><em>ContactsFS.storeFile(f) returns <code>fileId</code> or <code>null</code>. Actual downloads are spawned as "threads". It's also possible to add metadata: <code>storeFile(file, {})</code> — callback or event listeners are on the todo</em>.</p>
-
-<h2>Download files</h2>
-
-<h4>1. Add the view:</h4>
-
-<div class="highlight"><pre>    <span class="nt">&lt;template</span> <span class="na">name=</span><span class="s">"fileTable"</span><span class="nt">&gt;</span>
-      {{#each Files}}
-        <span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">"btn btn-primary btn-mini btnFileSaveAs"</span><span class="nt">&gt;</span>Save as<span class="nt">&lt;/a&gt;</span>{{filename}}<span class="nt">&lt;br/&gt;</span>
-      {{else}}
-        No files uploaded.
-      {{/each}}
-    <span class="nt">&lt;/template&gt;</span>
-</pre></div>
-
-<h4>2. Add the controller: [client]</h4>
-
-<div class="highlight"><pre>    <span class="nx">Template</span><span class="p">.</span><span class="nx">fileTable</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
-      <span class="s1">'click .btnFileSaveAs'</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">retrieveBlob</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_id</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">)</span> <span class="p">{</span>
-          <span class="k">if</span> <span class="p">(</span><span class="nx">fileItem</span><span class="p">.</span><span class="nx">blob</span><span class="p">)</span> <span class="p">{</span>
-            <span class="nx">saveAs</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span> <span class="nx">fileItem</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
-          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-            <span class="nx">saveAs</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">.</span><span class="nx">file</span><span class="p">,</span> <span class="nx">fileItem</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
-          <span class="p">}</span>
-        <span class="p">});</span>
-      <span class="p">}</span> <span class="c1">//EO saveAs</span>
-    <span class="p">});</span>
-</pre></div>
-
-<p><em>In the future only a blob will be returned, this will return local file if available. The <code>Save as</code> calls <a href="https://github.com/eligrey/FileSaver.js">Filesaver.js</a> by <a href="http://eligrey.com">Eli Grey</a>. It doesn't work on iPad.</em></p>
-
-<h4>3. Add controller helper: [client]</h4>
-
-<div class="highlight"><pre>    <span class="nx">Template</span><span class="p">.</span><span class="nx">fileTable</span><span class="p">.</span><span class="nx">helpers</span><span class="p">({</span>
-      <span class="nx">Files</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">find</span><span class="p">({},</span> <span class="p">{</span> <span class="nx">sort</span><span class="o">:</span> <span class="p">{</span> <span class="nx">uploadDate</span><span class="o">:-</span><span class="mi">1</span> <span class="p">}</span> <span class="p">});</span>
-      <span class="p">}</span>
-    <span class="p">});</span>
-</pre></div>
-
-<p><em>There are some <code>widgets</code> / <code>components</code> (e.g. gui elements for uploading files, via drag &amp; drop) in the works.</em></p>
-
-<h2>API for storing and retrieving files</h2>
-
-<h3>Client-side</h3>
-
-<h4>Store a file</h4>
-
-<div class="highlight"><pre>  <span class="nx">Contacts</span><span class="p">.</span><span class="nx">storeFile</span><span class="p">(</span><span class="nx">file</span><span class="p">,</span> <span class="nx">metadata</span><span class="p">);</span>
-</pre></div>
-
-<p><em>The file is the browser filehandle, and metadata is custom data to save in the file record for later use</em></p>
-
-<h4>Retrieve a file</h4>
-
-<div class="highlight"><pre>  <span class="nx">Contacts</span><span class="p">.</span><span class="nx">retrieveBlob</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fileId</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
-</pre></div>
-
-<p>Example:</p>
-
-<div class="highlight"><pre>  <span class="nx">Contacts</span><span class="p">.</span><span class="nx">retrieveBlob</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fileId</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fileItem</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// eiter fileItem.blob or fileItem.file is returned (in future a blob should allways be available)</span>
-    <span class="c1">// fileItem._id</span>
-    <span class="c1">// fileItem.countChunks</span>
-    <span class="c1">// fileItem.length   </span>
-  <span class="p">});</span>
-</pre></div>
-
-<h4>TODO:</h4>
-
-<p>The client-side code is going for a rewrite, for a better and more versatile api</p>
-
-<ul>
-<li>More options for storing and retrieving data</li>
-<li>More control over the queue eg. trottling the queue</li>
-<li>Make a dropbox like example of it</li>
-</ul><h3>Server-side</h3>
-
-<h4>Store a file</h4>
-
-<div class="highlight"><pre><span class="kd">var</span> <span class="nx">myText</span> <span class="o">=</span> <span class="s1">'Hello world, I wrote this..:)'</span><span class="p">;</span>
-<span class="kd">var</span> <span class="nx">buffer</span> <span class="o">=</span> <span class="nx">Buffer</span><span class="p">(</span><span class="nx">myText</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
-
-<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">myText</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span>
-  <span class="nx">buffer</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">myText</span><span class="p">.</span><span class="nx">charCodeAt</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
-
-<span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">storeBuffer</span><span class="p">(</span><span class="s1">'My server uploaded file.txt'</span><span class="p">,</span> <span class="nx">buffer</span><span class="p">,</span> <span class="p">{</span> 
-  <span class="c1">// Set a contentType (optional)</span>
-  <span class="nx">contentType</span><span class="o">:</span> <span class="s1">'text/plain'</span><span class="p">,</span>
-  <span class="c1">// Set a user id (optional)</span>
-  <span class="nx">owner</span><span class="o">:</span> <span class="s1">'WAaPHfyfgHGaeJ5kK'</span><span class="p">,</span>
-  <span class="c1">// Stop live update of progress (optional, defaults to false)     </span>
-  <span class="nx">noProgress</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
-  <span class="c1">// Attach custom data to the file  </span>
-  <span class="nx">metadata</span><span class="o">:</span> <span class="p">{</span> <span class="nx">text</span><span class="o">:</span> <span class="s1">'some stuff'</span> <span class="p">},</span>
-  <span class="c1">// Set encoding (optional default 'utf-8')</span>
-  <span class="nx">encoding</span><span class="o">:</span> <span class="s1">'utf-8'</span>
+    <span class="p">},</span>
+    <span class="nx">remove</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span> <span class="nx">files</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span> <span class="p">}</span>
 <span class="p">});</span>
 </pre></div>
 
-<p><em>A rough example to illustrate the API.</em></p>
+<p>Using the file object that is passed to the insert function, you can also restrict based on file characteristics like content types and file size. Alternatively, you can use filters for this. (See the following step.)</p>
 
-<h4>Retrieve a file server-side</h4>
+<h3>
+<a name="step-4-set-up-filters-client-and-server" class="anchor" href="#step-4-set-up-filters-client-and-server"><span class="octicon octicon-link"></span></a>Step 4: Set Up Filters (client and server)</h3>
 
-<div class="highlight"><pre><span class="kd">var</span> <span class="nx">blob</span> <span class="o">=</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">retrieveBuffer</span><span class="p">(</span><span class="nx">fileId</span><span class="p">);</span> <span class="c1">// Returns a Buffer</span>
+<p>To filter uploads to a CollectionFS so that only certain content types or extensions are allowed, you can use <code>CollectionFS.filter()</code>. Refer to the API reference for details. Here's an example:</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">filter</span><span class="p">({</span>
+    <span class="nx">allow</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">contentTypes</span><span class="o">:</span> <span class="p">[</span><span class="s1">'image/*'</span><span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<h3>
+<a name="step-5-publish-files" class="anchor" href="#step-5-publish-files"><span class="octicon octicon-link"></span></a>Step 5: Publish Files</h3>
+
+<p>Assuming that you are not autopublishing CollectionFS documents (see step 2), you now need to define which documents and fields should be published to each client.</p>
+
+<p>In a server Javascript file, you can write <code>publish</code> functions that return the results of <code>find</code> or <code>findOne</code> calls to determine which files will be visible on each client. Then in a client Javascript file, you can subscribe to those document sets.</p>
+
+<h4>
+<a name="simple-example" class="anchor" href="#simple-example"><span class="octicon octicon-link"></span></a>Simple Example</h4>
+
+<div class="highlight highlight-js"><pre><span class="c1">// in server.js</span>
+<span class="c1">// limit results and only show users files they own</span>
+<span class="nx">Meteor</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'myContactsFiles'</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">userId</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span> <span class="nx">owner</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">userId</span> <span class="p">},</span> <span class="p">{</span> <span class="nx">limit</span><span class="o">:</span> <span class="mi">30</span> <span class="p">});</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">// in client.js</span>
+<span class="nx">Meteor</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(</span><span class="s1">'myContactsFiles'</span><span class="p">);</span>
+</pre></div>
+
+<h4>
+<a name="example-with-client-side-filter-rules-and-reactivity" class="anchor" href="#example-with-client-side-filter-rules-and-reactivity"><span class="octicon octicon-link"></span></a>Example With Client Side Filter Rules and Reactivity</h4>
+
+<div class="highlight highlight-js"><pre><span class="c1">// in server.js</span>
+<span class="nx">Meteor</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'listContactsFiles'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">filter</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span> <span class="nx">complete</span><span class="o">:</span> <span class="nx">filter</span><span class="p">.</span><span class="nx">completed</span> <span class="p">},</span> <span class="p">{</span> <span class="c1">// publish only complete or only incomplete, depending on client setting</span>
+        <span class="nx">sort</span><span class="o">:</span>   <span class="p">{</span> <span class="nx">handledAt</span><span class="o">:</span> <span class="mi">1</span> <span class="p">},</span> <span class="c1">// sort by handledAt time</span>
+        <span class="nx">fields</span><span class="o">:</span> <span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">filename</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">handledAt</span><span class="o">:</span> <span class="mi">1</span><span class="p">},</span> <span class="c1">// publish only the filename, handledAt, and _id fields</span>
+        <span class="nx">limit</span><span class="o">:</span>  <span class="nx">filter</span><span class="p">.</span><span class="nx">limit</span> <span class="c1">// limit the number of files published, depending on client setting</span>
+    <span class="p">})</span>
+<span class="p">});</span>
+
+<span class="c1">// in client.js</span>
+<span class="c1">// Use session for setting filter options</span>
+<span class="nx">Session</span><span class="p">.</span><span class="nx">setDefault</span><span class="p">(</span><span class="s1">'myFilter'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">completed</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">limit</span><span class="o">:</span> <span class="mi">30</span> <span class="p">});</span>
+
+<span class="c1">// Subscription will be updated whenever myFilter session value changes</span>
+<span class="nx">Deps</span><span class="p">.</span><span class="nx">autorun</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">filter</span> <span class="o">=</span> <span class="nx">Session</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'myFilter'</span><span class="p">);</span>
+    <span class="nx">Meteor</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(</span><span class="s1">'listContactsFiles'</span><span class="p">,</span> <span class="nx">filter</span><span class="p">);</span>
+<span class="p">});</span>
+</pre></div>
+
+<h2>
+<a name="common-tasks" class="anchor" href="#common-tasks"><span class="octicon octicon-link"></span></a>Common Tasks</h2>
+
+<p>Now that you have everything set up, you're probably excited to start transferring some files. Here are examples of how to achieve the most common tasks.</p>
+
+<h3>
+<a name="upload-a-file-from-the-client" class="anchor" href="#upload-a-file-from-the-client"><span class="octicon octicon-link"></span></a>Upload a File From the Client</h3>
+
+<p>First, create a new template for the file upload input.</p>
+
+<div class="highlight highlight-html"><pre><span class="nt">&lt;template</span> <span class="na">name=</span><span class="s">"queueControl"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;h3&gt;</span>Select file(s) to upload:<span class="nt">&lt;/h3&gt;</span>
+    <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"files"</span> <span class="na">type=</span><span class="s">"file"</span> <span class="na">class=</span><span class="s">"fileUploader"</span> <span class="na">multiple</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+</pre></div>
+
+<p>Next, define an event handler that stores the files after the user selects them.</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">Template</span><span class="p">.</span><span class="nx">queueControl</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
+    <span class="s1">'change .fileUploader'</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">files</span> <span class="o">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">files</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">f</span><span class="p">;</span> <span class="nx">f</span> <span class="o">=</span> <span class="nx">files</span><span class="p">[</span><span class="nx">i</span><span class="p">];</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">storeFile</span><span class="p">(</span><span class="nx">f</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>or</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">Template</span><span class="p">.</span><span class="nx">queueControl</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
+    <span class="s1">'change .fileUploader'</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">files</span> <span class="o">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">files</span><span class="p">;</span>
+        <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">storeFiles</span><span class="p">(</span><span class="nx">files</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p><code>storeFile</code> returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads. When an upload finishes, client templates that list files or file information are updated live through reactivity.</p>
+
+<p><code>storeFiles</code> is a convenience method for storing multiple files at once and returns an array of fileIds.</p>
+
+<p>If you want to store additional metadata for each file, provide the data in the second parameter.</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">storeFile</span><span class="p">(</span><span class="nx">file</span><span class="p">,</span> <span class="p">{</span>
+   <span class="nx">name</span><span class="o">:</span> <span class="s2">"My File"</span>
+<span class="p">})</span>
+</pre></div>
+
+<p>There are currently no available callbacks or event listeners for the upload process. These will be added in a future release.</p>
+
+<h3>
+<a name="download-a-file-to-the-client" class="anchor" href="#download-a-file-to-the-client"><span class="octicon octicon-link"></span></a>Download a File to the Client</h3>
+
+<p>First, create a new template for the file link.</p>
+
+<div class="highlight highlight-html"><pre><span class="nt">&lt;template</span> <span class="na">name=</span><span class="s">"fileTable"</span><span class="nt">&gt;</span>
+    {{#each files}}
+    {{cfsDownloadButton "ContactsFS" class="btn btn-primary btn-mini" content=filename}}
+    {{else}}
+    No files uploaded.
+    {{/each}}
+<span class="nt">&lt;/template&gt;</span>
+</pre></div>
+
+<p>Next, provide the data context.</p>
+
+<div class="highlight highlight-js"><pre><span class="c1">//in client.js</span>
+<span class="nx">Template</span><span class="p">.</span><span class="nx">fileTable</span><span class="p">.</span><span class="nx">files</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">//show all files that have been published to the client, with most recently uploaded first</span>
+    <span class="k">return</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">find</span><span class="p">({},</span> <span class="p">{</span> <span class="nx">sort</span><span class="o">:</span> <span class="p">{</span> <span class="nx">uploadDate</span><span class="o">:-</span><span class="mi">1</span> <span class="p">}</span> <span class="p">});</span>
+<span class="p">};</span>
+</pre></div>
+
+<p>And that's it! The button is created by the helper and wired up
+with the necessary click event to begin downloading the file to the browser.</p>
+
+<p>For saving, the helper uses <a href="https://github.com/eligrey/FileSaver.js">FileSaver.js</a> by <a href="http://eligrey.com">Eli Grey</a>. It doesn't work on iPad.
+If you prefer, you can call <code>CollectionFS.retrieveBlob()</code> yourself and use your own saving method with the result.</p>
+
+<h3>
+<a name="delete-a-file" class="anchor" href="#delete-a-file"><span class="octicon octicon-link"></span></a>Delete a File</h3>
+
+<p>You can call <code>remove</code> on the client or server to remove all chunks and versions related to the original file from the database.</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">fileId</span><span class="p">);</span>
+</pre></div>
+
+<h3>
+<a name="store-a-file-from-the-server" class="anchor" href="#store-a-file-from-the-server"><span class="octicon octicon-link"></span></a>Store a File From the Server</h3>
+
+<p>You can also store files from the server side. You could, for example, retrieve a file from some external URL and save it to your database. Here is a rough example to illustrate:</p>
+
+<div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">myText</span> <span class="o">=</span> <span class="s1">'Hello world, I wrote this..:)'</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">buffer</span> <span class="o">=</span> <span class="nx">Buffer</span><span class="p">(</span><span class="nx">myText</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">myText</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">buffer</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">myText</span><span class="p">.</span><span class="nx">charCodeAt</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">storeBuffer</span><span class="p">(</span><span class="s1">'serverFile.txt'</span><span class="p">,</span> <span class="nx">buffer</span><span class="p">,</span> <span class="p">{</span> 
+    <span class="c1">// Set a contentType (optional)</span>
+    <span class="nx">contentType</span><span class="o">:</span> <span class="s1">'text/plain'</span><span class="p">,</span>
+    <span class="c1">// Set a user id (optional)</span>
+    <span class="nx">owner</span><span class="o">:</span> <span class="s1">'WAaPHfyfgHGaeJ5kK'</span><span class="p">,</span>
+    <span class="c1">// Stop live update of progress (optional, defaults to false)     </span>
+    <span class="nx">noProgress</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="c1">// Attach custom data to the file  </span>
+    <span class="nx">metadata</span><span class="o">:</span> <span class="p">{</span> <span class="nx">text</span><span class="o">:</span> <span class="s1">'some stuff'</span> <span class="p">},</span>
+    <span class="c1">// Set encoding (optional default 'utf-8')</span>
+    <span class="nx">encoding</span><span class="o">:</span> <span class="s1">'utf-8'</span>
+<span class="p">});</span>
+</pre></div>
+
+<h3>
+<a name="retrieve-a-file-from-the-server" class="anchor" href="#retrieve-a-file-from-the-server"><span class="octicon octicon-link"></span></a>Retrieve a File From the Server</h3>
+
+<p>You can also retrieve files from the server side. </p>
+
+<div class="highlight highlight-js"><pre><span class="c1">// Get the file itself as a BLOB (Buffer)</span>
+<span class="kd">var</span> <span class="nx">blob</span> <span class="o">=</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">retrieveBuffer</span><span class="p">(</span><span class="nx">fileId</span><span class="p">);</span>
 
 <span class="c1">// Get additional info from the file record</span>
 <span class="kd">var</span> <span class="nx">fileRecord</span> <span class="o">=</span> <span class="nx">ContactsFS</span><span class="p">.</span><span class="nx">findOne</span><span class="p">(</span><span class="nx">fileId</span><span class="p">);</span>
 </pre></div>
 
-<h2>Filehandlers</h2>
+<h2>
+<a name="common-api-reference" class="anchor" href="#common-api-reference"><span class="octicon octicon-link"></span></a>Common API Reference</h2>
 
-<h3>Create cache/versions of files and get an url reference on the server</h3>
-
-<p>Filehandlers are server-side functions that makes caching versions easier. The functions are run and handed a file record and a blob / <code>Buffer</code> containing all the bytes.</p>
+<p>The following Meteor.Collection methods are supported, and work identically:</p>
 
 <ul>
-<li>Return a blob and it gets named, saved and put in database while the user can continue. When files are created the files are updated containing link to the new file — all done reactively live.</li>
-<li>If only custom metadata is returned without a blob / Buffer then no files saved but metadata is saved in database.</li>
-<li>If null returned then only filehandler name and a date is saved in database.</li>
-<li>If false returned the filehandler failed and it will be resumed later</li>
-</ul><h4>Options</h4>
+<li><code>find()</code></li>
+<li><code>findOne()</code></li>
+<li><code>update()</code></li>
+<li><code>remove()</code></li>
+<li><code>allow()</code></li>
+<li><code>deny()</code></li>
+</ul><p>Instead of <code>insert()</code>, use <code>storeFile()</code> or <code>storeFiles()</code>.</p>
 
-<p><em>Each filehandler is handed a options object.</em></p>
+<h3>
+<a name="collectionfsfilterfilter" class="anchor" href="#collectionfsfilterfilter"><span class="octicon octicon-link"></span></a>CollectionFS.filter(filter)</h3>
 
-<div class="highlight"><pre><span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
-  <span class="nx">blob</span><span class="p">,</span>              <span class="c1">// Type of node.js Buffer() </span>
-  <span class="nx">fileRecord</span><span class="o">:</span> <span class="p">{</span>
-    <span class="nx">chunkSize</span> <span class="o">:</span> <span class="nx">self</span><span class="p">.</span><span class="nx">chunkSize</span><span class="p">,</span> <span class="c1">// Default 256kb ~ 262.144 bytes</span>
-    <span class="nx">uploadDate</span> <span class="o">:</span> <span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">(),</span>  <span class="c1">// Client set date</span>
-    <span class="nx">handledAt</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>          <span class="c1">// datetime set by Server when handled</span>
-    <span class="nx">fileHandler</span><span class="o">:</span><span class="p">{},</span>           <span class="c1">// fileHandler supplied data if any</span>
-    <span class="nx">md5</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>               <span class="c1">// Not yet implemented</span>
-    <span class="nx">complete</span> <span class="o">:</span> <span class="kc">false</span><span class="p">,</span>         <span class="c1">// countChunks == numChunks</span>
-    <span class="nx">currentChunk</span><span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>         <span class="c1">// Used to coordinate clients</span>
-    <span class="nx">owner</span><span class="o">:</span> <span class="nx">Meteor</span><span class="p">.</span><span class="nx">userId</span><span class="p">(),</span>
-    <span class="nx">countChunks</span><span class="o">:</span> <span class="nx">countChunks</span><span class="p">,</span> <span class="c1">// Expected number of chunks</span>
-    <span class="nx">numChunks</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>             <span class="c1">// number of chunks in database</span>
-    <span class="nx">filename</span> <span class="o">:</span> <span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>     <span class="c1">// Original filename</span>
-    <span class="nx">length</span><span class="o">:</span> <span class="s1">''</span><span class="o">+</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">,</span>     <span class="c1">// Issue in Meteor</span>
-    <span class="nx">contentType</span> <span class="o">:</span> <span class="nx">file</span><span class="p">.</span><span class="nx">type</span><span class="p">,</span>
-    <span class="nx">encoding</span><span class="o">:</span> <span class="nx">encoding</span><span class="p">,</span>       <span class="c1">// Default 'utf-8'</span>
-    <span class="nx">metadata</span> <span class="o">:</span> <span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="o">?</span> <span class="nx">options</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>  <span class="c1">// Custom data</span>
-    <span class="cm">/* TODO:</span>
-<span class="cm">    startedAt: null,          // Start timer for upload start</span>
-<span class="cm">    endedAt: null,            // Stop timer for upload ended</span>
-<span class="cm">    */</span>
-  <span class="p">},</span>
-  <span class="nx">destination</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="c1">// Check below</span>
-  <span class="nx">sumFailes</span><span class="o">:</span> <span class="mi">0</span><span class="p">..</span><span class="mi">3</span> <span class="p">(</span><span class="nx">times</span> <span class="nx">filehandler</span> <span class="nx">failed</span> <span class="k">in</span> <span class="k">this</span> <span class="nx">recovery</span> <span class="nx">session</span><span class="p">)</span>
+<ul>
+<li>
+<strong>filter</strong>: (Required) An object defining file content types and/or extensions that should be allowed or denied, and optionally a maximum file size in bytes.</li>
+</ul><p>Call this in a common javascript file. This is the format of the <code>filter</code> object:</p>
+
+<div class="highlight highlight-js"><pre><span class="p">{</span>
+    <span class="nx">allow</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">extensions</span><span class="o">:</span> <span class="p">[],</span>
+        <span class="nx">contentTypes</span><span class="o">:</span> <span class="p">[]</span>
+    <span class="p">},</span>
+    <span class="nx">deny</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">extensions</span><span class="o">:</span> <span class="p">[],</span>
+        <span class="nx">contentTypes</span><span class="o">:</span> <span class="p">[]</span>
+    <span class="p">},</span>
+    <span class="nx">maxSize</span><span class="o">:</span> <span class="mi">1048576</span>
 <span class="p">}</span>
 </pre></div>
 
-<h4>options.destination - function</h4>
+<p>You can mix and match filtering based on extension or content types.
+The contentTypes array also supports "image/<em>" and "audio/</em>" and "video/*" like
+the "accepts" attribute on the HTML5 file input element. <code>storeFile()</code> and 
+<code>storeFiles()</code> automatically check each file against these rules before uploading
+it, or you can call <code>CollectionFS.fileIsAllowed()</code>, passing in a file record object,
+if you need to check a file yourself.</p>
 
-<p><em>Filehandlers are presented with a helper function for handling paths — all paths can be custom, but it's recommended to use those returned by <code>destination()</code>.</em>
-<code>options.destination( [extension] )</code> takes an optional <code>extension</code> e.g.:</p>
+<p>If a file extension or content type matches any of those listed in <code>allow</code>, it is allowed. If not,
+it is denied. If it matches both <code>allow</code> and <code>deny</code>, it is denied. Typically, you would
+use only <code>allow</code> or only <code>deny</code>, but not both. If you do not call <code>filter()</code>, all files are allowed,
+as long as they pass the tests in <code>allow()</code> and <code>deny()</code>.</p>
 
-<div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">dest</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">destination</span><span class="p">(</span><span class="s1">'jpg'</span><span class="p">);</span> <span class="c1">// otherwise original extension is used</span>
-</pre></div>
+<p>The file extensions must be specified without a leading period.</p>
 
-<p>Object returned:</p>
+<h3>
+<a name="invalid-event-client-or-server" class="anchor" href="#invalid-event-client-or-server"><span class="octicon octicon-link"></span></a>Invalid Event (client or server)</h3>
 
-<div class="highlight"><pre>  <span class="nx">dest</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="nx">serverFilename</span><span class="o">:</span> <span class="s1">'/absolute/path/uniquename.jpg'</span><span class="p">,</span> <span class="c1">// Unix or windows based</span>
-    <span class="nx">fileData</span><span class="o">:</span> <span class="p">{</span>
-      <span class="nx">url</span><span class="o">:</span> <span class="s1">'/web/url/uniquename.jpg'</span><span class="p">,</span>
-      <span class="nx">extension</span><span class="o">:</span> <span class="s1">'jpg'</span>
+<p>You can define a function to be called whenever an "invalid" event is dispatched. This happens when a file fails the validation check defined
+by <code>CollectionFS.filter</code>.</p>
+
+<p>This function should accept two arguments:</p>
+
+<ul>
+<li>
+<strong>type</strong>: One of the enums in CFSErrorType, depending on which check the file failed.</li>
+<li>
+<strong>fileRecord</strong>: The fileRecord object.</li>
+</ul><p>Typically you might use this on the client to display an error message to the user, or on the server to log the failure.</p>
+
+<p>For example:</p>
+
+<div class="highlight highlight-javascript"><pre><span class="nx">Songs</span><span class="p">.</span><span class="nx">events</span><span class="p">({</span>
+  <span class="s1">'invalid'</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">fileRecord</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">type</span> <span class="o">===</span> <span class="nx">CFSErrorType</span><span class="p">.</span><span class="nx">disallowedContentType</span> <span class="o">||</span> <span class="nx">type</span> <span class="o">===</span> <span class="nx">CFSErrorType</span><span class="p">.</span><span class="nx">disallowedExtension</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Sorry, "</span> <span class="o">+</span> <span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span> <span class="o">+</span> <span class="s2">" is not the type of file we're looking for."</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">type</span> <span class="o">===</span> <span class="nx">CFSErrorType</span><span class="p">.</span><span class="nx">maxFileSizeExceeded</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Sorry, "</span> <span class="o">+</span> <span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span> <span class="o">+</span> <span class="s2">" is too big to upload."</span><span class="p">);</span>
     <span class="p">}</span>
-  <span class="p">}</span>
+  <span class="p">}</span> 
+<span class="p">});</span>
 </pre></div>
 
-<p>The <code>destination</code> helper gets handy e.g. when manually saving an image from within the filehandler.</p>
+<h2>
+<a name="client-api-reference" class="anchor" href="#client-api-reference"><span class="octicon octicon-link"></span></a>Client API Reference</h2>
 
-<div class="highlight"><pre>  <span class="nx">Filesystem</span><span class="p">.</span><span class="nx">fileHandlers</span><span class="p">({</span>
-    <span class="nx">soundToWav</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
-      <span class="c1">// Manipulate file, convert it to wav</span>
-      <span class="kd">var</span> <span class="nx">dest</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">destination</span><span class="p">(</span><span class="s1">'wav'</span><span class="p">);</span>
-      <span class="nx">writeFileToDisk</span><span class="p">(</span><span class="nx">dest</span><span class="p">.</span><span class="nx">serverFilename</span><span class="p">,</span> <span class="nx">blob</span><span class="p">);</span>
+<h3>
+<a name="collectionfsstorefilefile-metadata" class="anchor" href="#collectionfsstorefilefile-metadata"><span class="octicon octicon-link"></span></a>CollectionFS.storeFile(file, metadata)</h3>
 
-      <span class="c1">// Save correct reference to database by returning url and extension — but no blob</span>
-      <span class="k">return</span> <span class="nx">dest</span><span class="p">.</span><span class="nx">fileData</span><span class="p">;</span>
+<ul>
+<li>
+<strong>file</strong>: (Required) The browser filehandle.</li>
+<li>
+<strong>metadata</strong>: An object with any custom data you want to save in the file record for later use.</li>
+</ul><p><code>storeFile</code> returns immediately with a fileId, or with null if there was a problem. The actual uploads are handled by pseudo-threads.</p>
+
+<h3>
+<a name="collectionfsstorefilesfiles-metadata-callback" class="anchor" href="#collectionfsstorefilesfiles-metadata-callback"><span class="octicon octicon-link"></span></a>CollectionFS.storeFiles(files, metadata, callback)</h3>
+
+<ul>
+<li>
+<strong>files</strong>: (Required) The browser files array.</li>
+<li>
+<strong>metadata</strong>: (Optional) An object with any custom data you want to save in the file record for later use, or a function that accepts one parameter, the file object, and returns the metadata object.</li>
+<li>
+<strong>callback</strong>: (Optional) A function to be called after storing each file when looping over the files. This callback is passed two parameters, <code>file</code>, which is the browser file object, and <code>fileId</code>, which is the CollectionFS ID for that file.</li>
+</ul><p><code>storeFiles</code> returns immediately with an array of fileIds, or with null if there was a problem. The actual uploads are handled by pseudo-threads. This is a convenience function for calling <code>storeFile</code> multiple times; however, if you need to store metadata with each file, you will have to do the looping yourself and use <code>storeFile</code>.</p>
+
+<h3>
+<a name="collectionfsretrieveblobfileid-callback" class="anchor" href="#collectionfsretrieveblobfileid-callback"><span class="octicon octicon-link"></span></a>CollectionFS.retrieveBlob(fileId, callback)</h3>
+
+<ul>
+<li>
+<strong>fileId</strong>: (Required) The ID of the file</li>
+<li>
+<strong>callback</strong>: (Required) A function to handle the file BLOB after it's downloaded.</li>
+</ul><p><code>callback</code> is passed one argument, <code>fileItem</code>, which is a container for the file. Either fileItem.blob or fileItem.file will be available. fileItem.file is used if the file is already stored locally. In the future, this will be improved so that fileItem.blob is always set.</p>
+
+<p><code>fileItem</code> also has properties _id, countChunks, and length.</p>
+
+<h3>
+<a name="collectionfsacceptdropsontemplatename-selector-metadata-callback" class="anchor" href="#collectionfsacceptdropsontemplatename-selector-metadata-callback"><span class="octicon octicon-link"></span></a>CollectionFS.acceptDropsOn(templateName, selector, metadata, callback)</h3>
+
+<ul>
+<li>
+<strong>templateName</strong>: (Required) The template in which the element that should accept file drops can be found.</li>
+<li>
+<strong>selector</strong>: (Required) The CSS selector that matches the element that should accept file drops.</li>
+<li>
+<strong>metadata</strong>: (Optional) Same as the <code>CollectionFS.storeFiles</code> metadata argument. Passed to <code>CollectionFS.storeFiles</code> for the files that are dropped. Can be a getter function.</li>
+<li>
+<strong>callback</strong>: (Optional) Same as the <code>CollectionFS.storeFiles</code> callback argument. Passed to <code>CollectionFS.storeFiles</code> for the files that are dropped.</li>
+</ul><p>Sets up all of the elements matching <code>selector</code> to support dropping of one or more files onto them. As files are dropped onto these elements, they are automatically stored in the CollectionFS with the given metadata, and then the callback is called for each one.</p>
+
+<p>For example:</p>
+
+<div class="highlight highlight-html"><pre><span class="nt">&lt;template</span> <span class="na">name=</span><span class="s">"audioList"</span><span class="nt">&gt;</span>
+   <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"audioList"</span><span class="nt">&gt;</span>
+      {{#if cfsHasFiles "Songs"}}
+      <span class="nt">&lt;table&gt;</span>
+         <span class="nt">&lt;thead&gt;</span>
+            <span class="nt">&lt;th&gt;</span>ID<span class="nt">&lt;/th&gt;</span>
+            <span class="nt">&lt;th&gt;</span>Size<span class="nt">&lt;/th&gt;</span>
+            <span class="nt">&lt;th&gt;</span>Filename<span class="nt">&lt;/th&gt;</span>
+            <span class="nt">&lt;th&gt;</span>Content type<span class="nt">&lt;/th&gt;</span>
+            <span class="nt">&lt;th&gt;</span>Owner<span class="nt">&lt;/th&gt;</span>
+         <span class="nt">&lt;/thead&gt;</span>
+         <span class="nt">&lt;tbody&gt;</span>
+            {{#each cfsFiles "Songs"}}
+            {{&gt; song}}
+            {{/each}}
+         <span class="nt">&lt;/tbody&gt;</span>
+      <span class="nt">&lt;/table&gt;</span>
+      {{else}}
+      <span class="nt">&lt;div&gt;</span>You have not added any audio files.<span class="nt">&lt;/div&gt;</span>
+      {{/if}}
+   <span class="nt">&lt;/div&gt;</span>
+<span class="nt">&lt;/template&gt;</span>
+</pre></div>
+
+<div class="highlight highlight-js"><pre><span class="nx">Songs</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s2">"songs"</span><span class="p">,</span> <span class="p">{</span><span class="nx">autopublish</span><span class="o">:</span> <span class="kc">false</span><span class="p">});</span>
+<span class="k">if</span> <span class="p">(</span><span class="nx">Meteor</span><span class="p">.</span><span class="nx">isClient</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">Songs</span><span class="p">.</span><span class="nx">acceptDropsOn</span><span class="p">(</span><span class="s2">"audioList"</span><span class="p">,</span> <span class="s2">".audioList"</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+<h4>
+<a name="example-of-a-metadata-getter-function" class="anchor" href="#example-of-a-metadata-getter-function"><span class="octicon octicon-link"></span></a>Example of a metadata getter function:</h4>
+
+<div class="highlight highlight-js"><pre>  <span class="nx">Songs</span><span class="p">.</span><span class="nx">acceptDropsOn</span><span class="p">(</span><span class="s1">'audioList'</span><span class="p">,</span> <span class="s1">'.audioList'</span><span class="p">,</span>
+    <span class="c1">// Metadata getter</span>
+    <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">temp</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// This function would be run with `this` from the template</span>
+      <span class="c1">// it would return the metadata containing the `audioListItemId`</span>
+      <span class="k">return</span> <span class="p">{</span> <span class="nx">audioListItemId</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">_id</span> <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">);</span>
+</pre></div>
+
+<h2>
+<a name="server-api-reference" class="anchor" href="#server-api-reference"><span class="octicon octicon-link"></span></a>Server API Reference</h2>
+
+<h3>
+<a name="collectionfsstorebufferfilename-buffer-options" class="anchor" href="#collectionfsstorebufferfilename-buffer-options"><span class="octicon octicon-link"></span></a>CollectionFS.storeBuffer(fileName, buffer, options)</h3>
+
+<ul>
+<li>
+<strong>fileName</strong>: (Required) The name of the file</li>
+<li>
+<strong>buffer</strong>: (Required) The bufferred content of the file</li>
+<li>
+<strong>options</strong>: All of these are optional.
+
+<ul>
+<li>
+<strong>contentType</strong>: The content (MIME) type of the file</li>
+<li>
+<strong>owner</strong>: The user ID of the user who owns the document<br>
+</li>
+<li>
+<strong>noProgress</strong>: <code>true</code> to prevent live updating of progress; default is <code>false</code>
+</li>
+<li>
+<strong>metadata</strong>: An object containing any custom metadata you want to store with the file</li>
+<li>
+<strong>encoding</strong>: The file encoding; default is <code>utf-8</code>
+</li>
+</ul>
+</li>
+</ul><h3>
+<a name="collectionfsretrievebufferfileid" class="anchor" href="#collectionfsretrievebufferfileid"><span class="octicon octicon-link"></span></a>CollectionFS.retrieveBuffer(fileId)</h3>
+
+<ul>
+<li>
+<strong>fileId</strong>: (Required) The ID of the file
+Returns a buffer.</li>
+</ul><h2>
+<a name="filehandlers" class="anchor" href="#filehandlers"><span class="octicon octicon-link"></span></a>Filehandlers</h2>
+
+<p>Filehandlers are custom server-side functions that take a file record and a BLOB and do something with them. You can use them to convert files to other formats, process and convert images, store copies of the file on the filesystem, or upload files to remote services.</p>
+
+<h3>
+<a name="defining-filehandlers" class="anchor" href="#defining-filehandlers"><span class="octicon octicon-link"></span></a>Defining Filehandlers</h3>
+
+<p>To define a filehandler, use the <code>fileHandlers</code> function.</p>
+
+<div class="highlight highlight-js"><pre>  <span class="nx">Filesystem</span><span class="p">.</span><span class="nx">fileHandlers</span><span class="p">({</span>
+    <span class="nx">fileHandler1</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">//manipulate the file, save to disk, etc.</span>
+      <span class="k">return</span> <span class="nx">something</span><span class="p">;</span>
     <span class="p">}</span>
   <span class="p">});</span>
 </pre></div>
 
-<p>More examples follow, converters are to come:</p>
+<h3>
+<a name="possible-return-values" class="anchor" href="#possible-return-values"><span class="octicon octicon-link"></span></a>Possible Return Values</h3>
 
-<div class="highlight"><pre><span class="nx">Filesystem</span><span class="p">.</span><span class="nx">fileHandlers</span><span class="p">({</span>
+<p>Depending on what the filehandler is doing, you can return different values.</p>
+
+<ul>
+<li>If you return a BLOB: It is named, saved, and stored in database while the user can continue. After the file is successfully stored, the client data and template is updated live.</li>
+<li>If you return metadata without a BLOB: The metadata is saved in the database without the file data.</li>
+<li>If you return a String, it will be used as the URL for that document (usefull if you generated your own file -- see file handlers examples with ImageMagick)</li>
+<li>If you return null: Only the filehandler name and a date is saved in the database.</li>
+<li>If you return false: This means the filehandler failed temporarily. It will be tried again later.</li>
+</ul><h3>
+<a name="options" class="anchor" href="#options"><span class="octicon octicon-link"></span></a>Options</h3>
+
+<p>Each filehandler should accept one <code>options</code> argument. This contains the file data, information about the file, a <code>destination</code> helper function, and more.</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">blob</span><span class="p">,</span>              <span class="c1">// Type of node.js Buffer() </span>
+    <span class="nx">fileRecord</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">chunkSize</span> <span class="o">:</span> <span class="nx">self</span><span class="p">.</span><span class="nx">chunkSize</span><span class="p">,</span> <span class="c1">// Default 256kb ~ 262.144 bytes</span>
+        <span class="nx">uploadDate</span> <span class="o">:</span> <span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">(),</span>  <span class="c1">// Client set date</span>
+        <span class="nx">handledAt</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>          <span class="c1">// datetime set by Server when handled</span>
+        <span class="nx">fileHandler</span><span class="o">:</span><span class="p">{},</span>           <span class="c1">// fileHandler supplied data if any</span>
+        <span class="nx">md5</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>               <span class="c1">// Not yet implemented</span>
+        <span class="nx">complete</span> <span class="o">:</span> <span class="kc">false</span><span class="p">,</span>         <span class="c1">// countChunks == numChunks</span>
+        <span class="nx">currentChunk</span><span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>         <span class="c1">// Used to coordinate clients</span>
+        <span class="nx">owner</span><span class="o">:</span> <span class="nx">Meteor</span><span class="p">.</span><span class="nx">userId</span><span class="p">(),</span>
+        <span class="nx">countChunks</span><span class="o">:</span> <span class="nx">countChunks</span><span class="p">,</span> <span class="c1">// Expected number of chunks</span>
+        <span class="nx">numChunks</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>             <span class="c1">// number of chunks in database</span>
+        <span class="nx">filename</span> <span class="o">:</span> <span class="nx">file</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>     <span class="c1">// Original filename</span>
+        <span class="nx">length</span><span class="o">:</span> <span class="s1">''</span><span class="o">+</span><span class="nx">file</span><span class="p">.</span><span class="nx">size</span><span class="p">,</span>     <span class="c1">// Issue in Meteor</span>
+        <span class="nx">contentType</span> <span class="o">:</span> <span class="nx">file</span><span class="p">.</span><span class="nx">type</span><span class="p">,</span>
+        <span class="nx">encoding</span><span class="o">:</span> <span class="nx">encoding</span><span class="p">,</span>       <span class="c1">// Default 'utf-8'</span>
+        <span class="nx">metadata</span> <span class="o">:</span> <span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="o">?</span> <span class="nx">options</span> <span class="o">:</span> <span class="kc">null</span><span class="p">,</span>  <span class="c1">// Custom data</span>
+    <span class="p">},</span>
+    <span class="nx">destination</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span>
+    <span class="nx">sumFailes</span><span class="o">:</span> <span class="mi">0</span><span class="p">..</span><span class="mi">3</span> <span class="p">(</span><span class="nx">times</span> <span class="nx">filehandler</span> <span class="nx">failed</span> <span class="k">in</span> <span class="k">this</span> <span class="nx">recovery</span> <span class="nx">session</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+
+<h4>
+<a name="optionsdestinationextension" class="anchor" href="#optionsdestinationextension"><span class="octicon octicon-link"></span></a>options.destination(extension)</h4>
+
+<p>This function returns the correct file path for saving the current file to the local filesystem. While you can use custom paths to store files, it's easiest and safest to use the path returned by this function.</p>
+
+<p>If you want the file path to use a file extension that is different from the original file extension, pass the optional <code>extension</code> argument to <code>options.destination()</code>. For example:</p>
+
+<div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">dest</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">destination</span><span class="p">(</span><span class="s1">'jpg'</span><span class="p">);</span>
+</pre></div>
+
+<p>In this example, dest might be returned as</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">dest</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">serverFilename</span><span class="o">:</span> <span class="s1">'/absolute/path/uniquename.jpg'</span><span class="p">,</span> <span class="c1">// Unix or Windows is supported</span>
+    <span class="nx">fileData</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">url</span><span class="o">:</span> <span class="s1">'/web/url/uniquename.jpg'</span><span class="p">,</span>
+        <span class="nx">extension</span><span class="o">:</span> <span class="s1">'jpg'</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+<h3>
+<a name="limiting-filehandlers" class="anchor" href="#limiting-filehandlers"><span class="octicon octicon-link"></span></a>Limiting Filehandlers</h3>
+
+<p>When defining your CollectionFS collection, you can optionally specify the maximum number of simultaneous file handlers you want on the server, in total, regardless of the number of collections.</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">ContactsFS</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">CollectionFS</span><span class="p">(</span><span class="s1">'contacts'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">maxFilehandlers</span><span class="o">:</span> <span class="mi">1</span> <span class="p">});</span>
+</pre></div>
+
+<h3>
+<a name="filehandler-examples" class="anchor" href="#filehandler-examples"><span class="octicon octicon-link"></span></a>Filehandler Examples</h3>
+
+<div class="highlight highlight-js"><pre><span class="nx">Filesystem</span><span class="p">.</span><span class="nx">fileHandlers</span><span class="p">({</span>
   <span class="nx">default1</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// Options contains blob and fileRecord — same is expected in return if should be saved on filesytem, can be modified</span>
     <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling default1: '</span> <span class="o">+</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span><span class="p">);</span>
     <span class="k">return</span> <span class="p">{</span> <span class="nx">blob</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span> <span class="nx">fileRecord</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span> <span class="p">};</span> <span class="c1">// if no blob then save result in fileHandle (added createdAt)</span>
@@ -407,15 +672,20 @@
     <span class="k">return</span> <span class="nx">options</span><span class="p">;</span> 
   <span class="p">},</span>
   <span class="nx">size40x40</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
-    <span class="c1">// Use Future.wrap for handling async</span>
-    <span class="cm">/* var im = Npm.require('imagemagick'); // Add Imagemagick package</span>
-<span class="cm">    im.resize({</span>
-<span class="cm">                srcData: options.blob,</span>
-<span class="cm">                width: 40</span>
-<span class="cm">           }); */</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling: '</span> <span class="o">+</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span> <span class="o">+</span> <span class="s1">' to...'</span><span class="p">);</span>
-    <span class="k">return</span> <span class="p">{</span> <span class="nx">extension</span><span class="o">:</span> <span class="s1">'jpg'</span><span class="p">,</span> <span class="nx">blob</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span> <span class="nx">fileRecord</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span> <span class="p">};</span> <span class="c1">//or just 'options'...</span>
+    <span class="c1">//... Test that it's an actual image...</span>
+
+    <span class="c1">// Uses meteorite package imagemagick.</span>
+    <span class="kd">var</span> <span class="nx">destination</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">destination</span><span class="p">();</span>
+    <span class="nx">Imagemagick</span><span class="p">.</span><span class="nx">resize</span><span class="p">({</span>
+       <span class="nx">srcData</span><span class="o">:</span> <span class="nx">options</span><span class="p">.</span><span class="nx">blob</span><span class="p">,</span>
+       <span class="nx">dstPath</span><span class="o">:</span> <span class="nx">destination</span><span class="p">.</span><span class="nx">serverFilename</span><span class="p">,</span> <span class="c1">// Imagemagick will create the file for us.</span>
+       <span class="nx">width</span><span class="o">:</span> <span class="mi">40</span><span class="p">,</span>
+       <span class="nx">height</span><span class="o">:</span> <span class="mi">40</span>
+    <span class="p">});</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'I am handling: '</span> <span class="o">+</span> <span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">filename</span> <span class="o">+</span> <span class="s1">' to '</span><span class="p">.</span> <span class="nx">destination</span><span class="p">.</span><span class="nx">serverFilename</span><span class="p">);</span>
+
+    <span class="c1">// Return the url</span>
+    <span class="k">return</span> <span class="nx">destination</span><span class="p">.</span><span class="nx">fileData</span><span class="p">;</span>
   <span class="p">},</span>
   <span class="nx">size100x100gm</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">fileRecord</span><span class="p">.</span><span class="nx">contentType</span> <span class="o">!=</span> <span class="s1">'image/jpeg'</span><span class="p">)</span>
@@ -442,29 +712,217 @@
 <span class="cm">    */</span>
     <span class="c1">// I failed to deliver a url for this, but don't try again</span>
     <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+  <span class="p">},</span>
+  <span class="nx">soundToWav</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Manipulate file, convert it to wav</span>
+    <span class="kd">var</span> <span class="nx">dest</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">destination</span><span class="p">(</span><span class="s1">'wav'</span><span class="p">);</span>
+    <span class="nx">writeFileToDisk</span><span class="p">(</span><span class="nx">dest</span><span class="p">.</span><span class="nx">serverFilename</span><span class="p">,</span> <span class="nx">blob</span><span class="p">);</span>
+
+    <span class="c1">// Save correct reference to database by returning url and extension — but no blob</span>
+    <span class="k">return</span> <span class="nx">dest</span><span class="p">.</span><span class="nx">fileData</span><span class="p">;</span>
   <span class="p">}</span>
 <span class="p">});</span>
 </pre></div>
 
-<p><em>This is brand new on the testbed. The future brings easy image handling shortcuts to Imagemagick and maybe some sound/video conversion and integrated uploads to Google Drive, Dropbox, etc.</em></p>
+<h2>
+<a name="built-in-handlebars-helpers" class="anchor" href="#built-in-handlebars-helpers"><span class="octicon octicon-link"></span></a>Built-In Handlebars Helpers</h2>
 
-<h3>Future:</h3>
+<p>A number of handlebar helpers are available to help you generate UI elements related to the files stored in a CollectionFS.</p>
+
+<h3>
+<a name="cfsfile" class="anchor" href="#cfsfile"><span class="octicon octicon-link"></span></a>cfsFile</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">{{</span><span class="nx">cfsFile</span> <span class="s2">"Collection"</span> <span class="nx">fileId</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns the file object with ID fileId in the "Collection" CFS.</p>
+
+<h3>
+<a name="cfsfiles" class="anchor" href="#cfsfiles"><span class="octicon octicon-link"></span></a>cfsFiles</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">{{</span><span class="nx">cfsFile</span> <span class="s2">"Collection"</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns a cursor for the CFS. Doesn't support any limiting, sorting, etc. except whatever you're doing in <code>Meteor.publish()</code>.</p>
+
+<h3>
+<a name="cfshasfiles" class="anchor" href="#cfshasfiles"><span class="octicon octicon-link"></span></a>cfsHasFiles</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">{{</span><span class="err">#</span><span class="k">if</span> <span class="nx">cfsHasFiles</span> <span class="s2">"Collection"</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns true if the CFS has any files (as filtered by <code>Meteor.publish()</code>).</p>
+
+<h3>
+<a name="cfsisuploading" class="anchor" href="#cfsisuploading"><span class="octicon octicon-link"></span></a>cfsIsUploading</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsUploading</span> <span class="s2">"Collection"</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsUploading</span> <span class="s2">"Collection"</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsUploading</span> <span class="s2">"Collection"</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns true if the file is currently being uploaded to the specified CFS.</p>
+
+<h3>
+<a name="cfsisdownloading" class="anchor" href="#cfsisdownloading"><span class="octicon octicon-link"></span></a>cfsIsDownloading</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsDownloading</span> <span class="s2">"Collection"</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsDownloading</span> <span class="s2">"Collection"</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsDownloading</span> <span class="s2">"Collection"</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns true if the file is currently being downloaded from the specified CFS.</p>
+
+<h3>
+<a name="cfsisdownloaded" class="anchor" href="#cfsisdownloaded"><span class="octicon octicon-link"></span></a>cfsIsDownloaded</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsDownloaded</span> <span class="s2">"Collection"</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsDownloaded</span> <span class="s2">"Collection"</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsDownloaded</span> <span class="s2">"Collection"</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns true if the file has been downloaded from the specified CFS.</p>
+
+<h3>
+<a name="cfsiscomplete" class="anchor" href="#cfsiscomplete"><span class="octicon octicon-link"></span></a>cfsIsComplete</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsComplete</span> <span class="s2">"Collection"</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsComplete</span> <span class="s2">"Collection"</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsComplete</span> <span class="s2">"Collection"</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns true whenever neither a download nor an upload is happening for the given file.</p>
+
+<h3>
+<a name="cfsqueueprogress" class="anchor" href="#cfsqueueprogress"><span class="octicon octicon-link"></span></a>cfsQueueProgress</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsQueueProgress</span> <span class="s2">"Collection"</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsQueueProgress</span> <span class="s2">"Collection"</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsQueueProgress</span> <span class="s2">"Collection"</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns the percentage progress of the current operation for the file, either upload or download.</p>
+
+<h3>
+<a name="cfsqueueprogressbar" class="anchor" href="#cfsqueueprogressbar"><span class="octicon octicon-link"></span></a>cfsQueueProgressBar</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsQueueProgressBar</span> <span class="s2">"Collection"</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsQueueProgressBar</span> <span class="s2">"Collection"</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsQueueProgressBar</span> <span class="s2">"Collection"</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span><span class="p">}}</span>
+</pre></div>
+
+<p>Creates an HTML5 <code>&lt;progress&gt;</code> element that shows the progress of the current operation for the file, either upload or download.
+You can optionally specify <code>id</code> or <code>class</code> attributes to help you style it. For example:</p>
+
+<div class="highlight highlight-html"><pre>{{#each cfsFiles "Songs"}}
+{{#if cfsIsUploading "Songs"}}
+{{cfsQueueProgressBar "Songs" class="uploadBar"}}<span class="nt">&lt;br/&gt;&lt;em&gt;</span>Uploading...<span class="nt">&lt;/em&gt;</span>
+{{/if}}
+{{#if cfsIsDownloading "Songs"}}
+{{cfsQueueProgressBar "Songs" class="downloadBar"}}<span class="nt">&lt;br/&gt;&lt;em&gt;</span>Downloading...<span class="nt">&lt;/em&gt;</span>
+{{/if}}
+{{/each}}
+</pre></div>
+
+<p>Older browsers will simply display the percentage.</p>
+
+<h3>
+<a name="cfsispaused" class="anchor" href="#cfsispaused"><span class="octicon octicon-link"></span></a>cfsIsPaused</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">{{</span><span class="nx">cfsIsPaused</span> <span class="s2">"Collection"</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns true if the queue for the CFS is paused.</p>
+
+<h3>
+<a name="cfsisowner" class="anchor" href="#cfsisowner"><span class="octicon octicon-link"></span></a>cfsIsOwner</h3>
+
+<p>Is current user the owner of the file?</p>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsOwner</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsOwner</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsOwner</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span> <span class="nx">collection</span><span class="o">=</span><span class="s2">"Collection"</span><span class="p">}}</span>
+</pre></div>
+
+<p>Is user with userId the owner of the file?</p>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsOwner</span> <span class="nx">userId</span><span class="o">=</span><span class="nx">userId</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsOwner</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span> <span class="nx">userId</span><span class="o">=</span><span class="nx">userId</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsIsOwner</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span> <span class="nx">collection</span><span class="o">=</span><span class="s2">"Collection"</span> <span class="nx">userId</span><span class="o">=</span><span class="nx">userId</span><span class="p">}}</span>
+</pre></div>
+
+<h3>
+<a name="cfsformattedsize" class="anchor" href="#cfsformattedsize"><span class="octicon octicon-link"></span></a>cfsFormattedSize</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFormattedSize</span> <span class="nx">formatString</span><span class="o">=</span><span class="nx">formatString</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFormattedSize</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span> <span class="nx">formatString</span><span class="o">=</span><span class="nx">formatString</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFormattedSize</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span> <span class="nx">collection</span><span class="o">=</span><span class="s2">"Collection"</span> <span class="nx">formatString</span><span class="o">=</span><span class="nx">formatString</span><span class="p">}}</span>
+</pre></div>
+
+<p>Formats the file size of the given file using any format string supported by numeral.js. If you don't specify formatString,
+a default format string <code>'0.00 b'</code> is used.</p>
+
+<h3>
+<a name="cfsfilehandlers" class="anchor" href="#cfsfilehandlers"><span class="octicon octicon-link"></span></a>cfsFileHandlers</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFileHandlers</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFileHandlers</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFileHandlers</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span> <span class="nx">collection</span><span class="o">=</span><span class="s2">"Collection"</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns an array of filehandlers for the file, suitable for use with <code>#each</code>.</p>
+
+<h3>
+<a name="cfsfileurl" class="anchor" href="#cfsfileurl"><span class="octicon octicon-link"></span></a>cfsFileUrl</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFileUrl</span> <span class="s2">"defaultHandler"</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFileUrl</span> <span class="s2">"defaultHandler"</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsFileUrl</span> <span class="s2">"defaultHandler"</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span> <span class="nx">collection</span><span class="o">=</span><span class="s2">"Collection"</span><span class="p">}}</span>
+</pre></div>
+
+<p>Returns the file URL for the given file, as assigned by the given filehandler.</p>
+
+<h3>
+<a name="cfsdownloadbutton" class="anchor" href="#cfsdownloadbutton"><span class="octicon octicon-link"></span></a>cfsDownloadButton</h3>
+
+<div class="highlight highlight-js"><pre><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsDownloadButton</span> <span class="s2">"Collection"</span><span class="p">}}</span> <span class="p">(</span><span class="kd">with</span> <span class="nx">file</span> <span class="nx">as</span> <span class="nx">current</span> <span class="nx">context</span><span class="p">)</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsDownloadButton</span> <span class="s2">"Collection"</span> <span class="nx">file</span><span class="o">=</span><span class="nx">file</span><span class="p">}}</span>
+<span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="p">{{</span><span class="nx">cfsDownloadButton</span> <span class="s2">"Collection"</span> <span class="nx">fileId</span><span class="o">=</span><span class="nx">fileId</span><span class="p">}}</span>
+</pre></div>
+
+<p>Creates an HTML <code>&lt;button&gt;</code> element for the given file which, when clicked, initiates downloading
+of the file by the browser. This uses a FileSaver shim which should support most modern browsers.</p>
+
+<p>You can optionally specify <code>id</code> or <code>class</code> attributes to help you style it, and a <code>content</code> attribute
+to use as the button element content. If you don't specify content, the button will say "Download".</p>
+
+<h2>
+<a name="upcoming-features" class="anchor" href="#upcoming-features"><span class="octicon octicon-link"></span></a>Upcoming Features</h2>
+
+<p>An overhaul and many fixes and new features will hopefully be completed by July 2013.</p>
 
 <ul>
-<li>Handlebar helpers? <code>{{fileProgress}}</code>, <code>{{fileInQue}}</code> etc.</li>
 <li>Test server-side handling of image size, etc.</li>
 <li>When there is a hot code deploy the queue halts, which could be tackled in future version of Meteor.</li>
 <li>CollectionFS deviates from GridFS by using string-based files.length (Meteor are working on this issue).</li>
 <li>Prepare ability for special version caching options creating converting images, docs, tts, sound, video, remote server upload etc.</li>
+<li>Integrated uploads to Google Drive, Dropbox, etc.</li>
 <li>Make Meteor packages for <code>GraphicsMagick</code>, etc.</li>
-</ul><h3>Notes:</h3>
-
-<ul>
-<li>This is made as <code>Make it work, make it fast</code>, well it just got very fast! <em>Need to test if it's actually faster than regular upload.</em>
-</li>
-<li>No test suite — any good ones for Meteor?</li>
+<li>More options for storing and retrieving data</li>
+<li>More control over the queue eg. trottling the queue</li>
+<li>Make a dropbox like example of client side</li>
+<li>Test suite — any good ones for Meteor?</li>
 <li>Current code client side contains relics and will have a make-over one of these days.</li>
-</ul>
+</ul><h2>
+<a name="contributing" class="anchor" href="#contributing"><span class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>Do you have ideas, issues, documentation, fixes, or pull requests? Anyone is welcome to help make CollectionFS faster, more versatile, and easier to use.</p>
+
+<h3>
+<a name="special-thanks-to-code-contributors" class="anchor" href="#special-thanks-to-code-contributors"><span class="octicon octicon-link"></span></a>Special Thanks to Code Contributors</h3>
+
+<p><strong><a href="https://github.com/aldeed" class="user-mention">@aldeed</a>, <a href="https://github.com/eprochasson" class="user-mention">@eprochasson</a>, <a href="https://github.com/emgee3" class="user-mention">@emgee3</a>, <a href="https://github.com/nhibner" class="user-mention">@nhibner</a>, <a href="https://github.com/mitar" class="user-mention">@mitar</a>, <a href="https://github.com/petrocket" class="user-mention">@petrocket</a></strong><br><em>ranked by last commit</em>
+(Are you missing from the list? File it as an issue or submit a pull request.)</p>
       </section>
 
     </div>
