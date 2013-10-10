@@ -250,7 +250,7 @@ _.extend(_queueCollectionFS.prototype, {
 
 		if (fileItem.queueChunks.length === fileItem.countChunks) {
       //Last worker make chunks into blob
-			var buffers = fileItem.queueChunks.map( function(chunk) {
+			var buffers = _.map(fileItem.queueChunks, function(chunk) {
 			  return chunk.buffer;
 			});
 			self.queue[fileId].blob = new Blob(buffers,
