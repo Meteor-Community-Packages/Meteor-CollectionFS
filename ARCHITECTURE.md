@@ -229,6 +229,11 @@ We describe the life of a general task
     // this.failed will mark the job as failed and will be rerun at idle
   };
 ```
+Use function(complete) in add instead...
+
+Feature
+* pause, stop, start, resume, clear
+* should items be removed after executed option
 
 Usecases in the `CFS` project:
 * Filehandlers could be described as a queue with a special task handler
