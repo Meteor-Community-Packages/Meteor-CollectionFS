@@ -43,7 +43,9 @@ upCol.insert(event.target.files); //first arg is FileObject or File or array of 
 When you define filehandlers for an UploadsCollection, you must define both a "put"
 function and a "del" function. The result of the "put" function must be an object
 that is saved in the UploadRecord and then passed to the "del" function as necessary
-to aid in deleting that copy of the uploaded file.
+to aid in deleting that copy of the uploaded file. This object can have any properties
+you need, but by convention it should have a "url" property if the saved file copy
+is accessible at a certain URL.
 
 You can think of "filehandlers" as "copy makers". The "put" function makes a copy of
 the file and stores it somewhere. The "del" function deletes that copy.
