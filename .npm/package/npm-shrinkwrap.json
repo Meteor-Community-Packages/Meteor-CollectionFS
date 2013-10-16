@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "gm": {
+      "version": "1.13.1",
+      "dependencies": {
+        "debug": {
+          "version": "0.7.0"
+        },
+        "array-series": {
+          "version": "0.1.4"
+        },
+        "array-parallel": {
+          "version": "0.1.2"
+        },
+        "stream-to-buffer": {
+          "version": "0.0.1"
+        },
+        "through": {
+          "version": "2.3.4"
+        }
+      }
+    }
+  }
+}
