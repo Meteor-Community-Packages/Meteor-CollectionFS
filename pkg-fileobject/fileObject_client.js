@@ -8,7 +8,7 @@ FileObject.fromFile = function(file) {
     encoding: (file.encoding && file.encoding.length) ? file.encoding : 'utf-8' // Default 'utf-8'
   });
   
-  fileObject.blob = new Blob([file]);
+  fileObject.blob = new Blob([file], {type: file.type});
   return fileObject;
 };
 
@@ -30,31 +30,30 @@ FileObject.prototype.toDataUrl = function(callback) {
   }
 };
 
-FileObject.prototype.getChunk = function(chunkNum, callback) {
-  check(chunkNum, Number);
+FileObject.prototype.getChunk = function(chunkNumber, callback) {
+  var self = this, blob = self.blob, chunkSize = self.chunkSize;
   
-  var self = this, f = self.blob;
-  
-  if (!f)
-    throw new Error("FileObject must have an associated client File to call getChunk");
+  if (!blob || !chunkSize)
+    throw new Error("getChunk requires that data is loaded in the FileObject and chunkSize is set");
   
   callback = callback || function () {};
 
   var myreader = new FileReader();
-  var start = chunkNum * self.chunkSize;
-  //make sure not to exceed boundaries
-  var stop = Math.min(start + self.chunkSize, f.size);
-  var slice = f.slice || f.webkitSlice || f.mozSlice;
-  var blob = slice.call(f, start, stop, f.contentType);
+  var start = chunkNumber * chunkSize;
+  var end = start + chunkSize;
+  end = Math.min(end, blob.size);
   
-  if (!blob)
+  var slice = blob.slice || blob.webkitSlice || blob.mozSlice;
+  if (!slice)
     throw new Error('Slice function not supported');
+  
+  var chunk = slice.call(blob, start, end, blob.type);
 
   myreader.onload = function() {
     var result = new Uint8Array(myreader.result);
-    callback(chunkNum, result);
+    callback(chunkNumber, result);
   };
-  myreader.readAsArrayBuffer(blob);
+  myreader.readAsArrayBuffer(chunk);
 };
 
 FileObject.prototype.addDataChunk = function(chunkNumber, data) {

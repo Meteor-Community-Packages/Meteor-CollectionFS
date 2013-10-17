@@ -82,18 +82,18 @@ FileObject.prototype.saveBuffer = function() {
 };
 
 FileObject.prototype.getChunk = function(chunkNumber) {
-  var self = this;
+  var self = this, buffer = self.buffer, chunkSize = self.chunkSize;
   
-  if (!self.buffer || !self.chunkSize)
-    throw new Error("getChunk requires a buffer loaded in the FileObject and chunk size");
+  if (!buffer || !chunkSize)
+    throw new Error("getChunk requires that data is loaded in the FileObject and chunkSize is set");
   
-  var start = chunkNumber * self.chunkSize;
-  var end = start + self.chunkSize;
-  end = Math.min(end, self.buffer.length);
+  var start = chunkNumber * chunkSize;
+  var end = start + chunkSize;
+  end = Math.min(end, buffer.length);
   var total = end - start;
   var chunk = new UIntArray(total);
   for (var i = 0; i < total; i++) {
-    chunk[i] = self.buffer[start + i];
+    chunk[i] = buffer[start + i];
   }
   
   return chunk;
