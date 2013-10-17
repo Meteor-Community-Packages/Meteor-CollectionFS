@@ -15,89 +15,58 @@ UploadsCollection = function(name) {
  * Public Methods
  */
 
+UploadsCollection.prototype._insert = function(fileObject, callback) {
+  var self = this;
+  callback = callback || function() {};
+
+  var fileRecord = _.extend({}, fileObject.filesDocument(), {
+    totalChunks: fileObject.expectedChunks(),
+    uploadedChunks: 0,
+    complete: false
+  });
+
+  if ("_id" in fileRecord) {
+    delete fileRecord._id;
+  }
+
+  self._collection.insert(fileRecord, function(err, id) {
+    if (err)
+      throw err;
+
+    //start upload for the inserted ID
+    fileObject.setId(id);
+    self.uploadManager._uploadBlob(fileObject);
+
+    callback(err, id);
+  });
+};
+
 UploadsCollection.prototype.insert = function(document, callback) {
-  var self = this, f;
-
-  var getFileRecord = function(fileObject) {
-    var fileRecord = _.extend({}, fileObject.filesDocument(), {
-      totalChunks: fileObject.expectedChunks(),
-      uploadedChunks: 0,
-      complete: false
-    });
-
-    if ("_id" in fileRecord) {
-      delete fileRecord._id;
-    }
-
-    return fileRecord;
-  };
+  var self = this;
 
   //passed in a single FileObject
   if (Match.test(document, FileObject)) {
-    f = getFileRecord(document);
-    self._collection.insert(f, function(err, id) {
-      if (err)
-        throw err;
-
-      //start upload for the inserted ID
-      document.setId(id);
-      self.uploadManager._uploadBlob(document);
-
-      typeof callback === "function" && callback(err, id);
-    });
+    self._insert(document, callback);
   }
 
   //passed in an array of FileObjects
   else if (Match.test(document, [FileObject])) {
-    var fo;
     for (var i = 0, ln = document.length; i < ln; i++) {
-      fo = document[i];
-      f = getFileRecord(document[i]);
-      self._collection.insert(f, function(err, id) {
-        if (err)
-          throw err;
-
-        //start upload for the inserted ID
-        fo.setId(id);
-        self.uploadManager._uploadBlob(fo);
-
-        typeof callback === "function" && callback(err, id);
-      });
+      self._insert(document[i], callback);
     }
   }
 
   //passed in a single File
   else if (Match.test(document, File)) {
     var fo = FileObject.fromFile(document);
-    f = getFileRecord();
-    self._collection.insert(f, function(err, id) {
-      if (err)
-        throw err;
-
-      //start upload for the inserted ID
-      fo.setId(id);
-      self.uploadManager._uploadBlob(fo);
-
-      typeof callback === "function" && callback(err, id);
-    });
+    self._insert(fo, callback);
   }
 
   //passed in an array of Files
   else if (Match.test(document, Match.OneOf([File], FileList))) {
-    var fo;
     for (var i = 0, ln = document.length; i < ln; i++) {
-      fo = FileObject.fromFile(document[i]);
-      f = getFileRecord(fo);
-      self._collection.insert(f, function(err, id) {
-        if (err)
-          throw err;
-
-        //start upload for the inserted ID
-        fo.setId(id);
-        self.uploadManager._uploadBlob(fo);
-
-        typeof callback === "function" && callback(err, id);
-      });
+      var fo = FileObject.fromFile(document[i]);
+      self._insert(fo, callback);
     }
   }
 
