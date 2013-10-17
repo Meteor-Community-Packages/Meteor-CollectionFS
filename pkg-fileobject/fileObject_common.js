@@ -39,8 +39,8 @@ FileObject = function(fileRecord, chunksCollection) {
 
   self.encoding = fileRecord.encoding || 'utf-8'; // Default 'utf-8'
 
-  if (fileRecord.file)
-    self.file = fileRecord.file;
+  //if (fileRecord.file) TODO REMOVE
+  //  self.file = fileRecord.file;
 
   //optionally pin to a chunks collection from which a buffer can be loaded
   if (chunksCollection)

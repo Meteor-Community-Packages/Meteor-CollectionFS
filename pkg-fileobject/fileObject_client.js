@@ -1,13 +1,15 @@
 FileObject.fromFile = function(file) {
   check(file, File);
 
-  return new FileObject({
-    file: file,
+  var fileObject = new FileObject({
     length: '' + file.size,
     filename: file.name,
     contentType: file.type,
-    encoding: (file.encoding && file.encoding !== '') ? file.encoding : 'utf-8' // Default 'utf-8'
+    encoding: (file.encoding && file.encoding.length) ? file.encoding : 'utf-8' // Default 'utf-8'
   });
+  
+  fileObject.blob = new Blob([file]);
+  return fileObject;
 };
 
 FileObject.prototype.toDataUrl = function(callback) {
@@ -25,15 +27,13 @@ FileObject.prototype.toDataUrl = function(callback) {
   
   if (self.blob) {
     fileReader.readAsDataURL(self.blob);
-  } else if (self.file) {
-    fileReader.readAsDataURL(self.file);
   }
 };
 
 FileObject.prototype.getChunk = function(chunkNum, callback) {
   check(chunkNum, Number);
   
-  var self = this, f = self.file;
+  var self = this, f = self.blob;
   
   if (!f)
     throw new Error("FileObject must have an associated client File to call getChunk");
@@ -76,7 +76,5 @@ FileObject.prototype.saveLocal = function() {
   var self = this;
   if (self.blob) {
     window.saveAs(self.blob, self.filename);
-  } else if (self.file) {
-    window.saveAs(self.file, self.filename);
   }
 };

@@ -23,12 +23,13 @@ if (typeof Handlebars !== 'undefined') {
         return false;
       }
 
-      if (fileObject.file || fileObject.blob) {
+      if (fileObject.blob) {
         fileObject.saveLocal();
       } else {
         fileObject.loadBlobFromCFS(function() {
-          if (fileObject.blob)
+          if (fileObject.blob) {
             fileObject.saveLocal();
+          }
         });
       }
 
