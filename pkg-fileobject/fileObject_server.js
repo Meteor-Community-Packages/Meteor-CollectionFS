@@ -61,6 +61,26 @@ FileObject.prototype.loadBuffer = function(buffer) {
   self._loadBuffer(buffer);
 };
 
+FileObject.prototype.saveBuffer = function() {
+  var self = this, fileId = self._id;
+  
+  if (!self.chunksCollection)
+    throw new Error("saveBuffer: FileObject does not have a pinned chunks collection");
+
+  self.forEachChunk(function (chunkNum, data) {
+    // Save data chunk into database
+    var cId = self.chunksCollection.insert({
+      "files_id": fileId, // _id of the corresponding files collection entry
+      "n": chunkNum, // chunks are numbered in order, starting with 0
+      "data": data // the chunk's payload as a BSON binary type
+    });
+
+    // Check that we are okay
+    if (!cId)
+      throw new Error('saveBuffer: could not add chunk ' + chunkNum + ' of file ' + self.filename + ' to chunksCollection');
+  });
+};
+
 FileObject.prototype.getChunk = function(chunkNumber) {
   var self = this;
   

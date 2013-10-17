@@ -139,7 +139,7 @@ _.extend(_queueListener.prototype, {
     var fileObject = uploadRecord.toFileObject();
     if (fileObject.allChunksUploaded()) {
       fileObject.loadBuffer();
-      fileObject.clearId(); //remove ._id so that it is not set when passed to file handler functions
+      fileObject.setId(void 0); //remove ._id so that it is not set when passed to file handler functions
     }
 
     var uploadRecordID = uploadRecord._id;

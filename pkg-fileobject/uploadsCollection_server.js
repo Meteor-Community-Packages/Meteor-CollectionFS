@@ -140,7 +140,8 @@ UploadsCollection.prototype.insert = function(document, callback) {
     //start upload for the inserted ID
     if (id) {
       document.setId(id);
-      self._saveBufferToChunks(document);
+      document.chunksCollection = self._chunksCollection;
+      document.saveBuffer();
     }
     return id;
   }
@@ -148,33 +149,4 @@ UploadsCollection.prototype.insert = function(document, callback) {
   else {
     throw new Error("invalid first argument for UploadsCollection.insert");
   }
-};
-
-/*
- * Private Methods
- */
-
-UploadsCollection.prototype._saveBufferToChunks = function(fileObject) {
-  // Check filename
-  if (!fileObject.filename)
-    throw new Error('_saveBufferToChunks: fileObject.filename must be set');
-
-  if (!fileObject.buffer)
-    throw new Error('_saveBufferToChunks: fileObject.buffer must be set');
-
-  var self = this;
-  var fileId = fileObject._id;
-  
-  fileObject.forEachChunk(function (chunkNum, data) {
-    // Save data chunk into database
-    var cId = self._chunksCollection.insert({
-      "files_id": fileId, // _id of the corresponding files collection entry
-      "n": chunkNum, // chunks are numbered in order, starting with 0
-      "data": data // the chunk's payload as a BSON binary type
-    });
-
-    // Check that we are okay
-    if (!cId)
-      throw new Error('_saveBufferToChunks: could not add chunk ' + chunkNum + ' of file ' + fileObject.filename + ' to _chunksCollection');
-  });
 };

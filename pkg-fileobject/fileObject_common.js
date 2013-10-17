@@ -106,10 +106,6 @@ FileObject.prototype.filesDocument = function() {
   return doc;
 };
 
-FileObject.prototype.clearId = function() {
-  this._id = void 0;
-};
-
 FileObject.prototype.setId = function(value) {
   this._id = value;
 };
