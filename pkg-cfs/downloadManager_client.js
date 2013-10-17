@@ -141,7 +141,6 @@ _downloadManager.prototype._downloadChunk = function(chunkNum) {
       self._processing = false;
       throw err;
     }
-    console.log(chunkNum, chunk);
     self.currentFileObject.addDataChunk(chunkNum, chunk);
     self._downloadNextChunk();
   }

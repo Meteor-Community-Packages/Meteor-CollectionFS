@@ -111,7 +111,7 @@ _uploadManager.prototype._uploadBlob = function(fileObject) {
 
 _uploadManager.prototype._uploadChunk = function(chunkNum, data) {
   var self = this;
-
+  
   Meteor.apply(
           "uploadChunk_" + self._name,
           [self._currentFileId, chunkNum, data],
@@ -156,7 +156,7 @@ _uploadManager.prototype._uploadNextChunk = function() {
     return;
   }
 
-  self.currentFileObject.getChunk(chunkNum, function(chunkNum, data) {
+  self.currentFileObject.getChunk(chunkNum, function (chunkNum, data) {
     self._uploadChunk(chunkNum, data);
   });
   self._nextChunk++;

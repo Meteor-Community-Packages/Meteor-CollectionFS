@@ -86,7 +86,8 @@ UploadsCollection = function(name, options) {
   methods["uploadChunk_" + name] = function(fileId, chunkNum, data) {
     check(fileId, String);
     check(chunkNum, Number);
-
+    check(data, Uint8Array);
+    
     this.unblock();
 
     var cId = self._chunksCollection.insert({

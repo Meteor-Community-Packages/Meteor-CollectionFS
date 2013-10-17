@@ -32,39 +32,35 @@ FileObject.prototype.toDataUrl = function(callback) {
 
 FileObject.prototype.getChunk = function(chunkNum, callback) {
   check(chunkNum, Number);
-  check(callback, Function);
+  
+  var self = this, f = self.file;
+  
+  if (!f)
+    throw new Error("FileObject must have an associated client File to call getChunk");
+  
+  callback = callback || function () {};
 
-  var self = this;
-  var f = self.file;
   var myreader = new FileReader();
   var start = chunkNum * self.chunkSize;
   //make sure not to exceed boundaries
   var stop = Math.min(start + self.chunkSize, f.size);
   var slice = f.slice || f.webkitSlice || f.mozSlice;
   var blob = slice.call(f, start, stop, f.contentType);
-
-  myreader.onloadend = function(evt) {
-    if (evt.target.readyState === FileReader.DONE) {
-      callback(chunkNum, evt.target.result);
-    }
-  };
-
+  
   if (!blob)
     throw new Error('Slice function not supported');
 
-  myreader.readAsBinaryString(blob);
+  myreader.onload = function() {
+    var result = new Uint8Array(myreader.result);
+    callback(chunkNum, result);
+  };
+  myreader.readAsArrayBuffer(blob);
 };
 
 FileObject.prototype.addDataChunk = function(chunkNumber, data) {
   var self = this;
-
-  var carry = [];
-  for (var i = 0; i < data.length; i++) {
-    carry.push(data.charCodeAt(i));
-  }
-
   self._addedChunks = self._addedChunks || []; //we remove when not in use to keep the object properties clean
-  self._addedChunks[chunkNumber] = new Uint8Array(carry); //TODO: use EJSON.binary()
+  self._addedChunks[chunkNumber] = data;
   
   //When all chunks are present, automatically convert them into a Blob
   if (self._addedChunks && self._addedChunks.length === self.expectedChunks()) {

@@ -43,7 +43,7 @@ FileObject.prototype.loadBuffer = function(buffer) {
   var chunkSize = self.chunkSize;
 
   // Allocate memory for buffer
-  buffer = new Buffer(fileSize, self.encoding);
+  buffer = new Buffer(fileSize);
 
   // Fill buffer from BSON data
   query.rewind();
@@ -54,7 +54,7 @@ FileObject.prototype.loadBuffer = function(buffer) {
 
     var start = chunk.n * chunkSize;
     for (var i = 0; i < data.length; i++) {
-      buffer[start + i] = data.charCodeAt(i);
+      buffer[start + i] = data[i];
     }
   }); //EO each chunks
 
@@ -64,12 +64,19 @@ FileObject.prototype.loadBuffer = function(buffer) {
 FileObject.prototype.getChunk = function(chunkNumber) {
   var self = this;
   
-  if (!self.buffer || !self.encoding || !self.chunkSize)
-    throw new Error("getChunk requires a buffer loaded in the FileObject and an encoding and chunk size");
+  if (!self.buffer || !self.chunkSize)
+    throw new Error("getChunk requires a buffer loaded in the FileObject and chunk size");
   
   var start = chunkNumber * self.chunkSize;
   var end = start + self.chunkSize;
-  return self.buffer.toString(self.encoding, start, end);
+  end = Math.min(end, self.buffer.length);
+  var total = end - start;
+  var chunk = new UIntArray(total);
+  for (var i = 0; i < total; i++) {
+    chunk[i] = self.buffer[start + i];
+  }
+  
+  return chunk;
 };
 
 FileObject.prototype.forEachChunk = function(callback) {

@@ -56,22 +56,30 @@ CollectionFS = function(name, options) {
 }; //EO collectionFS
 
 CollectionFS.prototype.insert = function(fileObject) {
-  var self = this;
+  var self = this, buffer = fileObject.buffer;
+
+  if (!fileObject.buffer)
+    throw new Error("cannot insert FileObject into a CollectionFS unless its buffer is set");
+
   var fileId = self.files.insert(fileObject.filesDocument());
 
   // Check that we are ok
   if (!fileId)
     throw new Error('could not insert "' + fileObject.filename + '" in ' + self._name + ' collection');
 
-  //Put file in upload queue
-  var encoding = fileObject.encoding,
+  var length = fileObject.buffer.length,
           size = fileObject.chunkSize,
           totalChunks = fileObject.expectedChunks();
 
   for (var n = 0; n < totalChunks; n++) {
     // Handle each chunk
     var start = n * size, end = start + size;
-    var data = fileObject.buffer.toString(encoding, start, end);
+    end = Math.min(end, length);
+    var bytes = end - start;
+    var data = new Uint8Array(end - start);
+    for (var i = 0; i < bytes; ++i) {
+      data[i] = buffer[start + i];
+    }
 
     // Save data chunk into database
     var cId = self.chunks.insert({
