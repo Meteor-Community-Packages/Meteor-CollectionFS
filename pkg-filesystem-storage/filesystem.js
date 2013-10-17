@@ -131,10 +131,8 @@ if (typeof FileObject !== "undefined") {
     var extension = options.extension || path.extname(self.filename);
     // Remove optional leading '.' from extension name
     extension = (extension.substr(0, 1) === '.') ? extension.substr(1) : extension;
-    // Construct filename from '_id', current numeric date, and extension
-    var myFilename = self._id + '_' + Date.now() + '.' + extension;
-    // Construct url TODO: Should URL encode (could cause trouble in
-    // the remove observer)
+    // Construct filename from current numeric date and extension
+    var myFilename = Date.now() + '.' + extension;
     return {
       serverFilename: path.join(serverPath, myFilename),
       url: pathURL + '/' + myFilename
