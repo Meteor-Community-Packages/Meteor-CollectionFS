@@ -109,8 +109,9 @@ if (typeof FileObject !== "undefined") {
   };
 
   FileObject.prototype.delFilesystem = function(info) {
-    var ret = fs.unlinkSync(info.filePath);
-    console.log(ret);
+    if (fs.existsSync(info.filePath)) {
+      fs.unlinkSync(info.filePath);
+    }
     return true;
   };
 
