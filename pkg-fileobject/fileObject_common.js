@@ -37,11 +37,6 @@ FileObject = function(fileRecord, chunksCollection) {
     self.owner = Meteor.userId();
   }
 
-  self.encoding = fileRecord.encoding || 'utf-8'; // Default 'utf-8'
-
-  //if (fileRecord.file) TODO REMOVE
-  //  self.file = fileRecord.file;
-
   //optionally pin to a chunks collection from which a buffer can be loaded
   if (chunksCollection)
     self.chunksCollection = chunksCollection;
@@ -100,9 +95,6 @@ FileObject.prototype.filesDocument = function() {
   if (self.owner)
     doc.owner = self.owner;
 
-  if (self.encoding)
-    doc.encoding = self.encoding;
-
   return doc;
 };
 
@@ -152,7 +144,6 @@ FileObject.prototype.clone = function() {
     aliases: this.aliases,
     metadata: this.metadata,
     owner: this.owner,
-    encoding: this.encoding,
     _addedChunks: this._addedChunks
   });
 };
@@ -169,7 +160,6 @@ FileObject.prototype.toJSONValue = function() {
     aliases: this.aliases,
     metadata: this.metadata,
     owner: this.owner,
-    encoding: this.encoding,
     _addedChunks: this._addedChunks
   };
 };

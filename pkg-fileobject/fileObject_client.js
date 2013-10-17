@@ -4,8 +4,7 @@ FileObject.fromFile = function(file) {
   var fileObject = new FileObject({
     length: '' + file.size,
     filename: file.name,
-    contentType: file.type,
-    encoding: (file.encoding && file.encoding.length) ? file.encoding : 'utf-8' // Default 'utf-8'
+    contentType: file.type
   });
   
   fileObject.blob = new Blob([file], {type: file.type});
