@@ -104,6 +104,7 @@ if (typeof Handlebars !== 'undefined') {
       attributes: objToAttributes(hash)
     }));
   });
+  
 } else {
   throw new Error("add the handlebars package");
 }

@@ -88,6 +88,35 @@ if (typeof Handlebars !== 'undefined') {
     }));
   });
 
+  //Usage: {{cfsBlobUrl}} (with FileObject as current context)
+  //Will download blob and store data in session the first time it's rendered
+  Handlebars.registerHelper('cfsBlobUrl', function() {
+    var self = this;
+    
+    if (!window || !window.URL || !window.URL.createObjectURL || !self._id)
+      return "";
+    
+    var key = "cfsBlobUrlForId_" + self._id + "_inCollection_" + self.collection._name;
+
+    if (!Session.get(key)) {
+      self.loadBlobFromCFS(function () {
+        Session.set(key, window.URL.createObjectURL(self.blob));
+      });
+    }
+
+    return Session.get(key);
+  });
+  
+  //Usage: {{cfsBlobImage}} (with FileObject as current context)
+  Handlebars.registerHelper('cfsBlobImage', function(options) {
+    var hash = options.hash;
+    hash = hash || {};
+    return new Handlebars.SafeString(Template._cfsBlobImage({
+      fileObject: this,
+      attributes: objToAttributes(hash)
+    }));
+  });
+
   //Usage:
   //{{cfsIsPaused "Collection"}}
   Handlebars.registerHelper('cfsIsPaused', function(collection) {

@@ -7,3 +7,9 @@
   <progress value="{{cfsFileProgress}}" max="100"{{{../attributes}}}>{{cfsFileProgress}}%</progress>
   {{/with}}
 </template>
+
+<template name="_cfsBlobImage">
+  {{#with fileObject}}
+  <img src="{{cfsBlobUrl}}"{{{../attributes}}} />
+  {{/with}}
+</template>
