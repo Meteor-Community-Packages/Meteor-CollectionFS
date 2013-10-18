@@ -1,16 +1,12 @@
 var path = Npm.require('path');
 var Future = Npm.require(path.join('fibers', 'future'));
+var Knox = Npm.require('knox');
 
 //extend FileObject with CFS-specific methods
 if (typeof FileObject !== "undefined") {
-
-  if (typeof Knox === "undefined")
-    throw new Error("knox package is required");
-
   FileObject.prototype.putS3 = function(options) {
     var self = this;
     options = _.extend({
-      endpoint: null, //required
       region: null, //required
       key: null, //required
       secret: null, //required
@@ -40,6 +36,7 @@ if (typeof FileObject !== "undefined") {
         fut.return(false);
       }
     });
+    req.on('error', function (){}); //need this to prevent unhandled errors killing the app
     return fut.wait();
   };
 
@@ -57,10 +54,13 @@ if (typeof FileObject !== "undefined") {
     }, options);
 
     var S3 = Knox.createClient(options);
-    
+
     var fut = new Future();
     S3.deleteFile(returnValueFromPut.fileKey, function(err, res) {
-        fut.return(!!res);
+      if (err)
+        throw err;
+
+      fut.return(!!res);
     });
     return fut.wait();
   };

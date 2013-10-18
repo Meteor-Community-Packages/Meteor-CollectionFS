@@ -5,7 +5,5 @@
   "author": "Morten Henriksen  (http://gi-software.com)",
   "version": "0.3.0",
   "git": "https://github.com/raix/Meteor-CollectionFS.git",
-  "packages": {
-    "knox": {}
-  }
+  "packages": {}
 }

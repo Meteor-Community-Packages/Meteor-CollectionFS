@@ -6,7 +6,10 @@ Package.describe({
           "\u001b[33m-------------------------------------RaiX\n"
 });
 
-Npm.depends({gm: "1.13.1"}); //for fileobject-gm package
+Npm.depends({
+  gm: "1.13.1", //for fileobject-gm package
+  knox: "0.8.6" //for s3-storage package
+}); 
 
 Package.on_use(function(api) {
   "use strict";

@@ -19,6 +19,33 @@
           "version": "2.3.4"
         }
       }
+    },
+    "knox": {
+      "version": "0.8.6",
+      "dependencies": {
+        "mime": {
+          "version": "1.2.11"
+        },
+        "xml2js": {
+          "version": "0.2.8",
+          "dependencies": {
+            "sax": {
+              "version": "0.5.5"
+            }
+          }
+        },
+        "debug": {
+          "version": "0.7.2"
+        },
+        "stream-counter": {
+          "version": "0.1.0",
+          "dependencies": {
+            "readable-stream": {
+              "version": "1.0.17"
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -141,11 +141,12 @@ _.extend(_queueListener.prototype, {
       fileObject.loadBuffer();
       fileObject.setId(void 0); //remove ._id so that it is not set when passed to file handler functions
     }
-
-    var uploadRecordID = uploadRecord._id;
-    if (fileObject.buffer && fileObject.buffer.length > 0) {
-      var someFailed = false;
-
+    
+    if (!fileObject.buffer || fileObject.buffer.length === 0) {
+      throw new Error("workFileHandlers: Failed to load buffer into fileObject");
+    }
+    
+    var uploadRecordID = uploadRecord._id, someFailed = false;
 
       //loop through user-defined filehandler functions and execute them
       for (var fhName in fileHandlers) {
@@ -208,10 +209,6 @@ _.extend(_queueListener.prototype, {
         //done running all filehandler functions for this file; remove all chunks from the temporary collection
         self._uploadsCollection._chunksCollection.remove({files_id: uploadRecordID});
       }
-    } else {
-      //something went wrong
-      self._uploadsCollection._collection.remove({_id: uploadRecordID}); //this will remove files and related chunks
-    }
 
     //mark as handled in DB
     self._uploadsCollection._collection.update({_id: uploadRecordID}, {$set: {handledAt: Date.now()}});
