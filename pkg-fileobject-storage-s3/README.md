@@ -1,3 +1,6 @@
+fileobject-storage-s3
+=========================
+
 1. Create a new bucket in S3. We'll refer to this as `mybucket`.
 2. If desired, create an IAM policy specific to allowing this app access to this bucket.
 3. Call like so:
