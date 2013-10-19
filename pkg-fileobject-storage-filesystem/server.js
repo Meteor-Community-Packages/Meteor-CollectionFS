@@ -47,9 +47,6 @@ fsConfig.bundleStaticPath = path.join(fsConfig.bundleRoot, 'static');
 fsConfig.bundlePath = path.join(fsConfig.bundleStaticPath, fsConfig.folder);
 fsConfig.serverPath = path.join(fsConfig.rootDir, fsConfig.folder);
 
-serverConsole.log('bundlePath: ' + fsConfig.bundlePath);
-serverConsole.log('serverPath: ' + fsConfig.serverPath);
-
 // Check if the bundle static folder exists, if not then create Issue #40
 if (!fs.existsSync(fsConfig.bundleStaticPath)) {
   fs.mkdirSync(fsConfig.bundleStaticPath);
@@ -73,7 +70,6 @@ if (!fs.existsSync(fsConfig.serverPath)) {
 
 // Create symlink
 if (!!fs.existsSync(fsConfig.serverPath)) {
-  serverConsole.log('Create symlinkSync');
   fs.symlinkSync(fsConfig.serverPath, fsConfig.bundlePath);
 }
 
