@@ -1,0 +1,9 @@
+<template name="_uplFileProgressBar">
+  {{#with uploadRecord}}
+  <progress value="{{uplFileProgress}}" max="100"{{{../attributes}}}>{{uplFileProgress}}%</progress>
+  {{/with}}
+</template>
+
+<template name="_uplFileInput">
+  <form><input type="file"{{{attributes}}} /></form>
+</template>
