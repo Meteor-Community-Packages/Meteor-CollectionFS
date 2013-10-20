@@ -93,3 +93,14 @@ Package.on_use(function(api) {
   ], ['client', 'server']);
 
 });
+
+
+Package.on_test(function (api) {
+  api.use('collectionFS');
+  api.use('test-helpers', 'server');
+  api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
+           'random', 'deps']);
+
+  api.add_files('collectionFS.server.tests.js', 'server');
+  api.add_files('collectionFS.client.tests.js', 'client');
+});
