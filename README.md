@@ -1,4 +1,4 @@
-#This is the 0.3.x dev preview!! [![Build Status](https://travis-ci.org/raix/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/raix/Meteor-CollectionFS)
+#This is the 0.3.x dev preview!! [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 It's rough on the edges, please checkout the milestones for progress indication.
 
 ## Where can I get the older versions?
@@ -6,9 +6,9 @@ All versions are tagged but might not work with the latest version of Meteor.
 
 To use the version 1 of `collectionFS` please tryout [Eric's updated fork](https://github.com/aldeed/Meteor-CollectionFS)
 
-I'm working hard on the new version, primary focus is on the code at the moment so docs are somewhat limited.
+We are working hard on the new version, primary focus is on the code at the moment so docs are somewhat limited.
 
-Kind regards Morten
+Eric & Morten
 
 #CollectionFS
 CollectionFS adds simple yet robust file uploading and downloading abilities to your Meteor web app. It is a mix of [Meteor.Collection](http://docs.meteor.com/#meteor_collection) and MongoDB's [GridFS](http://docs.mongodb.org/manual/core/gridfs/). CollectionFS stores files in your MongoDB database but also provides the ability to easily store files on the server filesystem or a remote filesystem.
