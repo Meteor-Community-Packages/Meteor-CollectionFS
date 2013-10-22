@@ -121,19 +121,27 @@ We should be able to have an interface like:
 
 ##Storage adapters
 A storage adapter is the core of `CFS` it's a file access object that provides a standard interface for filehandling. It consists of a reactive collection `files` also known as a `fileRecord`. The filerecord holds information about the files such as size, name and path.
-The file record is constant kept updated / syncronized with the actual storage. It may be challanging to write storage adapters since it would require hooks and watching for local or remote filesystems.
+The file record is constant kept updated / syncronized with the actual storage. It may be challanging to write storage adapters since it would require __hooks__ and __watching__ for local or remote filesystems.
 Each type of storage handlers may require some options for configuration, some requires a path while others may require some authentication setup.
+*NOTE: One thing to keep in mind is the act of syncronization - A storage adapter should carry a timediff between current Meteor server and files stored to a `Storage Adapter` - This way a future client could know what files are the latest, and not overwrite files the newest files.*
 
-###Setting storage adapters
-We have added the `filesystem` storage adapter as default dependency in `CFS` and `new CollectionsFS(name)` will naturally bind it self on the `filesystem` storage adapter unless another adapter is specified.
-All storage adapters installed are located in the `CFS.Storage` scope and will all be instance of `CFS.StorageAdapter`.
+###~~Setting storage adapters~~
+~~We have added the `filesystem` storage adapter as default dependency in `CFS` and `new CollectionsFS(name)` will naturally bind it self on the `filesystem` storage adapter unless another adapter is specified.
+All storage adapters installed are located in the `CFS.Storage` scope and will all be instance of `CFS.StorageAdapter`.~~
+Files are recieved on server from the client and put into a `Temporary Storage` To actually store the file so that its retrievable from client you have to setup a `filehandler`.
+The filehandler will enable the user to do:
+* Manipulation/transformation/converting/resizing images
+* Execute code depending on the contents of the file
+* Store the file to any `Storage Adapter`
+
+When storing to a `Storage Adapter` is completed: `Storage Adapter` __Type__, `Filehandler` __name__ and storage __details__ are added to the `fileRecord` in the `CollectionFS`. This way `CollectionFS` can retrieve and serve the file contents.
 
 ```js
-  var pictures = new CollectionFS('mypictures', '~/www/pictures')
-or
-  var pictures = new CollectionFS('mypictures', {
-    storageAdapter: new CFS.Storage.Filesystem('~/www/pictures')
-  });
+//  var pictures = new CollectionFS('mypictures', '~/www/pictures')
+//or
+//  var pictures = new CollectionFS('mypictures', {
+//    storageAdapter: new CFS.Storage.Filesystem('~/www/pictures')
+//  });
 ```
 
 ##Filehandlers
@@ -144,7 +152,7 @@ This way one can have files uploaded to the mongo db but have filehandlers creat
 
 ```
 File input adapter ––> | filehandlers |–––> Output adapter
-(Storage adapter)                          (Storage adapter)
+(Temporary Storage adapter)               (Storage adapter)
                                               |   |   |
                                               V   V   V
                                            (file versions)
