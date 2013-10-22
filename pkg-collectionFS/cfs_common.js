@@ -48,37 +48,37 @@ CollectionFS.prototype.filter = function(options) {
   this._filter = options;
 };
 
-CollectionFS.prototype.fileIsAllowed = function(fileRecord) {
+CollectionFS.prototype.fileIsAllowed = function(uploadRecord) {
   var self = this;
   if (!self._filter) {
     return true;
   }
-  if (!fileRecord || !fileRecord.contentType || !fileRecord.filename) {
-    throw new Error("invalid fileRecord:", fileRecord);
+  if (!uploadRecord || !uploadRecord.contentType || !uploadRecord.filename) {
+    throw new Error("invalid uploadRecord:", uploadRecord);
   }
-  var fileSize = fileRecord.size || parseInt(fileRecord.length, 10);
+  var fileSize = uploadRecord.size || parseInt(uploadRecord.length, 10);
   if (!fileSize || isNaN(fileSize)) {
-    throw new Error("invalid fileRecord file size:", fileRecord);
+    throw new Error("invalid uploadRecord file size:", fileRecord);
   }
   var filter = self._filter;
   if (filter.maxSize && fileSize > filter.maxSize) {
-    self.dispatch('invalid', {maxFileSizeExceeded: true}, fileRecord);
+    //self.dispatch('invalid', {maxFileSizeExceeded: true}, fileRecord); //not implemented
     return false;
   }
   var saveAllFileExtensions = (filter.allow.extensions.length === 0);
   var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
-  var ext = getFileExtension(fileRecord.filename);
-  var contentType = fileRecord.contentType;
+  var ext = uploadRecord.getExtension();
+  var contentType = uploadRecord.contentType;
   if (!((saveAllFileExtensions ||
           _.indexOf(filter.allow.extensions, ext) !== -1) &&
           _.indexOf(filter.deny.extensions, ext) === -1)) {
-    self.dispatch('invalid', {disallowedExtension: true}, fileRecord);
+    //self.dispatch('invalid', {disallowedExtension: true}, fileRecord); //not implemented
     return false;
   }
   if (!((saveAllContentTypes ||
           contentTypeInList(filter.allow.contentTypes, contentType)) &&
           !contentTypeInList(filter.deny.contentTypes, contentType))) {
-    self.dispatch('invalid', {disallowedContentType: true}, fileRecord);
+    //self.dispatch('invalid', {disallowedContentType: true}, fileRecord); //not implemented
     return false;
   }
   return true;

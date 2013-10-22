@@ -8,6 +8,12 @@ CollectionFS = function(name) {
       return new UploadRecord(self, doc);
     }
   });
+  
+  //filter
+  self._collection.before.insert(function (userId, doc) {
+    var uploadRecord = this.transform();
+    return self.fileIsAllowed(uploadRecord);
+  });
 
   self.uploadManager = new GQ.Queue();
   self.uploadManager.taskHandler = function(task) {

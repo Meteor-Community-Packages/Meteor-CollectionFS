@@ -170,7 +170,7 @@ _.extend(_queueListener.prototype, {
           myData['copies.' + func].storageAdaptor = copyDefinition.saveTo;
           myData['copies.' + func].createdAt = Date.now();
           if (fo) {
-            // These two properties could change per file copy (in the beforeSave function)
+            // These properties could change per file copy (in the beforeSave function)
             // so we store them with the other copy information, for use in
             // later downloading the data.
             myData['copies.' + func].filename = fo.filename;

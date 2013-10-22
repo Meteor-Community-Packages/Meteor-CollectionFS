@@ -21,6 +21,25 @@ CollectionFS = function(name, options) {
     }
   });
 
+  //filter
+  self._collection.before.insert(function(userId, doc) {
+    var uploadRecord = this.transform();
+    return self.fileIsAllowed(uploadRecord);
+  });
+  //don't allow any updates from the client
+  self._collection.deny({
+    insert: function() {
+      return false;
+    },
+    update: function() {
+      return true;
+    },
+    remove: function() {
+      return false;
+    },
+    fetch: []
+  });
+
   //this is used only during the upload and file handling and is unmanaged
   self._chunksCollection = new Meteor.Collection(null, {
     _preventAutopublish: true
@@ -120,7 +139,7 @@ CollectionFS = function(name, options) {
 
     var copyInfo = uploadRecord.copies[copyName];
 
-    return __storageAdaptors[copyDefinition.saveTo].getBytes(copyDefinition.config, copyInfo, length, position);
+    return __storageAdaptors[copyDefinition.saveTo].getBytes(name, copyDefinition.config, copyInfo, length, position);
   };
   Meteor.methods(methods);
 
@@ -145,7 +164,7 @@ CollectionFS = function(name, options) {
 
       this.setContentType(copyInfo.contentType);
       this.setStatusCode(200);
-      return __storageAdaptors[copyDefinition.saveTo].get(copyDefinition.config, copyInfo);
+      return __storageAdaptors[copyDefinition.saveTo].get(name, copyDefinition.config, copyInfo);
     }
   };
   HTTP.methods(httpMethods);

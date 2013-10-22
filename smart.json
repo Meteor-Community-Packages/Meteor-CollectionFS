@@ -6,6 +6,7 @@
   "version": "0.4.0",
   "git": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS.git",
   "packages": {
-    "http-methods": {}
+    "http-methods": {},
+    "collection-hooks": {}
   }
 }

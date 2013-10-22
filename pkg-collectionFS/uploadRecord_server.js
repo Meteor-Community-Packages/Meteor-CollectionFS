@@ -8,7 +8,7 @@ UploadRecord.prototype.removeCopy = function(copyName) {
 
   var success;
   try {
-    success = __storageAdaptors[copyDefinition.saveTo].del.call(self.toFileObject(), copyDefinition.config, copyInfo);
+    success = __storageAdaptors[copyDefinition.saveTo].del(self._collectionFS._name, copyDefinition.config, copyInfo);
   } catch (e) {
     success = false;
   }
@@ -16,7 +16,7 @@ UploadRecord.prototype.removeCopy = function(copyName) {
   //set copyInfo to null to indicate that this copy of the file does not exist
   var setObj = {};
   setObj["copies." + copyName] = null;
-  self._collectionFS._collection.update({_id: self._id}, {$set: setObj});
+  self._collectionFS.update({_id: self._id}, {$set: setObj});
 
   if (!success)
     throw new Error('Failed to delete the "' + copyName + '" copy of the uploaded file with ID ' + self._id);

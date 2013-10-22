@@ -28,7 +28,7 @@ Package.on_use(function(api) {
   ], 'client');
   
   //collectionFS core package
-  api.use(['deps', 'underscore', 'mongo-livedata', 'ejson']);
+  api.use(['deps', 'underscore', 'mongo-livedata', 'ejson', 'collection-hooks', 'http-methods']);
   if (api.export) {
     api.export('FileObject');
     api.export('UploadRecord');
@@ -86,6 +86,7 @@ Package.on_use(function(api) {
   //cfs-storage-gridfs package
   api.use(['underscore', 'mongo-livedata'], 'server');
   api.add_files([
+    'pkg-cfs-storage-gridfs/gridfs.js',
     'pkg-cfs-storage-gridfs/server.js'
   ], 'server');
 });
