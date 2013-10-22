@@ -63,8 +63,8 @@ fsConfig.created = (!!fs.existsSync(fsConfig.bundleStaticPath));
  * Next two lines (public URL) thanks to @nooitaf
  */
 
-RoutePolicy.declare(fsConfig.url, 'network');
-WebApp.connectHandlers.use(fsConfig.url, connect.static(fsConfig.serverPath));
+//RoutePolicy.declare(fsConfig.url, 'network');
+//WebApp.connectHandlers.use(fsConfig.url, connect.static(fsConfig.serverPath));
 
 __meteor_runtime_config__.FILEHANDLER_SUPPORTED = fs.existsSync(fsConfig.serverPath);
 
@@ -101,7 +101,7 @@ UploadsCollection.registerStorageAdaptor("filesystem", {
     return this.putFilesystem(config);
   },
   get: function(config, info) {
-
+    return fs.readFileSync(info.filePath);
   },
   getBytes: function(config, info, length, position) {
     var buffer = new Buffer(length);

@@ -77,15 +77,15 @@ if (typeof Handlebars !== 'undefined') {
     var self = this;
     return (typeof self.copies === "object") ? self.copies[copyName] : {};
   });
+
+  //Usage: {{uplFileUrl}} (with UploadRecord as current context)
+  Handlebars.registerHelper('uplFileUrl', function(copyName) {
+    return this.urlForCopy(copyName);
+  });
   
   /*
    * TODO
    */
-
-  //Usage: {{uplFileUrl}} (with UploadRecord as current context)
-//  Handlebars.registerHelper('uplFileUrl', function(copyName) {
-//    return this.urlForCopy(copyName);
-//  });
 
 //Usage: {{cfsFileProgress}} (with FileObject as current context)
 //  Handlebars.registerHelper('cfsFileProgress', function() {
@@ -100,16 +100,6 @@ if (typeof Handlebars !== 'undefined') {
 //    var hash = options.hash;
 //    hash = hash || {};
 //    return new Handlebars.SafeString(Template._cfsFileProgressBar({
-//      fileObject: this,
-//      attributes: objToAttributes(hash)
-//    }));
-//  });
-  
-  //Usage: {{cfsBlobImage}} (with FileObject as current context)
-//  Handlebars.registerHelper('cfsBlobImage', function(options) {
-//    var hash = options.hash;
-//    hash = hash || {};
-//    return new Handlebars.SafeString(Template._cfsBlobImage({
 //      fileObject: this,
 //      attributes: objToAttributes(hash)
 //    }));

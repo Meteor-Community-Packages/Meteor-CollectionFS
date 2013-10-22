@@ -8,12 +8,6 @@
   {{/with}}
 </template>
 
-<template name="_cfsBlobImage">
-  {{#with fileObject}}
-  <img src="{{cfsBlobUrl}}"{{{../attributes}}} />
-  {{/with}}
-</template>
-
 <template name="_uplFileProgressBar">
   {{#with uploadRecord}}
   <progress value="{{uplFileProgress}}" max="100"{{{../attributes}}}>{{uplFileProgress}}%</progress>

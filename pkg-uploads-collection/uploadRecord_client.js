@@ -1,16 +1,9 @@
-//UploadRecord.prototype.urlForCopy = function(copyName) {
-//  var self = this, copyInfo = self.copies[copyName];
-//
-//  if (!copyInfo || !copyInfo.storageAdaptor || !__storageAdaptors[copyInfo.storageAdaptor])
-//    return "";
-//
-//  var getUrlFunction = __storageAdaptors[copyInfo.storageAdaptor].url;
-//
-//  if (!getUrlFunction)
-//    return "";
-//
-//  return getUrlFunction(copyInfo);
-//};
+UploadRecord.prototype.urlForCopy = function(copyName) {
+  var self = this;
+  if (!self.copies || !self.copies[copyName])
+    return "";
+  return "/files/" + self._uploadsCollection._name + "/" + self._id + "/" + copyName + "/" + self.copies[copyName].filename;
+};
 
 UploadRecord.prototype.downloadCopy = function(copyName, callback) {
   var self = this;

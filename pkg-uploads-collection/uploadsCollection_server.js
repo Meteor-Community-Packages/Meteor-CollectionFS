@@ -105,25 +105,50 @@ UploadsCollection = function(name, options) {
     check(copyName, String);
     check(length, Number);
     check(position, Number);
-    
+
     var copyList = self._copies, copyDefinition = copyList[copyName];
 
     if (!copyDefinition || !copyDefinition.saveTo || !__storageAdaptors[copyDefinition.saveTo])
       throw new Error('Copy definition "' + copyName + '" must have a "saveTo" property with a valid string value');
 
     this.unblock();
-    
+
     var uploadRecord = self.findOne({_id: fileId});
-    
+
     if (!uploadRecord)
       throw new Error("Invalid UploadRecord ID passed to downloadChunk");
-    
+
     var copyInfo = uploadRecord.copies[copyName];
 
-    //TODO call getBytes instead
     return __storageAdaptors[copyDefinition.saveTo].getBytes(copyDefinition.config, copyInfo, length, position);
   };
   Meteor.methods(methods);
+
+  var httpMethods = {};
+  httpMethods['/files/' + name + '/:id/:copyName/:filename'] = {
+    get: function() {
+      var fileId = this.params.id;
+      var copyName = this.params.copyName;
+      var copyList = self._copies, copyDefinition = copyList[copyName];
+
+      if (!copyDefinition || !copyDefinition.saveTo || !__storageAdaptors[copyDefinition.saveTo])
+        return;
+
+      //this.unblock(); //not currently implemented
+
+      var uploadRecord = self.findOne({_id: fileId});
+
+      if (!uploadRecord)
+        return;
+
+      var copyInfo = uploadRecord.copies[copyName];
+
+      this.setContentType(copyInfo.contentType);
+      this.setStatusCode(200);
+      return __storageAdaptors[copyDefinition.saveTo].get(copyDefinition.config, copyInfo);
+    }
+  };
+  HTTP.methods(httpMethods);
 };
 
 /*

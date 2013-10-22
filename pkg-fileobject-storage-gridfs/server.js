@@ -87,7 +87,32 @@ UploadsCollection.registerStorageAdaptor("gridFS", {
     };
   },
   get: function(config, info) {
+    var fileId = info.id;
+    
+    //find chunks in the gridFS chunks collection for this file
+    var query = config.collection.chunks.find({files_id: fileId}, {sort: {n: 1}});
 
+    // Allocate memory for buffer
+    var fileSize = +info.length; //+ Due to Meteor issue
+    var buffer = new Buffer(fileSize);
+
+    // Fill buffer from BSON data
+    query.rewind();
+    var start = 0;
+    query.forEach(function(chunk) {
+      var data = chunk.data || [];
+      for (var i = 0, ln = data.length; i < ln; i++) {
+        buffer[start + i] = data[i];
+        start++;
+      }
+    }); //EO each chunks
+    
+    if (start < fileSize) {
+      //some chunks are missing
+      return;
+    }
+    
+    return buffer;
   },
   getBytes: function(config, info, length, position) {
     var chunkNumber = Math.floor(position / length); //TODO handle requests that are not a full chunk or span multiple chunks

@@ -36,21 +36,51 @@ if (typeof FileObject !== "undefined") {
         fut.return(false);
       }
     });
-    req.on('error', function (){}); //need this to prevent unhandled errors killing the app
+    req.on('error', function() {
+    }); //need this to prevent unhandled errors killing the app
     return fut.wait();
   };
-
-  FileObject.prototype.delS3 = function(options, returnValueFromPut) {
-    var self = this;
+  
+  //TODO need to test this
+  var getS3 = function(options, returnValueFromPut) {
     options = _.extend({
       endpoint: null, //required
       region: null, //required
       key: null, //required
       secret: null, //required
       bucket: null, //required
-      style: "path",
-      'x-amz-acl': 'public-read',
-      fileKey: '/' + (new Date).getTime() + '/' + self.filename.replace(" ", "_")
+      style: "path"
+    }, options);
+
+    var S3 = Knox.createClient(options);
+
+    var fut = new Future();
+
+    var req = S3.get(returnValueFromPut.fileKey);
+
+    req.on('response', function(res) {
+      res.on('data', function(chunk) {
+        fut.return(chunk);
+      });
+    });
+    
+    req.on('error', function(e) {
+      fut.return(e);
+    });
+    
+    req.end();
+    
+    return fut.wait();
+  };
+
+  var delS3 = function(options, returnValueFromPut) {
+    options = _.extend({
+      endpoint: null, //required
+      region: null, //required
+      key: null, //required
+      secret: null, //required
+      bucket: null, //required
+      style: "path"
     }, options);
 
     var S3 = Knox.createClient(options);
@@ -64,19 +94,20 @@ if (typeof FileObject !== "undefined") {
     });
     return fut.wait();
   };
-  
+
   //register storage adaptor
   UploadsCollection.registerStorageAdaptor("s3", {
-    put: function (config) {
+    put: function(config) {
       return this.putS3(config);
     },
-                get: function(config, info) {
-
+    get: function(config, info) {
+      return getS3(config, info);
     },
     getChunk: function(config, info, chunkNumber) {
+      //TODO: is this possible?
     },
-    del: function (config, info) {
-      return this.delS3(config, info);
+    del: function(config, info) {
+      return delS3(config, info);
     }
   });
 }
