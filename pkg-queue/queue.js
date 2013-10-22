@@ -55,7 +55,6 @@ GQ.Queue.prototype.pause = function() {
   self._deps.paused.changed();
 };
 
-//TODO test
 GQ.Queue.prototype.resume = function() {
   var self = this;
   

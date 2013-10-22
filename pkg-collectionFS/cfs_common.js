@@ -20,7 +20,6 @@ _.extend(CollectionFS.prototype, {
   }
 });
 
-//TODO make sure this works
 CollectionFS.prototype.filter = function(options) {
   //clean up filter option values
   if (!options.allow || !Match.test(options.allow, Object)) {
