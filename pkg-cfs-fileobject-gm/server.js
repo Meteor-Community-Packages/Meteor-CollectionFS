@@ -16,14 +16,19 @@ if (typeof FileObject !== "undefined") {
   };
   
   gm.prototype.save = function() {
-    var fut = new Future();
     var self = this;
-    this.toBuffer(function(err, buffer) {
+    var fut = new Future();
+    
+    var callback = Meteor.bindEnvironment(function(err, buffer) {
       if (err)
         throw err;
-      self._options.fileObject.buffer = buffer;
+      self._options.fileObject.loadBuffer(buffer);
       fut.return(self);
+    }, function (err) {
+      throw err;
     });
+    this.toBuffer(callback);
+    
     return fut.wait();
   };
 }

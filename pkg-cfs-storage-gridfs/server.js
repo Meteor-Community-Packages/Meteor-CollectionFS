@@ -19,32 +19,17 @@ CollectionFS.registerStorageAdaptor("gridFS", {
     };
   },
   get: function(name, config, info) {
-    var fileId = info.id;
+    //get throwaway fileObject so that its methods can be used for convenience
+    var fileObject = new FileObject({
+      _id: info.id,
+      length: info.length,
+      filename: info.filename,
+      contentType: info.contentType
+    });
     
-    //find chunks in the gridFS chunks collection for this file
-    var query = gridFSWithName(name).chunks.find({files_id: fileId}, {sort: {n: 1}});
-
-    // Allocate memory for buffer
-    var fileSize = +info.length; //+ Due to Meteor issue
-    var buffer = new Buffer(fileSize);
-
-    // Fill buffer from BSON data
-    query.rewind();
-    var start = 0;
-    query.forEach(function(chunk) {
-      var data = chunk.data || [];
-      for (var i = 0, ln = data.length; i < ln; i++) {
-        buffer[start + i] = data[i];
-        start++;
-      }
-    }); //EO each chunks
-    
-    if (start < fileSize) {
-      //some chunks are missing
-      return;
-    }
-    
-    return buffer;
+    fileObject.chunksCollection = gridFSWithName(name).chunks;
+    fileObject.loadBuffer();
+    return fileObject.buffer;
   },
   getBytes: function(name, config, info, length, position) {
     var chunkNumber = Math.floor(position / length); //TODO handle requests that are not a full chunk or span multiple chunks

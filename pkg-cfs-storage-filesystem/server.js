@@ -132,7 +132,5 @@ var getFileSystemDestination = function(filename, options) {
     throw new Error("could not create serverPath");
 
   var myFilename = Meteor.uuid() + path.extname(filename);
-  return {
-    serverFilename: path.join(serverPath, myFilename)
-  };
+  return path.join(serverPath, myFilename);
 };

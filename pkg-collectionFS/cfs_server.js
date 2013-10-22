@@ -27,16 +27,22 @@ CollectionFS = function(name, options) {
     return self.fileIsAllowed(uploadRecord);
   });
   //don't allow any updates from the client
+  var returnFalse = function() {
+    return false;
+  };
+  var returnTrue = function() {
+    return true;
+  };
   self._collection.deny({
-    insert: function() {
-      return false;
-    },
-    update: function() {
-      return true;
-    },
-    remove: function() {
-      return false;
-    },
+    insert: returnFalse,
+    update: returnTrue,
+    remove: returnFalse,
+    fetch: []
+  });
+  self._collection.allow({
+    insert: returnTrue,
+    update: returnTrue,
+    remove: returnTrue,
     fetch: []
   });
 
