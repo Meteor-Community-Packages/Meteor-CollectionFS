@@ -106,32 +106,36 @@ save an even smaller, blurry thumbnail image into a CollectionFS. Our file handl
 would look something like this:
 
 ```js
-Thumbnails = new CollectionFS("thumbnails");
+if (Meteor.isServer) {
+  Thumbnails = new CollectionFS("thumbnails");
 
-ImageUploads.fileHandlers({
-  original: {
-    saveTo: "s3",
-    config: awsOptions
-  },
-  smaller: {
-    saveTo: "filesystem",
-    config: {
-      subfolder: "smaller"
-    },
-    beforeSave: function() {
-      this.gm().resize(400, 400).save();
-    }
-  },
-  thumbnail: {
-    saveTo: "gridFS",
-    config: {
-      collection: Thumbnails
-    },
-    beforeSave: function () {
-      this.gm().resize(60, 60).blur(7, 3).save();
-    }
-  }
-});
+  Meteor.startup(function () {
+    ImageUploads.copies({
+      original: {
+        saveTo: "s3",
+        config: awsOptions
+      },
+      smaller: {
+        saveTo: "filesystem",
+        config: {
+          subfolder: "smaller"
+        },
+        beforeSave: function() {
+          this.gm().resize(400, 400).save();
+        }
+      },
+      thumbnail: {
+        saveTo: "gridFS",
+        config: {
+          collection: Thumbnails
+        },
+        beforeSave: function () {
+          this.gm().resize(60, 60).blur(7, 3).save();
+        }
+      }
+    });
+  });
+}
 ```
 
 Note that:
