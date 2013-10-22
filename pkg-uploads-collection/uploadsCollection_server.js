@@ -3,7 +3,7 @@ UploadsCollection = function(name, options) {
   var self = this;
   self._name = name;
   self._filter = null;
-  self._fileHandlers = {};
+  self._copies = {};
 
   // Extend _options
   self._options = {
@@ -87,7 +87,7 @@ UploadsCollection = function(name, options) {
     check(fileId, String);
     check(chunkNum, Number);
     check(data, Uint8Array);
-    
+
     this.unblock();
 
     var cId = self._chunksCollection.insert({
@@ -100,16 +100,38 @@ UploadsCollection = function(name, options) {
       throw new Error("problem adding chunk");
     return true;
   };
-  Meteor.methods(methods);
+  methods["downloadBytes_" + name] = function(fileId, copyName, length, position) {
+    check(fileId, String);
+    check(copyName, String);
+    check(length, Number);
+    check(position, Number);
+    
+    var copyList = self._copies, copyDefinition = copyList[copyName];
 
+    if (!copyDefinition || !copyDefinition.saveTo || !__storageAdaptors[copyDefinition.saveTo])
+      throw new Error('Copy definition "' + copyName + '" must have a "saveTo" property with a valid string value');
+
+    this.unblock();
+    
+    var uploadRecord = self.findOne({_id: fileId});
+    
+    if (!uploadRecord)
+      throw new Error("Invalid UploadRecord ID passed to downloadChunk");
+    
+    var copyInfo = uploadRecord.copies[copyName];
+
+    //TODO call getBytes instead
+    return __storageAdaptors[copyDefinition.saveTo].getBytes(copyDefinition.config, copyInfo, length, position);
+  };
+  Meteor.methods(methods);
 };
 
 /*
  * Public Methods
  */
 
-UploadsCollection.prototype.fileHandlers = function(options) {
-  _.extend(this._fileHandlers, options);
+UploadsCollection.prototype.copies = function(options) {
+  _.extend(this._copies, options);
 };
 
 //TODO test

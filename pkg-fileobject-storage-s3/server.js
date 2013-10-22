@@ -64,4 +64,19 @@ if (typeof FileObject !== "undefined") {
     });
     return fut.wait();
   };
+  
+  //register storage adaptor
+  UploadsCollection.registerStorageAdaptor("s3", {
+    put: function (config) {
+      return this.putS3(config);
+    },
+                get: function(config, info) {
+
+    },
+    getChunk: function(config, info, chunkNumber) {
+    },
+    del: function (config, info) {
+      return this.delS3(config, info);
+    }
+  });
 }

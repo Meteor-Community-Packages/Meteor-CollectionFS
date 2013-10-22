@@ -41,41 +41,122 @@ if (typeof Handlebars !== 'undefined') {
     }));
   });
 
-  //Usage: {{uplFileHandlers}} (with UploadRecord object as current context)
-  Handlebars.registerHelper('uplFileHandlerNames', function() {
-    var self = this, fileHandlers = [];
+  //Usage: {{uplFileCopyNames}} (with UploadRecord object as current context)
+  Handlebars.registerHelper('uplFileCopyNames', function() {
+    var self = this, copies = [];
 
-    if (!self.fileHandler)
-      return fileHandlers;
+    if (!self.copies)
+      return copies;
 
-    _.each(self.fileHandler, function(val, key) {
+    _.each(self.copies, function(val, key) {
       if (val)
-        fileHandlers.push(key);
+        copies.push(key);
     });
-    return fileHandlers;
+    return copies;
   });
 
-  //Usage: {{uplFileHandlers}} (with UploadRecord object as current context)
-  Handlebars.registerHelper('uplFileHandlers', function() {
-    var self = this, fileHandlers = [];
+  //Usage: {{uplFileCopies}} (with UploadRecord object as current context)
+  Handlebars.registerHelper('uplFileCopies', function() {
+    var self = this, copies = [];
 
-    if (!self.fileHandler)
-      return fileHandlers;
+    if (!self.copies)
+      return copies;
 
-    _.each(self.fileHandler, function(val, key) {
+    _.each(self.copies, function(val, key) {
       if (!val)
         return;
       if (_.isObject(val))
         val.name = key;
-      fileHandlers.push(val);
+      copies.push(val);
     });
-    return fileHandlers;
+    return copies;
   });
 
-  //Usage: {{uplFileHandler "fileHandlerName"}} (with UploadRecord object as current context)
-  Handlebars.registerHelper('uplFileHandler', function(fileHandler) {
+  //Usage: {{uplFileCopyInfo "copyName"}} (with UploadRecord object as current context)
+  Handlebars.registerHelper('uplFileCopyInfo', function(copyName) {
     var self = this;
-    return (typeof self.fileHandler === "object") ? self.fileHandler[fileHandler] : {};
+    return (typeof self.copies === "object") ? self.copies[copyName] : {};
+  });
+  
+  /*
+   * TODO
+   */
+
+  //Usage: {{uplFileUrl}} (with UploadRecord as current context)
+//  Handlebars.registerHelper('uplFileUrl', function(copyName) {
+//    return this.urlForCopy(copyName);
+//  });
+
+//Usage: {{cfsFileProgress}} (with FileObject as current context)
+//  Handlebars.registerHelper('cfsFileProgress', function() {
+//    var self = this;
+//    if (!self._id || !self.collection || !self.collection.downloadManager)
+//      return 0;
+//    return self.collection.downloadManager.getProgressForFileId(self._id);
+//  });
+
+  //Usage: {{cfsFileProgressBar attribute=value}} (with FileObject as current context)
+//  Handlebars.registerHelper('cfsFileProgressBar', function(options) {
+//    var hash = options.hash;
+//    hash = hash || {};
+//    return new Handlebars.SafeString(Template._cfsFileProgressBar({
+//      fileObject: this,
+//      attributes: objToAttributes(hash)
+//    }));
+//  });
+  
+  //Usage: {{cfsBlobImage}} (with FileObject as current context)
+//  Handlebars.registerHelper('cfsBlobImage', function(options) {
+//    var hash = options.hash;
+//    hash = hash || {};
+//    return new Handlebars.SafeString(Template._cfsBlobImage({
+//      fileObject: this,
+//      attributes: objToAttributes(hash)
+//    }));
+//  });
+  
+    //Usage: {{cfsIsDownloadingCopy}} (with UploadRecord as current context)
+//  Handlebars.registerHelper('cfsIsDownloadingCopy', function(copyName) {
+//    return this.isDownloadingCopy(copyName);
+//  });
+  
+  ////Usage:
+  //{{cfsDownloadButton "copyName"}} (with UploadRecord as current context)
+  //Supported Options: content, any attribute
+  Handlebars.registerHelper('cfsDownloadButton', function(copyName, opts) {
+    var hash, content;
+    hash = opts.hash || {};
+    hash["class"] = hash["class"] ? hash["class"] + ' cfsDownloadButton' : 'cfsDownloadButton';
+    content = hash.content || "Download";
+    if ("content" in hash)
+      delete hash.content;
+    return new Handlebars.SafeString(Template._cfsDownloadButton({
+      uploadRecord: this,
+      copyName: copyName,
+      content: content,
+      attributes: objToAttributes(hash)
+    }));
+  });
+
+  Template._cfsDownloadButton.events({
+    'click .cfsDownloadButton': function(event, template) {
+      var uploadRecord = template.data.uploadRecord;
+      var copyName = template.data.copyName;
+      if (!uploadRecord || !copyName) {
+        return false;
+      }
+      
+      // Kick off download, and when it's done, tell the browser
+      // to save the file in the downloads folder.
+      uploadRecord.downloadCopy(copyName, function (err, fileObject) {
+        if (err)
+          throw err;
+        else
+          fileObject && fileObject.saveLocal();
+      });
+
+      return false;
+    }
   });
 
   Template._uplFileInput.events({
@@ -104,7 +185,7 @@ if (typeof Handlebars !== 'undefined') {
       attributes: objToAttributes(hash)
     }));
   });
-  
+
 } else {
   throw new Error("add the handlebars package");
 }

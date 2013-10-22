@@ -1,3 +1,19 @@
+<template name="_cfsDownloadButton">
+    <button type="button"{{{attributes}}}>{{content}}</button>
+</template>
+
+<template name="_cfsFileProgressBar">
+  {{#with fileObject}}
+  <progress value="{{cfsFileProgress}}" max="100"{{{../attributes}}}>{{cfsFileProgress}}%</progress>
+  {{/with}}
+</template>
+
+<template name="_cfsBlobImage">
+  {{#with fileObject}}
+  <img src="{{cfsBlobUrl}}"{{{../attributes}}} />
+  {{/with}}
+</template>
+
 <template name="_uplFileProgressBar">
   {{#with uploadRecord}}
   <progress value="{{uplFileProgress}}" max="100"{{{../attributes}}}>{{uplFileProgress}}%</progress>

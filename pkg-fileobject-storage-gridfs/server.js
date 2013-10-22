@@ -8,11 +8,9 @@
 "use strict";
 
 // @export CollectionFS
-CollectionFS = function(name, options) {
+CollectionFS = function(name) {
   var self = this;
   self._name = name || "fs";
-  self._options = {autopublish: false};
-  _.extend(self._options, options);
 
   //create collections
   self.files = new Meteor.Collection(self._name + '.files', {
@@ -27,30 +25,9 @@ CollectionFS = function(name, options) {
     _preventAutopublish: true
   });
 
-  //TODO both of these should deny inserts from clients
-
-  // Setup autopublish if not flag'ed out
-  if (self._options.autopublish) {
-    Meteor.publish(self._name + '.files', function() {
-      return self.find({});
-    }, {is_auto: true});
-  } //EO Autopublish
-
   Meteor.startup(function() {
     //Ensure chunks index on files_id and n
     self.chunks._ensureIndex({files_id: 1, n: 1}, {unique: true});
-
-    //add server method to be called from client code
-    var methods = {};
-    methods["downloadChunk_" + name] = function(options) {
-      check(options, {files_id: String, n: Number});
-
-      this.unblock();
-
-      var chunk = self.chunks.findOne(options);
-      return chunk ? chunk.data : null;
-    };
-    Meteor.methods(methods);
   });
 
 }; //EO collectionFS
@@ -96,3 +73,29 @@ CollectionFS.prototype.insert = function(fileObject) {
   // Return the newly created file id
   return fileId;
 };
+
+//register storage adaptor
+UploadsCollection.registerStorageAdaptor("gridFS", {
+  put: function(config) {
+    var id = config.collection.insert(this);
+    if (!id)
+      return null;
+    //return all info needed to retrieve or delete
+    return {
+      url: null,
+      id: id
+    };
+  },
+  get: function(config, info) {
+
+  },
+  getBytes: function(config, info, length, position) {
+    var chunkNumber = Math.floor(position / length); //TODO handle requests that are not a full chunk or span multiple chunks
+    var chunk = config.collection.chunks.findOne({files_id: info.id, n: chunkNumber});
+    return chunk ? chunk.data : null;
+  },
+  del: function(config, info) {
+    config.collection.remove({_id: info.id});
+    return true;
+  }
+});

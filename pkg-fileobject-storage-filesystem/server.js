@@ -20,6 +20,7 @@ if (!Npm.bundleRoot)
  * END NPM CHECKS
  */
 
+var connect = Npm.require('connect');
 var fs = Npm.require('fs');
 var path = Npm.require('path');
 
@@ -44,7 +45,6 @@ fsConfig.url = '/' + fsConfig.folder;
 fsConfig.bundleRoot = Npm.bundleRoot;
 fsConfig.rootDir = path.join(fsConfig.bundleRoot, '..') + path.sep;
 fsConfig.bundleStaticPath = path.join(fsConfig.bundleRoot, 'static');
-fsConfig.bundlePath = path.join(fsConfig.bundleStaticPath, fsConfig.folder);
 fsConfig.serverPath = path.join(fsConfig.rootDir, fsConfig.folder);
 
 // Check if the bundle static folder exists, if not then create Issue #40
@@ -52,28 +52,19 @@ if (!fs.existsSync(fsConfig.bundleStaticPath)) {
   fs.mkdirSync(fsConfig.bundleStaticPath);
 }
 
-// Remove symlink
-try {
-  fs.rmdirSync(fsConfig.bundlePath);
-} catch (e) { /* NOP */
-}
-
-try {
-  fs.unlinkSync(fsConfig.bundlePath);
-} catch (e) { /* NOP  */
-}
-
 // Check if server path exists, if not then create
 if (!fs.existsSync(fsConfig.serverPath)) {
   fs.mkdirSync(fsConfig.serverPath);
 }
 
-// Create symlink
-if (!!fs.existsSync(fsConfig.serverPath)) {
-  fs.symlinkSync(fsConfig.serverPath, fsConfig.bundlePath);
-}
+fsConfig.created = (!!fs.existsSync(fsConfig.bundleStaticPath));
 
-fsConfig.created = (!!fs.existsSync(fsConfig.bundlePath));
+/*
+ * Next two lines (public URL) thanks to @nooitaf
+ */
+
+RoutePolicy.declare(fsConfig.url, 'network');
+WebApp.connectHandlers.use(fsConfig.url, connect.static(fsConfig.serverPath));
 
 __meteor_runtime_config__.FILEHANDLER_SUPPORTED = fs.existsSync(fsConfig.serverPath);
 
@@ -86,11 +77,10 @@ if (typeof FileObject !== "undefined") {
   FileObject.prototype.putFilesystem = function(options) {
     var self = this;
     options = _.extend({
-      subfolder: "default",
-      extension: null
+      subfolder: "default"
     }, options);
 
-    var destination = self._getFileSystemDestination(options)
+    var destination = getFileSystemDestination(self.filename, options);
     fs.writeFileSync(destination.serverFilename, self.buffer);
 
     if (!fs.existsSync(destination.serverFilename)) {
@@ -103,35 +93,56 @@ if (typeof FileObject !== "undefined") {
       filePath: destination.serverFilename
     };
   };
+}
 
-  FileObject.prototype.delFilesystem = function(info) {
+//register storage adaptor
+UploadsCollection.registerStorageAdaptor("filesystem", {
+  put: function(config) {
+    return this.putFilesystem(config);
+  },
+  get: function(config, info) {
+
+  },
+  getBytes: function(config, info, length, position) {
+    var buffer = new Buffer(length);
+    var fd = fs.openSync(info.filePath, 'r'); //open file for reading
+    fs.readSync(fd, buffer, 0, length, position); //read bytes
+    fs.closeSync(fd);
+
+    var bytes = EJSON.newBinary(buffer.length);
+    for (var i = 0; i < buffer.length; i++) {
+      bytes[i] = buffer[i];
+    }
+
+    return bytes;
+  },
+  del: function(config, info) {
     if (fs.existsSync(info.filePath)) {
       fs.unlinkSync(info.filePath);
     }
-    return true;
+    return fs.existsSync(info.filePath);
+  }
+});
+
+var sanitizeFilename = function(filename) {
+  return filename.replace(/\//g, '').replace(/\.\.+/g, '.');
+};
+
+var getFileSystemDestination = function(filename, options) {
+  filename = sanitizeFilename(filename);
+  var serverPath = path.join(fsConfig.serverPath, options.subfolder); // Server path
+  var pathURL = fsConfig.url + '/' + options.subfolder; // Url path
+
+  if (!fs.existsSync(serverPath)) {
+    fs.mkdirSync(serverPath);
+  }
+
+  if (!fs.existsSync(serverPath))
+    throw new Error("could not create serverPath");
+
+  var myFilename = Meteor.uuid() + path.extname(filename);
+  return {
+    serverFilename: path.join(serverPath, myFilename),
+    url: pathURL + '/' + myFilename
   };
-
-  FileObject.prototype._getFileSystemDestination = function(options) {
-    var self = this;
-    var serverPath = path.join(fsConfig.serverPath, options.subfolder); // Server path
-    var pathURL = fsConfig.url + '/' + options.subfolder; // Url path
-
-    if (!fs.existsSync(serverPath)) {
-      fs.mkdirSync(serverPath);
-    }
-
-    if (!fs.existsSync(serverPath))
-      throw new Error("could not create serverPath");
-
-    // Make newExtension optional, fallback to fileRecord.filename
-    var extension = options.extension || path.extname(self.filename);
-    // Remove optional leading '.' from extension name
-    extension = (extension.substr(0, 1) === '.') ? extension.substr(1) : extension;
-    // Construct filename from current numeric date and extension
-    var myFilename = Date.now() + '.' + extension;
-    return {
-      serverFilename: path.join(serverPath, myFilename),
-      url: pathURL + '/' + myFilename
-    };
-  };
-}
+};

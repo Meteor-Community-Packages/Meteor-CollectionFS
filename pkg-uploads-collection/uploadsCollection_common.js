@@ -20,6 +20,7 @@ _.extend(UploadsCollection.prototype, {
   }
 });
 
+//TODO make sure this works
 UploadsCollection.prototype.filter = function(options) {
   //clean up filter option values
   if (!options.allow || !Match.test(options.allow, Object)) {

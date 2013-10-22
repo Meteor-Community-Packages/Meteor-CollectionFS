@@ -8,13 +8,24 @@ Package.describe({
 
 Npm.depends({
   gm: "1.13.1", //for fileobject-gm package
-  knox: "0.8.6" //for fileobject-storage-s3 package
+  knox: "0.8.6", //for fileobject-storage-s3 package
+  connect: "2.9.0" //for fileobject-storage-filesystem package
 });
 
 Package.on_use(function(api) {
   "use strict";
   
   //TODO divide these into separate repos
+  
+  //queue package
+  api.use(['deps', 'underscore']);
+  if (api.export) {
+    api.export('GQ');
+  }
+  api.add_files([
+    'pkg-queue/task.js',
+    'pkg-queue/queue.js'
+  ], 'client');
   
   //uploads-collection package
   api.use(['deps', 'underscore', 'mongo-livedata', 'ejson']);
@@ -31,15 +42,17 @@ Package.on_use(function(api) {
   api.add_files([
     'pkg-uploads-collection/FileSaver.js',
     'pkg-uploads-collection/fileObject_client.js',
-    'pkg-uploads-collection/uploadManager_client.js',
-    'pkg-uploads-collection/uploadsCollection_client.js'
+    'pkg-uploads-collection/uploadsCollection_client.js',
+    'pkg-uploads-collection/storageAdaptors_client.js',
+    'pkg-uploads-collection/uploadRecord_client.js'
   ], 'client');
 
   api.add_files([
     'pkg-uploads-collection/fileObject_server.js',
     'pkg-uploads-collection/uploadRecord_server.js',
     'pkg-uploads-collection/filehandlers_server.js',
-    'pkg-uploads-collection/uploadsCollection_server.js'
+    'pkg-uploads-collection/uploadsCollection_server.js',
+    'pkg-uploads-collection/storageAdaptors_server.js'
   ], 'server');
 
   api.add_files([
@@ -54,44 +67,35 @@ Package.on_use(function(api) {
   ], 'client');
 
   //fileobject-gm package
-  api.use(['underscore']);
+  api.use(['underscore'], 'server');
   api.add_files([
     'pkg-fileobject-gm/server.js'
   ], 'server');
 
   //fileobject-storage-filesystem package
-  api.use(['underscore']);
+  api.use(['routepolicy', 'webapp', 'underscore'], 'server');
   api.add_files([
     'pkg-fileobject-storage-filesystem/server.js'
   ], 'server');
+  api.add_files([
+    'pkg-fileobject-storage-filesystem/client.js'
+  ], 'client');
 
   //fileobject-storage-s3 package
-  api.use(['underscore']);
+  api.use(['underscore'], 'server');
   api.add_files([
     'pkg-fileobject-storage-s3/server.js'
   ], 'server');
-
-  //collectionFS package
-  api.use(['deps', 'underscore', 'templating', 'handlebars', 'mongo-livedata']);
-  api.export && api.export('CollectionFS');
   api.add_files([
-    'pkg-collectionFS/numeral.js',
-    'pkg-collectionFS/collectionFS_client.js',
-    'pkg-collectionFS/fileObject_client.js',
-    'pkg-collectionFS/downloadManager_client.js',
-    'pkg-collectionFS/templates.html',
-    'pkg-collectionFS/handlebars.js'
+    'pkg-fileobject-storage-s3/client.js'
   ], 'client');
 
+  //fileobject-storage-gridfs package
+  api.use(['underscore', 'mongo-livedata'], 'server');
+  api.export && api.export('CollectionFS');
   api.add_files([
-    'pkg-collectionFS/collectionFS_server.js',
-    'pkg-collectionFS/fileObject_server.js'
+    'pkg-fileobject-storage-gridfs/server.js'
   ], 'server');
-
-  api.add_files([
-    'pkg-collectionFS/collectionFS_common.js'
-  ], ['client', 'server']);
-
 });
 
 
