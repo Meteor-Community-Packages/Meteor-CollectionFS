@@ -21,9 +21,9 @@ __filehandlerConfig = {
   // Default 5000ms / 5sec - no filehandlers defined yet, we wait? 0 disables
 };
 
-_queueListener = function(uploadsCollection) {
+_queueListener = function(collectionFS) {
   var self = this;
-  self._uploadsCollection = uploadsCollection;
+  self._collectionFS = collectionFS;
 
   //Spawn initial file handler
   Meteor.setTimeout(function() {
@@ -36,20 +36,20 @@ _.extend(_queueListener.prototype, {
   checkQueue: function() {
     var self = this;
     //check items in queue and init workers for conversion
-    if (self._uploadsCollection) {
-      if (self._uploadsCollection._copies) {
+    if (self._collectionFS) {
+      if (self._collectionFS._copies) {
         // Run file handler if there aren't too many running (per server, not per upload record)
         if (__filehandlerConfig.Running < __filehandlerConfig.MaxRunning) {
           __filehandlerConfig.Running++;
 
           // First, try to find new unhandled uploads
-          var uploadRecord = self._uploadsCollection._collection.findOne({handledAt: null, complete: true});
+          var uploadRecord = self._collectionFS._collection.findOne({handledAt: null, complete: true});
           
           // Second, try to find new copies requested, not yet attempted
           if (!uploadRecord) {
             // Create a $or query array from filehandlers
             var queryFilehandlersExists = [];
-            for (var copyName in self._uploadsCollection._copies) {
+            for (var copyName in self._collectionFS._copies) {
               var queryExists = {};
               queryExists['copies.' + copyName] = {$exists: false};
               queryFilehandlersExists.push(queryExists);
@@ -57,7 +57,7 @@ _.extend(_queueListener.prototype, {
 
             //Where one of the fileHandlers are missing
             if (queryFilehandlersExists.length > 0) {
-              uploadRecord = self._uploadsCollection._collection.findOne({
+              uploadRecord = self._collectionFS._collection.findOne({
                 complete: true,
                 $or: queryFilehandlersExists
               });
@@ -68,7 +68,7 @@ _.extend(_queueListener.prototype, {
           if (!uploadRecord) {
             // Create a $or query array from filehandlers
             var queryFilehandlersExists = [];
-            for (var copyName in self._uploadsCollection._copies) {
+            for (var copyName in self._collectionFS._copies) {
               var queryExists = {};
               queryExists['copies.' + copyName + '.failures'] = {$gt: 0, $lt: __filehandlerConfig.MaxFailes};
               queryFilehandlersExists.push(queryExists);
@@ -76,7 +76,7 @@ _.extend(_queueListener.prototype, {
 
             //Where one of the fileHandlers has previously failed fewer than the maximum number of times
             if (queryFilehandlersExists.length > 0) {
-              uploadRecord = self._uploadsCollection._collection.findOne({
+              uploadRecord = self._collectionFS._collection.findOne({
                 complete: true,
                 $or: queryFilehandlersExists
               });
@@ -107,7 +107,7 @@ _.extend(_queueListener.prototype, {
 
   saveCopies: function(uploadRecord) {
     var self = this, setNull = false;
-    var copyList = self._uploadsCollection._copies;
+    var copyList = self._collectionFS._copies;
 
     // Load buffer into fileObject
     var fileObject = uploadRecord.toFileObject();
@@ -156,7 +156,7 @@ _.extend(_queueListener.prototype, {
           // passing in the user-provided storage adaptor settings
           // and a copy of the FileObject.
           try {
-            result = __storageAdaptors[copyDefinition.saveTo].put.call(copyOfFileObject, copyDefinition.config);
+            result = __storageAdaptors[copyDefinition.saveTo].put(self._collectionFS._name, copyDefinition.config, copyOfFileObject);
           } catch (e) {
             throw new Error('Error saving copy with name "' + copyName + '": ' + (e.trace || e.message));
           }
@@ -213,7 +213,7 @@ _.extend(_queueListener.prototype, {
           setObj = normalizeFilehandle(copyName, result, copyOfFileObject);
         }
         
-        self._uploadsCollection._collection.update({_id: uploadRecordID}, {$set: setObj});
+        self._collectionFS._collection.update({_id: uploadRecordID}, {$set: setObj});
 
       } // EO if not tried or try again
     } //EO loop through copy list
@@ -221,10 +221,10 @@ _.extend(_queueListener.prototype, {
     // If there were no failures that need retrying, we're done creating copies
     // for this upload record. We can remove all chunks from the temporary collection.
     if (!someFailed) {
-      self._uploadsCollection._chunksCollection.remove({files_id: uploadRecordID});
+      self._collectionFS._chunksCollection.remove({files_id: uploadRecordID});
     }
 
     //mark as handled in DB
-    self._uploadsCollection._collection.update({_id: uploadRecordID}, {$set: {handledAt: Date.now()}});
+    self._collectionFS._collection.update({_id: uploadRecordID}, {$set: {handledAt: Date.now()}});
   }
 });//EO queueListener extend

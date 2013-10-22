@@ -151,27 +151,27 @@ if (typeof Handlebars !== 'undefined') {
 
   Template._uplFileInput.events({
     'change .uplFileInput': function(event, template) {
-      var files = event.target.files, uploadsCollection = template.data.uploadsCollection;
+      var files = event.target.files, collectionFS = template.data.collectionFS;
 
       if (!files)
         throw new Error("uplFileInput Helper: no files");
 
-      if (!uploadsCollection)
-        throw new Error("uplFileInput Helper: no bound UploadsCollection");
+      if (!collectionFS)
+        throw new Error("uplFileInput Helper: no bound CollectionFS");
 
-      uploadsCollection.insert(files, function() {
+      collectionFS.insert(files, function() {
         event.target.parentElement.reset();
       });
     }
   });
 
-  //Usage: {{uplFileInput uploadsCollection attribute=value}}
-  Handlebars.registerHelper('uplFileInput', function(uploadsCollection, options) {
+  //Usage: {{uplFileInput collectionFS attribute=value}}
+  Handlebars.registerHelper('uplFileInput', function(collectionFS, options) {
     var hash = options.hash;
     hash = hash || {};
     hash["class"] = hash["class"] ? hash["class"] + ' uplFileInput' : 'uplFileInput';
     return new Handlebars.SafeString(Template._uplFileInput({
-      uploadsCollection: uploadsCollection,
+      collectionFS: collectionFS,
       attributes: objToAttributes(hash)
     }));
   });

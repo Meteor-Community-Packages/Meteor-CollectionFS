@@ -1,5 +1,5 @@
 // Make files basic functions available in CollectionFS
-_.extend(UploadsCollection.prototype, {
+_.extend(CollectionFS.prototype, {
   find: function() {
     return this._collection.find.apply(this._collection, arguments);
   },
@@ -21,7 +21,7 @@ _.extend(UploadsCollection.prototype, {
 });
 
 //TODO make sure this works
-UploadsCollection.prototype.filter = function(options) {
+CollectionFS.prototype.filter = function(options) {
   //clean up filter option values
   if (!options.allow || !Match.test(options.allow, Object)) {
     options.allow = {};
@@ -48,7 +48,7 @@ UploadsCollection.prototype.filter = function(options) {
   this._filter = options;
 };
 
-UploadsCollection.prototype.fileIsAllowed = function(fileRecord) {
+CollectionFS.prototype.fileIsAllowed = function(fileRecord) {
   var self = this;
   if (!self._filter) {
     return true;

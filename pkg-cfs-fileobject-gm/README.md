@@ -11,3 +11,5 @@ fo.gm().anyGMFunction().save();
 Calling FileObject.gm() gets you a graphicsmagick context and then calling .save() at the end of your chain saves all of the changes back into the FileObject buffer.
 
 The main purpose of this is to quickly and easily manipulate images within a filehandler "put" function before saving them.
+
+Prereq: install imagemagick and graphicsmagick on dev machine/server

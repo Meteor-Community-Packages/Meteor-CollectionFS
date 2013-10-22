@@ -28,7 +28,6 @@ if (typeof FileObject !== "undefined") {
       if (res && req && res.statusCode === 200 && req.url) {
         //return all info needed to retrieve or delete
         fut.return({
-          url: req.url,
           path: req.path,
           fileKey: options.fileKey
         });
@@ -96,17 +95,17 @@ if (typeof FileObject !== "undefined") {
   };
 
   //register storage adaptor
-  UploadsCollection.registerStorageAdaptor("s3", {
-    put: function(config) {
-      return this.putS3(config);
+  CollectionFS.registerStorageAdaptor("s3", {
+    put: function(name, config, fileObject) {
+      return fileObject.putS3(config);
     },
-    get: function(config, info) {
+    get: function(name, config, info) {
       return getS3(config, info);
     },
-    getChunk: function(config, info, chunkNumber) {
+    getChunk: function(name, config, info, chunkNumber) {
       //TODO: is this possible?
     },
-    del: function(config, info) {
+    del: function(name, config, info) {
       return delS3(config, info);
     }
   });

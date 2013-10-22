@@ -2,7 +2,7 @@ UploadRecord.prototype.urlForCopy = function(copyName) {
   var self = this;
   if (!self.copies || !self.copies[copyName])
     return "";
-  return "/files/" + self._uploadsCollection._name + "/" + self._id + "/" + copyName + "/" + self.copies[copyName].filename;
+  return "/files/" + self._collectionFS._name + "/" + self._id + "/" + copyName + "/" + self.copies[copyName].filename;
 };
 
 UploadRecord.prototype.downloadCopy = function(copyName, callback) {
@@ -15,7 +15,7 @@ UploadRecord.prototype.downloadCopy = function(copyName, callback) {
     length: self.copies[copyName].length
   });
 
-  var task = self._uploadsCollection.downloadManager.addTask({
+  var task = self._collectionFS.downloadManager.addTask({
     id: self._id,
     fo: fileObject,
     copyName: copyName
@@ -44,17 +44,17 @@ UploadRecord.prototype.downloadCopy = function(copyName, callback) {
 
 //UploadRecord.prototype.isDownloadingCopy = function(copyName) {
 //  var self = this;
-//  if (!self._id || !self._uploadsCollection || !self._uploadsCollection.downloadManager)
+//  if (!self._id || !self._collectionFS || !self._collectionFS.downloadManager)
 //    return false;
 //
-//  var task = self._uploadsCollection.downloadManager.currentTask();
+//  var task = self._collectionFS.downloadManager.currentTask();
 //
 //  return (task.id === self._id && task.copyName === copyName);
 //};
 
 UploadRecord.prototype.upload = function(fileObject, callback) {
   var self = this;
-  var task = self._uploadsCollection.uploadManager.addTask({
+  var task = self._collectionFS.uploadManager.addTask({
     id: self._id,
     fo: fileObject
   });

@@ -59,13 +59,6 @@ if (!fs.existsSync(fsConfig.serverPath)) {
 
 fsConfig.created = (!!fs.existsSync(fsConfig.bundleStaticPath));
 
-/*
- * Next two lines (public URL) thanks to @nooitaf
- */
-
-//RoutePolicy.declare(fsConfig.url, 'network');
-//WebApp.connectHandlers.use(fsConfig.url, connect.static(fsConfig.serverPath));
-
 __meteor_runtime_config__.FILEHANDLER_SUPPORTED = fs.existsSync(fsConfig.serverPath);
 
 /*
@@ -80,30 +73,29 @@ if (typeof FileObject !== "undefined") {
       subfolder: "default"
     }, options);
 
-    var destination = getFileSystemDestination(self.filename, options);
-    fs.writeFileSync(destination.serverFilename, self.buffer);
+    var serverFilename = getFileSystemDestination(self.filename, options);
+    fs.writeFileSync(serverFilename, self.buffer);
 
-    if (!fs.existsSync(destination.serverFilename)) {
+    if (!fs.existsSync(serverFilename)) {
       return false;
     }
 
     //return all info needed to retrieve or delete
     return {
-      url: destination.url,
-      filePath: destination.serverFilename
+      filePath: serverFilename
     };
   };
 }
 
 //register storage adaptor
-UploadsCollection.registerStorageAdaptor("filesystem", {
-  put: function(config) {
-    return this.putFilesystem(config);
+CollectionFS.registerStorageAdaptor("filesystem", {
+  put: function(name, config, fileObject) {
+    return fileObject.putFilesystem(config);
   },
-  get: function(config, info) {
+  get: function(name, config, info) {
     return fs.readFileSync(info.filePath);
   },
-  getBytes: function(config, info, length, position) {
+  getBytes: function(name, config, info, length, position) {
     var buffer = new Buffer(length);
     var fd = fs.openSync(info.filePath, 'r'); //open file for reading
     fs.readSync(fd, buffer, 0, length, position); //read bytes
@@ -116,7 +108,7 @@ UploadsCollection.registerStorageAdaptor("filesystem", {
 
     return bytes;
   },
-  del: function(config, info) {
+  del: function(name, config, info) {
     if (fs.existsSync(info.filePath)) {
       fs.unlinkSync(info.filePath);
     }
@@ -131,7 +123,6 @@ var sanitizeFilename = function(filename) {
 var getFileSystemDestination = function(filename, options) {
   filename = sanitizeFilename(filename);
   var serverPath = path.join(fsConfig.serverPath, options.subfolder); // Server path
-  var pathURL = fsConfig.url + '/' + options.subfolder; // Url path
 
   if (!fs.existsSync(serverPath)) {
     fs.mkdirSync(serverPath);
@@ -142,7 +133,6 @@ var getFileSystemDestination = function(filename, options) {
 
   var myFilename = Meteor.uuid() + path.extname(filename);
   return {
-    serverFilename: path.join(serverPath, myFilename),
-    url: pathURL + '/' + myFilename
+    serverFilename: path.join(serverPath, myFilename)
   };
 };

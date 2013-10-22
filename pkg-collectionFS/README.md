@@ -1,7 +1,7 @@
-UploadsCollection
+CollectionFS
 =========================
 
-UploadsCollection is a smart package for Meteor that makes it trivial to upload
+CollectionFS is a smart package for Meteor that makes it trivial to upload
 files from the browser or the server into a special MongoDB collection, and to
 create 0 or more copies of each file after the upload is finished.
 
@@ -10,22 +10,23 @@ create 0 or more copies of each file after the upload is finished.
 Install using Meteorite. When in a Meteorite-managed app directory, enter:
 
 ```
-$ mrt add uploads-collection
+$ mrt add collectionFS
+```
 
 ## Introduction
 
-The UploadsCollection package makes available two important global variables:
-`FileObject` and `UploadsCollection`.
+The CollectionFS package makes available two important global variables:
+`FileObject` and `CollectionFS`.
 
 * A `FileObject` wraps a file and it's data
 on the client or server. It is similar to the browser `File` object (and can be
 created from a `File` object), but it has additional properties and methods.
-* An `UploadsCollection` provides a collection in which information about
+* An `CollectionFS` provides a collection in which information about
 uploaded files can be stored. It also provides
 the necessary methods to upload and download the files, track
 upload and download progress reactively, pause and resume uploads, and more.
 
-A document from an `UploadsCollection` is represented as an `UploadRecord`, another
+A document from an `CollectionFS` is represented as an `UploadRecord`, another
 global variable exported by this package. An `UploadRecord` is similar in some
 ways to a `FileObject` but has information about all of the copies of the uploaded
 file the you may choose to create. It also has methods that allow you to download or delete
@@ -33,10 +34,10 @@ any of those copies by name.
 
 ### Getting Started
 
-The first step in using this package is to define an `UploadsCollection`.
+The first step in using this package is to define an `CollectionFS`.
 
 ```js
-ImageUploads = new UploadsCollection("images");
+ImageUploads = new CollectionFS("images");
 ImageUploads.filter({
   allow: {
     contentTypes: ['image/*']
@@ -44,11 +45,11 @@ ImageUploads.filter({
 });
 ```
 
-In this example, we've defined an UploadsCollection named "images", which will
+In this example, we've defined an CollectionFS named "images", which will
 be a new collection in your MongoDB database with the name "images.uploads". We've
 also defined a filter for it, stating that only images can be uploaded to it.
 
-Your UploadsCollection variable does not necessarily have to be global on the
+Your CollectionFS variable does not necessarily have to be global on the
 client or the server, but be sure to give it the same name on both the client and
 the server.
 
@@ -68,7 +69,7 @@ Template.myForm.events({
 
 Notice that the only thing we're doing is passing the browser-provided `File`
 object to `ImageUploads.insert()`. This will save the file's properties into
-an `UploadRecord` in the `ImageUploads` UploadsCollection, and then immediately
+an `UploadRecord` in the `ImageUploads` CollectionFS, and then immediately
 begin uploading the data to the server with reactive progress updates.
 
 On the client, the `insert` method can alternatively accept these other types of objects
@@ -85,8 +86,8 @@ its buffer set.
 
 By default,
 the actual file is not saved anywhere after upload; only the file details are
-saved in the UploadsCollection record. To manipulate and save the file, you
-use a `copies` method to define one or more copies of the file, which tell the UploadsCollection how to
+saved in the CollectionFS record. To manipulate and save the file, you
+use a `copies` method to define one or more copies of the file, which tell the CollectionFS how to
 manipulate, save, retrieve, and delete a single copy of the file. By defining more than
 one copy, you can save variations of a file or save it in multiple
 places.
@@ -98,17 +99,15 @@ As part of defining a copy, you must indicate which storage adaptor should be us
 * `fileobject-storage-filesystem`: Adds "filesystem" adaptor. Allows you to save a copy of an uploaded file to the server filesystem.
 * `fileobject-storage-s3`: Adds "s3" adaptor. Allows you to save a copy of an uploaded file to an Amazon S3 bucket.
 
-Returning to our `ImageUploads` example, let's say we now want to define three
-file handlers in order to save three different copies of each uploaded file. We
+Returning to our `ImageUploads` example, let's say we now want to save three
+different copies of each uploaded file. We
 first want to save the original uploaded image to an S3 bucket. Then we want to
 save a smaller copy of the image to our server filesystem. Finally, we want to
-save an even smaller, blurry thumbnail image into a CollectionFS. Our file handlers
-would look something like this:
+save an even smaller, blurry thumbnail image into a GridFS collection in our
+MongoDB database. Our `copies` method call would look something like this:
 
 ```js
 if (Meteor.isServer) {
-  Thumbnails = new CollectionFS("thumbnails");
-
   Meteor.startup(function () {
     ImageUploads.copies({
       original: {
@@ -126,9 +125,6 @@ if (Meteor.isServer) {
       },
       thumbnail: {
         saveTo: "gridFS",
-        config: {
-          collection: Thumbnails
-        },
         beforeSave: function () {
           this.gm().resize(60, 60).blur(7, 3).save();
         }

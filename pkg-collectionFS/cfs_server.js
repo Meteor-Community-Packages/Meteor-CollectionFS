@@ -1,5 +1,5 @@
 //exported
-UploadsCollection = function(name, options) {
+CollectionFS = function(name, options) {
   var self = this;
   self._name = name;
   self._filter = null;
@@ -155,12 +155,12 @@ UploadsCollection = function(name, options) {
  * Public Methods
  */
 
-UploadsCollection.prototype.copies = function(options) {
+CollectionFS.prototype.copies = function(options) {
   _.extend(this._copies, options);
 };
 
 //TODO test
-UploadsCollection.prototype.insert = function(document, callback) {
+CollectionFS.prototype.insert = function(document, callback) {
   var self = this, f, id;
 
   var getFileRecord = function(fileObject) {
@@ -194,6 +194,6 @@ UploadsCollection.prototype.insert = function(document, callback) {
   }
 
   else {
-    throw new Error("invalid first argument for UploadsCollection.insert");
+    throw new Error("invalid first argument for CollectionFS.insert");
   }
 };

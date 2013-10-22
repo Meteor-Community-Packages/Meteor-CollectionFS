@@ -2,26 +2,26 @@
 
 NOTE: This is a work-in-progress repo that will eventually be split into multiple repos/packages. Don't use it except for testing it.
 
-## uploads-collection
-
-The main package to enable simple file uploads in your app.
-
-## uploads-collection-handlebars
-
-Companion package
-
 ## collectionFS
 
-Companion package
+The core package to manage files in your app, including uploading and downloading.
 
-## fileobject-storage-s3
+## collectionFS-handlebars
 
-Companion package
+Handlebars helpers for the core package.
 
-## fileobject-storage-filesystem
+## cfs-storage-gridFS
 
-Companion package
+GridFS storage adaptor.
 
-## fileobject-gm
+## cfs-storage-s3
 
-Companion package
+S3 storage adaptor.
+
+## cfs-storage-filesystem
+
+Local filesystem storage adaptor.
+
+## cfs-fileobject-gm
+
+Extends FileObject, making it trivial to manipulate images in your beforeSave method prior to saving each copy.
