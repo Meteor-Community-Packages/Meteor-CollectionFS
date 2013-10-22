@@ -14,27 +14,31 @@ _.extend(CollectionFS.prototype, {
 		self.queue.addFile(fileId, file);
 		return fileId;
 	}, //EO storeFile
-              storeFiles: function(files, metadata, callback) {
-                      var self = this, fileId, fileIds = [], file, temp_md;
-                      if (files && files.length) {
-                          for (var i = 0, ln = files.length; i < ln; i++) {
-                              file = files[i];
-                              if (metadata !== undefined && typeof metadata === 'function') {
-                                  temp_md = metadata(file);
-                              } else {
-                                  temp_md = metadata;
-                              }
-                              fileId = self.storeFile(file, temp_md);
-                              if (fileId) {
-                                  fileIds.push(fileId);
-                              }
-                              if (callback !== undefined && typeof callback === 'function') {
-                                  callback(file, fileId);
-                              }
-                          }
-                      }
-                      return fileIds;
-              }, //EO storeFiles
+  storeFiles: function(files, metadata, callback) {
+    var self = this, fileId, fileIds = [], file, temp_md;
+    if (files && files.length) {
+        for (var i = 0, ln = files.length; i < ln; i++) {
+            file = files[i];
+            if (metadata !== undefined && typeof metadata === 'function') {
+                temp_md = metadata(file);
+            } else {
+                temp_md = metadata;
+            }
+            fileId = self.storeFile(file, temp_md);
+            if (fileId) {
+                fileIds.push(fileId);
+            }
+            if (callback !== undefined && typeof callback === 'function') {
+                callback(file, fileId);
+            }
+        }
+    } else {
+      if (typeof files.length === 'undefined') {
+        throw new Error('storeFiles expects files input as an array of files');
+      } // Else its a empty list of files XXX Should we throw an error on this?
+    }
+    return fileIds;
+  }, //EO storeFiles
 	//callback(fileItem)
 	retrieveBlob: function(fileId, callback) {
 		//console.log('retrieveBlob');
