@@ -6,7 +6,7 @@ FileObject.fromFile = function(file) {
     filename: file.name,
     contentType: file.type
   });
-  
+
   fileObject.blob = new Blob([file], {type: file.type});
   return fileObject;
 };
@@ -14,7 +14,7 @@ FileObject.fromFile = function(file) {
 FileObject.prototype.toDataUrl = function(callback) {
   if (typeof callback !== 'function')
     throw new Error("toDataUrl requires function as callback");
-  
+
   if (typeof FileReader === "undefined")
     throw new Error("Browser does not support FileReader");
 
@@ -23,7 +23,7 @@ FileObject.prototype.toDataUrl = function(callback) {
   fileReader.onload = function(event) {
     callback(event.target.result);
   };
-  
+
   if (self.blob) {
     fileReader.readAsDataURL(self.blob);
   }
@@ -31,21 +31,22 @@ FileObject.prototype.toDataUrl = function(callback) {
 
 FileObject.prototype.getChunk = function(chunkNumber, callback) {
   var self = this, blob = self.blob, chunkSize = self.chunkSize;
-  
+
   if (!blob || !chunkSize)
     throw new Error("getChunk requires that data is loaded in the FileObject and chunkSize is set");
-  
-  callback = callback || function () {};
+
+  callback = callback || function() {
+  };
 
   var myreader = new FileReader();
   var start = chunkNumber * chunkSize;
   var end = start + chunkSize;
   end = Math.min(end, blob.size);
-  
+
   var slice = blob.slice || blob.webkitSlice || blob.mozSlice;
   if (!slice)
     throw new Error('Slice function not supported');
-  
+
   var chunk = slice.call(blob, start, end, blob.type);
 
   myreader.onload = function() {
@@ -59,10 +60,17 @@ FileObject.prototype.addDataChunk = function(chunkNumber, data) {
   var self = this;
   self._addedChunks = self._addedChunks || []; //we remove when not in use to keep the object properties clean
   self._addedChunks[chunkNumber] = data;
-  
+
   //When all chunks are present, automatically convert them into a Blob
   if (self._addedChunks && self._addedChunks.length === self.expectedChunks()) {
-    self.blob = new Blob(self._addedChunks, {type: self.contentType});
+    var buffers = _.map(self._addedChunks, function(chunk) {
+      return chunk.buffer;
+    });
+    self.blob = new Blob(buffers, {type: self.contentType});
+
+    //Note: The following does not work in Safari currently, hence the use of buffers above
+    //self.blob = new Blob(self._addedChunks, {type: self.contentType});
+    
     delete self._addedChunks;
   }
 };
