@@ -8,9 +8,9 @@ CollectionFS = function(name) {
       return new UploadRecord(self, doc);
     }
   });
-  
+
   //filter
-  self._collection.before.insert(function (userId, doc) {
+  self._collection.before.insert(function(userId, doc) {
     var uploadRecord = this.transform();
     return self.fileIsAllowed(uploadRecord);
   });
@@ -20,14 +20,14 @@ CollectionFS = function(name) {
     var fileObject = task.taskData.fo;
     var expectedChunks = fileObject.expectedChunks();
 
-    //update progress
-    if (!fileObject._addedChunks) {
-      task.updateProgress(0);
-    } else {
-      task.updateProgress((fileObject._addedChunks.length / expectedChunks) * 100);
-    }
-
     var uploadChunk = function(chunkNum) {
+      //update progress
+      if (!fileObject._addedChunks) {
+        task.updateProgress(0);
+      } else {
+        task.updateProgress((fileObject._addedChunks.length / expectedChunks) * 100);
+      }
+
       fileObject.getChunk(chunkNum, function(chunkNum, data) {
         Meteor.apply(
                 "uploadChunk_" + self._name,
@@ -84,7 +84,7 @@ CollectionFS = function(name) {
           task.done(err);
           return;
         }
-        
+
         //append chunk TODO should be addDataBytes?
         fileObject.addDataChunk((position / chunkSize), chunk);
 
