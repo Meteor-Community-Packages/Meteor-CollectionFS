@@ -50,7 +50,7 @@ FileObject.prototype.getChunk = function(chunkNumber, callback) {
   var chunk = slice.call(blob, start, end, blob.type);
 
   myreader.onload = function() {
-    var result = new Uint8Array(myreader.result);
+    var result = EJSON.newBinary(myreader.result);
     callback(chunkNumber, result);
   };
   myreader.readAsArrayBuffer(chunk);

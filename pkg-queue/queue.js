@@ -42,6 +42,7 @@ GQ.Queue.prototype.addTask = function(taskData) {
   var self = this, task = new GQ.Task(taskData);
   console.log("Task added to queue: ", task);
   self._tasks.push(task);
+  self._checkQueue();
   return task;
 };
 
@@ -75,15 +76,8 @@ GQ.Queue.prototype.stop = function() {
   self._deps.stopped.changed();
 };
 
-GQ.Queue.prototype.start = function() {
+GQ.Queue.prototype._checkQueue = function () {
   var self = this;
-
-  if (!self._stopped)
-    return;
-
-  self._stopped = false;
-  self._deps.stopped.changed();
-
   if (!self.maxThreads) {
     self.checkQueue();
   } else {
@@ -95,10 +89,21 @@ GQ.Queue.prototype.start = function() {
   }
 };
 
-GQ.Queue.prototype.isRunning = function() {
+GQ.Queue.prototype.start = function() {
+  var self = this;
+
+  if (!self._stopped)
+    return;
+
+  self._stopped = false;
+  self._deps.stopped.changed();
+  self._checkQueue();
+};
+
+GQ.Queue.prototype.isStopped = function() {
   var self = this;
   self._deps.stopped.depend();
-  return !self._stopped;
+  return self._stopped;
 };
 
 GQ.Queue.prototype.isPaused = function() {
@@ -111,7 +116,7 @@ GQ.Queue.prototype.checkQueue = function() {
   var self = this;
 
   if (!self.taskHandler)
-    throw new Error("You must define a taskHandler for your generic queue");
+    throw new Error("You must define a taskHandler for your queue");
 
   if (self._paused)
     return;
@@ -137,8 +142,8 @@ GQ.Queue.prototype.checkQueue = function() {
     }
   }
 
-  //check the queue again on this "thread" in 1 second
-  if (!self._stopped) {
+  //check the queue again on this "thread" in 1 second, unless we're out of tasks
+  if (task && !self._stopped) {
     Meteor.setTimeout(function() {
       self.checkQueue();
     }, 1000);

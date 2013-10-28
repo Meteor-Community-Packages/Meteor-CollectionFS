@@ -98,7 +98,7 @@ FileObject.prototype.getChunk = function(chunkNumber) {
   var end = start + chunkSize;
   end = Math.min(end, buffer.length);
   var total = end - start;
-  var chunk = new UIntArray(total);
+  var chunk = EJSON.newBinary(total);
   for (var i = 0; i < total; i++) {
     chunk[i] = buffer[start + i];
   }

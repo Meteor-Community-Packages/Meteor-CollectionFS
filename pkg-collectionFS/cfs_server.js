@@ -1,3 +1,17 @@
+// Configuration flags
+__filehandlerConfig = {
+  MaxRunning: 1,
+  // The max number of filehandlers you want running at the same time in total on server,
+  // not per collectionFS
+
+  Running: 0,
+  // Counter tracks number of filehandlers running at the same time in total on server,
+  // not per collectionFS
+
+  MaxFailes: 3,
+  // Will attempt to create each copy of an uploaded file this many times. Default 3.
+};
+
 //exported
 CollectionFS = function(name, options) {
   var self = this;
@@ -8,7 +22,8 @@ CollectionFS = function(name, options) {
   // Extend _options
   self._options = {
     autopublish: false,
-    maxFilehandlers: __filehandlerConfig.MaxRunning
+    maxFilehandlers: __filehandlerConfig.MaxRunning,
+    copies: null
   };
   _.extend(self._options, options);
 
@@ -56,7 +71,33 @@ CollectionFS = function(name, options) {
     //self._chunksCollection._ensureIndex({files_id: 1, n: 1}, {unique: true});
 
     //start listener for this manager
-    self._listener = new _queueListener(self);
+    self.fileCopier = new GQ.Queue();
+    self.fileCopier.taskHandler = function(task) {
+      task.taskData.uploadRecord.saveCopies();
+      task.done();
+    };
+    self.fileCopier.start();
+
+    // If copies have been requested, observe the collection to kick off copying
+    // by adding them to the fileCopier queue
+    if (self._copies) {
+      self._collection.find({complete: true, $or: [{needsMoreHandling: null}, {needsMoreHandling: true}]}).observe({
+        added: function(uploadRecord) {
+          var task = self.fileCopier.addTask({
+            uploadRecord: uploadRecord
+          });
+          task.ready();
+        },
+        changed: function(uploadRecord, oldUploadRecord) {
+          if (oldUploadRecord.needsMoreHandling !== uploadRecord.needsMoreHandling) {
+            var task = self.fileCopier.addTask({
+              uploadRecord: uploadRecord
+            });
+            task.ready();
+          }
+        }
+      });
+    }
 
     //live queries keep things in sync
     self._collection.find().observe({
@@ -111,7 +152,6 @@ CollectionFS = function(name, options) {
   methods["uploadChunk_" + name] = function(fileId, chunkNum, data) {
     check(fileId, String);
     check(chunkNum, Number);
-    check(data, Uint8Array);
 
     this.unblock();
 

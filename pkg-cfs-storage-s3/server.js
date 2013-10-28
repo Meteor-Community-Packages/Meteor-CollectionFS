@@ -102,7 +102,7 @@ if (typeof FileObject !== "undefined") {
     get: function(name, config, info) {
       return getS3(config, info);
     },
-    getChunk: function(name, config, info, chunkNumber) {
+    getBytes: function(name, config, info, chunkNumber) {
       //TODO: is this possible?
     },
     del: function(name, config, info) {

@@ -45,7 +45,7 @@ GridFS.prototype.insert = function(fileObject) {
     var start = n * size, end = start + size;
     end = Math.min(end, length);
     var bytes = end - start;
-    var data = new Uint8Array(end - start);
+    var data = EJSON.newBinary(end - start);
     for (var i = 0; i < bytes; ++i) {
       data[i] = buffer[start + i];
     }

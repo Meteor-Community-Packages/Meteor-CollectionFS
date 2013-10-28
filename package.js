@@ -25,7 +25,7 @@ Package.on_use(function(api) {
   api.add_files([
     'pkg-queue/task.js',
     'pkg-queue/queue.js'
-  ], 'client');
+  ], ['client', 'server']);
   
   //collectionFS core package
   api.use(['deps', 'underscore', 'mongo-livedata', 'ejson', 'collection-hooks', 'http-methods']);
@@ -49,7 +49,6 @@ Package.on_use(function(api) {
   api.add_files([
     'pkg-collectionFS/fileObject_server.js',
     'pkg-collectionFS/uploadRecord_server.js',
-    'pkg-collectionFS/filehandlers_server.js',
     'pkg-collectionFS/cfs_server.js',
     'pkg-collectionFS/storageAdaptors_server.js'
   ], 'server');
