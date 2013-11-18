@@ -2,10 +2,25 @@ function equals(a, b) {
   return !!(EJSON.stringify(a) === EJSON.stringify(b));
 }
 
-Tinytest.add('CollectionFS - client - test environment', function(test) {
+Tinytest.add('CollectionFS - server - test environment', function(test) {
   test.isTrue(typeof CollectionFS !== 'undefined', 'test environment not initialized CollectionFS');
   test.isTrue(typeof CFSErrorType !== 'undefined', 'test environment not initialized CFSErrorType');
 });
+
+/*
+ * FileObject Server Tests
+ * 
+ * construct FO with no arguments
+ * load buffer into FO with FO.loadBuffer
+ * load buffer into FO and then call FO.toDataUrl with and without callback
+ * call FO.loadBinary and make sure it sets FO.buffer properly
+ * load buffer into FO and then call FO.toBinary; make sure correct data is returned
+ * load buffer into FO and then call FO.getBytes
+ * construct FO, set FO.collectionName to a CFS name, and then test FO.update/remove/get/put/del/url
+ * (call these with and without callback to test sync vs. async)
+ * set FO.name to a filename and test that FO.getExtension() returns the extension
+ * 
+ */
 
 
 //Test API:
