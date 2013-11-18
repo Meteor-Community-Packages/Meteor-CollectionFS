@@ -40,7 +40,21 @@ Here's an explanation of what they are named and what their documents look like.
   name: "",
   type: "",
   size: 0,
-  utime: Date
+  utime: Date,
+  failures: {
+    master: {
+      count: 0,
+      firstAttempt: Date,
+      lastAttempt: Date
+    },
+    copies: {
+      copyName: {
+        count: 0,
+        firstAttempt: Date,
+        lastAttempt: Date
+      }
+    }
+  }
 }
 ```
 
