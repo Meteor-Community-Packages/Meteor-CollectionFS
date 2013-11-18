@@ -229,12 +229,16 @@ CollectionFS = function(name, options) {
 
   // This uses collection-hooks package.
   // Prevents insertion on both client and server if filter rules say so
-  self.files.before.insert(function(userId, doc) {
+  self.files.before.insert(function() {
     var fileObject = this.transform();
     return fileObject.fileIsAllowed();
   });
 
-  //TODO might need to filter updates, too?
+  self.files.before.update(function() {
+    // TODO will need some kind of security here
+    // Don't allow them to change the type, size, name, and
+    // anything else that would be security or data integrity issue.
+  });
 
   /*
    * EO FILTER INSERTS

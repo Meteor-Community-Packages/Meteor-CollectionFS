@@ -20,6 +20,12 @@ Tinytest.add('CollectionFS - server - test environment', function(test) {
  * (call these with and without callback to test sync vs. async)
  * set FO.name to a filename and test that FO.getExtension() returns the extension
  * 
+ * 
+ * CollectionFS Server Tests
+ * 
+ * Make sure options.filter is respected
+ * 
+ * 
  */
 
 

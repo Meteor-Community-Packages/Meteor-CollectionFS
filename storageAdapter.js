@@ -160,7 +160,6 @@ StorageAdapter = function(name, options, api) {
   };
 
   self.update = function(fileObject, options, callback) {
-    //TODO test this
     console.log("---SA UPDATE");
     var self = this;
     foCheck(fileObject, "update");
