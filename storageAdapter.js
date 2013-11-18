@@ -22,8 +22,8 @@ StorageAdapter = function(name, options, api) {
     throw new Error('StorageAdapter please define an api.put function');
   }
 
-  if (typeof api.remove !== 'function') {
-    throw new Error('StorageAdapter please define an api.remove function');
+  if (typeof api.del !== 'function') {
+    throw new Error('StorageAdapter please define an api.del function');
   }
 
   if (api.typeName !== '' + api.typeName) {
@@ -40,7 +40,7 @@ StorageAdapter = function(name, options, api) {
   // Make sync versions of some API functions
   api.putSync = Meteor._wrapAsync(api.put);
   api.getSync = Meteor._wrapAsync(api.get);
-  api.removeSync = Meteor._wrapAsync(api.remove);
+  api.delSync = Meteor._wrapAsync(api.del);
   if (typeof api.getBytes === "function") {
     api.getBytesSync = Meteor._wrapAsync(api.getBytes);
   }
@@ -232,7 +232,7 @@ StorageAdapter = function(name, options, api) {
     // Remove the file from storage
     // Async
     if (callback) {
-      api.remove.call(self, fileInfo.key, function(err, result) {
+      api.del.call(self, fileInfo.key, function(err, result) {
         if (err)
           return handleError(callback, err);
 
@@ -243,7 +243,7 @@ StorageAdapter = function(name, options, api) {
     }
     //Sync
     else {
-      api.removeSync.call(self, fileInfo.key);
+      api.delSync.call(self, fileInfo.key);
       // remove the SA file record
       self.files.remove({_id: fileInfo._id});
     }
@@ -377,7 +377,7 @@ StorageAdapter = function(name, options, api) {
   // api.getBytes = function(fileKey, start, end, callback) {};
 
   // // Delete the file data
-  // api.remove = function(fileKey, callback) {};
+  // api.del = function(fileKey, callback) {};
 
   // // File stats returns size, ctime, mtime
   // api.stats = function(fileKey, callback) {}
