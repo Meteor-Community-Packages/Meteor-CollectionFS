@@ -371,6 +371,12 @@ FileObject.prototype.isImage = function() {
   return self.type.indexOf("image/") === 0;
 };
 
+
+FileObject.prototype.hasCopy = function(copyName) {
+  var self = this;
+  return (self.copies && self.copies[copyName] && typeof self.copies[copyName] === "object");
+};
+
 FileObject.prototype.fileIsAllowed = function() {
   var self = this;
   var collection = _collectionsFS[self.collectionName];
