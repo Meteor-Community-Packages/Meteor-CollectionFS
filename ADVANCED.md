@@ -40,13 +40,7 @@ Here's an explanation of what they are named and what their documents look like.
   name: "",
   type: "",
   size: 0,
-  start: 0,
-  end: 0,
-  utime: Date,
-  bytesRead: 0,
-  bytesUploaded: 0,
-  readProgress: 0,
-  uploadProgress: 0
+  utime: Date
 }
 ```
 

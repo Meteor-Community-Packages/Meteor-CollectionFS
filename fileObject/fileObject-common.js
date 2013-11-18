@@ -13,11 +13,6 @@ FileObject = function(ref) {
     self.utime = new Date();
     self.loadBlob(ref);
   }
-
-  // This sets the upload state for this object - but does not hinder multiple
-  // instances uploading the same file TODO: possible issue
-  self.isUploading = false;
-
 };
 
 // Converts EJSON binary to Buffer or Blob and saves in FileObject

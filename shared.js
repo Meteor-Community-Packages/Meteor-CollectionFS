@@ -26,13 +26,8 @@ cloneFileRecord = function(rec) {
     name: '' + rec.name,
     type: '' + rec.type,
     size: defaultZero(rec.size),
-    start: defaultZero(rec.start),
-    end: defaultZero(rec.end),
     utime: new Date(rec.utime),
-    bytesRead: defaultZero(rec.bytesRead),
-    bytesUploaded: defaultZero(rec.bytesUploaded),
-    readProgress: defaultZero(rec.readProgress),
-    uploadProgress: defaultZero(rec.uploadProgress)
+    bytesUploaded: defaultZero(rec.bytesUploaded)
   };
   // clone master
   if (_.isObject(rec.master)) {
