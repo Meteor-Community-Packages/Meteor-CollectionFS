@@ -1,0 +1,13 @@
+{
+  "name": "cfs-filesystem",
+  "description": "Filesystem storage adapter for CollectionFS",
+  "homepage": "",
+  "author": "Morten Henriksen (http://gi-software.com)",
+  "version": "0.1.0",
+  "git": "",
+  "packages": {
+    "collectionFS": {
+      "path": "/Users/Eric/DevProjects/Meteor-CollectionFS"
+    }
+  }
+}
