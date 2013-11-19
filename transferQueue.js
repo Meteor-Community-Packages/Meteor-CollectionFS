@@ -24,6 +24,7 @@ TransferQueue = function(isUpload) {
   if (Meteor.isClient) {
     self._progressPercentDeps = new Deps.Dependency();
     self._pausedDeps = new Deps.Dependency();
+    self._queuePausedDeps = new Deps.Dependency();
   }
 
   // Make queue update reactive queue progress / status
@@ -34,6 +35,9 @@ TransferQueue = function(isUpload) {
       self._progressPercent = p;
       if (self._progressPercentDeps) {
         self._progressPercentDeps.changed();
+      }
+      if (self._queuePausedDeps) {
+        self._queuePausedDeps.changed();
       }
     }
   };
@@ -237,7 +241,14 @@ var downloadChunk = function(tQueue, fileObject, selector, start) {
 // This is done as a recursive function rather than a loop so that
 // the closure variables will be correct when the queue tasks are run.
 var downloadChunks = function(tQueue, fileObject, selector, size, chunks, chunk) {
-  size = size || fileObject.size;
+  if (typeof size !== 'number') {
+    if (selector) {
+      size = fileObject.copies[selector].size;
+    } else {
+      size = fileObject.master.size;
+    }
+  }
+  
   if (typeof size !== 'number') {
     throw new Error('TransferQueue download failed: fileObject size not set');
   }
@@ -299,7 +310,10 @@ TransferQueue.prototype.isPaused = function() {
 
 TransferQueue.prototype.isRunning = function() {
   var self = this;
-  return self.queue.paused;
+  if (self._queuePausedDeps) {
+    self._queuePausedDeps.depend();
+  }
+  return !self.queue.paused;
 };
 
 TransferQueue.prototype.pause = function() {
@@ -326,18 +340,24 @@ TransferQueue.prototype.progress = function(fileObject, selector) {
   if (self._progressPercentDeps) {
     self._progressPercentDeps.depend();
   }
+  console.log("tQueue Progress");
   if (fileObject) {
     if (self.isUploadQueue) {
+      console.log("tQueue Progress Upload");
       var totalChunks = Math.ceil(fileObject.size / chunkSize);
       var uploadedChunks = self.collection.find({fo: fileObject, type: "upload", done: true}).count();
+      console.log("tQueue Progress Upload", Math.round(uploadedChunks / totalChunks * 100));
       return Math.round(uploadedChunks / totalChunks * 100);
     } else {
+      console.log("tQueue Progress Download");
       selector = selector || null;
       var totalChunks = Math.ceil(fileObject.size / chunkSize);
       var downloadedChunks = self.collection.find({fo: fileObject, selector: selector, type: "download", data: {$exists: true}}).count();
+      console.log("tQueue Progress Download", Math.round(downloadedChunks / totalChunks * 100));
       return Math.round(downloadedChunks / totalChunks * 100);
     }
   } else {
+    console.log("tQueue Progress Overall", self._progressPercent);
     return self._progressPercent;
   }
 };

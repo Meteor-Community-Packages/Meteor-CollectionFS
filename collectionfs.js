@@ -346,7 +346,7 @@ if (Meteor.isServer) {
         fileObject.logCopyFailure();
       } else {
         // Success. Update the file object
-        fileObject.update({$set: {master: copyInfo}});
+        fileObject.update({$set: {master: result}});
       }
     }
   };

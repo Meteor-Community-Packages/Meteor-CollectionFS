@@ -368,6 +368,15 @@ FileObject.prototype.isImage = function() {
   return self.type.indexOf("image/") === 0;
 };
 
+FileObject.prototype.isUploaded = function() {
+  var self = this;
+  return self.bytesUploaded === self.size;
+};
+
+FileObject.prototype.hasMaster = function() {
+  var self = this;
+  return (typeof self.master === "object");
+};
 
 FileObject.prototype.hasCopy = function(copyName) {
   var self = this;
