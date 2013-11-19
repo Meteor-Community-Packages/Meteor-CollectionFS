@@ -1,18 +1,34 @@
 cfs-s3
 =========================
 
-Adds Amazon S3 storage adapter to CollectionFS.
+A Meteor package that adds Amazon S3 storage for [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS).
+
+## Installation
+
+Install using Meteorite. When in a Meteorite-managed app directory, enter:
+
+```
+$ mrt add cfs-s3
+```
+
+## Usage
 
 1. Create a new bucket in S3. We'll refer to this as `mybucket`.
 2. If desired, create an IAM policy specific to allowing this app access to this bucket.
-3. Use like so:
+3. Use when constructing a CollectionFS, like this:
 
 ```js
-var myS3Store = new CollectionFS.S3Store("myS3Store", {
-  region: "my-s3-region", //required
-  key: "account or IAM key", //required
-  secret: "account or IAM secret", //required
-  bucket: "mybucket", //required
-  'x-amz-acl': myValue //default is 'public-read'
+Images = new CollectionFS("images", {
+  store: new CollectionFS.S3Store("images", {
+           region: "my-s3-region", //required
+           key: "account or IAM key", //required
+           secret: "account or IAM secret", //required
+           bucket: "mybucket", //required
+           'x-amz-acl': myValue //default is 'public-read'
+         });
 });
 ```
+
+## Notes
+
+An S3Store does not support the `sync` option.
