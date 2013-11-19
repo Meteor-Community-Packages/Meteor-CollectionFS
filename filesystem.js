@@ -92,7 +92,7 @@ CollectionFS.FileSystemStore = function(name, pathname) {
         throw err;
       }));
     },
-    remove: function(fileKey, callback) {
+    del: function(fileKey, callback) {
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
