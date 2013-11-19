@@ -1,4 +1,4 @@
 cfs-gridfs
 =========================
 
-Adds GridFS storage adaptor to CollectionFS.
+Adds GridFS storage adapter to CollectionFS.
