@@ -9,7 +9,8 @@
     "http-methods": {},
     "collection-hooks": {},
     "power-queue": {
-      "path": "/Users/Eric/DevProjects/meteor-power-queue"
+      "git": "https://github.com/CollectionFS/Meteor-powerqueue.git",
+      "branch": "master"
     }
   }
 }

@@ -210,8 +210,8 @@ CollectionFS = function(name, options) {
     if (!self.options.filter.deny || !Match.test(self.options.filter.deny, Object)) {
       self.options.filter.deny = {};
     }
-    if (!self.options.filter.maxSize || !_.isNumber(self.options.filter.maxSize)) {
-      self.options.filter.maxSize = false;
+    if (!self.options.filter.maxSize || typeof self.options.filter.maxSize !== "number") {
+      self.options.filter.maxSize = null;
     }
     if (!self.options.filter.allow.extensions || !_.isArray(self.options.filter.allow.extensions)) {
       self.options.filter.allow.extensions = [];

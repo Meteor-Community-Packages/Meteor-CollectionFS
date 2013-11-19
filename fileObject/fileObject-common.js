@@ -389,7 +389,7 @@ FileObject.prototype.fileIsAllowed = function() {
     }
     return false;
   }
-  if (filter.maxSize !== null && fileSize > filter.maxSize) {
+  if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
     if (typeof filter.onInvalid === "function") {
       filter.onInvalid("File is too big");
     }
