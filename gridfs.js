@@ -111,7 +111,7 @@ CollectionFS.GridFSStore = function(name) {
 
       callback(null, id);
     },
-    remove: function(id, callback) {
+    del: function(id, callback) {
       chunksCollection.remove({files_id: id}, callback);
     },
     watch: function() {
