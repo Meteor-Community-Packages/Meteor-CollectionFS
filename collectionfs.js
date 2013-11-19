@@ -71,9 +71,13 @@ if (Meteor.isServer) {
 
       // If http get then return file
       if (self.method.toLowerCase() === 'get') {
-        self.setContentType(file.type);
-        self.setStatusCode(200);
-        return APDownload.call(self, file, self.params.selector, query.start, query.end);
+        try {
+          self.setContentType(file.type);
+          self.setStatusCode(200);
+          return APDownload.call(self, file, self.params.selector, query.start, query.end);
+        } catch (e) {
+          throw new Meteor.Error(404, "Not Found", "Could not retrieve file with ID " + self.params.id);
+        }
       }
 
       else if (self.method.toLowerCase() === 'put') {
@@ -410,7 +414,10 @@ CollectionFS.prototype.insert = function(doc, callback) {
     fileObj.collectionName = self.files._name;
 
     // Insert the file into db
+    console.log('Now doing actual insert into collection');
     fileObj._id = self.files.insert(cloneFileRecord(fileObj), function(err, id) {
+      console.log('Insert callback error:', err);
+      console.log('Insert callback result:', id);
       if (err) {
         if (typeof callback === 'function') {
           callback(err, id);

@@ -8,7 +8,9 @@ FileObject = function(ref) {
 
   if (typeof File !== "undefined" && ref instanceof File) {
     self.utime = ref.lastModifiedDate;
+    console.log("Loading Blob...");
     self.loadBlob(new Blob([ref], {type: ref.type}));
+    console.log("Done loading Blob");
   } else if (typeof Blob !== "undefined" && ref instanceof Blob) {
     self.utime = new Date();
     self.loadBlob(ref);
