@@ -19,20 +19,22 @@ Install using Meteorite. When in a Meteorite-managed app directory, enter:
 $ mrt add collectionFS
 ```
 
-You may need to add additional packages depending on how you are using CollectionFS.
+You may need to add additional packages depending on how you are using
+CollectionFS. Continue reading for details.
 
 ## Introduction
 
 The CollectionFS package makes available two important global variables:
 `FileObject` and `CollectionFS`.
 
-* A `FileObject` wraps a file and it's data
+* A `FileObject` wraps a file and its data
 on the client or server. It is similar to the browser `File` object (and can be
 created from a `File` object), but it has additional properties and methods.
 * A `CollectionFS` provides a collection in which information about 
 files can be stored. It also provides
 the necessary mechanisms to upload and download the files, track
-upload and download progress reactively, pause and resume uploads and downloads, and more.
+upload and download progress reactively, pause and resume uploads and downloads,
+and more.
 
 A document from a `CollectionFS` is represented as a `FileObject`.
 
@@ -43,13 +45,13 @@ The first step in using this package is to define a `CollectionFS`.
 *client.js:*
 
 ```js
-Images = new CollectionFS("images");
+var Images = new CollectionFS("images");
 ```
 
 *server.js:*
 
 ```js
-Images = new CollectionFS("images", {
+var Images = new CollectionFS("images", {
   useHTTP: true,
   store: new CollectionFS.FileSystemStore("images", "~/uploads")
 });
@@ -57,12 +59,13 @@ Images = new CollectionFS("images", {
 
 In this example, we've defined a CollectionFS named "images", which will
 be a new collection in your MongoDB database with the name "images.files". We've
-also defined a filter for it, stating that only images can be uploaded to it,
-and we've told it to store the files in a new filesystem store.
+also told it to store the files in `~/uploads` on the local filesystem.
 
 Your CollectionFS variable does not necessarily have to be global on the
-client or the server, but be sure to give it the same name on both the client and
-the server. It's also best if you put the server code in a server-only file that
+client or the server, but be sure to give it the same name (the first argument)
+on both the client and the server.
+
+It's highly recommended that you put the server code in a server-only file that
 will not be sent to the client because the storage adapters sometimes require
 sensitive information like access keys.
 
@@ -74,7 +77,9 @@ Template.myForm.events({
   'change .myFileInput': function(event, template) {
     var files = event.target.files;
     for (var i = 0, ln = files.length; i < ln; i++) {
-      Images.insert(files[i]);
+      Images.insert(files[i], function (err, id) {
+        //Inserted new doc with _id = id, and kicked off the data upload using DDP
+      });
     }
   }
 });
@@ -100,6 +105,10 @@ configurable number of failed attempts at saving, the server will give up. At
 this point, if the master copy has still not been saved, the `FileObject` will
 be deleted from the CollectionFS.
 
+To configure the maximum number of save attempts, use the `maxTries` option. You
+can specify this for the master copy and/or for any of the additional copies. The
+default is 5.
+
 ## Storage Adapters
 
 There are currently three available storage adapters, which are in separate
@@ -121,7 +130,7 @@ compress it, etc. before allowing the storage adapter to save it. You may also
 want to convert to another content type or change the filename. You can do all
 of this by defining a `beforeSave` method.
 
-A `beforeSave` method can be defined for the master copy and for any of the
+A `beforeSave` method can be defined for the master copy and/or for any of the
 additional copies. It does not receive any arguments, but its context is the
 `FileObject` being saved, which you can alter as necessary.
 
@@ -185,10 +194,19 @@ functions.
 The file extensions must be specified without a leading period.
 
 *Tip: You can do more advanced filtering in your master `beforeSave` function. If you return
-`false` from a `beforeSave` function, the file is removed.*
+`false` from a master `beforeSave` function, the file is removed. If you return
+`false` from the `beforeSave` function for a copy, that copy will not be created.*
 
 ## Handlebars
 
 To simplify your life, consider using the `cfs-handlebars` package, which provides
 several helpers to easily display `FileObject` information, create file inputs,
-create download buttons, show file transfer progress, and more.
+create download or delete buttons, show file transfer progress, and more.
+
+## FileObject Reference
+
+TODO
+
+## CollectionFS Reference
+
+TODO
