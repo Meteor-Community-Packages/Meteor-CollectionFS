@@ -3,7 +3,8 @@ Package.describe({
 });
 
 Npm.depends({
-  chokidar: "0.7.0"
+  chokidar: "0.7.0",
+  mkdirp: "0.3.5"
 });
 
 Package.on_use(function(api) {

@@ -1,5 +1,6 @@
 var fs = Npm.require('fs');
 var path = Npm.require('path');
+var mkdirp = Npm.require('mkdirp');
 var chokidar = Npm.require('chokidar');
 
 CollectionFS.FileSystemStore = function(name, pathname) {
@@ -13,19 +14,14 @@ CollectionFS.FileSystemStore = function(name, pathname) {
 
   // Set absolute path
   var absolutePath = path.resolve(pathname);
-
-  if (!fs.existsSync(absolutePath)) {
-    fs.mkdirSync(absolutePath);
-    if (!fs.existsSync(absolutePath))
-      throw new Error('SA FileSystem - Path not found and could not be created: "' + absolutePath + '"');
-  } else {
-    console.log(name + ' FileSystem mounted on: ' + absolutePath);
-  }
+  
+  // Ensure the path exists
+  mkdirp.sync(absolutePath);
+  console.log(name + ' FileSystem mounted on: ' + absolutePath);
 
   return new StorageAdapter(name, {}, {
     typeName: 'storage.filesystem',
     get: function(fileKey, callback) {
-      console.log("get filekey:", fileKey);
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
@@ -123,7 +119,6 @@ CollectionFS.FileSystemStore = function(name, pathname) {
       console.log('Watching ' + absolutePath);
 
       // chokidar seems to be most widely used and production ready watcher
-      // TODO determine whether the event was due to something we just did
       var watcher = chokidar.watch(absolutePath, {ignored: /\/\./, ignoreInitial: true});
       watcher.on('add', Meteor.bindEnvironment(function(filePath, stats) {
         callback("change", fileKey(filePath), {
