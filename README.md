@@ -1,7 +1,7 @@
 CollectionFS
 =========================
 
-NOTE: This branch is under active development right now (2013-11-18). It has
+NOTE: This branch is under active development right now (2013-11-20). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -123,9 +123,9 @@ default is 5.
 There are currently three available storage adapters, which are in separate
 packages. Refer to the package documentation for usage instructions.
 
-* `cfs-gridfs`: Allows you to save data chunks into `Meteor.Collection`s that follow the GridFS spec.
-* `cfs-filesystem`: Allows you to save to the server filesystem.
-* `cfs-s3`: Allows you to save to an Amazon S3 bucket.
+* [cfs-gridfs](https://github.com/CollectionFS/Meteor-cfs-gridfs): Allows you to save data chunks into `Meteor.Collection`s that follow the GridFS spec.
+* [cfs-filesystem](https://github.com/CollectionFS/Meteor-cfs-filesystem): Allows you to save to the server filesystem.
+* [cfs-s3](https://github.com/CollectionFS/Meteor-cfs-s3): Allows you to save to an Amazon S3 bucket.
 
 Storage adapters also handle retrieving the file data and removing the file data
 when you delete the file. Some of them support synchronization, where updates
@@ -144,7 +144,7 @@ additional copies. It does not receive any arguments, but its context is the
 `FileObject` being saved, which you can alter as necessary.
 
 The most common scenario is image manipulation, and for this there is a convenient
-package, `cfs-graphicsmagick` that allows you to easily call `GraphicsMagick` methods on the `FileObject`
+package, [cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick), that allows you to easily call `GraphicsMagick` methods on the `FileObject`
 data. Here's an example:
 
 ```js
@@ -159,7 +159,7 @@ Images = new CollectionFS("images", {
 It's pretty easy to understand. First call `gm()` on the `FileObject` to enter
 a special GraphicsMagick context, then call any methods from the node `gm` package,
 and finally call `save()` to update the `FileObject` data with those modifications.
-Refer to the `cfs-graphicsmagick` package documentation for more information.
+Refer to the [cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick) package documentation for more information.
 
 ## Filtering
 
@@ -208,7 +208,7 @@ The file extensions must be specified without a leading period.
 
 ## Handlebars
 
-To simplify your life, consider using the `cfs-handlebars` package, which provides
+To simplify your life, consider using the [cfs-handlebars](https://github.com/CollectionFS/Meteor-cfs-handlebars) package, which provides
 several helpers to easily display `FileObject` information, create file inputs,
 create download or delete buttons, show file transfer progress, and more.
 
