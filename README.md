@@ -12,6 +12,15 @@ in your MongoDB database.
 
 ## Installation
 
+NOTE: Until this is added to atmosphere, use this in smart.json:
+
+```js
+"cfs-gridfs": {
+  "git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
+  "branch": "master"
+}
+```
+
 Install using Meteorite. When in a Meteorite-managed app directory, enter:
 
 ```
