@@ -1,7 +1,7 @@
 This is advanced information useful for anyone who contributes to CollectionFS
 or wants to make their own storage adapter.
 
-== Goals
+## Goals
 
 * Scale horizontally and vertically
 * Secure file operations and file serving
@@ -10,7 +10,7 @@ or wants to make their own storage adapter.
 * Reactivity
 * Uploads and downloads are cancelable and resumable
 
-== Related Packages
+## All Packages
 
 * collectionFS
 * cfs-graphicsmagick
@@ -19,12 +19,12 @@ or wants to make their own storage adapter.
 * cfs-gridfs
 * cfs-s3
 
-== Collections
+## Collections
 
 Various MongoDB collections are created by CollectionFS and related packages.
 Here's an explanation of what they are named and what their documents look like.
 
-=== name + ".files" (CollectionFS)
+### name + ".files" (CollectionFS)
 
 ```js
 {
@@ -67,7 +67,7 @@ Here's an explanation of what they are named and what their documents look like.
 }
 ```
 
-=== "storage." + storageAdapterType + "." + storageAdapterName + "." + storeName + ".files" (per store)
+### "storage." + storageAdapterType + "." + storageAdapterName + "." + storeName + ".files" (per store)
 
 ```js
 {
@@ -78,11 +78,11 @@ Here's an explanation of what they are named and what their documents look like.
 }
 ```
 
-=== name + ".chunks"
+### name + ".chunks"
 
 Created by the GridFS storage adapter. These collections match the GridFS spec.
 
-== Creating a Storage Adapter
+## Creating a Storage Adapter
 
 To create a storage adapter, define an object constructor function that takes
 a name as a first argument and any additional necessary settings as additional
@@ -135,7 +135,7 @@ callback.
 By convention, any official stores should be in the `CollectionFS` namespace
 and end with the word "Store".
 
-== Architecture
+## Architecture
 
 ```
 Client <---- (ddp/http) --- | CFS access point |
@@ -148,7 +148,7 @@ Client <---- (ddp/http) --- | CFS access point |
                 External server––––––––––––––O
 ```
 
-== Transfer Queues
+## Transfer Queues
 
 There are two transfer queues, one for uploads and one for downloads,
 because that made some of the progress reactivity stuff easier.
@@ -177,7 +177,7 @@ the browser to save. The idea is for this to be a collection that persists if
 the client reloads, such that downloads can be resumed. Currently I think the
 collection is lost but maybe all we need to do is ground it with grounddb?
 
-== The FileWorker
+## The FileWorker
 
 A single FileWorker is created on the server. It attempts to save missing data
 for all CFS. Every 5 secs (not configurable right now but could be),
@@ -193,13 +193,13 @@ the temp file is deleted and the FileObject is deleted from the CFS.
 from the master store. If the data can't be saved to the copy store after max
 tries, that copy just won't exist, but the FileObject remains in the CFS.
 
-== PowerQueue
+## PowerQueue
 
 The PowerQueue code is really just the simple queue from the prototype.
 It works well, but if it was made into more of the true PowerQueue that was
 conceived, that might simplify some of the TransferQueue code.
 
-== Wish List
+## Wish List
 
 * Dynamic file manipulation
 * Drag/drop upload component
