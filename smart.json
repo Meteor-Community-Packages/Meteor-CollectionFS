@@ -1,10 +1,10 @@
 {
   "name": "cfs-gridfs",
   "description": "GridFS storage adapter for CollectionFS",
-  "homepage": "",
+  "homepage": "https://github.com/CollectionFS/Meteor-cfs-gridfs",
   "author": "Eric Dobbertin (http://dairystatedesigns.com)",
   "version": "0.1.0",
-  "git": "",
+  "git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
   "packages": {
     "collectionFS": {
       "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
