@@ -10,6 +10,15 @@ or wants to make their own storage adapter.
 * Reactivity
 * Uploads and downloads are cancelable and resumable
 
+== Related Packages
+
+* collectionFS
+* cfs-graphicsmagick
+* cfs-handlebars
+* cfs-filesystem
+* cfs-gridfs
+* cfs-s3
+
 == Collections
 
 Various MongoDB collections are created by CollectionFS and related packages.
@@ -123,6 +132,9 @@ saved for the given `id` or `fileKey`. If not, you may alter the `fileKey` as
 necessary to prevent overwriting and then pass the altered `fileKey` to the
 callback.
 
+By convention, any official stores should be in the `CollectionFS` namespace
+and end with the word "Store".
+
 == Architecture
 
 ```
@@ -135,6 +147,57 @@ Client <---- (ddp/http) --- | CFS access point |
                 Fileserver––––––––––––––O    |
                 External server––––––––––––––O
 ```
+
+== Transfer Queues
+
+There are two transfer queues, one for uploads and one for downloads,
+because that made some of the progress reactivity stuff easier.
+They are just two separate instances of a TransferQueue, so it's a bit strange
+in that TransferQueue includes code for both uploads and downloads,
+but each instance only uses one or the other. There might be some less
+confusing way to do that.
+
+The TransferQueue looks at the file size on the client and automatically
+decides whether to do chunked upload/download vs. a single DDP call.
+
+* *Uploads:* For a single-call upload, it has all the data, so it immediately
+passes it to the beforeSave function and storage adapters. For chunked uploads,
+it will stream each chunk into a temporary file on the filesystem, keeping
+track with a `bytesUploaded` property in the FileObject. After the whole file
+has been saved to the temp file (`bytesUploaded === size`), it will load back
+from the temp file and pass
+everything to the beforeSave function and storage adapters. Using this temp
+file keeps memory usage low and allows uploads to resume after the server
+restarts (theoretically, I didn't test yet).
+* *Downloads:* For a single-call download, it just takes the returned data
+and tells the browser to save it. For chunked downloads, the data is saved
+into a temporary unmanaged client collection, which is used to track progress.
+When all data has been stored in the collection, it is combined and given to
+the browser to save. The idea is for this to be a collection that persists if
+the client reloads, such that downloads can be resumed. Currently I think the
+collection is lost but maybe all we need to do is ground it with grounddb?
+
+== The FileWorker
+
+A single FileWorker is created on the server. It attempts to save missing data
+for all CFS. Every 5 secs (not configurable right now but could be),
+it looks for any file in any CFS that is fully uploaded but wasn't able to
+be saved to either the master store or a copy store. It them attempts to save
+to these stores again, up until the maxTries for that master/copy.
+
+* When attempting to save to the master store at a later time, the data is loaded
+from the temporary file. The temporary file is never deleted until the master
+store has successfully saved. If the master store can't save after max tries,
+the temp file is deleted and the FileObject is deleted from the CFS.
+* When attempting to save to a copy store at a later time, the data is loaded
+from the master store. If the data can't be saved to the copy store after max
+tries, that copy just won't exist, but the FileObject remains in the CFS.
+
+== PowerQueue
+
+The PowerQueue code is really just the simple queue from the prototype.
+It works well, but if it was made into more of the true PowerQueue that was
+conceived, that might simplify some of the TransferQueue code.
 
 == Wish List
 
