@@ -103,6 +103,14 @@ TransferQueue.prototype.cacheDownload = function(fileObject, selector, start, ca
 TransferQueue.prototype.addDownloadedData = function(fileObject, selector, start, data, callback) {
   var self = this;
 
+  function save(data) {
+    fileObject.loadBinary(data);
+    var filename = (typeof selector === "string") ? fileObject.copies[selector].name : fileObject.master.name;
+    fileObject.saveLocal(filename);
+    // Now that we've saved it, clear the cache
+    self.unCacheDownload(fileObject, selector, callback);
+  }
+
   if (typeof start === "number") {
     self.collection.update({fo: fileObject, selector: selector, start: start, type: "download"}, {$set: {data: data}}, function(err) {
       if (err) {
@@ -115,6 +123,8 @@ TransferQueue.prototype.addDownloadedData = function(fileObject, selector, start
       console.log("Downloaded", cnt, "of", totalChunks);
       if (totalChunks === cnt) {
         // All chunks have been downloaded into the cache
+        // Combine chunks
+        console.log("Loading chunks into file object");
         var bin = EJSON.newBinary(fileObject.size), r = 0;
         cachedChunks.rewind();
         cachedChunks.forEach(function(chunkCache) {
@@ -124,19 +134,13 @@ TransferQueue.prototype.addDownloadedData = function(fileObject, selector, start
             r++;
           }
         });
-        console.log("Loading chunks into file object");
-        fileObject.loadBinary(bin);
-        fileObject.saveLocal();
-        // Now that we've saved it, clear the cache
-        self.unCacheDownload(fileObject, selector, callback);
+        // Save combined data
+        save(bin);
       }
     });
   } else {
     // There is just one chunk, so save the downloaded file.
-    fileObject.loadBinary(data);
-    fileObject.saveLocal();
-    // Now that we've saved it, clear the cache
-    self.unCacheDownload(fileObject, selector);
+    save(data);
   }
 };
 
@@ -248,7 +252,7 @@ var downloadChunks = function(tQueue, fileObject, selector, size, chunks, chunk)
       size = fileObject.master.size;
     }
   }
-  
+
   if (typeof size !== 'number') {
     throw new Error('TransferQueue download failed: fileObject size not set');
   }
@@ -340,24 +344,18 @@ TransferQueue.prototype.progress = function(fileObject, selector) {
   if (self._progressPercentDeps) {
     self._progressPercentDeps.depend();
   }
-  console.log("tQueue Progress");
   if (fileObject) {
     if (self.isUploadQueue) {
-      console.log("tQueue Progress Upload");
       var totalChunks = Math.ceil(fileObject.size / chunkSize);
       var uploadedChunks = self.collection.find({fo: fileObject, type: "upload", done: true}).count();
-      console.log("tQueue Progress Upload", Math.round(uploadedChunks / totalChunks * 100));
       return Math.round(uploadedChunks / totalChunks * 100);
     } else {
-      console.log("tQueue Progress Download");
       selector = selector || null;
       var totalChunks = Math.ceil(fileObject.size / chunkSize);
       var downloadedChunks = self.collection.find({fo: fileObject, selector: selector, type: "download", data: {$exists: true}}).count();
-      console.log("tQueue Progress Download", Math.round(downloadedChunks / totalChunks * 100));
       return Math.round(downloadedChunks / totalChunks * 100);
     }
   } else {
-    console.log("tQueue Progress Overall", self._progressPercent);
     return self._progressPercent;
   }
 };

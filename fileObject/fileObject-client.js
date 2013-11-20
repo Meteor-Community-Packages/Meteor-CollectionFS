@@ -6,12 +6,14 @@ FileObject.prototype.loadBlob = function(blob) {
   self.type = blob.type;
 };
 
-FileObject.prototype.saveLocal = function() {
+FileObject.prototype.saveLocal = function(filename) {
+  var self = this;
+  
   if (typeof window === "undefined")
     throw new Error("window must be defined to use saveLocal");
-
-  var self = this;
+  
   if (self.blob) {
-    window.saveAs(self.blob, self.name);
+    filename = filename || self.name;
+    window.saveAs(self.blob, filename);
   }
 };
