@@ -9,6 +9,15 @@ A Meteor package that adds Amazon S3 storage for [CollectionFS](https://github.c
 
 ## Installation
 
+NOTE: Until this is added to atmosphere, use this in smart.json:
+
+```js
+"cfs-s3": {
+  "git": "https://github.com/CollectionFS/Meteor-cfs-s3.git",
+  "branch": "master"
+}
+```
+
 Install using Meteorite. When in a Meteorite-managed app directory, enter:
 
 ```
