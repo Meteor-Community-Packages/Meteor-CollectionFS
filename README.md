@@ -13,6 +13,15 @@ created.
 
 ## Installation
 
+NOTE: For testing, use this in smart.json:
+
+```js
+"collectionFS": {
+  "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
+  "branch": "devel-merge"
+}
+```
+
 Install using Meteorite. When in a Meteorite-managed app directory, enter:
 
 ```
