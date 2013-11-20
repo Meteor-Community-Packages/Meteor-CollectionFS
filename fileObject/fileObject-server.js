@@ -31,7 +31,7 @@ FileObject.prototype.loadBinaryChunk = function(binary, start, callback) {
     throw new Error("FileObject.loadBinaryChunk requires a callback");
   }
 
-  function saveBytes(fd) {
+  self.openTempFile(function(err, fd) {
     fs.writeSync(fd, binaryToBuffer(binary), 0, total, start);
     fs.closeSync(fd);
 
@@ -46,41 +46,9 @@ FileObject.prototype.loadBinaryChunk = function(binary, start, callback) {
     if (self.bytesUploaded === self.size) {
       // We are done loading all bytes
       // so we should load the temp file into the actual fileObject now
-      self.loadBufferFromFile(self.tempFile, function(err) {
-        callback(err, true);
-      });
+      self.loadBufferFromTempFile(callback);
     }
-  }
-
-  if (!self.tempFile) {
-    console.log("Creating new temp file for chunked upload");
-    self.update({$set: {tempFile: "retrieving"}}); //set to this temporarily so that we know not to get another temp file
-    tmp.file({keep: true}, Meteor.bindEnvironment(function(err, path, fd) {
-      if (err) {
-        self.update({$unset: {tempFile: ''}});
-        callback(err);
-      } else {
-        console.log("Created temp file for chunked upload: ", path);
-        self.update({$set: {tempFile: path}});
-        saveBytes(fd);
-      }
-    }, function(err) {
-      throw err;
-    }));
-  } else {
-    //TODO maybe check for tempFile === "retrieving" here and loop until it equals a filepath?
-    fs.open(self.tempFile, 'a', Meteor.bindEnvironment(function(err, fd) {
-      if (err) {
-        self.update({$unset: {tempFile: ''}});
-        callback(err);
-      } else {
-        console.log("Opened temp file for chunked upload: ", self.tempFile);
-        saveBytes(fd);
-      }
-    }, function(err) {
-      throw err;
-    }));
-  }
+  });
 };
 
 // callback(err)
@@ -130,30 +98,47 @@ FileObject.prototype.loadBufferFromTempFile = function(callback) {
 // callback(err)
 FileObject.prototype.saveBufferToTempFile = function(callback) {
   var self = this;
-
-  if (!self.tempFile) {
-    tmp.file({keep: true}, Meteor.bindEnvironment(function(err, path, fd) {
-      if (err) {
-        callback(err);
-      } else {
-        console.log("Created temp file: ", path);
-        self.update({$set: {tempFile: path}});
-        self.saveBufferToFile(path, callback);
-      }
-    }, function(err) {
-      throw err;
-    }));
-  } else {
+  
+  self.openTempFile(function (err, fd) {
+    fs.closeSync(fd);
     self.saveBufferToFile(self.tempFile, callback);
-  }
+  });
 };
 
+// Either creates a temp file and sets its path in self.tempFile or opens self.tempFile
+// for appending.
 // callback(err)
-FileObject.prototype.ensureTempFile = function(callback) {
+FileObject.prototype.openTempFile = function(callback) {
   var self = this;
 
   if (!self.tempFile) {
-    self.saveBufferToTempFile(callback);
+    console.log("Creating new temp file for", self._id);
+    self.update({$set: {tempFile: "retrieving"}}); //set to this temporarily so that we know not to get another temp file
+    tmp.file({keep: true}, Meteor.bindEnvironment(function(err, path, fd) {
+      if (err) {
+        self.update({$unset: {tempFile: ''}});
+        callback(err);
+      } else {
+        console.log("Created temp file for", self._id, path);
+        self.update({$set: {tempFile: path}});
+        callback(null, fd);
+      }
+    }, function(err) {
+      callback(err);
+    }));
+  } else {
+    //TODO maybe check for tempFile === "retrieving" here and loop until it equals a filepath?
+    fs.open(self.tempFile, 'a', Meteor.bindEnvironment(function(err, fd) {
+      if (err) {
+        self.update({$unset: {tempFile: ''}});
+        callback(err);
+      } else {
+        console.log("Opened temp file for", self._id, self.tempFile);
+        callback(null, fd);
+      }
+    }, function(err) {
+      callback(err);
+    }));
   }
 };
 
@@ -201,7 +186,7 @@ FileObject.prototype.logCopyFailure = function(copyName) {
     } else {
       // Make sure we have a temporary file saved since we will be
       // trying the save again.
-      self.ensureTempFile(function(err) {
+      self.saveBufferToTempFile(function(err) {
         if (err) {
           console.log("Error saving temp file for later master attempts:", err);
         }
