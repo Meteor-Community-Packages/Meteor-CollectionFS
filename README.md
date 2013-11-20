@@ -12,6 +12,15 @@ on the same server on which your Meteor app is running.
 
 ## Installation
 
+NOTE: Until this is added to atmosphere, use this in smart.json:
+
+```js
+"cfs-filesystem": {
+  "git": "https://github.com/CollectionFS/Meteor-cfs-filesystem.git",
+  "branch": "master"
+}
+```
+
 Install using Meteorite. When in a Meteorite-managed app directory, enter:
 
 ```
