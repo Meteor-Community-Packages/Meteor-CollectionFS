@@ -274,7 +274,7 @@ FileObject.prototype.url = function(selector, auth) {
     if (auth === true) {
       authToken = Accounts && Accounts._storedLoginToken() || '';
     } else {
-      authToken = auth;
+      authToken = auth || '';
     }
 
     if (authToken !== '') {
@@ -305,15 +305,18 @@ FileObject.prototype.put = function(callback) {
   var collection = _collectionsFS[self.collectionName];
 
   // We have to have the file in the collectionFS first
-  if (self._id && collection) {
-    if (Meteor.isClient && !CollectionFS.uploadQueue.isUploadingFile(self)) {
-      CollectionFS.uploadQueue.uploadFile(self);
-    } else if (Meteor.isServer) {
-      // We let the collection handle the storage adapters
-      collection.saveMaster(self, {missing: true});
-      collection.saveCopies(self, {missing: true});
-      callback(null, self);
-    }
+  if (!self._id || !collection) {
+    callback(new Error("FileObject put needs collection and _id"));
+  }
+
+  if (Meteor.isClient && !CollectionFS.uploadQueue.isUploadingFile(self)) {
+    CollectionFS.uploadQueue.uploadFile(self);
+    callback(null, self._id);
+  } else if (Meteor.isServer) {
+    // We let the collection handle the storage adapters
+    collection.saveMaster(self, {missing: true});
+    collection.saveCopies(self, {missing: true});
+    callback(null, self._id);
   }
 };
 
