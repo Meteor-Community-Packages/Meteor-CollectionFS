@@ -90,21 +90,22 @@ Contacts = new Meteor.Collection('contacts');
 ###Step 3: Configure Authorization (client and server)
 *This step is necessary only if you are using one of the `accounts- * ` packages and you have removed the `insecure` package.*
 
-In the client/server Javascript file where you define the data model for your project, use the `allow` and `deny` methods to define which users may insert, update, and remove files. This is no different from defining authorization for a normal `Meteor.Collection`.
+In the client/server Javascript file where you define the data model for your project, use the `allow`
+and `deny` methods to define which users may insert, update, and remove files. This is no different from
+defining authorization for a normal `Meteor.Collection`.
 
 ```js
 ContactsFS.allow({
-    insert: function(userId, file) { return userId && file.owner === userId; },
-    update: function(userId, files, fields, modifier) {
-        return _.all(files, function (file) {
-            return (userId == file.owner);
-        });  //EO iterate through files
-    },
-    remove: function(userId, files) { return false; }
+  insert: function(userId, file) { return userId && file.owner === userId; },
+  update: function(userId, file, fields, modifier) {
+    return userId && file.owner === userId;
+  },
+  remove: function(userId, file) { return false; }
 });
 ```
 
-Using the file object that is passed to the insert function, you can also restrict based on file characteristics like content types and file size. Alternatively, you can use filters for this. (See the following step.)
+Using the file object that is passed to the insert function, you can also restrict based on file characteristics
+like content types and file size. Alternatively, you can use filters for this. (See the following step.)
 
 ###Step 4: Set Up Filters (client and server)
 
