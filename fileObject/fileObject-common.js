@@ -361,6 +361,31 @@ FileObject.prototype.toDataUrl = function(callback) {
   }
 };
 
+// Load data from a URL into a new FileObject and pass it to callback
+// callback(err, fileObject)
+FileObject.fromUrl = function(url, filename, callback) {
+  callback = callback || defaultCallback;
+  var fileObject = new FileObject({name: filename});
+  if (Meteor.isClient) {
+    fileObject.loadBlobFromUrl(url, function(err) {
+      if (err) {
+        callback(err);
+      } else {
+        callback(null, fileObject);
+      }
+    }); 
+  } else if (Meteor.isServer) {
+    //TODO create loadBufferFromUrl method in server code
+//    fileObject.loadBufferFromUrl(url, function(err) {
+//      if (err) {
+//        callback(err);
+//      } else {
+//        callback(null, fileObject);
+//      }
+//    });
+  }
+};
+
 FileObject.prototype.isImage = function() {
   var self = this;
   if (typeof self.type !== "string") {
