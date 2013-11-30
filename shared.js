@@ -29,6 +29,9 @@ cloneFileRecord = function(rec) {
     utime: new Date(rec.utime),
     bytesUploaded: defaultZero(rec.bytesUploaded)
   };
+  if (_.isObject(rec.metadata)) {
+    result.metadata = rec.metadata;
+  }
   // clone master
   if (_.isObject(rec.master)) {
     result.master = {

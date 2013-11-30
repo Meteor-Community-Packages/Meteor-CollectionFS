@@ -328,7 +328,7 @@ if (Meteor.isServer) {
         throw new Error("saveMaster: Cannot save without buffer in FileObject");
       }
     }
-    
+
     console.log("saveMaster missing:", options.missing);
     console.log("saveMaster failed perm:", fileObject.failedPermanently());
 
@@ -502,7 +502,55 @@ CollectionFS.prototype.deny = function() {
 if (Meteor.isClient) {
   // There is a single uploads transfer queue per client (not per CFS)
   CollectionFS.downloadQueue = new TransferQueue();
-  
+
   // There is a single downloads transfer queue per client (not per CFS)
   CollectionFS.uploadQueue = new TransferQueue(true);
+
+  CollectionFS.prototype.acceptDropsOn = function(templateName, selector, metadata, callback) {
+    var self = this, events = {}, metadata = metadata || {};
+    // Prevent default drag and drop
+    function noopHandler(evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+
+    // Handle file dropped
+    function dropped(evt, temp) {
+      noopHandler(evt);
+      var files = evt.dataTransfer.files, fileObj;
+      // Check if the metadata is a getter / function
+      if (typeof metadata === 'function') {
+        try {
+          var myMetadata = metadata.apply(this, [evt, temp]) || {};
+          if (typeof myMetadata !== "object") {
+            throw new Error("metadata must be an object");
+          }
+          for (var i = 0, ln = files.length; i < ln; i++) {
+            fileObj = new FileObject(files[i]);
+            fileObj.metadata = myMetadata;
+            self.insert(fileObj, callback);
+          }
+        } catch (err) {
+          throw new Error('acceptDropsOn error in metadata getter, Error: ' + (err.stack || err.message));
+        }
+      } else {
+        if (typeof metadata !== "object") {
+          throw new Error("metadata must be an object");
+        }
+        for (var i = 0, ln = files.length; i < ln; i++) {
+          fileObj = new FileObject(files[i]);
+          fileObj.metadata = metadata;
+          self.insert(fileObj, callback);
+        }
+      }
+    }
+
+    events['dragenter ' + selector] = noopHandler;
+    events['dragexit ' + selector] = noopHandler;
+    events['dragover ' + selector] = noopHandler;
+    events['dragend ' + selector] = noopHandler;
+    events['drop ' + selector] = dropped;
+
+    Template[templateName].events(events);
+  };
 }
