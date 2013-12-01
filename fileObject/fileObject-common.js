@@ -215,14 +215,14 @@ FileObject.prototype.get = function(/* copyName, start, end, callback */) {
           callback(new Error('FileObject.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval'));
           return;
         }
-        store.getBytes(self, start, end, function(err, bytesRead, buffer) {
+        store.getBytes(self, start, end, {copyName: copyName}, function(err, bytesRead, buffer) {
           if (buffer) {
             buffer = bufferToBinary(buffer);
           }
           callback(err, bytesRead, buffer);
         });
       } else {
-        store.getBuffer(self, function(err, buffer) {
+        store.getBuffer(self, {copyName: copyName}, function(err, buffer) {
           if (buffer) {
             buffer = bufferToBinary(buffer);
           }
@@ -235,11 +235,11 @@ FileObject.prototype.get = function(/* copyName, start, end, callback */) {
           throw new Error('FileObject.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval');
         }
         //if callback is undefined, getBuffer will be synchrononous
-        var buffer = store.getBytes(self, start, end);
+        var buffer = store.getBytes(self, start, end, {copyName: copyName});
         return bufferToBinary(buffer);
       } else {
         //if callback is undefined, getBuffer will be synchrononous
-        var buffer = store.getBuffer(self);
+        var buffer = store.getBuffer(self, {copyName: copyName});
         return bufferToBinary(buffer);
       }
     }
@@ -248,11 +248,14 @@ FileObject.prototype.get = function(/* copyName, start, end, callback */) {
 
 // Return the http url for getting the file - on server set auth if wanting to
 // use authentication on client set auth to true or token
-// the selector can contain one reference to a SA eg. 'dropbox'
-FileObject.prototype.url = function(selector, auth) {
+FileObject.prototype.url = function(copyName, auth) {
   var self = this;
 
-  if (selector && (!self.copies || !self.copies[selector])) {
+  if (copyName && (!self.copies || !self.copies[copyName])) {
+    return null;
+  }
+  
+  if (!copyName && !self.master) {
     return null;
   }
 
@@ -269,7 +272,7 @@ FileObject.prototype.url = function(selector, auth) {
   // TODO: Could we somehow figure out if the collection requires login?
   if (typeof auth !== 'undefined') {
     if (auth === true) {
-      authToken = Accounts && Accounts._storedLoginToken() || '';
+      authToken = (typeof Accounts !== "undefined" && Accounts._storedLoginToken()) || '';
     } else {
       authToken = auth || '';
     }
@@ -280,13 +283,9 @@ FileObject.prototype.url = function(selector, auth) {
     }
   }
 
-  // #########################################################################
-  //
   // Construct the http method url
-  //
-  // #########################################################################
-  if (selector) {
-    return collection.httpUrl + '/' + self._id + '/' + selector + authToken;
+  if (copyName) {
+    return collection.httpUrl + '/' + self._id + '/' + copyName + authToken;
   } else {
     return collection.httpUrl + '/' + self._id + authToken;
   }

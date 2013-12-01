@@ -16,29 +16,25 @@ if (Meteor.isServer) {
     fileObject.reload(); //update properties from the linked server collection
 
     if (typeof start === "number") {
-      console.log("APUpload got chunk of size " + data.length + " at start " + start);
+      console.log("Received chunk of size " + data.length + " at start " + start + " for " + fileObject._id);
       // Chunked Upload
       fileObject.loadBinaryChunk(data, start, function(err, done) {
         if (err) {
-          throw new Error("APUpload problem loading binary chunk at position " + start + ": " + err.message);
+          throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
         }
         if (done) {
           console.log("Received all chunks for " + fileObject._id);
           // Save file to master store and save any additional copies
-          console.log("Buffer length: " + fileObject.buffer.length);
           fileObject.put();
         }
       });
     } else {
-      console.log("APUpload get all data in one chunk");
+      console.log("Received all data for " + fileObject._id + " in one chunk");
       // Load binary data into fileObject, which also sets fileObject.buffer
       fileObject.loadBinary(data);
 
       // Save file to master store and save any additional copies
       fileObject.put();
-
-      // TODO if any copies missing and not set to false, add this to copymaker queue
-      // to try again later
     }
   };
 
@@ -61,22 +57,34 @@ if (Meteor.isServer) {
     return function(data) {
       var self = this;
       var query = self.query || {};
+      var id = self.params.id;
+      var copyName = self.params.selector;
 
       // Get the fileObject
-      var file = collection.findOne({_id: '' + self.params.id});
+      var file = collection.findOne({_id: '' + id});
 
       if (!file) {
-        throw new Meteor.Error(404, "Not Found", "There is no file with ID " + self.params.id);
+        throw new Meteor.Error(404, "Not Found", "There is no file with ID " + id);
       }
 
       // If http get then return file
       if (self.method.toLowerCase() === 'get') {
         try {
-          self.setContentType(file.type);
+          var type, copyInfo;
+          if (copyName) {
+            copyInfo = file.copies[copyName];
+            if (copyInfo) {
+              type = copyInfo.type;
+            }
+          }
+          type = type || file.type;
+          if (typeof type === "string") {
+            self.setContentType(type);
+          }
           self.setStatusCode(200);
-          return APDownload.call(self, file, self.params.selector, query.start, query.end);
+          return APDownload.call(self, file, copyName, query.start, query.end);
         } catch (e) {
-          throw new Meteor.Error(404, "Not Found", "Could not retrieve file with ID " + self.params.id);
+          throw new Meteor.Error(404, "Not Found", "Could not retrieve file with ID " + id);
         }
       }
 
@@ -251,7 +259,6 @@ CollectionFS = function(name, options) {
   // Save the collection reference
   _collectionsFS[collectionName] = this;
 
-
   if (Meteor.isServer) {
     // Rig an observer on the server
     var cursor = self.files.find();
@@ -265,10 +272,10 @@ CollectionFS = function(name, options) {
       removed: function(oldDoc) {
         console.log('remove: ' + oldDoc._id);
         //delete master
-        self.options.store.remove(oldDoc, {ignoreMissing: true});
+        self.options.store.remove(oldDoc, {ignoreMissing: true, copyName: null});
         //delete all copies
         _.each(self.options.copies, function(copyDefinition, copyName) {
-          copyDefinition.store.remove(oldDoc, {ignoreMissing: true});
+          copyDefinition.store.remove(oldDoc, {ignoreMissing: true, copyName: copyName});
         });
       }
     });
@@ -356,12 +363,10 @@ if (Meteor.isServer) {
   function saveCopy(fileObject, store, beforeSave) {
     // Get a new copy and a fresh buffer each time in case beforeSave changes anything
     var copyOfFileObject = loadBufferSync(fileObject);
-    console.log("saveCopy fo", copyOfFileObject);
 
     // Call the beforeSave function provided by the user
     if (!beforeSave ||
             beforeSave.apply(copyOfFileObject) !== false) {
-      console.log("saveCopy store insert");
       var id = store.insert(copyOfFileObject);
       if (!id) {
         return null;
@@ -387,11 +392,10 @@ if (Meteor.isServer) {
     options = options || {};
 
     var copyInfo = fileObject.master;
-    console.log("saveMaster copyInfo", copyInfo);
 
     // If master has not already been saved or we want to overwrite it
     if (!options.missing || (copyInfo === void 0 && !fileObject.failedPermanently())) {
-      console.log('create master copy');
+      console.log('creating master copy');
 
       var result = saveCopy(fileObject, self.options.store, self.options.beforeSave);
       if (result === false) {
@@ -425,7 +429,7 @@ if (Meteor.isServer) {
       var copyInfo = fileObject.copies && fileObject.copies[copyName];
       // If copy has not already been saved or we want to overwrite it
       if (!options.missing || (copyInfo === void 0 && !fileObject.failedPermanently(copyName))) {
-        console.log('create copy ' + copyName);
+        console.log('creating copy ' + copyName);
 
         var result = saveCopy(fileObject, copyDefinition.store, copyDefinition.beforeSave);
         if (result === null) {
