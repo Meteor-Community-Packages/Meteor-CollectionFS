@@ -329,15 +329,40 @@ CollectionFS = function(name, options) {
 
 if (Meteor.isServer) {
 
-  function saveCopy(fileObject, store, copyName, beforeSave) {
-    // Get a new copy and a fresh buffer each time in case beforeSave changes anything
+  function loadBuffer(fileObject, callback) {
     var copyOfFileObject = fileObject.clone();
-    copyOfFileObject.loadBuffer(fileObject.buffer);
+
+    if (fileObject.buffer instanceof Buffer) {
+      copyOfFileObject.loadBuffer(fileObject.buffer);
+      callback(null, copyOfFileObject);
+      return;
+    }
+
+    // If the supplied fileObject does not have a buffer loaded already,
+    // try to load it from the temporary file.
+    console.log("attempting to load buffer from temp file");
+    fileObject.loadBufferFromTempFile(function(err) {
+      if (err) {
+        callback(err);
+      } else {
+        copyOfFileObject.loadBuffer(fileObject.buffer);
+        callback(null, copyOfFileObject);
+      }
+    });
+  }
+  
+  var loadBufferSync = Meteor._wrapAsync(loadBuffer);
+
+  function saveCopy(fileObject, store, beforeSave) {
+    // Get a new copy and a fresh buffer each time in case beforeSave changes anything
+    var copyOfFileObject = loadBufferSync(fileObject);
+    console.log("saveCopy fo", copyOfFileObject);
 
     // Call the beforeSave function provided by the user
     if (!beforeSave ||
             beforeSave.apply(copyOfFileObject) !== false) {
-      var id = store.insert(copyOfFileObject, {copyName: copyName});
+      console.log("saveCopy store insert");
+      var id = store.insert(copyOfFileObject);
       if (!id) {
         return null;
       } else {
@@ -364,25 +389,11 @@ if (Meteor.isServer) {
     var copyInfo = fileObject.master;
     console.log("saveMaster copyInfo", copyInfo);
 
-    // If the supplied fileObject does not have a buffer loaded already,
-    // load it from the temporary file.
-    if (!(fileObject.buffer instanceof Buffer)) {
-      console.log("saveMaster attempting to load buffer from temp file");
-      if (fileObject.tempFile) {
-        fileObject.loadBufferFromTempFile();
-      } else {
-        throw new Error("saveMaster: Cannot save without buffer in FileObject");
-      }
-    }
-
-    console.log("saveMaster missing:", options.missing);
-    console.log("saveMaster failed perm:", fileObject.failedPermanently());
-
     // If master has not already been saved or we want to overwrite it
     if (!options.missing || (copyInfo === void 0 && !fileObject.failedPermanently())) {
       console.log('create master copy');
 
-      var result = saveCopy(fileObject, self.options.store, null, self.options.beforeSave);
+      var result = saveCopy(fileObject, self.options.store, self.options.beforeSave);
       if (result === false) {
         // The master beforeSave returned false; delete the whole record.
         fileObject.remove();
@@ -416,7 +427,7 @@ if (Meteor.isServer) {
       if (!options.missing || (copyInfo === void 0 && !fileObject.failedPermanently(copyName))) {
         console.log('create copy ' + copyName);
 
-        var result = saveCopy(fileObject, copyDefinition.store, copyName, copyDefinition.beforeSave);
+        var result = saveCopy(fileObject, copyDefinition.store, copyDefinition.beforeSave);
         if (result === null) {
           // Temporary failure; let the fileObject log it and potentially decide
           // to give up.

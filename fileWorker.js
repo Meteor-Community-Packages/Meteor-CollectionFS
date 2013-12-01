@@ -27,7 +27,7 @@ FileWorker.prototype.checkForMissingCopies = function() {
   
   // Loop through all defined CollectionFS
   _.each(_collectionsFS, function(cfs, cfsName) {
-    console.log("FileWorker checking for missing copies in the " + cfsName + " collection...");
+    //console.log("FileWorker checking for missing copies in the " + cfsName + " collection...");
     // First priority is missing master, oldest first.
     // The collection handles the details of max tries and sets doneTrying.
     cfs.find({'failures.master.count': {$gt: 0}, 'failures.master.doneTrying': false}, {sort: [['failures.master.firstAttempt', 'asc'], ['failures.master.lastAttempt', 'asc']]}).forEach(function(fileObject) {

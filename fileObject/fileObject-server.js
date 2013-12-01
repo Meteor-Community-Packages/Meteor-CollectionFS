@@ -32,22 +32,44 @@ FileObject.prototype.loadBinaryChunk = function(binary, start, callback) {
   }
 
   self.openTempFile(function(err, fd) {
-    fs.writeSync(fd, binaryToBuffer(binary), 0, total, start);
-    fs.closeSync(fd);
+    if (err) {
+      callback(err);
+      return;
+    }
 
+    try {
+      fs.writeSync(fd, binaryToBuffer(binary), 0, total, start);
+      fs.closeSync(fd);
+    } catch (err) {
+      callback(err);
+      return;
+    }
+
+    var mod;
     if (start === 0) {
-      self.update({$set: {bytesUploaded: total}});
+      mod = {$set: {bytesUploaded: total}};
     } else {
-      self.update({$inc: {bytesUploaded: total}});
+      mod = {$inc: {bytesUploaded: total}};
     }
 
-    console.log("Uploaded " + self.bytesUploaded + " of " + self.size + " bytes");
-
-    if (self.bytesUploaded === self.size) {
-      // We are done loading all bytes
-      // so we should load the temp file into the actual fileObject now
-      self.loadBufferFromTempFile(callback);
-    }
+    self.update(mod, function(err) {
+      if (err) {
+        callback(err);
+        return;
+      }
+      console.log("Uploaded " + self.bytesUploaded + " of " + self.size + " bytes");
+      if (self.bytesUploaded === self.size) {
+        // We are done loading all bytes
+        // so we should load the temp file into the actual fileObject now
+        self.loadBufferFromTempFile(function(err) {
+          if (err) {
+            callback(err);
+            return;
+          }
+          callback(null, true);
+        });
+      }
+    });
   });
 };
 
@@ -98,8 +120,8 @@ FileObject.prototype.loadBufferFromTempFile = function(callback) {
 // callback(err)
 FileObject.prototype.saveBufferToTempFile = function(callback) {
   var self = this;
-  
-  self.openTempFile(function (err, fd) {
+
+  self.openTempFile(function(err, fd) {
     fs.closeSync(fd);
     self.saveBufferToFile(self.tempFile, callback);
   });
