@@ -175,16 +175,16 @@ FileObject.prototype.remove = function(copyName) {
   return id;
 };
 
-// Client: Downloads the binary data for the current copy as a single chunk and then passes it to the callback
-// Server: Returns the Buffer data for the current copy (synchronous) or passes it to an optional callback
-FileObject.prototype.get = function(/* selector, start, end, callback */) {
+// Client: Downloads the binary data for the copy as a single chunk and then passes it to the callback
+// Server: Returns the Buffer data for the copy (synchronous) or passes it to an optional callback
+FileObject.prototype.get = function(/* copyName, start, end, callback */) {
   var self = this;
   var args = parseArguments(arguments,
-          [["selector"], ["start"], ["end"], ["callback"]],
+          [["copyName"], ["start"], ["end"], ["callback"]],
           [String, Number, Number, Function]);
   if (args instanceof Error)
     throw args;
-  var selector = args.selector,
+  var copyName = args.copyName,
           callback = args.callback,
           start = args.start,
           end = args.end,
@@ -195,37 +195,34 @@ FileObject.prototype.get = function(/* selector, start, end, callback */) {
 
   // On the client we download the file via transfer queue
   if (Meteor.isClient) {
-    CollectionFS.downloadQueue.downloadFile(self, selector);
+    CollectionFS.downloadQueue.downloadFile(self, copyName);
   } else if (Meteor.isServer) {
     var collection = _collectionsFS[self.collectionName];
     if (typeof collection === 'undefined' || collection === null) {
       return handleError(callback, 'FileObject.get no collection assigned');
     }
 
-    // The selector can be empty - if so the first raw copies
-    // file is served if possible else a handled copy
-    // the selector can contain one reference to a SA eg. 'dropbox'
-    var sa = collection.getStorageAdapter(selector);
+    var store = collection.getStoreForCopy(copyName);
 
-    if (typeof sa === 'undefined' || sa === null) {
-      return handleError(callback, 'FileObject.get could not find "' + (selector || 'master') + '" Storage Adapter on CollectionFS "' + collection.name + '"');
+    if (typeof store === 'undefined' || store === null) {
+      return handleError(callback, 'FileObject.get could not find "' + (copyName || 'master') + '" Storage Adapter on CollectionFS "' + collection.name + '"');
     }
 
     // On server we contact the storage adapter
     if (callback) {
       if (partial) {
-        if (!(typeof sa.getBytes === "function")) {
-          callback(new Error('FileObject.get storage adapter for "' + (selector || 'master') + '" does not support partial retrieval'));
+        if (!(typeof store.getBytes === "function")) {
+          callback(new Error('FileObject.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval'));
           return;
         }
-        sa.getBytes(self, start, end, function(err, bytesRead, buffer) {
+        store.getBytes(self, start, end, function(err, bytesRead, buffer) {
           if (buffer) {
             buffer = bufferToBinary(buffer);
           }
           callback(err, bytesRead, buffer);
         });
       } else {
-        sa.getBuffer(self, function(err, buffer) {
+        store.getBuffer(self, function(err, buffer) {
           if (buffer) {
             buffer = bufferToBinary(buffer);
           }
@@ -234,15 +231,15 @@ FileObject.prototype.get = function(/* selector, start, end, callback */) {
       }
     } else {
       if (partial) {
-        if (!(typeof sa.getBytes === "function")) {
-          throw new Error('FileObject.get storage adapter for "' + (selector || 'master') + '" does not support partial retrieval');
+        if (!(typeof store.getBytes === "function")) {
+          throw new Error('FileObject.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval');
         }
         //if callback is undefined, getBuffer will be synchrononous
-        var buffer = sa.getBytes(self, start, end);
+        var buffer = store.getBytes(self, start, end);
         return bufferToBinary(buffer);
       } else {
         //if callback is undefined, getBuffer will be synchrononous
-        var buffer = sa.getBuffer(self);
+        var buffer = store.getBuffer(self);
         return bufferToBinary(buffer);
       }
     }

@@ -273,9 +273,55 @@ CollectionFS = function(name, options) {
       }
     });
 
-    // Tell master storage adapter what to sync to
+    // Tell master storage adapter how to sync
     if (self.options.sync) {
-      self.options.store.sync(self);
+      self.options.store.sync({
+        insert: function(storeId, info, buffer) {
+          // Create a FileObject that already has info for the master copy
+          var fileObject = new FileObject({
+            name: info.name,
+            type: info.type,
+            size: info.size,
+            utime: info.utime,
+            master: {
+              _id: storeId,
+              name: info.name,
+              type: info.type,
+              size: info.size,
+              utime: info.utime
+            }
+          });
+
+          // Load the master buffer into the file object
+          fileObject.loadBuffer(buffer, info.type);
+
+          // Save into the sync'd CollectionFS.
+          self.insert(fileObject);
+        },
+        update: function(storeId, info) {
+          // Get the FileObject
+          var fileObject = self.findOne({'master._id': storeId});
+
+          // Update info for the master store since that is the synchronized data
+          // we just received. Also, set info into the generic info since we're
+          // treating this like an upload. Finally, clear out other copy info
+          // so that the file worker will create new copies.
+          fileObject.update({$set: {
+              name: info.name,
+              type: info.type,
+              size: info.size,
+              utime: info.utime,
+              'master.name': info.name,
+              'master.type': info.type,
+              'master.size': info.size,
+              'master.utime': info.utime
+            }, $unset: {copies: ''}});
+        },
+        remove: function(storeId) {
+          //TODO possibly should just remove this copy?
+          self.remove({'master._id': storeId});
+        }
+      });
     }
   }
 
@@ -283,7 +329,7 @@ CollectionFS = function(name, options) {
 
 if (Meteor.isServer) {
 
-  function saveCopy(fileObject, store, beforeSave) {
+  function saveCopy(fileObject, store, copyName, beforeSave) {
     // Get a new copy and a fresh buffer each time in case beforeSave changes anything
     var copyOfFileObject = fileObject.clone();
     copyOfFileObject.loadBuffer(fileObject.buffer);
@@ -291,7 +337,7 @@ if (Meteor.isServer) {
     // Call the beforeSave function provided by the user
     if (!beforeSave ||
             beforeSave.apply(copyOfFileObject) !== false) {
-      var id = store.insert(copyOfFileObject);
+      var id = store.insert(copyOfFileObject, {copyName: copyName});
       if (!id) {
         return null;
       } else {
@@ -336,7 +382,7 @@ if (Meteor.isServer) {
     if (!options.missing || (copyInfo === void 0 && !fileObject.failedPermanently())) {
       console.log('create master copy');
 
-      var result = saveCopy(fileObject, self.options.store, self.options.beforeSave);
+      var result = saveCopy(fileObject, self.options.store, null, self.options.beforeSave);
       if (result === false) {
         // The master beforeSave returned false; delete the whole record.
         fileObject.remove();
@@ -370,7 +416,7 @@ if (Meteor.isServer) {
       if (!options.missing || (copyInfo === void 0 && !fileObject.failedPermanently(copyName))) {
         console.log('create copy ' + copyName);
 
-        var result = saveCopy(fileObject, copyDefinition.store, copyDefinition.beforeSave);
+        var result = saveCopy(fileObject, copyDefinition.store, copyName, copyDefinition.beforeSave);
         if (result === null) {
           // Temporary failure; let the fileObject log it and potentially decide
           // to give up.
@@ -388,13 +434,13 @@ if (Meteor.isServer) {
     });
   };
 
-  CollectionFS.prototype.getStorageAdapter = function(selector) {
+  CollectionFS.prototype.getStoreForCopy = function(copyName) {
     var self = this;
-    if (selector) {
-      if (typeof self.options.copies[selector] !== "object" || self.options.copies[selector] === null) {
-        throw new Error('getStorageAdapter: selector "' + selector + '" is not defined');
+    if (copyName) {
+      if (typeof self.options.copies[copyName] !== "object" || self.options.copies[copyName] === null) {
+        throw new Error('getStoreForCopy: copy "' + copyName + '" is not defined');
       }
-      return self.options.copies[selector].store;
+      return self.options.copies[copyName].store;
     } else {
       return self.options.store;
     }

@@ -277,20 +277,20 @@ var downloadChunks = function(tQueue, fileObject, selector, size, chunks, chunk)
   }
 };
 
-TransferQueue.prototype.downloadFile = function(/* fileObject, selector */) {
+TransferQueue.prototype.downloadFile = function(/* fileObject, copyName */) {
   var self = this;
 
   var args = parseArguments(arguments,
-          ["fileObject", ["selector"]],
+          ["fileObject", ["copyName"]],
           [FileObject, String]);
   if (args instanceof Error)
     throw args;
   var fileObject = args.fileObject,
-          selector = args.selector;
+          copyName = args.copyName;
 
   // Load via DDP
   console.log('transferQueue: downloadFile');
-  downloadChunks(self, fileObject, selector);
+  downloadChunks(self, fileObject, copyName);
 };
 
 TransferQueue.prototype.isUploadingFile = function(fileObject) {

@@ -64,41 +64,36 @@ StorageAdapter = function(name, options, api) {
     if (!(fileObject instanceof FileObject)) {
       throw new Error('Storage adapter "' + name + '" ' + type + ' requires fileObject');
     }
-    if (typeof fileObject._id !== 'string') {
-      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fileObject with an id');
-    }
-    if (typeof fileObject.collectionName !== 'string') {
-      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fileObject in a CollectionFS');
+    if (!(fileObject.buffer instanceof Buffer) && (type === "insert" || type === "update")) {
+      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fileObject with buffer');
     }
   };
 
-  var getFileInfo = function(fileObject) {
-    // TODO: if the same SA instance is used for two different copies, checking
-    // for cfs and cfsId will not be enough; will need to key on copyName, too.
-    // Should we not allow using the same one for different copies?
-    return self.files.findOne({cfs: fileObject.collectionName, cfsId: fileObject._id});
+  var getFileId = function(fileObject, copyName) {
+    var copyInfo;
+    if (copyName) {
+      copyInfo = fileObject.copies[copyName];
+    } else {
+      copyInfo = fileObject.master;
+    }
+    if (!copyInfo) {
+      return null;
+    }
+    return copyInfo._id;
   };
 
   self.insert = function(fileObject, options, callback) {
     console.log("---SA INSERT");
-    var self = this;
     foCheck(fileObject, "insert");
-    if (typeof fileObject.buffer === 'undefined') {
-      throw new Error('Storage adapter "' + name + '" insert requires fileObject with buffer data');
-    }
 
-    if (typeof options === "function") {
+    if (!callback && typeof options === "function") {
       callback = options;
       options = {};
     }
-
-    // Check if file somehow is already found in storage adapter
-    if (getFileInfo(fileObject)) {
-      throw new Error('File "' + fileObject.name + '" already exists in storage adapter "' + name + '"');
-    }
+    options = options || {};
 
     // insert the file ref into the SA file record
-    var id = self.files.insert({cfs: fileObject.collectionName, cfsId: fileObject._id, createdAt: new Date()});
+    var id = self.files.insert({createdAt: new Date()});
 
     // construct the filename
     var preferredFilename = fileObject.name;
@@ -120,7 +115,6 @@ StorageAdapter = function(name, options, api) {
           // note the file key and updatedAt in the SA file record
           if (typeof api.stats === "function") {
             api.stats.call(self, fileKey, function(err, stats) {
-              console.log("Modified time", stats.mtime);
               self.files.update({_id: id}, {$set: {key: fileKey, updatedAt: stats.mtime}}, function(err, result) {
                 callback(err, result);
               });
@@ -142,7 +136,6 @@ StorageAdapter = function(name, options, api) {
           if (typeof api.statsSync === "function") {
             var stats = api.statsSync.call(self, fileKey);
             if (stats) {
-              console.log("Modified time", stats.mtime);
               self.files.update({_id: id}, {$set: {key: fileKey, updatedAt: stats.mtime}});
             }
           } else {
@@ -161,16 +154,20 @@ StorageAdapter = function(name, options, api) {
 
   self.update = function(fileObject, options, callback) {
     console.log("---SA UPDATE");
-    var self = this;
     foCheck(fileObject, "update");
 
-    var fileInfo = getFileInfo(fileObject);
+    if (!callback && typeof options === "function") {
+      callback = options;
+      options = {};
+    }
+    options = options || {};
+
+    var id = getFileId(fileObject, options.copyName);
+    var fileInfo = self.files.findOne({_id: id});
 
     if (!fileInfo) {
-      throw new Error('Storage adapter "' + name + '" update does not contain the file');
+      return handleError(callback, 'Storage Adapter Update: The "' + name + '" store does not contain a file with ID ' + id);
     }
-
-    var id = fileInfo._id;
 
     // Put the file to storage
     if (callback) {
@@ -209,7 +206,6 @@ StorageAdapter = function(name, options, api) {
 
   self.remove = function(fileObject, options, callback) {
     console.log("---SA REMOVE");
-    var self = this;
     foCheck(fileObject, "remove");
 
     if (!callback && typeof options === "function") {
@@ -219,13 +215,15 @@ StorageAdapter = function(name, options, api) {
 
     options = options || {};
 
-    var fileInfo = getFileInfo(fileObject);
+    var id = getFileId(fileObject, options.copyName);
+    var fileInfo = self.files.findOne({_id: id});
+
     if (!fileInfo) {
       if (options.ignoreMissing) {
         callback && callback(null, true);
         return true;
       }
-      return handleError(callback, 'Storage adapter "' + name + '" remove does not contain the file');
+      return handleError(callback, 'Storage Adapter Remove: The "' + name + '" store does not contain a file with ID ' + id);
     }
 
     // Remove the file from storage
@@ -248,59 +246,76 @@ StorageAdapter = function(name, options, api) {
     }
   };
 
-  self.getBuffer = function(fileObject, callback) {
-    var self = this;
+  self.getBuffer = function(fileObject, options, callback) {
     foCheck(fileObject, "getBuffer");
 
-    var fileInfo = getFileInfo(fileObject);
-
-    if (!fileInfo) {
-      throw new Error('Storage adapter "' + name + '" getBuffer has not stored fileObject')
+    if (!callback && typeof options === "function") {
+      callback = options;
+      options = {};
     }
 
+    options = options || {};
+
+    var id = getFileId(fileObject, options.copyName);
+    var fileInfo = self.files.findOne({_id: id});
+
+    if (!fileInfo) {
+      return handleError(callback, 'Storage Adapter getBuffer: The "' + name + '" store does not contain a file with ID ' + id);
+    }
     if (!fileInfo.key) {
-      throw new Error('Storage adapter "' + name + '" getBuffer is missing key for fileObject')
+      return handleError(callback, 'Storage Adapter getBuffer: The "' + name + '" store does not contain a file with ID ' + id + ' in the "' + name + '" store is missing key');
     }
 
     // Async
     if (callback) {
-      console.log("getBuffer async");
       return api.get.call(self, fileInfo.key, callback);
     }
     // Sync
     else {
-      console.log("getBuffer sync", fileInfo.key);
       return api.getSync.call(self, fileInfo.key);
     }
   };
 
   if (typeof api.getBytes === 'function') {
-    self.getBytes = function(fileObject, start, end, callback) {
-      var self = this;
+    self.getBytes = function(fileObject, start, end, options, callback) {
       foCheck(fileObject, "getBytes");
 
-      var fileInfo = getFileInfo(fileObject);
+      if (!callback && typeof options === "function") {
+        callback = options;
+        options = {};
+      }
+
+      options = options || {};
+
+      var id = getFileId(fileObject, options.copyName);
+      var fileInfo = self.files.findOne({_id: id});
 
       if (!fileInfo) {
-        throw new Error('Storage adapter "' + name + '" getBytes has not stored fileObject')
+        return handleError(callback, 'Storage Adapter getBytes: The "' + name + '" store does not contain a file with ID ' + id);
+      }
+      if (!fileInfo.key) {
+        return handleError(callback, 'Storage Adapter getBytes: The "' + name + '" store does not contain a file with ID ' + id + ' in the "' + name + '" store is missing key');
       }
 
       // Async
       if (callback) {
-        console.log("getBytes async");
         return api.getBytes.call(self, fileInfo.key, start, end, callback);
       }
       // Sync
       else {
-        console.log("getBytes sync");
         return api.getBytesSync.call(self, fileInfo.key, start, end);
       }
     };
   }
 
-  self.sync = function(collectionFS) {
+  self.sync = function(callbacks) {
     // This is intended to be called one time in the CollectionFS constructor
-    
+    callbacks = _.extend({
+      insert: null,
+      update: null,
+      remove: null
+    }, callbacks);
+
     // TODO this is currently not usable; need to filter out changes that we make
     return; // remove this when fixed
 
@@ -308,7 +323,7 @@ StorageAdapter = function(name, options, api) {
       var fileInfo = self.files.findOne({key: fileKey});
       if (fileInfo) {
         if (type === "remove") {
-          collectionFS.remove({_id: fileInfo.cfsId});
+          callbacks.remove && callbacks.remove(fileKey);
         } else { //changed
           // Compare the updated date of the watched file against the one
           // recorded in our files collection. If they match, then we changed
@@ -316,38 +331,19 @@ StorageAdapter = function(name, options, api) {
           // then this is an outside change that we need to sync.
           // TODO does not work because watcher usually sees file before
           // fileInfo.updateAt is set?
-          console.log(fileInfo, info);
           if (fileInfo.updatedAt && fileInfo.updatedAt.getTime() === info.utime.getTime()) {
             console.log("Update is not external; will not sync");
             return;
           }
           self.files.update({_id: fileInfo._id}, {$set: {updatedAt: info.utime}});
-          var fileObject = makeFileObject(fileInfo._id, info);
-          self.getBuffer(fileObject, function(buffer) {
-            fileObject.loadBuffer(buffer, info.type);
-            collectionFS.update(fileObject);
-          });
+          callbacks.update && callbacks.update(fileInfo._id, info);
         }
       } else {
         api.get.call(self, fileKey, function(err, buffer) {
           if (buffer) {
             // Insert information about this file into the storage adapter collection
-            var filesId = self.files.insert({key: fileKey, createdAt: new Date()});
-            
-            // Create a FileObject that already has info for the master copy
-            var fileObject = makeFileObject(filesId, info);
-            
-            // Load the master buffer into the file object
-            fileObject.loadBuffer(buffer, info.type);
-            
-            // Save into the sync'd CollectionFS. This will cause additional
-            // copies to be created, but the master copy will not be saved
-            // because we already have the info for it.
-            collectionFS.insert(fileObject, function(err, id) {
-              if (id) {
-                self.files.update({_id: filesId}, {$set: {cfs: fileObject.collectionName, cfsId: id}});
-              }
-            });
+            var filesId = self.files.insert({key: fileKey, createdAt: info.utime});
+            filesId && callbacks.update && callbacks.update(filesId, info, buffer); 
           }
         });
       }
@@ -384,20 +380,4 @@ StorageAdapter = function(name, options, api) {
   // // Sync; should be called once by sync'd CFS to pass itself for updating whenever files change externally
   // api.sync = function(collectionFS) {};
 
-};
-
-var makeFileObject = function(filesId, info) {
-  return new FileObject({
-    name: info.name,
-    type: info.type,
-    size: info.size,
-    utime: info.utime,
-    master: {
-      _id: filesId,
-      name: info.name,
-      type: info.type,
-      size: info.size,
-      utime: info.utime
-    }
-  });
 };
