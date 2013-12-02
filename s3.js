@@ -1,6 +1,6 @@
 var Knox = Npm.require('knox');
 
-CollectionFS.S3Store = function(name, options) {
+FS.S3Store = function(name, options) {
   options = _.extend({
     region: null, //required
     key: null, //required
@@ -12,7 +12,7 @@ CollectionFS.S3Store = function(name, options) {
 
   var S3 = Knox.createClient(options);
 
-  return new StorageAdapter(name, {}, {
+  return new FS.StorageAdapter(name, {}, {
     typeName: 'storage.s3',
     get: function(fileKey, callback) {
       var req = S3.get(fileKey);

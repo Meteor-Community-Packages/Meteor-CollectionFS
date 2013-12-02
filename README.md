@@ -28,11 +28,11 @@ $ mrt add cfs-s3
 
 1. Create a new bucket in S3. We'll refer to this as `mybucket`.
 2. If desired, create an IAM policy specific to allowing this app access to this bucket.
-3. Use when constructing a CollectionFS, like this:
+3. Use when constructing an FS.Collection, like this:
 
 ```js
-Images = new CollectionFS("images", {
-  store: new CollectionFS.S3Store("images", {
+Images = new FS.Collection("images", {
+  store: new FS.S3Store("images", {
            region: "my-s3-region", //required
            key: "account or IAM key", //required
            secret: "account or IAM secret", //required
