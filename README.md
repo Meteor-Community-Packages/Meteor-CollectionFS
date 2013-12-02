@@ -30,8 +30,8 @@ $ mrt add cfs-gridfs
 ## Usage
 
 ```js
-Images = new CollectionFS("images", {
-  store: new CollectionFS.GridFSStore("images")
+Images = new FS.Collection("images", {
+  store: new FS.GridFSStore("images")
 });
 ```
 
