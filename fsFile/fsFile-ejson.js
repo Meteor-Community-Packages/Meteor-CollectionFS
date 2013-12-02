@@ -1,12 +1,12 @@
 // EJSON custom type
-FileObject.prototype.typeName = function() {
-  return 'FileObject';
+FS.File.prototype.typeName = function() {
+  return 'FS.File';
 };
 
 // EJSON equals type
-FileObject.prototype.equals = function(other) {
+FS.File.prototype.equals = function(other) {
   var self = this;
-  if (other instanceof FileObject) {
+  if (other instanceof FS.File) {
     return (self._id === other._id && self.collectionName === other.collectionName);
   }
 
@@ -21,32 +21,32 @@ FileObject.prototype.equals = function(other) {
 };
 
 // EJSON custom clone
-FileObject.prototype.clone = function() {
-  return new FileObject(this);
+FS.File.prototype.clone = function() {
+  return new FS.File(this);
 };
 
 // EJSON toJSONValue
-FileObject.prototype.toJSONValue = function() {
+FS.File.prototype.toJSONValue = function() {
   return cloneFileRecord(this);
 };
 
 // EJSON fromJSONValue
-FileObject.fromJSONValue = function(value) {
+FS.File.fromJSONValue = function(value) {
   // We should be able to load the files record from the collection
-  var collection = _collectionsFS[value.collectionName];
-  if (Meteor.isClient && collection instanceof CollectionFS && value._id) {
+  var collection = _collections[value.collectionName];
+  if (Meteor.isClient && collection instanceof FS.Collection && value._id) {
     // TODO For now only works on client?
     // If the server method call "Parse error" issue is resolved, use the client
     // code for both client and server.
-    var fileObject = collection.findOne({_id: value._id});
+    var fsFile = collection.findOne({_id: value._id});
 
     // We found the file record
-    if (fileObject) {
-      return fileObject;
+    if (fsFile) {
+      return fsFile;
     }
   }
   // Could not find the filerecord so we return the best we can
-  return new FileObject(value);
+  return new FS.File(value);
 };
 
-EJSON.addType('FileObject', FileObject.fromJSONValue);
+EJSON.addType('FS.File', FS.File.fromJSONValue);

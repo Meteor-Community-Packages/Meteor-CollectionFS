@@ -1,8 +1,16 @@
-FileObject = function(ref) {
+if (Meteor.isClient) {
+  // There is a single uploads transfer queue per client (not per CFS)
+  FS.downloadQueue = new TransferQueue();
+
+  // There is a single downloads transfer queue per client (not per CFS)
+  FS.uploadQueue = new TransferQueue(true);
+}
+
+FS.File = function(ref) {
   var self = this;
 
   if (typeof ref !== 'object')
-    throw new Error('FileObject expects an object as argument');
+    throw new Error('FS.File expects an object as argument');
 
   _.extend(self, cloneFileRecord(ref));
 
@@ -15,8 +23,8 @@ FileObject = function(ref) {
   }
 };
 
-// Converts EJSON binary to Buffer or Blob and saves in FileObject
-FileObject.prototype.loadBinary = function(binary, type) {
+// Converts EJSON binary to Buffer or Blob and saves in FS.File
+FS.File.prototype.loadBinary = function(binary, type) {
   var self = this;
   self.binary = binary;
   if (Meteor.isServer) {
@@ -27,11 +35,11 @@ FileObject.prototype.loadBinary = function(binary, type) {
   }
 };
 
-FileObject.prototype.toBinary = function(callback) {
+FS.File.prototype.toBinary = function(callback) {
   var self = this;
 
   if (typeof callback !== "function")
-    throw new Error("FileObject.toBinary requires a callback");
+    throw new Error("FS.File.toBinary requires a callback");
 
   // Use binary if already present
   if (self.binary) {
@@ -68,15 +76,15 @@ FileObject.prototype.toBinary = function(callback) {
   }
 };
 
-FileObject.prototype.getBytes = function(start, end, callback) {
+FS.File.prototype.getBytes = function(start, end, callback) {
   var self = this;
 
   if (typeof callback !== "function")
-    throw new Error("FileObject.getBytes requires a callback");
+    throw new Error("FS.File.getBytes requires a callback");
 
   self.toBinary(function(data) {
     if (start >= data.length) {
-      callback(new Error("FileObject getBytes: start position beyond end of data (" + data.length + ")"));
+      callback(new Error("FS.File getBytes: start position beyond end of data (" + data.length + ")"));
     }
     end = (end > data.length) ? data.length : end;
     var size = end - start;
@@ -89,10 +97,10 @@ FileObject.prototype.getBytes = function(start, end, callback) {
 };
 
 // This is a collection wrapper with error messages, primarily for internal use
-FileObject.prototype.useCollection = function(title, func) {
+FS.File.prototype.useCollection = function(title, func) {
   // Get the collection reference
   var self = this;
-  var collection = _collectionsFS[self.collectionName];
+  var collection = _collections[self.collectionName];
   if (collection) {
     try {
       return func.apply(collection.files);
@@ -103,16 +111,16 @@ FileObject.prototype.useCollection = function(title, func) {
     if (self.collectionName) {
       // if images.files we use the images part since this is known to the user
       var prefix = self.collectionName.split('.')[0];
-      throw new Error(title + ', Error: CollectionFS "' + prefix + '" not found');
+      throw new Error(title + ', Error: FS.Collection "' + prefix + '" not found');
     } else {
-      throw new Error(title + ', Error: No CollectionFS found');
+      throw new Error(title + ', Error: No FS.Collection found');
     }
   }
 };
 
-FileObject.prototype.reload = function() {
+FS.File.prototype.reload = function() {
   var self = this;
-  self.useCollection('FileObject reload of _id: "' + self._id + '"', function() {
+  self.useCollection('FS.File reload of _id: "' + self._id + '"', function() {
     var ref = this.findOne({_id: self._id});
     if (ref) {
       _.extend(self, cloneFileRecord(ref));
@@ -121,7 +129,7 @@ FileObject.prototype.reload = function() {
 };
 
 // Update the fileRecord
-FileObject.prototype.update = function(modifier, options, callback) {
+FS.File.prototype.update = function(modifier, options, callback) {
   var self = this;
   if (!callback && typeof options === "function") {
     callback = options;
@@ -130,11 +138,11 @@ FileObject.prototype.update = function(modifier, options, callback) {
   if (Meteor.isClient && !callback) {
     // Since the client can't block and we need to update self after being
     // sure the update went through, we need a callback
-    throw new Error("FileObject.update requires a callback");
+    throw new Error("FS.File.update requires a callback");
   }
 
   // Apply title for error messages
-  return self.useCollection('FileObject update of _id: "' + self._id + '"', function() {
+  return self.useCollection('FS.File update of _id: "' + self._id + '"', function() {
     // this is our collection
     var collection = this;
     if (callback) {
@@ -163,11 +171,11 @@ FileObject.prototype.update = function(modifier, options, callback) {
 };
 
 // Remove the file TODO: self destruct?
-FileObject.prototype.remove = function(copyName) {
+FS.File.prototype.remove = function(copyName) {
   var self = this;
   var id;
   // Apply title for error messages
-  self.useCollection('FileObject remove _id: "' + self._id + '"', function() {
+  self.useCollection('FS.File remove _id: "' + self._id + '"', function() {
     // this is our collection
     id = this.remove({_id: self._id});
     delete self._id;
@@ -177,7 +185,7 @@ FileObject.prototype.remove = function(copyName) {
 
 // Client: Downloads the binary data for the copy as a single chunk and then passes it to the callback
 // Server: Returns the Buffer data for the copy (synchronous) or passes it to an optional callback
-FileObject.prototype.get = function(/* copyName, start, end, callback */) {
+FS.File.prototype.get = function(/* copyName, start, end, callback */) {
   var self = this;
   var args = parseArguments(arguments,
           [["copyName"], ["start"], ["end"], ["callback"]],
@@ -195,24 +203,24 @@ FileObject.prototype.get = function(/* copyName, start, end, callback */) {
 
   // On the client we download the file via transfer queue
   if (Meteor.isClient) {
-    CollectionFS.downloadQueue.downloadFile(self, copyName);
+    FS.downloadQueue.downloadFile(self, copyName);
   } else if (Meteor.isServer) {
-    var collection = _collectionsFS[self.collectionName];
+    var collection = _collections[self.collectionName];
     if (typeof collection === 'undefined' || collection === null) {
-      return handleError(callback, 'FileObject.get no collection assigned');
+      return handleError(callback, 'FS.File.get no collection assigned');
     }
 
     var store = collection.getStoreForCopy(copyName);
 
     if (typeof store === 'undefined' || store === null) {
-      return handleError(callback, 'FileObject.get could not find "' + (copyName || 'master') + '" Storage Adapter on CollectionFS "' + collection.name + '"');
+      return handleError(callback, 'FS.File.get could not find "' + (copyName || 'master') + '" Storage Adapter on FS.Collection "' + collection.name + '"');
     }
 
     // On server we contact the storage adapter
     if (callback) {
       if (partial) {
         if (!(typeof store.getBytes === "function")) {
-          callback(new Error('FileObject.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval'));
+          callback(new Error('FS.File.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval'));
           return;
         }
         store.getBytes(self, start, end, {copyName: copyName}, function(err, bytesRead, buffer) {
@@ -232,7 +240,7 @@ FileObject.prototype.get = function(/* copyName, start, end, callback */) {
     } else {
       if (partial) {
         if (!(typeof store.getBytes === "function")) {
-          throw new Error('FileObject.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval');
+          throw new Error('FS.File.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval');
         }
         //if callback is undefined, getBuffer will be synchrononous
         var buffer = store.getBytes(self, start, end, {copyName: copyName});
@@ -248,7 +256,7 @@ FileObject.prototype.get = function(/* copyName, start, end, callback */) {
 
 // Return the http url for getting the file - on server set auth if wanting to
 // use authentication on client set auth to true or token
-FileObject.prototype.url = function(copyName, auth) {
+FS.File.prototype.url = function(copyName, auth) {
   var self = this;
 
   if (copyName && (!self.copies || !self.copies[copyName])) {
@@ -259,13 +267,13 @@ FileObject.prototype.url = function(copyName, auth) {
     return null;
   }
 
-  var collection = _collectionsFS[self.collectionName];
+  var collection = _collections[self.collectionName];
   if (typeof collection === 'undefined') {
-    throw new Error('FileObject.url no collection assigned');
+    throw new Error('FS.File.url no collection assigned');
   }
 
   if (!collection.httpUrl) {
-    throw new Error('FileObject.url CollectionFS "' + collection.name + '" has no HTTP access point; set useHTTP option to true');
+    throw new Error('FS.File.url FS.Collection "' + collection.name + '" has no HTTP access point; set useHTTP option to true');
   }
   var authToken = '';
 
@@ -291,22 +299,22 @@ FileObject.prototype.url = function(copyName, auth) {
   }
 };
 
-FileObject.prototype.put = function(callback) {
+FS.File.prototype.put = function(callback) {
   console.log('PUT---------');
   var self = this;
 
   callback = callback || defaultCallback;
 
   // Get collection reference
-  var collection = _collectionsFS[self.collectionName];
+  var collection = _collections[self.collectionName];
 
-  // We have to have the file in the collectionFS first
+  // We have to have the file in the FS.Collection first
   if (!self._id || !collection) {
-    callback(new Error("FileObject put needs collection and _id"));
+    callback(new Error("FS.File put needs collection and _id"));
   }
 
-  if (Meteor.isClient && !CollectionFS.uploadQueue.isUploadingFile(self)) {
-    CollectionFS.uploadQueue.uploadFile(self);
+  if (Meteor.isClient && !FS.uploadQueue.isUploadingFile(self)) {
+    FS.uploadQueue.uploadFile(self);
     callback(null, self._id);
   } else if (Meteor.isServer) {
     // We let the collection handle the storage adapters
@@ -316,14 +324,14 @@ FileObject.prototype.put = function(callback) {
   }
 };
 
-FileObject.prototype.getExtension = function() {
+FS.File.prototype.getExtension = function() {
   var self = this;
   var name = self.name;
   var found = name.lastIndexOf('.') + 1;
   return (found > 0 ? name.substr(found) : null);
 };
 
-FileObject.prototype.toDataUrl = function(callback) {
+FS.File.prototype.toDataUrl = function(callback) {
   var self = this;
 
   if (Meteor.isClient) {
@@ -345,7 +353,7 @@ FileObject.prototype.toDataUrl = function(callback) {
 
   else if (Meteor.isServer) {
     if (!self.buffer || !self.type)
-      throw new Error("toDataUrl requires a buffer loaded in the FileObject and a contentType");
+      throw new Error("toDataUrl requires a buffer loaded in the FS.File and a contentType");
 
     var data_uri_prefix = "data:" + self.type + ";base64,";
     var url = data_uri_prefix + self.buffer.toString("base64");
@@ -357,32 +365,32 @@ FileObject.prototype.toDataUrl = function(callback) {
   }
 };
 
-// Load data from a URL into a new FileObject and pass it to callback
-// callback(err, fileObject)
-FileObject.fromUrl = function(url, filename, callback) {
+// Load data from a URL into a new FS.File and pass it to callback
+// callback(err, fsFile)
+FS.File.fromUrl = function(url, filename, callback) {
   callback = callback || defaultCallback;
-  var fileObject = new FileObject({name: filename});
+  var fsFile = new FS.File({name: filename});
   if (Meteor.isClient) {
-    fileObject.loadBlobFromUrl(url, function(err) {
+    fsFile.loadBlobFromUrl(url, function(err) {
       if (err) {
         callback(err);
       } else {
-        callback(null, fileObject);
+        callback(null, fsFile);
       }
     }); 
   } else if (Meteor.isServer) {
     //TODO create loadBufferFromUrl method in server code
-//    fileObject.loadBufferFromUrl(url, function(err) {
+//    fsFile.loadBufferFromUrl(url, function(err) {
 //      if (err) {
 //        callback(err);
 //      } else {
-//        callback(null, fileObject);
+//        callback(null, fsFile);
 //      }
 //    });
   }
 };
 
-FileObject.prototype.isImage = function() {
+FS.File.prototype.isImage = function() {
   var self = this;
   if (typeof self.type !== "string") {
     return false;
@@ -390,26 +398,26 @@ FileObject.prototype.isImage = function() {
   return self.type.indexOf("image/") === 0;
 };
 
-FileObject.prototype.isUploaded = function() {
+FS.File.prototype.isUploaded = function() {
   var self = this;
   return self.bytesUploaded === self.size;
 };
 
-FileObject.prototype.hasMaster = function() {
+FS.File.prototype.hasMaster = function() {
   var self = this;
   return (typeof self.master === "object");
 };
 
-FileObject.prototype.hasCopy = function(copyName) {
+FS.File.prototype.hasCopy = function(copyName) {
   var self = this;
   return (self.copies && self.copies[copyName] && typeof self.copies[copyName] === "object");
 };
 
-FileObject.prototype.fileIsAllowed = function() {
+FS.File.prototype.fileIsAllowed = function() {
   var self = this;
-  var collection = _collectionsFS[self.collectionName];
+  var collection = _collections[self.collectionName];
   if (typeof collection === 'undefined') {
-    throw new Error('FileObject.fileIsAllowed no collection assigned');
+    throw new Error('FS.File.fileIsAllowed no collection assigned');
   }
   var filter = collection.options.filter;
   if (!filter) {

@@ -3,8 +3,8 @@ var path = Npm.require('path');
 var tmp = Npm.require('tmp');
 var mmm = Npm.require('mmmagic');
 
-// Loads the given buffer into myFileObject.buffer
-FileObject.prototype.loadBuffer = function(buffer, type) {
+// Loads the given buffer into myFS.File.buffer
+FS.File.prototype.loadBuffer = function(buffer, type) {
   check(buffer, Buffer);
   var self = this;
   self.size = buffer.length;
@@ -23,12 +23,12 @@ FileObject.prototype.loadBuffer = function(buffer, type) {
 // Using temp file allows us to easily resume uploads, even if the server
 // restarts, and to keep the working memory clear.
 // callback(err, allBytesLoaded)
-FileObject.prototype.loadBinaryChunk = function(binary, start, callback) {
+FS.File.prototype.loadBinaryChunk = function(binary, start, callback) {
   var self = this;
   var total = binary.length;
 
   if (typeof callback !== "function") {
-    throw new Error("FileObject.loadBinaryChunk requires a callback");
+    throw new Error("FS.File.loadBinaryChunk requires a callback");
   }
 
   self.openTempFile(function(err, fd) {
@@ -60,7 +60,7 @@ FileObject.prototype.loadBinaryChunk = function(binary, start, callback) {
       console.log("Uploaded " + self.bytesUploaded + " of " + self.size + " bytes");
       if (self.bytesUploaded === self.size) {
         // We are done loading all bytes
-        // so we should load the temp file into the actual fileObject now
+        // so we should load the temp file into the actual fsFile now
         self.loadBufferFromTempFile(function(err) {
           if (err) {
             callback(err);
@@ -74,7 +74,7 @@ FileObject.prototype.loadBinaryChunk = function(binary, start, callback) {
 };
 
 // callback(err)
-FileObject.prototype.loadBufferFromFile = function(filePath, callback) {
+FS.File.prototype.loadBufferFromFile = function(filePath, callback) {
   var self = this;
 
   // Call node readFile
@@ -90,7 +90,7 @@ FileObject.prototype.loadBufferFromFile = function(filePath, callback) {
 };
 
 // callback(err)
-FileObject.prototype.saveBufferToFile = function(filePath, callback) {
+FS.File.prototype.saveBufferToFile = function(filePath, callback) {
   var self = this;
 
   if (!(self.buffer instanceof Buffer)) {
@@ -107,7 +107,7 @@ FileObject.prototype.saveBufferToFile = function(filePath, callback) {
 };
 
 // callback(err)
-FileObject.prototype.loadBufferFromTempFile = function(callback) {
+FS.File.prototype.loadBufferFromTempFile = function(callback) {
   var self = this;
 
   if (!self.tempFile) {
@@ -118,7 +118,7 @@ FileObject.prototype.loadBufferFromTempFile = function(callback) {
 };
 
 // callback(err)
-FileObject.prototype.saveBufferToTempFile = function(callback) {
+FS.File.prototype.saveBufferToTempFile = function(callback) {
   var self = this;
 
   self.openTempFile(function(err, fd) {
@@ -130,7 +130,7 @@ FileObject.prototype.saveBufferToTempFile = function(callback) {
 // Either creates a temp file and sets its path in self.tempFile or opens self.tempFile
 // for appending.
 // callback(err)
-FileObject.prototype.openTempFile = function(callback) {
+FS.File.prototype.openTempFile = function(callback) {
   var self = this;
 
   if (!self.tempFile) {
@@ -165,7 +165,7 @@ FileObject.prototype.openTempFile = function(callback) {
 };
 
 // callback(err)
-FileObject.prototype.deleteTempFile = function(callback) {
+FS.File.prototype.deleteTempFile = function(callback) {
   var self = this;
 
   if (!self.tempFile) {
@@ -184,10 +184,10 @@ FileObject.prototype.deleteTempFile = function(callback) {
 };
 
 // If copyName isn't a string, will log the failure to master
-FileObject.prototype.logCopyFailure = function(copyName) {
+FS.File.prototype.logCopyFailure = function(copyName) {
   var self = this, currentCount, collection, maxTries;
 
-  self.useCollection('FileObject logCopyFailure of _id: "' + self._id + '"', function() {
+  self.useCollection('FS.File logCopyFailure of _id: "' + self._id + '"', function() {
     collection = this;
   });
 
@@ -227,7 +227,7 @@ FileObject.prototype.logCopyFailure = function(copyName) {
   self.update(modifier);
 };
 
-FileObject.prototype.failedPermanently = function(copyName) {
+FS.File.prototype.failedPermanently = function(copyName) {
   var self = this;
   if (typeof copyName === "string") {
     return (self.failures
@@ -241,16 +241,16 @@ FileObject.prototype.failedPermanently = function(copyName) {
   }
 };
 
-// Load data from a local path into a new FileObject and pass it to callback
-// callback(err, fileObject)
-FileObject.fromFile = function(filePath, filename, callback) {
+// Load data from a local path into a new FS.File and pass it to callback
+// callback(err, fsFile)
+FS.File.fromFile = function(filePath, filename, callback) {
   filename = filename || path.basename(filePath);
-  var fileObject = new FileObject({name: filename});
-  fileObject.loadBufferFromFile(filePath, function(err) {
+  var fsFile = new FS.File({name: filename});
+  fsFile.loadBufferFromFile(filePath, function(err) {
     if (err) {
       callback(err);
     } else {
-      callback(null, fileObject);
+      callback(null, fsFile);
     }
   });
 };

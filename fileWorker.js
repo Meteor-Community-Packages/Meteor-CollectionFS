@@ -25,14 +25,14 @@ FileWorker.prototype.stop = function() {
 FileWorker.prototype.checkForMissingCopies = function() {
   var self = this;
   
-  // Loop through all defined CollectionFS
-  _.each(_collectionsFS, function(cfs, cfsName) {
+  // Loop through all defined FS.Collection
+  _.each(_collections, function(cfs, cfsName) {
     //console.log("FileWorker checking for missing copies in the " + cfsName + " collection...");
     // First priority is missing master, oldest first.
     // The collection handles the details of max tries and sets doneTrying.
-    cfs.find({'failures.master.count': {$gt: 0}, 'failures.master.doneTrying': false}, {sort: [['failures.master.firstAttempt', 'asc'], ['failures.master.lastAttempt', 'asc']]}).forEach(function(fileObject) {
-      console.log("FileWorker trying to save master for " + fileObject._id + " in " + cfs.name);
-      cfs.saveMaster(fileObject, {missing: true});
+    cfs.find({'failures.master.count': {$gt: 0}, 'failures.master.doneTrying': false}, {sort: [['failures.master.firstAttempt', 'asc'], ['failures.master.lastAttempt', 'asc']]}).forEach(function(fsFile) {
+      console.log("FileWorker trying to save master for " + fsFile._id + " in " + cfs.name);
+      cfs.saveMaster(fsFile, {missing: true});
     });
 
     // Second priority is missing copies, oldest first, only if the master was saved.
@@ -41,9 +41,9 @@ FileWorker.prototype.checkForMissingCopies = function() {
       var selector = {'failures.master': null};
       selector['failures.copies.' + copyName + '.count'] = {$gt: 0};
       selector['failures.copies.' + copyName + '.doneTrying'] = false;
-      cfs.find(selector, {sort: [['failures.copies.' + copyName + '.firstAttempt', 'asc'], ['failures.copies.' + copyName + '.lastAttempt', 'asc']]}).forEach(function(fileObject) {
-        console.log("FileWorker trying to save copy " + copyName + " for " + fileObject._id + " in " + cfs.name);
-        cfs.saveCopies(fileObject, {missing: true});
+      cfs.find(selector, {sort: [['failures.copies.' + copyName + '.firstAttempt', 'asc'], ['failures.copies.' + copyName + '.lastAttempt', 'asc']]}).forEach(function(fsFile) {
+        console.log("FileWorker trying to save copy " + copyName + " for " + fsFile._id + " in " + cfs.name);
+        cfs.saveCopies(fsFile, {missing: true});
       });
     }
   });
@@ -56,6 +56,6 @@ FileWorker.prototype.checkForMissingCopies = function() {
   }
 };
 
-// This periodically attempts to save missing files for all collectionFS
+// This periodically attempts to save missing files for all FS.Collection
 fileWorker = new FileWorker();
 fileWorker.start();

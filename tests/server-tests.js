@@ -2,13 +2,13 @@ function equals(a, b) {
   return !!(EJSON.stringify(a) === EJSON.stringify(b));
 }
 
-Tinytest.add('CollectionFS - server - test environment', function(test) {
-  test.isTrue(typeof CollectionFS !== 'undefined', 'test environment not initialized CollectionFS');
+Tinytest.add('FS.Collection - server - test environment', function(test) {
+  test.isTrue(typeof FS.Collection !== 'undefined', 'test environment not initialized FS.Collection');
   test.isTrue(typeof CFSErrorType !== 'undefined', 'test environment not initialized CFSErrorType');
 });
 
 /*
- * FileObject Server Tests
+ * FS.File Server Tests
  * 
  * construct FO with no arguments
  * load buffer into FO with FO.loadBuffer
@@ -21,7 +21,7 @@ Tinytest.add('CollectionFS - server - test environment', function(test) {
  * set FO.name to a filename and test that FO.getExtension() returns the extension
  * 
  * 
- * CollectionFS Server Tests
+ * FS.Collection Server Tests
  * 
  * Make sure options.filter is respected
  * 

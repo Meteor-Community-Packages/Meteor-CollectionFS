@@ -16,29 +16,28 @@ Package.on_use(function(api) {
   
   api.use(['deps', 'underscore', 'mongo-livedata', 'ejson', 'collection-hooks', 'http-methods', 'power-queue']);
   if (api.export) {
-    api.export('FileObject');
-    api.export('StorageAdapter');
-    api.export('CollectionFS');
-    api.export('_collectionsFS');
+    api.export('FS');
   }
   
   api.add_files([
     'FileSaver.js',
-    'transferQueue.js',
     'shared.js',
-    'fileObject/fileObject-common.js',
-    'fileObject/fileObject-client.js',
-    'fileObject/fileObject-ejson.js',
-    'collectionfs.js'
+    'argParser.js',
+    'transferQueue.js',
+    'fsFile/fsFile-common.js',
+    'fsFile/fsFile-client.js',
+    'fsFile/fsFile-ejson.js',
+    'fsCollection.js'
   ], 'client');
   
   api.add_files([
     'shared.js',
-    'fileObject/fileObject-common.js',
-    'fileObject/fileObject-server.js',
-    'fileObject/fileObject-ejson.js',
+    'argParser.js',
+    'fsFile/fsFile-common.js',
+    'fsFile/fsFile-server.js',
+    'fsFile/fsFile-ejson.js',
     'storageAdapter.js',
-    'collectionfs.js',
+    'fsCollection.js',
     'fileWorker.js'
   ], 'server');
 });

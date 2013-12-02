@@ -24,7 +24,7 @@ or wants to make their own storage adapter.
 Various MongoDB collections are created by CollectionFS and related packages.
 Here's an explanation of what they are named and what their documents look like.
 
-### name + ".files" (CollectionFS)
+### name + ".files" (FS.Collection)
 
 ```js
 {
@@ -72,7 +72,7 @@ Here's an explanation of what they are named and what their documents look like.
 ```js
 {
   _id: "",
-  cfs: "", //the CollectionFS name
+  cfs: "", //the FS.Collection name
   cfsId: "", //the _id in the CFS collection
   filename: "" //actual filename that was stored
 }
@@ -86,14 +86,14 @@ Created by the GridFS storage adapter. These collections match the GridFS spec.
 
 To create a storage adapter, define an object constructor function that takes
 a name as a first argument and any additional necessary settings as additional
-arguments. Make it return an instance of StorageAdapter, passing your API to
-the StorageAdapter constructor function. Here's an example:
+arguments. Make it return an instance of FS.StorageAdapter, passing your API to
+the FS.StorageAdapter constructor function. Here's an example:
 
 ```js
-CollectionFS.MyStore = function(name, options) {
+FS.MyStore = function(name, options) {
   // Prep some variables here
 
-  return new StorageAdapter(name, {}, {
+  return new FS.StorageAdapter(name, {}, {
     typeName: 'storage.myadapter',
     get: function(identifier, callback) {
       // Use identifier to retrieve a Buffer and pass it to callback
@@ -132,7 +132,7 @@ saved for the given `id` or `fileKey`. If not, you may alter the `fileKey` as
 necessary to prevent overwriting and then pass the altered `fileKey` to the
 callback.
 
-By convention, any official stores should be in the `CollectionFS` namespace
+By convention, any official stores should be in the `FS` namespace
 and end with the word "Store".
 
 ## Architecture
@@ -163,7 +163,7 @@ decides whether to do chunked upload/download vs. a single DDP call.
 * *Uploads:* For a single-call upload, it has all the data, so it immediately
 passes it to the beforeSave function and storage adapters. For chunked uploads,
 it will stream each chunk into a temporary file on the filesystem, keeping
-track with a `bytesUploaded` property in the FileObject. After the whole file
+track with a `bytesUploaded` property in the FS.File. After the whole file
 has been saved to the temp file (`bytesUploaded === size`), it will load back
 from the temp file and pass
 everything to the beforeSave function and storage adapters. Using this temp
@@ -188,10 +188,10 @@ to these stores again, up until the maxTries for that master/copy.
 * When attempting to save to the master store at a later time, the data is loaded
 from the temporary file. The temporary file is never deleted until the master
 store has successfully saved. If the master store can't save after max tries,
-the temp file is deleted and the FileObject is deleted from the CFS.
+the temp file is deleted and the FS.File is deleted from the CFS.
 * When attempting to save to a copy store at a later time, the data is loaded
 from the master store. If the data can't be saved to the copy store after max
-tries, that copy just won't exist, but the FileObject remains in the CFS.
+tries, that copy just won't exist, but the FS.File remains in the CFS.
 
 ## PowerQueue
 

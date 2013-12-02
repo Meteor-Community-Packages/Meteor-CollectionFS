@@ -6,51 +6,51 @@
 
 if (Meteor.isServer) {
 
-  var APUpload = function(fileObject, data, start) {
-    check(fileObject, FileObject);
+  var APUpload = function(fsFile, data, start) {
+    check(fsFile, FS.File);
     if (!EJSON.isBinary(data))
       throw new Error("APUpload expects binary data");
 
     this.unblock();
 
-    fileObject.reload(); //update properties from the linked server collection
+    fsFile.reload(); //update properties from the linked server collection
 
     if (typeof start === "number") {
-      console.log("Received chunk of size " + data.length + " at start " + start + " for " + fileObject._id);
+      console.log("Received chunk of size " + data.length + " at start " + start + " for " + fsFile._id);
       // Chunked Upload
-      fileObject.loadBinaryChunk(data, start, function(err, done) {
+      fsFile.loadBinaryChunk(data, start, function(err, done) {
         if (err) {
           throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
         }
         if (done) {
-          console.log("Received all chunks for " + fileObject._id);
+          console.log("Received all chunks for " + fsFile._id);
           // Save file to master store and save any additional copies
-          fileObject.put();
+          fsFile.put();
         }
       });
     } else {
-      console.log("Received all data for " + fileObject._id + " in one chunk");
-      // Load binary data into fileObject, which also sets fileObject.buffer
-      fileObject.loadBinary(data);
+      console.log("Received all data for " + fsFile._id + " in one chunk");
+      // Load binary data into fsFile, which also sets fsFile.buffer
+      fsFile.loadBinary(data);
 
       // Save file to master store and save any additional copies
-      fileObject.put();
+      fsFile.put();
     }
   };
 
   // Returns the data for selector,
   // or data from master store if selector is not set
-  var APDownload = function(fileObject, selector, start, end) {
+  var APDownload = function(fsFile, selector, start, end) {
     this.unblock();
-    return fileObject.get(selector, start, end);
+    return fsFile.get(selector, start, end);
   };
 
-  // Deletes fileObject.
+  // Deletes fsFile.
   // Always deletes the entire file and all copies, even if a specific
   // selector is passed. We don't allow deleting individual copies.
-  var APDelete = function(fileObject) {
+  var APDelete = function(fsFile) {
     this.unblock();
-    return fileObject.remove();
+    return fsFile.remove();
   };
 
   var APhandler = function(collection) {
@@ -60,7 +60,7 @@ if (Meteor.isServer) {
       var id = self.params.id;
       var copyName = self.params.selector;
 
-      // Get the fileObject
+      // Get the fsFile
       var file = collection.findOne({_id: '' + id});
 
       if (!file) {
@@ -125,7 +125,7 @@ if (Meteor.isServer) {
 //
 // #############################################################################
 
-CollectionFS = function(name, options) {
+FS.Collection = function(name, options) {
   var self = this;
 
   self.options = {
@@ -145,7 +145,7 @@ CollectionFS = function(name, options) {
   // When on the server we expect copies in options - otherwise we just recieve
   // the file but dont use it for anything
   if (Meteor.isServer) {
-    if (!(self.options.store instanceof StorageAdapter)) {
+    if (!(self.options.store instanceof FS.StorageAdapter)) {
       throw new Error("You must specify a master store. Please consult the documentation.");
     }
 
@@ -166,13 +166,13 @@ CollectionFS = function(name, options) {
       var copyOptions;
       for (var copyName in self.options.copies) {
         copyOptions = self.options.copies[copyName];
-        if (copyOptions instanceof StorageAdapter) {
+        if (copyOptions instanceof FS.StorageAdapter) {
           self.options.copies[copyName] = {
             store: copyOptions,
             beforeSave: null,
             maxTries: self.options.maxTries
           };
-        } else if (!(copyOptions.store instanceof StorageAdapter)) {
+        } else if (!(copyOptions.store instanceof FS.StorageAdapter)) {
           throw new Error('You must specify a store for the "' + copyName + '" copy');
         }
       }
@@ -201,10 +201,10 @@ CollectionFS = function(name, options) {
 
   var collectionName = name + '.files';
 
-  // Create the ".files" and use fileObject
+  // Create the ".files" and use fsFile
   self.files = new Meteor.Collection(collectionName, {
     transform: function(doc) {
-      var result = new FileObject(doc);
+      var result = new FS.File(doc);
       result.collectionName = collectionName;
       return result;
     }
@@ -242,8 +242,8 @@ CollectionFS = function(name, options) {
   // This uses collection-hooks package.
   // Prevents insertion on both client and server if filter rules say so
   self.files.before.insert(function() {
-    var fileObject = this.transform();
-    return fileObject.fileIsAllowed();
+    var fsFile = this.transform();
+    return fsFile.fileIsAllowed();
   });
 
   self.files.before.update(function() {
@@ -257,7 +257,7 @@ CollectionFS = function(name, options) {
    */
 
   // Save the collection reference
-  _collectionsFS[collectionName] = this;
+  _collections[collectionName] = this;
 
   if (Meteor.isServer) {
     // Rig an observer on the server
@@ -284,8 +284,8 @@ CollectionFS = function(name, options) {
     if (self.options.sync) {
       self.options.store.sync({
         insert: function(storeId, info, buffer) {
-          // Create a FileObject that already has info for the master copy
-          var fileObject = new FileObject({
+          // Create a FS.File that already has info for the master copy
+          var fsFile = new FS.File({
             name: info.name,
             type: info.type,
             size: info.size,
@@ -300,20 +300,20 @@ CollectionFS = function(name, options) {
           });
 
           // Load the master buffer into the file object
-          fileObject.loadBuffer(buffer, info.type);
+          fsFile.loadBuffer(buffer, info.type);
 
-          // Save into the sync'd CollectionFS.
-          self.insert(fileObject);
+          // Save into the sync'd FS.Collection.
+          self.insert(fsFile);
         },
         update: function(storeId, info) {
-          // Get the FileObject
-          var fileObject = self.findOne({'master._id': storeId});
+          // Get the FS.File
+          var fsFile = self.findOne({'master._id': storeId});
 
           // Update info for the master store since that is the synchronized data
           // we just received. Also, set info into the generic info since we're
           // treating this like an upload. Finally, clear out other copy info
           // so that the file worker will create new copies.
-          fileObject.update({$set: {
+          fsFile.update({$set: {
               name: info.name,
               type: info.type,
               size: info.size,
@@ -336,47 +336,47 @@ CollectionFS = function(name, options) {
 
 if (Meteor.isServer) {
 
-  function loadBuffer(fileObject, callback) {
-    var copyOfFileObject = fileObject.clone();
+  function loadBuffer(fsFile, callback) {
+    var fsFileClone = fsFile.clone();
 
-    if (fileObject.buffer instanceof Buffer) {
-      copyOfFileObject.loadBuffer(fileObject.buffer);
-      callback(null, copyOfFileObject);
+    if (fsFile.buffer instanceof Buffer) {
+      fsFileClone.loadBuffer(fsFile.buffer);
+      callback(null, fsFileClone);
       return;
     }
 
-    // If the supplied fileObject does not have a buffer loaded already,
+    // If the supplied fsFile does not have a buffer loaded already,
     // try to load it from the temporary file.
     console.log("attempting to load buffer from temp file");
-    fileObject.loadBufferFromTempFile(function(err) {
+    fsFile.loadBufferFromTempFile(function(err) {
       if (err) {
         callback(err);
       } else {
-        copyOfFileObject.loadBuffer(fileObject.buffer);
-        callback(null, copyOfFileObject);
+        fsFileClone.loadBuffer(fsFile.buffer);
+        callback(null, fsFileClone);
       }
     });
   }
   
   var loadBufferSync = Meteor._wrapAsync(loadBuffer);
 
-  function saveCopy(fileObject, store, beforeSave) {
+  function saveCopy(fsFile, store, beforeSave) {
     // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-    var copyOfFileObject = loadBufferSync(fileObject);
+    var fsFileClone = loadBufferSync(fsFile);
 
     // Call the beforeSave function provided by the user
     if (!beforeSave ||
-            beforeSave.apply(copyOfFileObject) !== false) {
-      var id = store.insert(copyOfFileObject);
+            beforeSave.apply(fsFileClone) !== false) {
+      var id = store.insert(fsFileClone);
       if (!id) {
         return null;
       } else {
         return {
           _id: id,
-          name: copyOfFileObject.name,
-          type: copyOfFileObject.type,
-          size: copyOfFileObject.size,
-          utime: copyOfFileObject.utime
+          name: fsFileClone.name,
+          type: fsFileClone.type,
+          size: fsFileClone.size,
+          utime: fsFileClone.utime
         };
       }
     } else if (beforeSave) {
@@ -387,55 +387,55 @@ if (Meteor.isServer) {
 
   // This function is called to save the master copy. It may be safely
   // called multiple times with the "missing" option set. It is synchronous.
-  CollectionFS.prototype.saveMaster = function(fileObject, options) {
+  FS.Collection.prototype.saveMaster = function(fsFile, options) {
     var self = this;
     options = options || {};
 
-    var copyInfo = fileObject.master;
+    var copyInfo = fsFile.master;
 
     // If master has not already been saved or we want to overwrite it
-    if (!options.missing || (copyInfo === void 0 && !fileObject.failedPermanently())) {
+    if (!options.missing || (copyInfo === void 0 && !fsFile.failedPermanently())) {
       console.log('creating master copy');
 
-      var result = saveCopy(fileObject, self.options.store, self.options.beforeSave);
+      var result = saveCopy(fsFile, self.options.store, self.options.beforeSave);
       if (result === false) {
         // The master beforeSave returned false; delete the whole record.
-        fileObject.remove();
+        fsFile.remove();
       } else if (result === null) {
-        // Temporary failure; let the fileObject log it and potentially decide
+        // Temporary failure; let the fsFile log it and potentially decide
         // to give up.
-        fileObject.logCopyFailure();
+        fsFile.logCopyFailure();
       } else {
         // Success. Update the file object
-        fileObject.update({$set: {master: result}});
+        fsFile.update({$set: {master: result}});
       }
     }
   };
 
   // This function is called to create all copies or only missing copies. It may be safely
   // called multiple times with the "missing" option set. It is synchronous.
-  CollectionFS.prototype.saveCopies = function(fileObject, options) {
+  FS.Collection.prototype.saveCopies = function(fsFile, options) {
     var self = this;
     options = options || {};
 
-    // If the supplied fileObject does not have a buffer loaded already,
+    // If the supplied fsFile does not have a buffer loaded already,
     // load it from the master store.
-    if (!(fileObject.buffer instanceof Buffer)) {
-      fileObject.loadBinary(fileObject.get());
+    if (!(fsFile.buffer instanceof Buffer)) {
+      fsFile.loadBinary(fsFile.get());
     }
 
     // Loop through copies defined in CFS options
     _.each(self.options.copies, function(copyDefinition, copyName) {
-      var copyInfo = fileObject.copies && fileObject.copies[copyName];
+      var copyInfo = fsFile.copies && fsFile.copies[copyName];
       // If copy has not already been saved or we want to overwrite it
-      if (!options.missing || (copyInfo === void 0 && !fileObject.failedPermanently(copyName))) {
+      if (!options.missing || (copyInfo === void 0 && !fsFile.failedPermanently(copyName))) {
         console.log('creating copy ' + copyName);
 
-        var result = saveCopy(fileObject, copyDefinition.store, copyDefinition.beforeSave);
+        var result = saveCopy(fsFile, copyDefinition.store, copyDefinition.beforeSave);
         if (result === null) {
-          // Temporary failure; let the fileObject log it and potentially decide
+          // Temporary failure; let the fsFile log it and potentially decide
           // to give up.
-          fileObject.logCopyFailure(copyName);
+          fsFile.logCopyFailure(copyName);
         } else {
           // Update the main file object
           // copyInfo might be false, which indicates that this copy
@@ -443,13 +443,13 @@ if (Meteor.isServer) {
           var modifier = {};
           modifier["copies." + copyName] = result;
           // Update the main file object with the modifier
-          fileObject.update({$set: modifier});
+          fsFile.update({$set: modifier});
         }
       }
     });
   };
 
-  CollectionFS.prototype.getStoreForCopy = function(copyName) {
+  FS.Collection.prototype.getStoreForCopy = function(copyName) {
     var self = this;
     if (copyName) {
       if (typeof self.options.copies[copyName] !== "object" || self.options.copies[copyName] === null) {
@@ -465,8 +465,8 @@ if (Meteor.isServer) {
 
 // Collection Wrappers
 // Call insert on files collection
-CollectionFS.prototype.insert = function(doc, callback) {
-  console.log('CollectionFS insert-------------');
+FS.Collection.prototype.insert = function(doc, callback) {
+  console.log('FS.Collection insert-------------');
   var self = this;
   var fileObj;
 
@@ -491,43 +491,43 @@ CollectionFS.prototype.insert = function(doc, callback) {
     });
   };
 
-  if (doc instanceof FileObject) {
+  if (doc instanceof FS.File) {
     fileObj = doc;
     doInsert();
   } else if (Meteor.isClient && typeof File !== "undefined" && doc instanceof File) {
     // For convenience, allow File to be passed directly on the client
-    fileObj = new FileObject(doc);
+    fileObj = new FS.File(doc);
     doInsert();
   } else {
-    throw new Error('CollectionFS insert expects FileObject');
+    throw new Error('FS.Collection insert expects FS.File');
   }
 
-  // We return the FileObject
+  // We return the FS.File
   return doc;
 };
 
 // Call update on files collection
-CollectionFS.prototype.update = function(selector, modifier, options) {
+FS.Collection.prototype.update = function(selector, modifier, options) {
   var self = this;
-  if (selector instanceof FileObject) {
-    // We use the FileObject handle and makes sure the file belongs to this
-    // collectionFS
+  if (selector instanceof FS.File) {
+    // We use the FS.File handle and makes sure the file belongs to this
+    // FS.Collection
     if (selector.collectionName === self.files._name) {
       selector.update(modifier, options);
     } else {
-      // User tried to save a file in the wrong collectionFS
-      throw new Error('CollectionFS cannot update file belongs to: "' + selector.collectionName + '" not: "' + self.files._name + '"');
+      // User tried to save a file in the wrong FS.Collection
+      throw new Error('FS.Collection cannot update file belongs to: "' + selector.collectionName + '" not: "' + self.files._name + '"');
     }
     return self.files.update(selector, modifier, options);
   } else {
-    throw new Error('CollectionFS update expects a FileObject');
+    throw new Error('FS.Collection update expects a FS.File');
   }
 };
 
 // Call remove on files collection
-CollectionFS.prototype.remove = function(selector, callback) {
+FS.Collection.prototype.remove = function(selector, callback) {
   var self = this;
-  if (selector instanceof FileObject) {
+  if (selector instanceof FS.File) {
     selector.remove();
   } else {
     //doesn't work correctly on the client without a callback
@@ -537,23 +537,23 @@ CollectionFS.prototype.remove = function(selector, callback) {
 };
 
 // Call findOne on files collection
-CollectionFS.prototype.findOne = function(selector) {
+FS.Collection.prototype.findOne = function(selector) {
   var self = this;
   return self.files.findOne.apply(self.files, arguments);
 };
 
 // Call find on files collection
-CollectionFS.prototype.find = function(selector) {
+FS.Collection.prototype.find = function(selector) {
   var self = this;
   return self.files.find.apply(self.files, arguments);
 };
 
-CollectionFS.prototype.allow = function() {
+FS.Collection.prototype.allow = function() {
   var self = this;
   return self.files.allow.apply(self.files, arguments);
 };
 
-CollectionFS.prototype.deny = function() {
+FS.Collection.prototype.deny = function() {
   var self = this;
   return self.files.deny.apply(self.files, arguments);
 };
@@ -561,13 +561,7 @@ CollectionFS.prototype.deny = function() {
 // TODO: Upsert?
 
 if (Meteor.isClient) {
-  // There is a single uploads transfer queue per client (not per CFS)
-  CollectionFS.downloadQueue = new TransferQueue();
-
-  // There is a single downloads transfer queue per client (not per CFS)
-  CollectionFS.uploadQueue = new TransferQueue(true);
-
-  CollectionFS.prototype.acceptDropsOn = function(templateName, selector, metadata, callback) {
+  FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadata, callback) {
     var self = this, events = {}, metadata = metadata || {};
     // Prevent default drag and drop
     function noopHandler(evt) {
@@ -587,7 +581,7 @@ if (Meteor.isClient) {
             throw new Error("metadata must be an object");
           }
           for (var i = 0, ln = files.length; i < ln; i++) {
-            fileObj = new FileObject(files[i]);
+            fileObj = new FS.File(files[i]);
             fileObj.metadata = myMetadata;
             self.insert(fileObj, callback);
           }
@@ -599,7 +593,7 @@ if (Meteor.isClient) {
           throw new Error("metadata must be an object");
         }
         for (var i = 0, ln = files.length; i < ln; i++) {
-          fileObj = new FileObject(files[i]);
+          fileObj = new FS.File(files[i]);
           fileObj.metadata = metadata;
           self.insert(fileObj, callback);
         }

@@ -2,13 +2,13 @@ function equals(a, b) {
   return !!(EJSON.stringify(a) === EJSON.stringify(b));
 }
 
-Tinytest.add('CollectionFS - client - test environment', function(test) {
-  test.isTrue(typeof CollectionFS !== 'undefined', 'test environment not initialized CollectionFS');
+Tinytest.add('FS.Collection - client - test environment', function(test) {
+  test.isTrue(typeof FS.Collection !== 'undefined', 'test environment not initialized FS.Collection');
   test.isTrue(typeof CFSErrorType !== 'undefined', 'test environment not initialized CFSErrorType');
 });
 
 /*
- * FileObject Client Tests
+ * FS.File Client Tests
  * 
  * construct FO with no arguments
  * construct FO passing in File (this also tests FO.loadBlob)

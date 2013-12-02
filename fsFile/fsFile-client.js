@@ -1,4 +1,4 @@
-FileObject.prototype.loadBlob = function(blob) {
+FS.File.prototype.loadBlob = function(blob) {
   check(blob, Blob);
   var self = this;
   self.blob = blob;
@@ -7,7 +7,7 @@ FileObject.prototype.loadBlob = function(blob) {
 };
 
 //callback(err)
-FileObject.prototype.loadBlobFromUrl = function(url, callback) {
+FS.File.prototype.loadBlobFromUrl = function(url, callback) {
   var self = this;
   callback = callback || defaultCallback;
   var xhr = new XMLHttpRequest();
@@ -20,7 +20,7 @@ FileObject.prototype.loadBlobFromUrl = function(url, callback) {
   xhr.send();
 };
 
-FileObject.prototype.saveLocal = function(filename) {
+FS.File.prototype.saveLocal = function(filename) {
   var self = this;
 
   if (typeof window === "undefined")

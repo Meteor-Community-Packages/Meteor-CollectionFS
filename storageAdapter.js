@@ -6,28 +6,28 @@
 
 var _storageAdapters = {};
 
-StorageAdapter = function(name, options, api) {
+FS.StorageAdapter = function(name, options, api) {
   var self = this;
 
   // Check the api
   if (typeof api === 'undefined') {
-    throw new Error('StorageAdapter please define an api');
+    throw new Error('FS.StorageAdapter please define an api');
   }
 
   if (typeof api.get !== 'function') {
-    throw new Error('StorageAdapter please define an api.get function');
+    throw new Error('FS.StorageAdapter please define an api.get function');
   }
 
   if (typeof api.put !== 'function') {
-    throw new Error('StorageAdapter please define an api.put function');
+    throw new Error('FS.StorageAdapter please define an api.put function');
   }
 
   if (typeof api.del !== 'function') {
-    throw new Error('StorageAdapter please define an api.del function');
+    throw new Error('FS.StorageAdapter please define an api.del function');
   }
 
   if (api.typeName !== '' + api.typeName) {
-    throw new Error('StorageAdapter please define an api.typeName string');
+    throw new Error('FS.StorageAdapter please define an api.typeName string');
   }
 
   // Name of Storage Adapter name
@@ -60,21 +60,21 @@ StorageAdapter = function(name, options, api) {
   // _id, extension, createdAt, updatedAt
   self.files = new Meteor.Collection(self.name);
 
-  var foCheck = function(fileObject, type) {
-    if (!(fileObject instanceof FileObject)) {
-      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fileObject');
+  var foCheck = function(fsFile, type) {
+    if (!(fsFile instanceof FS.File)) {
+      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fsFile');
     }
-    if (!(fileObject.buffer instanceof Buffer) && (type === "insert" || type === "update")) {
-      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fileObject with buffer');
+    if (!(fsFile.buffer instanceof Buffer) && (type === "insert" || type === "update")) {
+      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fsFile with buffer');
     }
   };
 
-  var getFileId = function(fileObject, copyName) {
+  var getFileId = function(fsFile, copyName) {
     var copyInfo;
     if (copyName) {
-      copyInfo = fileObject.copies[copyName];
+      copyInfo = fsFile.copies[copyName];
     } else {
-      copyInfo = fileObject.master;
+      copyInfo = fsFile.master;
     }
     if (!copyInfo) {
       return null;
@@ -82,9 +82,9 @@ StorageAdapter = function(name, options, api) {
     return copyInfo._id;
   };
 
-  self.insert = function(fileObject, options, callback) {
+  self.insert = function(fsFile, options, callback) {
     console.log("---SA INSERT");
-    foCheck(fileObject, "insert");
+    foCheck(fsFile, "insert");
 
     if (!callback && typeof options === "function") {
       callback = options;
@@ -96,12 +96,12 @@ StorageAdapter = function(name, options, api) {
     var id = self.files.insert({createdAt: new Date()});
 
     // construct the filename
-    var preferredFilename = fileObject.name;
+    var preferredFilename = fsFile.name;
 
     // Put the file to storage
     // Async
     if (callback) {
-      api.put.call(self, id, preferredFilename, fileObject.buffer, {overwrite: false}, function(err, fileKey, updatedAt) {
+      api.put.call(self, id, preferredFilename, fsFile.buffer, {overwrite: false}, function(err, fileKey, updatedAt) {
         if (err) {
           // remove the SA file record
           self.files.remove({_id: id});
@@ -130,7 +130,7 @@ StorageAdapter = function(name, options, api) {
     //Sync
     else {
       try {
-        var fileKey = api.putSync.call(self, id, preferredFilename, fileObject.buffer, {overwrite: false});
+        var fileKey = api.putSync.call(self, id, preferredFilename, fsFile.buffer, {overwrite: false});
         // note the file key in the SA file record
         if (fileKey) {
           if (typeof api.statsSync === "function") {
@@ -152,9 +152,9 @@ StorageAdapter = function(name, options, api) {
     return id;
   };
 
-  self.update = function(fileObject, options, callback) {
+  self.update = function(fsFile, options, callback) {
     console.log("---SA UPDATE");
-    foCheck(fileObject, "update");
+    foCheck(fsFile, "update");
 
     if (!callback && typeof options === "function") {
       callback = options;
@@ -162,7 +162,7 @@ StorageAdapter = function(name, options, api) {
     }
     options = options || {};
 
-    var id = getFileId(fileObject, options.copyName);
+    var id = getFileId(fsFile, options.copyName);
     var fileInfo = self.files.findOne({_id: id});
 
     if (!fileInfo) {
@@ -171,7 +171,7 @@ StorageAdapter = function(name, options, api) {
 
     // Put the file to storage
     if (callback) {
-      api.put.call(self, id, fileInfo.key, fileObject.buffer, {overwrite: true}, function(err, fileKey) {
+      api.put.call(self, id, fileInfo.key, fsFile.buffer, {overwrite: true}, function(err, fileKey) {
         if (err) {
           callback(err);
         } else if (fileKey) {
@@ -188,7 +188,7 @@ StorageAdapter = function(name, options, api) {
     }
     //Sync
     else {
-      var fileKey = api.putSync.call(self, id, fileInfo.key, fileObject.buffer, {overwrite: true});
+      var fileKey = api.putSync.call(self, id, fileInfo.key, fsFile.buffer, {overwrite: true});
       // note the updatedAt in the SA file record
       if (fileKey) {
         if (typeof api.statsSync === "function") {
@@ -204,9 +204,9 @@ StorageAdapter = function(name, options, api) {
     return 1;
   };
 
-  self.remove = function(fileObject, options, callback) {
+  self.remove = function(fsFile, options, callback) {
     console.log("---SA REMOVE");
-    foCheck(fileObject, "remove");
+    foCheck(fsFile, "remove");
 
     if (!callback && typeof options === "function") {
       callback = options;
@@ -215,7 +215,7 @@ StorageAdapter = function(name, options, api) {
 
     options = options || {};
 
-    var id = getFileId(fileObject, options.copyName);
+    var id = getFileId(fsFile, options.copyName);
     var fileInfo = self.files.findOne({_id: id});
 
     if (!fileInfo) {
@@ -246,8 +246,8 @@ StorageAdapter = function(name, options, api) {
     }
   };
 
-  self.getBuffer = function(fileObject, options, callback) {
-    foCheck(fileObject, "getBuffer");
+  self.getBuffer = function(fsFile, options, callback) {
+    foCheck(fsFile, "getBuffer");
 
     if (!callback && typeof options === "function") {
       callback = options;
@@ -256,7 +256,7 @@ StorageAdapter = function(name, options, api) {
 
     options = options || {};
 
-    var id = getFileId(fileObject, options.copyName);
+    var id = getFileId(fsFile, options.copyName);
     var fileInfo = self.files.findOne({_id: id});
 
     if (!fileInfo) {
@@ -277,8 +277,8 @@ StorageAdapter = function(name, options, api) {
   };
 
   if (typeof api.getBytes === 'function') {
-    self.getBytes = function(fileObject, start, end, options, callback) {
-      foCheck(fileObject, "getBytes");
+    self.getBytes = function(fsFile, start, end, options, callback) {
+      foCheck(fsFile, "getBytes");
 
       if (!callback && typeof options === "function") {
         callback = options;
@@ -287,7 +287,7 @@ StorageAdapter = function(name, options, api) {
 
       options = options || {};
 
-      var id = getFileId(fileObject, options.copyName);
+      var id = getFileId(fsFile, options.copyName);
       var fileInfo = self.files.findOne({_id: id});
 
       if (!fileInfo) {
@@ -309,7 +309,7 @@ StorageAdapter = function(name, options, api) {
   }
 
   self.sync = function(callbacks) {
-    // This is intended to be called one time in the CollectionFS constructor
+    // This is intended to be called one time in the FS.Collection constructor
     callbacks = _.extend({
       insert: null,
       update: null,
@@ -377,7 +377,11 @@ StorageAdapter = function(name, options, api) {
   // // File stats returns size, ctime, mtime
   // api.stats = function(fileKey, callback) {}
 
-  // // Sync; should be called once by sync'd CFS to pass itself for updating whenever files change externally
-  // api.sync = function(collectionFS) {};
+  // // For external syncing, should accept a callback function
+  // // and invoke that function when files in the store change,
+  // // passing a string "remove" or "change" as the first argument,
+  // // the file key as the second argument, and an object with updated
+  // // file info as the third argument.
+  // api.watch = function(callback) {};
 
 };
