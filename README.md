@@ -30,8 +30,8 @@ $ mrt add cfs-filesystem
 ## Usage
 
 ```js
-Images = new CollectionFS("images", {
-  store: new CollectionFS.FileSystemStore("images", "~/app-files/images")
+Images = new FS.Collection("images", {
+  store: new FS.FileSystemStore("images", "~/app-files/images")
 });
 ```
 
@@ -39,6 +39,6 @@ Images = new CollectionFS("images", {
 
 A FileSystemStore theoretically supports the `sync` option, but this feature
 is not yet working correctly. When you use a FileSystemStore as the master
-store for a CollectionFS with the `sync` option set to `true`, file changes
+store for a FS.Collection with the `sync` option set to `true`, file changes
 caused by something other than your app in the designated directory will
-be synchronized back to your CollectionFS.
+be synchronized back to your FS.Collection.

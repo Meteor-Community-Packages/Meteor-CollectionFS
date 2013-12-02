@@ -3,7 +3,7 @@ var path = Npm.require('path');
 var mkdirp = Npm.require('mkdirp');
 var chokidar = Npm.require('chokidar');
 
-CollectionFS.FileSystemStore = function(name, pathname) {
+FS.FileSystemStore = function(name, pathname) {
   // Pass home ~ in pathname
   var homepath = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
 
@@ -19,7 +19,7 @@ CollectionFS.FileSystemStore = function(name, pathname) {
   mkdirp.sync(absolutePath);
   console.log(name + ' FileSystem mounted on: ' + absolutePath);
 
-  return new StorageAdapter(name, {}, {
+  return new FS.StorageAdapter(name, {}, {
     typeName: 'storage.filesystem',
     get: function(fileKey, callback) {
       // this is the Storage adapter scope
