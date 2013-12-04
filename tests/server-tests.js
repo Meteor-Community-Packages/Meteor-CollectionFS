@@ -10,15 +10,14 @@ Tinytest.add('FS.Collection - server - test environment', function(test) {
 /*
  * FS.File Server Tests
  * 
- * construct FO with no arguments
- * load buffer into FO with FO.loadBuffer
- * load buffer into FO and then call FO.toDataUrl with and without callback
- * call FO.loadBinary and make sure it sets FO.buffer properly
- * load buffer into FO and then call FO.toBinary; make sure correct data is returned
- * load buffer into FO and then call FO.getBytes
- * construct FO, set FO.collectionName to a CFS name, and then test FO.update/remove/get/put/del/url
+ * construct FS.File with no arguments
+ * load data with FS.File.setDataFromBuffer
+ * load data with FS.File.setDataFromBinary
+ * load data and then call FS.File.toDataUrl with and without callback
+ * load buffer into FS.File and then call FS.File.getBinary with and without start/end; make sure correct data is returned
+ * construct FS.File, set FS.File.collectionName to a CFS name, and then test FS.File.update/remove/get/put/del/url
  * (call these with and without callback to test sync vs. async)
- * set FO.name to a filename and test that FO.getExtension() returns the extension
+ * set FS.File.name to a filename and test that FS.File.getExtension() returns the extension
  * 
  * 
  * FS.Collection Server Tests

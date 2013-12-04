@@ -1,24 +1,3 @@
-var fs = Npm.require('fs');
-var path = Npm.require('path');
-var tmp = Npm.require('tmp');
-var mmm = Npm.require('mmmagic');
-
-// Loads the given buffer into myFS.File.buffer
-FS.File.prototype.loadBuffer = function(buffer, type) {
-  check(buffer, Buffer);
-  var self = this;
-  self.size = buffer.length;
-  self.buffer = buffer;
-  if (type) {
-    self.type = '' + type;
-  } else if (typeof self.type !== "string") {
-    // If we don't know the content type, we can inspect the buffer
-    var magic = new mmm.Magic(mmm.MAGIC_MIME_TYPE);
-    var detectSync = Meteor._wrapAsync(magic.detect);
-    self.type = detectSync(buffer);
-  }
-};
-
 // Save a chunk of the total binary data into a temp file on the filesystem.
 // Using temp file allows us to easily resume uploads, even if the server
 // restarts, and to keep the working memory clear.
@@ -61,12 +40,12 @@ FS.File.prototype.loadBinaryChunk = function(binary, start, callback) {
       if (self.bytesUploaded === self.size) {
         // We are done loading all bytes
         // so we should load the temp file into the actual fsFile now
-        self.loadBufferFromTempFile(function(err) {
+        self.setDataFromTempFile(function(err) {
           if (err) {
             callback(err);
-            return;
+          } else {
+            callback(null, true);
           }
-          callback(null, true);
         });
       }
     });
@@ -74,32 +53,16 @@ FS.File.prototype.loadBinaryChunk = function(binary, start, callback) {
 };
 
 // callback(err)
-FS.File.prototype.loadBufferFromFile = function(filePath, callback) {
-  var self = this;
+FS.File.prototype.saveDataToFile = function(filePath, callback) {
+  var self = this, buffer = self.getBuffer();
 
-  // Call node readFile
-  fs.readFile(filePath, Meteor.bindEnvironment(function(err, buffer) {
-    console.log("got buffer from temp file", buffer.length);
-    if (buffer) {
-      self.loadBuffer(buffer);
-    }
-    callback(err);
-  }, function(err) {
-    callback(err);
-  }));
-};
-
-// callback(err)
-FS.File.prototype.saveBufferToFile = function(filePath, callback) {
-  var self = this;
-
-  if (!(self.buffer instanceof Buffer)) {
+  if (!(buffer instanceof Buffer)) {
     callback(new Error("saveBufferToFile: No buffer"));
+    return;
   }
 
-  // Call node readFile
-  fs.writeFile(filePath, self.buffer, Meteor.bindEnvironment(function(err) {
-    console.log("saved entire buffer to temp file");
+  // Call node writeFile
+  fs.writeFile(filePath, buffer, Meteor.bindEnvironment(function(err) {
     callback(err);
   }, function(err) {
     callback(err);
@@ -107,23 +70,12 @@ FS.File.prototype.saveBufferToFile = function(filePath, callback) {
 };
 
 // callback(err)
-FS.File.prototype.loadBufferFromTempFile = function(callback) {
-  var self = this;
-
-  if (!self.tempFile) {
-    callback(new Error("loadBufferFromTempFile: No temp file"));
-  }
-
-  self.loadBufferFromFile(self.tempFile, callback);
-};
-
-// callback(err)
-FS.File.prototype.saveBufferToTempFile = function(callback) {
+FS.File.prototype.saveDataToTempFile = function(callback) {
   var self = this;
 
   self.openTempFile(function(err, fd) {
     fs.closeSync(fd);
-    self.saveBufferToFile(self.tempFile, callback);
+    self.saveDataToFile(self.tempFile, callback);
   });
 };
 
@@ -168,19 +120,19 @@ FS.File.prototype.openTempFile = function(callback) {
 FS.File.prototype.deleteTempFile = function(callback) {
   var self = this;
 
-  if (!self.tempFile) {
+  if (self.tempFile) {
+    fs.unlink(self.tempFile, Meteor.bindEnvironment(function(err) {
+      console.log("deleted temp file ", self.tempFile);
+      if (!err) {
+        self.update({$unset: {tempFile: ''}});
+      }
+      callback(err);
+    }, function(err) {
+      callback(err);
+    }));
+  } else {
     callback();
   }
-
-  fs.unlink(self.tempFile, Meteor.bindEnvironment(function(err) {
-    console.log("deleted temp file ", self.tempFile);
-    if (!err) {
-      self.update({$unset: {tempFile: ''}});
-    }
-    callback(err);
-  }, function(err) {
-    callback(err);
-  }));
 };
 
 // If copyName isn't a string, will log the failure to master
@@ -246,7 +198,7 @@ FS.File.prototype.failedPermanently = function(copyName) {
 FS.File.fromFile = function(filePath, filename, callback) {
   filename = filename || path.basename(filePath);
   var fsFile = new FS.File({name: filename});
-  fsFile.loadBufferFromFile(filePath, function(err) {
+  fsFile.setDataFromFile(filePath, function(err) {
     if (err) {
       callback(err);
     } else {

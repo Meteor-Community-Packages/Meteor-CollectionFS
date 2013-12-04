@@ -64,13 +64,16 @@ FS.StorageAdapter = function(name, options, api) {
     if (!(fsFile instanceof FS.File)) {
       throw new Error('Storage adapter "' + name + '" ' + type + ' requires fsFile');
     }
-    if (!(fsFile.buffer instanceof Buffer) && (type === "insert" || type === "update")) {
-      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fsFile with buffer');
+    if (!fsFile.hasData() && (type === "insert" || type === "update")) {
+      throw new Error('Storage adapter "' + name + '" ' + type + ' requires fsFile with data');
     }
   };
 
   var getFileId = function(fsFile, copyName) {
     var copyInfo;
+    if (!fsFile.copies) {
+      return null;
+    }
     if (copyName) {
       copyInfo = fsFile.copies[copyName];
     } else {
@@ -101,7 +104,7 @@ FS.StorageAdapter = function(name, options, api) {
     // Put the file to storage
     // Async
     if (callback) {
-      api.put.call(self, id, preferredFilename, fsFile.buffer, {overwrite: false}, function(err, fileKey, updatedAt) {
+      api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false}, function(err, fileKey, updatedAt) {
         if (err) {
           // remove the SA file record
           self.files.remove({_id: id});
@@ -111,6 +114,7 @@ FS.StorageAdapter = function(name, options, api) {
             //file key already used
             self.files.remove({_id: id});
             callback(new Error("File key " + fileKey + " already saved"));
+            return;
           }
           // note the file key and updatedAt in the SA file record
           if (typeof api.stats === "function") {
@@ -130,7 +134,7 @@ FS.StorageAdapter = function(name, options, api) {
     //Sync
     else {
       try {
-        var fileKey = api.putSync.call(self, id, preferredFilename, fsFile.buffer, {overwrite: false});
+        var fileKey = api.putSync.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false});
         // note the file key in the SA file record
         if (fileKey) {
           if (typeof api.statsSync === "function") {
@@ -171,7 +175,7 @@ FS.StorageAdapter = function(name, options, api) {
 
     // Put the file to storage
     if (callback) {
-      api.put.call(self, id, fileInfo.key, fsFile.buffer, {overwrite: true}, function(err, fileKey) {
+      api.put.call(self, id, fileInfo.key, fsFile.getBuffer(), {overwrite: true}, function(err, fileKey) {
         if (err) {
           callback(err);
         } else if (fileKey) {
@@ -188,7 +192,7 @@ FS.StorageAdapter = function(name, options, api) {
     }
     //Sync
     else {
-      var fileKey = api.putSync.call(self, id, fileInfo.key, fsFile.buffer, {overwrite: true});
+      var fileKey = api.putSync.call(self, id, fileInfo.key, fsFile.getBuffer(), {overwrite: true});
       // note the updatedAt in the SA file record
       if (fileKey) {
         if (typeof api.statsSync === "function") {

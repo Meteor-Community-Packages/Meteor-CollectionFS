@@ -30,8 +30,8 @@ if (Meteor.isServer) {
       });
     } else {
       console.log("Received all data for " + fsFile._id + " in one chunk");
-      // Load binary data into fsFile, which also sets fsFile.buffer
-      fsFile.loadBinary(data);
+      // Load binary data into fsFile
+      fsFile.setDataFromBinary(data);
 
       // Save file to master store and save any additional copies
       fsFile.put();
@@ -300,7 +300,7 @@ FS.Collection = function(name, options) {
           });
 
           // Load the master buffer into the file object
-          fsFile.loadBuffer(buffer, info.type);
+          fsFile.setDataFromBuffer(buffer, info.type);
 
           // Save into the sync'd FS.Collection.
           self.insert(fsFile);
@@ -339,25 +339,27 @@ if (Meteor.isServer) {
   function loadBuffer(fsFile, callback) {
     var fsFileClone = fsFile.clone();
 
-    if (fsFile.buffer instanceof Buffer) {
-      fsFileClone.loadBuffer(fsFile.buffer);
+    function copyData() {
+      fsFileClone.setDataFromBinary(fsFile.getBinary());
       callback(null, fsFileClone);
-      return;
+    }
+
+    if (fsFile.hasData()) {
+      return copyData();
     }
 
     // If the supplied fsFile does not have a buffer loaded already,
     // try to load it from the temporary file.
     console.log("attempting to load buffer from temp file");
-    fsFile.loadBufferFromTempFile(function(err) {
+    fsFile.setDataFromTempFile(function(err) {
       if (err) {
         callback(err);
       } else {
-        fsFileClone.loadBuffer(fsFile.buffer);
-        callback(null, fsFileClone);
+        copyData();
       }
     });
   }
-  
+
   var loadBufferSync = Meteor._wrapAsync(loadBuffer);
 
   function saveCopy(fsFile, store, beforeSave) {
@@ -420,8 +422,8 @@ if (Meteor.isServer) {
 
     // If the supplied fsFile does not have a buffer loaded already,
     // load it from the master store.
-    if (!(fsFile.buffer instanceof Buffer)) {
-      fsFile.loadBinary(fsFile.get());
+    if (!fsFile.hasData()) {
+      fsFile.setDataFromBinary(fsFile.get());
     }
 
     // Loop through copies defined in CFS options
@@ -499,7 +501,12 @@ FS.Collection.prototype.insert = function(doc, callback) {
     fileObj = new FS.File(doc);
     doInsert();
   } else {
-    throw new Error('FS.Collection insert expects FS.File');
+    var e = new Error('FS.Collection insert expects FS.File');
+    if (typeof callback === 'function') {
+      callback(e);
+    } else {
+      throw e;
+    }
   }
 
   // We return the FS.File

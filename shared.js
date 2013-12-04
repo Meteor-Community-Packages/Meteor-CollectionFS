@@ -7,6 +7,13 @@ _collections = {};
 // A simple event queue for synchronous tasks
 eventQueue = new PowerQueue('EventQueue');
 
+if (Meteor.isServer) {
+  fs = Npm.require('fs');
+  path = Npm.require('path');
+  tmp = Npm.require('tmp');
+  mmm = Npm.require('mmmagic');
+}
+
 // #############################################################################
 //
 // HELPERS
@@ -47,7 +54,7 @@ cloneFileRecord = function(rec) {
   }
   // clone copies
   if (_.isObject(rec.copies)) {
-    result.copies = {}; 
+    result.copies = {};
     _.each(rec.copies, function(value, key) {
       if (_.isObject(value)) {
         result.copies['' + key] = {

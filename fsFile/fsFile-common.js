@@ -16,84 +16,11 @@ FS.File = function(ref) {
 
   if (typeof File !== "undefined" && ref instanceof File) {
     self.utime = ref.lastModifiedDate;
-    self.loadBlob(new Blob([ref], {type: ref.type}));
+    self.setDataFromBlob(new Blob([ref], {type: ref.type}));
   } else if (typeof Blob !== "undefined" && ref instanceof Blob) {
     self.utime = new Date();
-    self.loadBlob(ref);
+    self.setDataFromBlob(ref);
   }
-};
-
-// Converts EJSON binary to Buffer or Blob and saves in FS.File
-FS.File.prototype.loadBinary = function(binary, type) {
-  var self = this;
-  self.binary = binary;
-  if (Meteor.isServer) {
-    self.loadBuffer(binaryToBuffer(binary));
-  } else if (Meteor.isClient) {
-    type = type || self.type;
-    self.loadBlob(new Blob([binary], {type: type}));
-  }
-};
-
-FS.File.prototype.toBinary = function(callback) {
-  var self = this;
-
-  if (typeof callback !== "function")
-    throw new Error("FS.File.toBinary requires a callback");
-
-  // Use binary if already present
-  if (self.binary) {
-    callback(self.binary);
-  }
-
-  // Convert Blob to binary and use that
-  if (self.blob) {
-    if (typeof FileReader === "undefined") {
-      throw new Error("Browser does not support FileReader");
-    }
-
-    var reader = new FileReader();
-    reader.onload = function() {
-      var arrayBuffer = reader.result;
-      var arrayBufferView = new Uint8Array(arrayBuffer);
-      var len = arrayBuffer.byteLength;
-      var bin = EJSON.newBinary(len);
-      for (var i = 0; i < len; i++) {
-        bin[i] = arrayBufferView[i];
-      }
-      self.binary = bin;
-      callback(self.binary);
-    };
-    reader.onError = function(err) {
-      throw err;
-    };
-    reader.readAsArrayBuffer(self.blob);
-  }
-
-  if (self.buffer) {
-    self.binary = bufferToBinary(self.buffer);
-    callback(self.binary);
-  }
-};
-
-FS.File.prototype.getBytes = function(start, end, callback) {
-  var self = this;
-
-  if (typeof callback !== "function")
-    throw new Error("FS.File.getBytes requires a callback");
-
-  self.toBinary(function(data) {
-    if (start >= data.length) {
-      callback(new Error("FS.File getBytes: start position beyond end of data (" + data.length + ")"));
-    }
-    end = (end > data.length) ? data.length : end;
-    var size = end - start;
-    var chunk = EJSON.newBinary(size);
-    for (var i = 0; i < size; i++) {
-      chunk[i] = data[start + i];
-    }
-    callback(null, chunk);
-  });
 };
 
 // This is a collection wrapper with error messages, primarily for internal use
@@ -179,6 +106,7 @@ FS.File.prototype.remove = function(copyName) {
     // this is our collection
     id = this.remove({_id: self._id});
     delete self._id;
+    delete self.binary;
   });
   return id;
 };
@@ -262,7 +190,7 @@ FS.File.prototype.url = function(copyName, auth) {
   if (copyName && (!self.copies || !self.copies[copyName])) {
     return null;
   }
-  
+
   if (!copyName && !self.master) {
     return null;
   }
@@ -311,6 +239,7 @@ FS.File.prototype.put = function(callback) {
   // We have to have the file in the FS.Collection first
   if (!self._id || !collection) {
     callback(new Error("FS.File put needs collection and _id"));
+    return;
   }
 
   if (Meteor.isClient && !FS.uploadQueue.isUploadingFile(self)) {
@@ -331,6 +260,7 @@ FS.File.prototype.getExtension = function() {
   return (found > 0 ? name.substr(found) : null);
 };
 
+// callback(err, dataUrl) (callback is optional on server)
 FS.File.prototype.toDataUrl = function(callback) {
   var self = this;
 
@@ -338,55 +268,42 @@ FS.File.prototype.toDataUrl = function(callback) {
     if (typeof callback !== 'function')
       throw new Error("toDataUrl requires function as callback");
 
-    if (typeof FileReader === "undefined")
-      throw new Error("Browser does not support FileReader");
+    if (typeof FileReader === "undefined") {
+      callback(new Error("Browser does not support FileReader"));
+      return;
+    }
 
     var fileReader = new FileReader();
     fileReader.onload = function(event) {
-      callback(event.target.result);
+      callback(null, event.target.result);
     };
-
-    if (self.blob) {
-      fileReader.readAsDataURL(self.blob);
+    fileReader.onerror = function(err) {
+      callback(err);
+    };
+    try {
+      var blob = self.getBlob();
+      fileReader.readAsDataURL(blob);
+    } catch (err) {
+      callback(err);
     }
   }
 
   else if (Meteor.isServer) {
-    if (!self.buffer || !self.type)
-      throw new Error("toDataUrl requires a buffer loaded in the FS.File and a contentType");
+    var hasCallback = (typeof callback === 'function');
+    callback = callback || defaultCallback;
+    var buffer = self.getBuffer();
+    if (!buffer || !self.type) {
+      callback(new Error("toDataUrl requires a buffer loaded in the FS.File and a contentType"));
+      return;
+    }
 
     var data_uri_prefix = "data:" + self.type + ";base64,";
-    var url = data_uri_prefix + self.buffer.toString("base64");
-    if (typeof callback === 'function') {
-      callback(url);
+    var url = data_uri_prefix + buffer.toString("base64");
+    if (hasCallback) {
+      callback(null, url);
     } else {
       return url;
     }
-  }
-};
-
-// Load data from a URL into a new FS.File and pass it to callback
-// callback(err, fsFile)
-FS.File.fromUrl = function(url, filename, callback) {
-  callback = callback || defaultCallback;
-  var fsFile = new FS.File({name: filename});
-  if (Meteor.isClient) {
-    fsFile.loadBlobFromUrl(url, function(err) {
-      if (err) {
-        callback(err);
-      } else {
-        callback(null, fsFile);
-      }
-    }); 
-  } else if (Meteor.isServer) {
-    //TODO create loadBufferFromUrl method in server code
-//    fsFile.loadBufferFromUrl(url, function(err) {
-//      if (err) {
-//        callback(err);
-//      } else {
-//        callback(null, fsFile);
-//      }
-//    });
   }
 };
 

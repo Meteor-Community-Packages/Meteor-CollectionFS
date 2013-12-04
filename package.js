@@ -25,6 +25,8 @@ Package.on_use(function(api) {
     'argParser.js',
     'transferQueue.js',
     'fsFile/fsFile-common.js',
+    'fsFile/fsFile-data-get.js',
+    'fsFile/fsFile-data-set.js',
     'fsFile/fsFile-client.js',
     'fsFile/fsFile-ejson.js',
     'fsCollection.js'
@@ -34,6 +36,8 @@ Package.on_use(function(api) {
     'shared.js',
     'argParser.js',
     'fsFile/fsFile-common.js',
+    'fsFile/fsFile-data-get.js',
+    'fsFile/fsFile-data-set.js',
     'fsFile/fsFile-server.js',
     'fsFile/fsFile-ejson.js',
     'storageAdapter.js',

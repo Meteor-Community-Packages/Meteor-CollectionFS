@@ -100,7 +100,7 @@ object to `Images.insert()`. This will create a `FS.File` from the
 begin uploading the data to the server with reactive progress updates.
 
 On both the client and the server, the `insert` method can directly
-accept a `FS.File`, too, but you must load a buffer or blob into it first.
+accept a `FS.File`, too, but you must load data into it first.
 
 ## After the Upload
 

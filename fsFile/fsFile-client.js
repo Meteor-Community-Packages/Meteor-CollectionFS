@@ -1,23 +1,15 @@
-FS.File.prototype.loadBlob = function(blob) {
-  check(blob, Blob);
-  var self = this;
-  self.blob = blob;
-  self.size = blob.size;
-  self.type = blob.type;
-};
-
-//callback(err)
-FS.File.prototype.loadBlobFromUrl = function(url, callback) {
-  var self = this;
+// Load data from a URL into a new FS.File and pass it to callback
+// callback(err, fsFile)
+FS.File.fromUrl = function(url, filename, callback) {
   callback = callback || defaultCallback;
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', url, true);
-  xhr.responseType = "blob";
-  xhr.onload = function() {
-    self.loadBlob(xhr.response);
-    callback();
-  };
-  xhr.send();
+  var fsFile = new FS.File({name: filename});
+  fsFile.setDataFromUrl(url, function(err) {
+    if (err) {
+      callback(err);
+    } else {
+      callback(null, fsFile);
+    }
+  });
 };
 
 FS.File.prototype.saveLocal = function(filename) {
@@ -26,8 +18,5 @@ FS.File.prototype.saveLocal = function(filename) {
   if (typeof window === "undefined")
     throw new Error("window must be defined to use saveLocal");
 
-  if (self.blob) {
-    filename = filename || self.name;
-    window.saveAs(self.blob, filename);
-  }
+  window.saveAs(self.getBlob(), (filename || self.name));
 };

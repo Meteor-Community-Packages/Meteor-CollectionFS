@@ -66,6 +66,7 @@ TransferQueue.prototype.cacheUpload = function(fsFile, data, start, callback) {
   if (self.collection.findOne({fo: fsFile, start: start, type: "upload"})) {
     // If already cached, don't do it again
     callback();
+    return;
   }
   self.collection.insert({fo: fsFile, data: data, start: start, type: "upload"}, callback);
 };
@@ -96,6 +97,7 @@ TransferQueue.prototype.cacheDownload = function(fsFile, selector, start, callba
   if (self.collection.findOne({fo: fsFile, selector: selector, start: start, type: "download"})) {
     // If already cached, don't do it again
     callback();
+    return;
   }
   self.collection.insert({fo: fsFile, selector: selector, start: start, type: "download"}, callback);
 };
@@ -104,7 +106,7 @@ TransferQueue.prototype.addDownloadedData = function(fsFile, selector, start, da
   var self = this;
 
   function save(data) {
-    fsFile.loadBinary(data);
+    fsFile.setDataFromBinary(data);
     var filename = (typeof selector === "string") ? fsFile.copies[selector].name : fsFile.master.name;
     fsFile.saveLocal(filename);
     // Now that we've saved it, clear the cache
@@ -162,15 +164,11 @@ var uploadChunk = function(tQueue, fsFile, data, start) {
               wait: true
             },
     function(err) {
-      if (err) {
-        console.log(err);
+      if (!err) {
+        tQueue.markChunkUploaded(fsFile, start, function(err) {
+          complete();
+        });
       }
-      tQueue.markChunkUploaded(fsFile, start, function() {
-        if (err) {
-          console.log(err);
-        }
-        complete();
-      });
     });
   });
 };
@@ -189,19 +187,12 @@ var uploadChunks = function(tQueue, fsFile, size, chunks, chunk) {
   var start = chunk * chunkSize;
   var end = start + chunkSize;
   console.log("uploadChunks: chunk " + chunk + " of " + chunks + " where start is " + start + " and end is " + end + " and file size is " + fsFile.size);
-  fsFile.getBytes(start, end, function(err, data) {
-    if (err) {
-      throw err;
-    }
-    if (chunks === 1) {
-      start = null; //It's a small file. Upload all data in a single method call
-    }
-    tQueue.cacheUpload(fsFile, data, start, function(err) {
-      if (err) {
-        console.log(err);
-      }
-      uploadChunk(tQueue, fsFile, data, start);
-    });
+  var data = fsFile.getBinary(start, end);
+  if (chunks === 1) {
+    start = null; //It's a small file. Upload all data in a single method call
+  }
+  tQueue.cacheUpload(fsFile, data, start, function(err) {
+    uploadChunk(tQueue, fsFile, data, start);
   });
   if (chunk < chunks - 1) {
     uploadChunks(tQueue, fsFile, size, chunks, chunk + 1);
@@ -229,15 +220,11 @@ var downloadChunk = function(tQueue, fsFile, selector, start) {
               wait: true
             },
     function(err, data) {
-      if (err) {
-        console.log(err);
+      if (!err) {
+        tQueue.addDownloadedData(fsFile, selector, start, data, function(err) {
+          complete();
+        });
       }
-      tQueue.addDownloadedData(fsFile, selector, start, data, function(err) {
-        if (err) {
-          console.log(err);
-        }
-        complete();
-      });
     });
   });
 };
@@ -267,9 +254,6 @@ var downloadChunks = function(tQueue, fsFile, selector, size, chunks, chunk) {
     start = null; //It's a small file. Upload all data in a single method call
   }
   tQueue.cacheDownload(fsFile, selector, start, function(err) {
-    if (err) {
-      console.log(err);
-    }
     downloadChunk(tQueue, fsFile, selector, start);
   });
   if (chunk < chunks - 1) {
