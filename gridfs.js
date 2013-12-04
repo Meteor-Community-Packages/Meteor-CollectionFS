@@ -43,15 +43,16 @@ FS.GridFSStore = function(name) {
       callback(null, result);
     },
     getBytes: function(id, start, end, callback) {
-      //TODO maybe have "chunkSize" property in every chunks document
-      //so that we can grab that from the first chunk rather than using
-      //the global value. This would allow the global value to change.
-      var first = Math.floor(start / chunkSize);
-      var last = Math.floor(end / chunkSize);
+      // Find out what chunk size we saved with, which we stored
+      // with chunk 0 when we saved it
+      var chunk = chunksCollection.findOne({files_id: id, n: 0});
+      var savedChunkSize = chunk.chunkSize || chunkSize;
+      var first = Math.floor(start / savedChunkSize);
+      var last = Math.floor(end / savedChunkSize);
       var current = first;
-      var currentByte = first * chunkSize;
+      var currentByte = first * savedChunkSize;
       var result = EJSON.newBinary(end - start);
-      var chunk, data, r = 0;
+      var data, r = 0;
       while (current <= last) {
         chunk = chunksCollection.findOne({files_id: id, n: current});
         if (!chunk || !chunk.data) {
@@ -94,12 +95,17 @@ FS.GridFSStore = function(name) {
 
         if (cPos === size) {
           console.log("---GridFS PUT writing chunk " + n);
-          // Save data chunk into database
-          var chunkId = chunksCollection.insert({
+          var chunkDoc = {
             files_id: id, // _id of the corresponding files collection entry
             n: n,
             data: chunk
-          });
+          };
+          if (n === 0) {
+            // Store the desired, not actual, chunk size with chunk 0, for later reference
+            chunkDoc.chunkSize = chunkSize;
+          }
+          // Save data chunk into database
+          var chunkId = chunksCollection.insert(chunkDoc);
           if (!chunkId) {
             callback(new Error("GridFS failed to save chunk " + n + " for file " + id));
             return;
