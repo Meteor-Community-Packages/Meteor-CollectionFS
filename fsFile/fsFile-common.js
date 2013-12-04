@@ -13,14 +13,6 @@ FS.File = function(ref) {
     throw new Error('FS.File expects an object as argument');
 
   _.extend(self, cloneFileRecord(ref));
-
-  if (typeof File !== "undefined" && ref instanceof File) {
-    self.utime = ref.lastModifiedDate;
-    self.setDataFromBlob(new Blob([ref], {type: ref.type}));
-  } else if (typeof Blob !== "undefined" && ref instanceof Blob) {
-    self.utime = new Date();
-    self.setDataFromBlob(ref);
-  }
 };
 
 // This is a collection wrapper with error messages, primarily for internal use

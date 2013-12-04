@@ -3,16 +3,21 @@
  */
 
 // Sets EJSON.binary data directly
-FS.File.prototype.setDataFromBinary = function(binary) {
+FS.File.prototype.setDataFromBinary = function(binary, type) {
+  var self = this;
   if (EJSON.isBinary(binary)) {
-    this.binary = binary;
+    self.binary = binary;
+    self.size = binary.length;
+    if (type) {
+      self.type = '' + type;
+    }
   } else {
     throw new Error("setDataFromBinary: Invalid argument")
   }
 };
 
 // Converts ArrayBuffer to EJSON.binary data and sets it
-FS.File.prototype.setDataFromArrayBuffer = function(arrayBuffer) {
+FS.File.prototype.setDataFromArrayBuffer = function(arrayBuffer, type) {
   if (Meteor.isClient && typeof ArrayBuffer === "undefined") {
     throw new Error("Browser does not support ArrayBuffer");
   }
@@ -23,6 +28,10 @@ FS.File.prototype.setDataFromArrayBuffer = function(arrayBuffer) {
   self.binary = EJSON.newBinary(len);
   for (var i = 0; i < len; i++) {
     self.binary[i] = arrayBufferView[i];
+  }
+  self.size = len;
+  if (type) {
+    self.type = '' + type;
   }
 };
 
@@ -43,7 +52,7 @@ if (Meteor.isClient) {
 
     var reader = new FileReader();
     reader.onload = function() {
-      self.setDataFromArrayBuffer(reader.result);
+      self.setDataFromArrayBuffer(reader.result, blob.type);
       callback();
     };
     reader.onError = function(err) {
@@ -61,7 +70,7 @@ if (Meteor.isClient) {
     xhr.open('GET', url, true);
     xhr.responseType = "arraybuffer";
     xhr.onload = function() {
-      self.setDataFromArrayBuffer(xhr.response);
+      self.setDataFromArrayBuffer(xhr.response, this.getResponseHeader('content-type'));
       callback();
     };
     xhr.onerror = function(err) {
@@ -99,7 +108,6 @@ if (Meteor.isServer) {
 
     // Call node readFile
     fs.readFile(filePath, Meteor.bindEnvironment(function(err, buffer) {
-      console.log("got buffer from temp file", buffer.length);
       if (buffer) {
         self.setDataFromBuffer(buffer);
       }

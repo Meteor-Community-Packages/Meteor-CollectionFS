@@ -498,8 +498,14 @@ FS.Collection.prototype.insert = function(doc, callback) {
     doInsert();
   } else if (Meteor.isClient && typeof File !== "undefined" && doc instanceof File) {
     // For convenience, allow File to be passed directly on the client
-    fileObj = new FS.File(doc);
-    doInsert();
+    FS.File.fromFile(doc, function(err, f) {
+      if (err) {
+        callback(err);
+      } else {
+        fileObj = f;
+        doInsert();
+      }
+    });
   } else {
     var e = new Error('FS.Collection insert expects FS.File');
     if (typeof callback === 'function') {
@@ -570,6 +576,9 @@ FS.Collection.prototype.deny = function() {
 if (Meteor.isClient) {
   FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadata, callback) {
     var self = this, events = {}, metadata = metadata || {};
+
+    callback = callback || defaultCallback;
+
     // Prevent default drag and drop
     function noopHandler(evt) {
       evt.stopPropagation();
@@ -583,27 +592,25 @@ if (Meteor.isClient) {
       // Check if the metadata is a getter / function
       if (typeof metadata === 'function') {
         try {
-          var myMetadata = metadata.apply(this, [evt, temp]) || {};
-          if (typeof myMetadata !== "object") {
-            throw new Error("metadata must be an object");
-          }
-          for (var i = 0, ln = files.length; i < ln; i++) {
-            fileObj = new FS.File(files[i]);
-            fileObj.metadata = myMetadata;
-            self.insert(fileObj, callback);
-          }
+          metadata = metadata.apply(this, [evt, temp]) || {};
         } catch (err) {
-          throw new Error('acceptDropsOn error in metadata getter, Error: ' + (err.stack || err.message));
+          callback(new Error('acceptDropsOn error in metadata getter, Error: ' + (err.stack || err.message)));
         }
-      } else {
-        if (typeof metadata !== "object") {
-          throw new Error("metadata must be an object");
-        }
-        for (var i = 0, ln = files.length; i < ln; i++) {
-          fileObj = new FS.File(files[i]);
-          fileObj.metadata = metadata;
-          self.insert(fileObj, callback);
-        }
+      }
+
+      if (typeof metadata !== "object") {
+        callback(new Error("metadata must be an object"));
+      }
+
+      for (var i = 0, ln = files.length; i < ln; i++) {
+        FS.File.fromFile(files[i], function(err, fsFile) {
+          if (err) {
+            callback(err);
+          } else {
+            fsFile.metadata = myMetadata;
+            self.insert(fsFile, callback);
+          }
+        });
       }
     }
 
