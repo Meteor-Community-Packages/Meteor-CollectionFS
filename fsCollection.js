@@ -598,7 +598,7 @@ if (Meteor.isClient) {
     // Handle file dropped
     function dropped(evt, temp) {
       noopHandler(evt);
-      var files = evt.dataTransfer.files, fileObj;
+      var files = evt.dataTransfer.files, fsFile;
       // Check if the metadata is a getter / function
       if (typeof metadata === 'function') {
         try {
@@ -613,14 +613,9 @@ if (Meteor.isClient) {
       }
 
       for (var i = 0, ln = files.length; i < ln; i++) {
-        FS.File.fromFile(files[i], function(err, fsFile) {
-          if (err) {
-            callback(err);
-          } else {
-            fsFile.metadata = myMetadata;
-            self.insert(fsFile, callback);
-          }
-        });
+        fsFile = new FS.File(files[i]);
+        fsFile.metadata = metadata;
+        self.insert(fsFile, callback);
       }
     }
 

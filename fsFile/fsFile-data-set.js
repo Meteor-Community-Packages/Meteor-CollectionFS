@@ -40,27 +40,6 @@ FS.File.prototype.setDataFromArrayBuffer = function(arrayBuffer, type) {
  */
 
 if (Meteor.isClient) {
-  // Converts Blob to EJSON.binary data and sets it
-  // callback(err)
-  FS.File.prototype.setDataFromBlob = function(blob, callback) {
-    check(blob, Blob);
-    var self = this;
-    if (typeof FileReader === "undefined") {
-      callback(new Error("Browser does not support FileReader"));
-      return;
-    }
-
-    var reader = new FileReader();
-    reader.onload = function() {
-      self.setDataFromArrayBuffer(reader.result, blob.type);
-      callback();
-    };
-    reader.onError = function(err) {
-      callback(err);
-    };
-    reader.readAsArrayBuffer(blob);
-  };
-
   // Converts ArrayBuffer retrieved from URL to EJSON.binary data and sets it
   // callback(err)
   FS.File.prototype.setDataFromUrl = function(url, callback) {

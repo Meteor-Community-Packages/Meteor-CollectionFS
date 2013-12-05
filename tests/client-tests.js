@@ -11,8 +11,8 @@ Tinytest.add('FS.Collection - client - test environment', function(test) {
  * FS.File Client Tests
  * 
  * construct FS.File with no arguments
- * construct FS.File passing in File (this also tests FS.File.setDataFromBlob)
- * construct FS.File passing in Blob (this also tests FS.File.setDataFromBlob)
+ * construct FS.File passing in File
+ * construct FS.File passing in Blob
  * load blob into FS.File and then call FS.File.toDataUrl 
  * call FS.File.setDataFromBinary, then FS.File.getBlob(); make sure correct data is returned
  * load blob into FS.File and then call FS.File.getBinary() with and without start/end; make sure correct data is returned

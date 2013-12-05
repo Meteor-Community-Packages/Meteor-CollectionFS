@@ -1,4 +1,4 @@
-var chunkSize = 262144; // 256k; can be changed
+var chunkSize = 0.5 * 1024 * 1024; // 0.5MB; can be changed
 var uploadStartTime; // for testing
 
 TransferQueue = function(isUpload) {
@@ -146,6 +146,8 @@ TransferQueue.prototype.addDownloadedData = function(fsFile, selector, start, da
         });
         // Save combined data
         save(bin);
+      } else {
+        callback();
       }
     });
   } else {
@@ -167,21 +169,29 @@ var uploadChunk = function(tQueue, fsFile, start, end) {
   }
   tQueue.cacheUpload(fsFile, start, function() {
     tQueue.queue.add(function(complete) {
-      var data = fsFile.getBinary(start, end);
       console.log("uploading bytes " + start + " to " + end + " of " + fsFile.size);
-      var b = new Date;
-      Meteor.apply(collection.methodName + '/put',
-              [fsFile, data, start],
-              function(err) {
-                var e = new Date;
-                console.log("server took " + (e.getTime() - b.getTime()) + "ms");
-                if (!err) {
-                  tQueue.markChunkUploaded(fsFile, start, function() {
-                    complete();
-                  });
-                }
-              });
+      fsFile.getBinary(start, end, function(err, data) {
+        if (err) {
+          complete();
+          throw err;
+        }
+        var b = new Date;
+        Meteor.apply(collection.methodName + '/put',
+                [fsFile, data, start],
+                function(err) {
+                  var e = new Date;
+                  console.log("server took " + (e.getTime() - b.getTime()) + "ms");
+                  if (!err) {
+                    tQueue.markChunkUploaded(fsFile, start, function() {
+                      complete();
+                    });
+                  }
+                });
+      });
     });
+    if (end >= fsFile.size) {
+      tQueue.queue.run();
+    }
   });
 };
 
@@ -210,30 +220,38 @@ TransferQueue.prototype.uploadFile = function(fsFile) {
   var self = this;
   console.log('transferQueue: uploadFile');
   uploadStartTime = Date.now();
-  uploadChunks(self, fsFile);
+  Meteor.setTimeout(function() {
+    uploadChunks(self, fsFile);
+  });
 };
 
 // Downloading is a bit different from uploading. We cache data as it comes back
 // rather than before making the method calls.
-var downloadChunk = function(tQueue, fsFile, selector, start) {
+var downloadChunk = function(tQueue, fsFile, selector, start, isLast) {
   var collection = _collections[fsFile.collectionName];
   if (typeof collection === 'undefined') {
     throw new Error('TransferQueue upload failed FS.Collection "' + fsFile.collectionName + '" not found');
   }
 
-  tQueue.queue.add(function(complete) {
-    Meteor.apply(collection.methodName + '/get',
-            [fsFile, selector, start],
-            {
-              wait: true
-            },
-    function(err, data) {
-      if (!err) {
-        tQueue.addDownloadedData(fsFile, selector, start, data, function(err) {
+  tQueue.cacheDownload(fsFile, selector, start, function(err) {
+    tQueue.queue.add(function(complete) {
+      Meteor.apply(collection.methodName + '/get',
+              [fsFile, selector, start],
+              {
+                wait: true
+              },
+      function(err, data) {
+        if (err) {
           complete();
-        });
-      }
+          throw err;
+        } else {
+          tQueue.addDownloadedData(fsFile, selector, start, data, function(err) {
+            complete();
+          });
+        }
+      });
     });
+    isLast && tQueue.queue.run();
   });
 };
 
@@ -261,10 +279,10 @@ var downloadChunks = function(tQueue, fsFile, selector, size, chunks, chunk) {
   if (chunks === 1) {
     start = null; //It's a small file. Upload all data in a single method call
   }
-  tQueue.cacheDownload(fsFile, selector, start, function(err) {
-    downloadChunk(tQueue, fsFile, selector, start);
-  });
-  if (chunk < chunks - 1) {
+
+  var done = (chunk >= chunks - 1);
+  downloadChunk(tQueue, fsFile, selector, start, done);
+  if (!done) {
     downloadChunks(tQueue, fsFile, selector, size, chunks, chunk + 1);
   }
 };
@@ -282,7 +300,9 @@ TransferQueue.prototype.downloadFile = function(/* fsFile, copyName */) {
 
   // Load via DDP
   console.log('transferQueue: downloadFile');
-  downloadChunks(self, fsFile, copyName);
+  Meteor.setTimeout(function() {
+    downloadChunks(self, fsFile, copyName);
+  });
 };
 
 TransferQueue.prototype.isUploadingFile = function(fsFile) {
@@ -324,6 +344,20 @@ TransferQueue.prototype.pause = function() {
 TransferQueue.prototype.resume = function() {
   var self = this;
   self.queue.run();
+  self._paused = false;
+  if (self._pausedDeps) {
+    self._pausedDeps.changed();
+  }
+};
+
+TransferQueue.prototype.cancel = function() {
+  var self = this;
+  self.queue.reset();
+  if (self.isUploadQueue) {
+    self.collection.remove({type: "upload"});
+  } else {
+    self.collection.remove({type: "download"});
+  }
   self._paused = false;
   if (self._pausedDeps) {
     self._pausedDeps.changed();
