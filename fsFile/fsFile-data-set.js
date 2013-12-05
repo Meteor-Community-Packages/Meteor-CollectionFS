@@ -121,17 +121,18 @@ if (Meteor.isServer) {
   FS.File.prototype.setDataFromTempFiles = function(callback) {
     var self = this;
     self.binary = EJSON.newBinary(self.size);
-    var position = 0, stop = false;
+    var total = 0, stop = false;
     _.each(self.chunks, function(chunk) {
       if (!stop) {
+        var start = chunk.start;
         // Call node readFile
         fs.readFile(chunk.tempFile, Meteor.bindEnvironment(function(err, buffer) {
           if (buffer) {
             for (var i = 0, ln = buffer.length; i < ln; i++) {
-              self.binary[position] = buffer[i];
-              position++;
+              self.binary[start + i] = buffer[i];
+              total++;
             }
-            if (position === self.size) {
+            if (total === self.size) {
               callback();
             }
           } else {
