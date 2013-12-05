@@ -10,7 +10,7 @@ eventQueue = new PowerQueue('EventQueue');
 if (Meteor.isServer) {
   fs = Npm.require('fs');
   path = Npm.require('path');
-  tmp = Npm.require('tmp');
+  tmp = Npm.require('temp');
   mmm = Npm.require('mmmagic');
 }
 
@@ -93,8 +93,16 @@ cloneFileRecord = function(rec) {
   if (typeof rec._id !== 'undefined') {
     result._id = '' + rec._id;
   }
-  if (Meteor.isServer && typeof rec.tempFile === 'string') {
-    result.tempFile = rec.tempFile;
+  if (Meteor.isServer) {
+    if (_.isArray(rec.chunks)) {
+      result.chunks = [];
+      _.each(rec.chunks, function (chunk, i) {
+        result.chunks[i] = {
+          start: chunk.start,
+          tempFile: chunk.tempFile
+        };
+      });
+    }
   }
   return result;
 };

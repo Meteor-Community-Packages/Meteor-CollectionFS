@@ -2,54 +2,56 @@
 // Using temp file allows us to easily resume uploads, even if the server
 // restarts, and to keep the working memory clear.
 // callback(err, allBytesLoaded)
-FS.File.prototype.loadBinaryChunk = function(binary, start, callback) {
+FS.File.prototype.saveChunk = function(binary, start, callback) {
   var self = this;
   var total = binary.length;
 
   if (typeof callback !== "function") {
-    throw new Error("FS.File.loadBinaryChunk requires a callback");
+    throw new Error("FS.File.saveChunk requires a callback");
   }
 
-  self.openTempFile(function(err, fd) {
+  var chunks = self.chunks || [], chunk, tempFile;
+  for (var i = 0, ln = chunks.length; i < ln; i++) {
+    chunk = chunks[i];
+    if (chunk.start === start) {
+      tempFile = chunk.tempFile;
+      break;
+    }
+  }
+  if (!tempFile) {
+    console.log("Creating new temp file for", self._id);
+    tempFile = tmp.path({suffix: '.bin'});
+    self.update({$push: {chunks: {start: start, tempFile: tempFile}}});
+    console.log("Create new temp file", tempFile);
+  }
+
+  // Call node writeFile
+  fs.writeFile(tempFile, binaryToBuffer(binary), Meteor.bindEnvironment(function(err) {
     if (err) {
       callback(err);
-      return;
-    }
-
-    try {
-      fs.writeSync(fd, binaryToBuffer(binary), 0, total, start);
-      fs.closeSync(fd);
-    } catch (err) {
-      callback(err);
-      return;
-    }
-
-    var mod;
-    if (start === 0) {
-      mod = {$set: {bytesUploaded: total}};
     } else {
-      mod = {$inc: {bytesUploaded: total}};
-    }
-
-    self.update(mod, function(err) {
-      if (err) {
-        callback(err);
-        return;
-      }
-      console.log("Uploaded " + self.bytesUploaded + " of " + self.size + " bytes");
-      if (self.bytesUploaded === self.size) {
-        // We are done loading all bytes
-        // so we should load the temp file into the actual fsFile now
-        self.setDataFromTempFile(function(err) {
-          if (err) {
-            callback(err);
-          } else {
-            callback(null, true);
+      self.update({$inc: {bytesUploaded: total}}, function(err) {
+        if (err) {
+          callback(err);
+        } else {
+          console.log("Uploaded " + self.bytesUploaded + " of " + self.size + " bytes");
+          if (self.bytesUploaded === self.size) {
+            // We are done loading all bytes
+            // so we should load the temp files into the actual fsFile now
+            self.setDataFromTempFiles(function(err) {
+              if (err) {
+                callback(err);
+              } else {
+                callback(null, true);
+              }
+            });
           }
-        });
-      }
-    });
-  });
+        }
+      });
+    }
+  }, function(err) {
+    callback(err);
+  }));
 };
 
 // callback(err)
@@ -72,67 +74,47 @@ FS.File.prototype.saveDataToFile = function(filePath, callback) {
 // callback(err)
 FS.File.prototype.saveDataToTempFile = function(callback) {
   var self = this;
-
-  self.openTempFile(function(err, fd) {
-    fs.closeSync(fd);
-    self.saveDataToFile(self.tempFile, callback);
-  });
-};
-
-// Either creates a temp file and sets its path in self.tempFile or opens self.tempFile
-// for appending.
-// callback(err)
-FS.File.prototype.openTempFile = function(callback) {
-  var self = this;
-
-  if (!self.tempFile) {
-    console.log("Creating new temp file for", self._id);
-    self.update({$set: {tempFile: "retrieving"}}); //set to this temporarily so that we know not to get another temp file
-    tmp.file({keep: true}, Meteor.bindEnvironment(function(err, path, fd) {
-      if (err) {
-        self.update({$unset: {tempFile: ''}});
-        callback(err);
-      } else {
-        console.log("Created temp file for", self._id, path);
-        self.update({$set: {tempFile: path}});
-        callback(null, fd);
-      }
-    }, function(err) {
-      callback(err);
-    }));
-  } else {
-    //TODO maybe check for tempFile === "retrieving" here and loop until it equals a filepath?
-    fs.open(self.tempFile, 'a', Meteor.bindEnvironment(function(err, fd) {
-      if (err) {
-        self.update({$unset: {tempFile: ''}});
-        callback(err);
-      } else {
-        console.log("Opened temp file for", self._id, self.tempFile);
-        callback(null, fd);
-      }
-    }, function(err) {
-      callback(err);
-    }));
-  }
+  self.saveChunk(self.getBinary(), 0, callback);
 };
 
 // callback(err)
-FS.File.prototype.deleteTempFile = function(callback) {
-  var self = this;
+FS.File.prototype.deleteTempFiles = function(callback) {
+  var self = this, stop = false, count, deletedCount = 0;
 
-  if (self.tempFile) {
-    fs.unlink(self.tempFile, Meteor.bindEnvironment(function(err) {
-      console.log("deleted temp file ", self.tempFile);
-      if (!err) {
-        self.update({$unset: {tempFile: ''}});
-      }
-      callback(err);
-    }, function(err) {
-      callback(err);
-    }));
-  } else {
+  if (!self.chunks) {
     callback();
+    return;
   }
+
+  var count = self.chunks.length;
+  if (!count) {
+    callback();
+    return;
+  }
+
+  function success() {
+    deletedCount++;
+    if (deletedCount === count) {
+      callback();
+    }
+  }
+
+  _.each(self.chunks, function(chunk) {
+    if (!stop) {
+      fs.unlink(chunk.tempFile, Meteor.bindEnvironment(function(err) {
+        console.log("deleted temp file ", chunk.tempFile);
+        if (err) {
+          callback(err);
+          stop = true;
+        } else {
+          success();
+        }
+      }, function(err) {
+        callback(err);
+        stop = true;
+      }));
+    }
+  });
 };
 
 // If copyName isn't a string, will log the failure to master

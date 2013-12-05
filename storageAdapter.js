@@ -71,10 +71,10 @@ FS.StorageAdapter = function(name, options, api) {
 
   var getFileId = function(fsFile, copyName) {
     var copyInfo;
-    if (!fsFile.copies) {
-      return null;
-    }
     if (copyName) {
+      if (!fsFile.copies) {
+        return null;
+      }
       copyInfo = fsFile.copies[copyName];
     } else {
       copyInfo = fsFile.master;
@@ -347,7 +347,7 @@ FS.StorageAdapter = function(name, options, api) {
           if (buffer) {
             // Insert information about this file into the storage adapter collection
             var filesId = self.files.insert({key: fileKey, createdAt: info.utime});
-            filesId && callbacks.update && callbacks.update(filesId, info, buffer); 
+            filesId && callbacks.update && callbacks.update(filesId, info, buffer);
           }
         });
       }

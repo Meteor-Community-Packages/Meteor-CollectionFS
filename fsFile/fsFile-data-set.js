@@ -118,13 +118,31 @@ if (Meteor.isServer) {
   };
 
   // callback(err)
-  FS.File.prototype.setDataFromTempFile = function(callback) {
+  FS.File.prototype.setDataFromTempFiles = function(callback) {
     var self = this;
-
-    if (self.tempFile) {
-      self.setDataFromFile(self.tempFile, callback);
-    } else {
-      callback(new Error("setDataFromTempFile: No temp file"));
-    }
+    self.binary = EJSON.newBinary(self.size);
+    var position = 0, stop = false;
+    _.each(self.chunks, function(chunk) {
+      if (!stop) {
+        // Call node readFile
+        fs.readFile(chunk.tempFile, Meteor.bindEnvironment(function(err, buffer) {
+          if (buffer) {
+            for (var i = 0, ln = buffer.length; i < ln; i++) {
+              self.binary[position] = buffer[i];
+              position++;
+            }
+            if (position === self.size) {
+              callback();
+            }
+          } else {
+            callback(err);
+            stop = true;
+          }
+        }, function(err) {
+          callback(err);
+          stop = true;
+        }));
+      }
+    });
   };
 }

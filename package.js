@@ -8,7 +8,8 @@ Package.describe({
 
 Npm.depends({
   mmmagic: "0.3.4",
-  tmp: "0.0.21"
+  temp: "0.6.0"
+  //tmp: "0.0.21"
 });
 
 Package.on_use(function(api) {

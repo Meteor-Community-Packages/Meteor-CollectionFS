@@ -90,20 +90,28 @@ FS.File.prototype.update = function(modifier, options, callback) {
 };
 
 // Remove the file TODO: self destruct?
-FS.File.prototype.remove = function(copyName) {
+FS.File.prototype.remove = function() {
   var self = this;
-  var id;
+  var count;
+  // Remove any associated temp files
+  if (Meteor.isServer) {
+    self.deleteTempFiles(function (err) {
+      if (err) {
+        console.log(err);
+      }
+    });
+  }
   // Apply title for error messages
   self.useCollection('FS.File remove _id: "' + self._id + '"', function() {
     // this is our collection
-    id = this.remove({_id: self._id});
+    count = this.remove({_id: self._id});
     delete self._id;
     delete self.binary;
   });
-  return id;
+  return count;
 };
 
-// Client: Downloads the binary data for the copy as a single chunk and then passes it to the callback
+// Client: Downloads the binary data for the copy and then saves it
 // Server: Returns the Buffer data for the copy (synchronous) or passes it to an optional callback
 FS.File.prototype.get = function(/* copyName, start, end, callback */) {
   var self = this;

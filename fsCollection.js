@@ -7,22 +7,22 @@
 if (Meteor.isServer) {
 
   var APUpload = function(fsFile, data, start) {
+    var self = this;
     check(fsFile, FS.File);
     if (!EJSON.isBinary(data))
       throw new Error("APUpload expects binary data");
-
-    this.unblock();
 
     fsFile.reload(); //update properties from the linked server collection
 
     if (typeof start === "number") {
       console.log("Received chunk of size " + data.length + " at start " + start + " for " + fsFile._id);
       // Chunked Upload
-      fsFile.loadBinaryChunk(data, start, function(err, done) {
+      fsFile.saveChunk(data, start, function(err, done) {
         if (err) {
           throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
         }
         if (done) {
+          self.unblock();
           console.log("Received all chunks for " + fsFile._id);
           // Save file to master store and save any additional copies
           fsFile.put();
@@ -30,6 +30,7 @@ if (Meteor.isServer) {
       });
     } else {
       console.log("Received all data for " + fsFile._id + " in one chunk");
+      self.unblock();
       // Load binary data into fsFile
       fsFile.setDataFromBinary(data);
 
@@ -40,9 +41,9 @@ if (Meteor.isServer) {
 
   // Returns the data for selector,
   // or data from master store if selector is not set
-  var APDownload = function(fsFile, selector, start, end) {
+  var APDownload = function(fsFile, copyName, start, end) {
     this.unblock();
-    return fsFile.get(selector, start, end);
+    return fsFile.get(copyName, start, end);
   };
 
   // Deletes fsFile.
@@ -409,7 +410,16 @@ if (Meteor.isServer) {
         fsFile.logCopyFailure();
       } else {
         // Success. Update the file object
-        fsFile.update({$set: {master: result}});
+        fsFile.update({$set: {master: result}}, function(err, result) {
+          if (err) {
+            console.log(err);
+          }
+          fsFile.deleteTempFiles(function(err) {
+            if (err) {
+              console.log(err);
+            }
+          });
+        });
       }
     }
   };
