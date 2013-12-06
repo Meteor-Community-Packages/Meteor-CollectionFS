@@ -6,11 +6,31 @@
 
 if (Meteor.isServer) {
 
-  var APUpload = function(fsFile, data, start) {
+  var APUpload = function(fsFile, data, start, userId) {
     var self = this;
     check(fsFile, FS.File);
     if (!EJSON.isBinary(data))
       throw new Error("APUpload expects binary data");
+
+    var collection = _collections[fsFile.collectionName];
+    if (typeof collection === 'undefined' || collection === null) {
+      throw new Meteor.Error(500, "FS.File has no collection");
+    }
+
+    // Call user validators; use the "insert" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(collection.files._validators.insert.deny, function(validator) {
+      return validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(collection.files._validators.insert.allow, function(validator) {
+      return !validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
 
     fsFile.reload(); //update properties from the linked server collection
 
@@ -42,7 +62,29 @@ if (Meteor.isServer) {
   // Returns the data for selector,
   // or data from master store if selector is not set
   var APDownload = function(fsFile, copyName, start, end) {
-    this.unblock();
+    var self = this;
+    self.unblock();
+
+    var collection = _collections[fsFile.collectionName];
+    if (typeof collection === 'undefined' || collection === null) {
+      throw new Meteor.Error(500, "FS.File has no collection");
+    }
+
+    // Call user validators; use the custom "download" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(collection._validators.download.deny, function(validator) {
+      return validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(collection._validators.download.allow, function(validator) {
+      return !validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+
     return fsFile.get(copyName, start, end);
   };
 
@@ -50,7 +92,29 @@ if (Meteor.isServer) {
   // Always deletes the entire file and all copies, even if a specific
   // selector is passed. We don't allow deleting individual copies.
   var APDelete = function(fsFile) {
-    this.unblock();
+    var self = this;
+    self.unblock();
+
+    var collection = _collections[fsFile.collectionName];
+    if (typeof collection === 'undefined' || collection === null) {
+      throw new Meteor.Error(500, "FS.File has no collection");
+    }
+
+    // Call user validators; use the "remove" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(collection.files._validators.remove.deny, function(validator) {
+      return validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(collection.files._validators.remove.allow, function(validator) {
+      return !validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+
     return fsFile.remove();
   };
 
@@ -70,23 +134,19 @@ if (Meteor.isServer) {
 
       // If http get then return file
       if (self.method.toLowerCase() === 'get') {
-        try {
-          var type, copyInfo;
-          if (copyName) {
-            copyInfo = file.copies[copyName];
-            if (copyInfo) {
-              type = copyInfo.type;
-            }
+        var type, copyInfo;
+        if (copyName) {
+          copyInfo = file.copies[copyName];
+          if (copyInfo) {
+            type = copyInfo.type;
           }
-          type = type || file.type;
-          if (typeof type === "string") {
-            self.setContentType(type);
-          }
-          self.setStatusCode(200);
-          return APDownload.call(self, file, copyName, query.start, query.end);
-        } catch (e) {
-          throw new Meteor.Error(404, "Not Found", "Could not retrieve file with ID " + id);
         }
+        type = type || file.type;
+        if (typeof type === "string") {
+          self.setContentType(type);
+        }
+        self.setStatusCode(200);
+        return APDownload.call(self, file, copyName, query.start, query.end);
       }
 
       else if (self.method.toLowerCase() === 'put') {
@@ -210,6 +270,11 @@ FS.Collection = function(name, options) {
       return result;
     }
   });
+
+  // For storing custom allow/deny functions
+  self._validators = {
+    download: {allow: [], deny: []}
+  };
 
   /*
    * FILTER INSERTS
@@ -565,14 +630,34 @@ FS.Collection.prototype.find = function(selector) {
   return self.files.find.apply(self.files, arguments);
 };
 
-FS.Collection.prototype.allow = function() {
+FS.Collection.prototype.allow = function(options) {
   var self = this;
-  return self.files.allow.apply(self.files, arguments);
+
+  // Pull out the custom "download" functions
+  if (options.download) {
+    if (!(options.download instanceof Function)) {
+      throw new Error("allow: Value for `download` must be a function");
+    }
+    self._validators.download.allow.push(options.download);
+    delete options.download;
+  }
+
+  return self.files.allow.call(self.files, options);
 };
 
-FS.Collection.prototype.deny = function() {
+FS.Collection.prototype.deny = function(options) {
   var self = this;
-  return self.files.deny.apply(self.files, arguments);
+
+  // Pull out the custom "download" functions
+  if (options.download) {
+    if (!(options.download instanceof Function)) {
+      throw new Error("deny: Value for `download` must be a function");
+    }
+    self._validators.download.deny.push(options.download);
+    delete options.download;
+  }
+
+  return self.files.deny.call(self.files, options);
 };
 
 // TODO: Upsert?

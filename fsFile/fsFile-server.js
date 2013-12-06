@@ -95,6 +95,7 @@ FS.File.prototype.deleteTempFiles = function(callback) {
   function success() {
     deletedCount++;
     if (deletedCount === count) {
+      self.update({$unset: {chunks: 1}});
       callback();
     }
   }
