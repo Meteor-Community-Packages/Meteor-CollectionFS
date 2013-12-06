@@ -536,27 +536,25 @@ Filesystem.fileHandlers({
   size100x100gm: function(options) {
     if (options.fileRecord.contentType != 'image/jpeg')
       return null; // jpeg files only  
+  
+    var destination = options.destination();
+    var dest = destination.serverFilename;
+    
+    // Uses meteorite graphicsmagick
+    gm(options.blob, dest).resize(40, 40).quality(90).write(dest, function(err) {
+      if (err) {
+       // console.log('GraphicsMagick error ' + err);
+       return false;
+       // False will trigger rerun, could check options.sumFailes
+       // if we only want to rerun 2 times (default limit is 3,
+       // but sumFailes is reset at server idle + wait period)
+      } else {
+        console.log('Finished writing image.');
+        //return destination('jpg').fileData.url; // We only return the url for the file, no blob to save since we took care of it
+      }
+   });
 
-    // Use Future.wrap for handling async
-    /*
-    var dest = options.destination('jpg').serverFilename; // Set optional extension
-
-    var gm = Npm.require('gm'); // GraphicsMagick required need Meteor package
-    gm(options.blob, dest).resize(100,100).quality(90).write(dest, function(err) {
-        if (err) {
-          // console.log('GraphicsMagick error ' + err);
-          return false; 
-          // False will trigger rerun, could check options.sumFailes
-          // if we only want to rerun 2 times (default limit is 3,
-          // but sumFailes is reset at server idle + wait period)
-        }
-        else {
-          // console.log('Finished writing image.');
-          return destination('jpg').fileData; // We only return the url for the file, no blob to save since we took care of it
-        }
-      });
-    */
-    // I failed to deliver a url for this, but don't try again
+   // I failed to deliver a url for this, but don't try again
     return null;
   },
   soundToWav: function(options) {
