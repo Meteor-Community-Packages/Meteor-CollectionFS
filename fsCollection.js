@@ -508,14 +508,8 @@ FS.Collection.prototype.insert = function(doc, callback) {
     doInsert();
   } else if (Meteor.isClient && typeof File !== "undefined" && doc instanceof File) {
     // For convenience, allow File to be passed directly on the client
-    FS.File.fromFile(doc, function(err, f) {
-      if (err) {
-        callback(err);
-      } else {
-        fileObj = f;
-        doInsert();
-      }
-    });
+    fileObj = new FS.File(doc);
+    doInsert();
   } else {
     var e = new Error('FS.Collection insert expects FS.File');
     if (typeof callback === 'function') {
