@@ -19,19 +19,21 @@ Package.on_use(function(api) {
   api.add_files([
     'FileSaver.js',
     'shared.js',
-    'argParser.js',
+    'codeUtilities/argParser.js',
     'transferQueue.js',
     'fsFile/fsFile-common.js',
     'fsFile/fsFile-data-get.js',
     'fsFile/fsFile-data-set.js',
     'fsFile/fsFile-client.js',
     'fsFile/fsFile-ejson.js',
-    'fsCollection.js'
+    'fsCollection/common.js',
+    'fsCollection/api.common.js',
+    'fsCollection/api.client.js'
   ], 'client');
   
   api.add_files([
     'shared.js',
-    'argParser.js',
+    'codeUtilities/argParser.js',
     'fsFile/fsFile-common.js',
     'fsFile/fsFile-data-get.js',
     'fsFile/fsFile-data-set.js',
@@ -39,7 +41,9 @@ Package.on_use(function(api) {
     'fsFile/fsFile-ejson.js',
     'storageAdapter.js',
     'accessPoint.js',
-    'fsCollection.js',
+    'fsCollection/common.js',
+    'fsCollection/api.common.js',
+    'fsCollection/api.server.js',
     'fileWorker.js'
   ], 'server');
 });
