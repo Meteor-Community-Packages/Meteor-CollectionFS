@@ -1,9 +1,5 @@
 Package.describe({
-  summary: "\u001b[32mv0.4.0 (under development)\n" +
-          "\u001b[33m-----------------------------------------\n" +
-          "\u001b[0m Filesystem for Meteor, collectionFS      \n" +
-          "\u001b[0m                                          \n" +
-          "\u001b[33m-------------------------------------RaiX\n"
+  summary: 'Filesystem for Meteor, collectionFS'
 });
 
 Npm.depends({
@@ -42,6 +38,7 @@ Package.on_use(function(api) {
     'fsFile/fsFile-server.js',
     'fsFile/fsFile-ejson.js',
     'storageAdapter.js',
+    'accessPoint.js',
     'fsCollection.js',
     'fileWorker.js'
   ], 'server');
