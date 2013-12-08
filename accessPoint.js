@@ -116,7 +116,7 @@ var APDelete = function(fsFile) {
   return fsFile.remove();
 };
 
-var APhandler = function(collection) {
+var APhandler = function(collection, download) {
   return function(data) {
     var self = this;
     var query = self.query || {};
@@ -143,6 +143,11 @@ var APhandler = function(collection) {
       if (typeof type === "string") {
         self.setContentType(type);
       }
+      if (download) {
+        self.addHeader('Content-Disposition', 'attachment; filename="' +
+                'download.' + file.getExtension() + '"');
+      }
+      
       self.setStatusCode(200);
       return APDownload.call(self, file, copyName, query.start, query.end);
     }
@@ -171,6 +176,8 @@ var accessPointHTTP = function(cfs) {
   var result = {};
   // We namespace with using the current Meteor convention - this could
   // change
+  result[cfs.httpUrl + '/download/:id'] = APhandler(cfs, true);
+  result[cfs.httpUrl + '/download/:id/:selector'] = APhandler(cfs, true);
   result[cfs.httpUrl + '/:id'] = APhandler(cfs);
   result[cfs.httpUrl + '/:id/:selector'] = APhandler(cfs);
   return result;

@@ -192,8 +192,10 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
 
 // Return the http url for getting the file - on server set auth if wanting to
 // use authentication on client set auth to true or token
-FS.File.prototype.url = function(copyName, auth) {
+FS.File.prototype.url = function(copyName, auth, download) {
   var self = this;
+
+  var urlPrefix = (download)?'/download/':'/';
 
   if (copyName && (!self.copies || !self.copies[copyName])) {
     return null;
@@ -229,10 +231,15 @@ FS.File.prototype.url = function(copyName, auth) {
 
   // Construct the http method url
   if (copyName) {
-    return collection.httpUrl + '/' + self._id + '/' + copyName + authToken;
+    return collection.httpUrl + urlPrefix + self._id + '/' + copyName + authToken;
   } else {
-    return collection.httpUrl + '/' + self._id + authToken;
+    return collection.httpUrl + urlPrefix + self._id + authToken;
   }
+};
+
+// Construct a download url
+FS.File.prototype.downloadUrl = function(copyName, auth) {
+  return FS.File.prototype.url.call(this, copyName, auth, true);
 };
 
 FS.File.prototype.put = function(callback) {
