@@ -99,6 +99,9 @@ FS.Collection = function(name, options) {
    */
 
   // Normalize filter option values for quicker checking later
+  // TODO I think we have to throw an error if security options dont comply with
+  // the api - in case of mismatch the user should correct this, if not the
+  // result will be less secure?
   if (self.options.filter) {
     if (!self.options.filter.allow || !Match.test(self.options.filter.allow, Object)) {
       self.options.filter.allow = {};
