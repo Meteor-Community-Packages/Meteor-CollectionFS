@@ -28,71 +28,59 @@ var defaultZero = function(val) {
   return +(val || 0);
 };
 
+cloneFileUnit = function(unit) {
+  if (_.isObject(unit)) {
+    return {
+      _id: unit._id && '' + unit._id,
+      name: '' + unit.name,
+      type: '' + unit.type,
+      size: defaultZero(unit.size),
+      utime: new Date(unit.utime)
+    };
+  }
+  return {};
+};
+
+cloneFileAttempt = function(attempt) {
+  if (_.isObject(attempt)) {
+    return {
+      count: attempt.count,
+      firstAttempt: attempt.firstAttempt,
+      lastAttempt: attempt.lastAttempt,
+      doneTrying: attempt.doneTrying
+    };
+  }
+  return {}; 
+};
+
 cloneFileRecord = function(rec) {
-  var result = {
-    // Base reference
-    collectionName: '' + rec.collectionName,
-    // Basic file stuff
-    name: '' + rec.name,
-    type: '' + rec.type,
-    size: defaultZero(rec.size),
-    utime: new Date(rec.utime),
-    bytesUploaded: defaultZero(rec.bytesUploaded)
-  };
+  var result = cloneFileUnit(rec);
+  // Base reference
+  result.collectionName = '' + rec.collectionName;
+  result.bytesUploaded = defaultZero(rec.bytesUploaded);
+
   if (_.isObject(rec.metadata)) {
     result.metadata = rec.metadata;
   }
   // clone master
-  if (_.isObject(rec.master)) {
-    result.master = {
-      _id: '' + rec.master._id,
-      name: '' + rec.master.name,
-      type: '' + rec.master.type,
-      size: defaultZero(rec.master.size),
-      utime: new Date(rec.master.utime)
-    };
-  }
+  result.master = cloneFileUnit(rec.master);
+
   // clone copies
-  if (_.isObject(rec.copies)) {
-    result.copies = {};
-    _.each(rec.copies, function(value, key) {
-      if (_.isObject(value)) {
-        result.copies['' + key] = {
-          _id: '' + value._id,
-          name: '' + value.name,
-          type: '' + value.type,
-          size: defaultZero(value.size),
-          utime: new Date(value.utime)
-        };
-      }
-    });
-  }
+  result.copies = {};
+  _.each(rec.copies, function(value, key) {
+    result.copies[key] = cloneFileUnit(value);
+  });
+
   // clone failures
-  if (_.isObject(rec.failures)) {
-    result.failures = {};
-    if (_.isObject(rec.failures.master)) {
-      result.failures.master = {};
-      result.failures.master.count = rec.failures.master.count;
-      result.failures.master.firstAttempt = rec.failures.master.firstAttempt;
-      result.failures.master.lastAttempt = rec.failures.master.lastAttempt;
-      result.failures.master.doneTrying = rec.failures.master.doneTrying;
-    }
-    if (_.isObject(rec.failures.copies)) {
-      result.failures.copies = {};
-      _.each(rec.failures.copies, function(value, key) {
-        result.failures.copies['' + key] = {};
-        if (_.isObject(value)) {
-          result.failures.copies['' + key].count = value.count;
-          result.failures.copies['' + key].firstAttempt = value.firstAttempt;
-          result.failures.copies['' + key].lastAttempt = value.lastAttempt;
-          result.failures.copies['' + key].doneTrying = value.doneTrying;
-        }
-      });
-    }
-  }
-  if (typeof rec._id !== 'undefined') {
-    result._id = '' + rec._id;
-  }
+  result.failures = {};
+
+  result.failures.master = cloneFileAttempt(rec.failures.master);
+
+  result.failures.copies = {};
+  _.each(rec.failures.copies, function(value, key) {
+    result.failures.copies[key] = cloneFileAttempt(value);
+  });
+
   if (Meteor.isServer) {
     if (_.isArray(rec.chunks)) {
       result.chunks = [];
