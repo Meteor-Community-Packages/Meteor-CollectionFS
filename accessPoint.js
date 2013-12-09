@@ -162,7 +162,7 @@ var APhandler = function(collection, download) {
   };
 };
 
-var accessPointDDP = function(name) {
+accessPointDDP = function(name) {
   var result = {};
   // We namespace with using the current Meteor convention - this could
   // change
@@ -172,7 +172,7 @@ var accessPointDDP = function(name) {
   return result;
 };
 
-var accessPointHTTP = function(cfs) {
+accessPointHTTP = function(cfs) {
   var result = {};
   // We namespace with using the current Meteor convention - this could
   // change

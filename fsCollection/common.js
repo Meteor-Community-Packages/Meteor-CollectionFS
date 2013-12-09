@@ -24,6 +24,11 @@ FS.Collection = function(name, options) {
   self.name = name;
 
   self.methodName = '/cfs/files/' + name;
+  
+  // On the client, we just need the httpUrl set
+  if (Meteor.isClient && self.options.useHTTP) {
+    self.httpUrl = self.methodName;
+  }
 
   // When on the server we expect copies in options - otherwise we just recieve
   // the file but dont use it for anything
@@ -75,8 +80,6 @@ FS.Collection = function(name, options) {
     }
 
   } // EO is Server
-
-
 
   var collectionName = name + '.files';
 

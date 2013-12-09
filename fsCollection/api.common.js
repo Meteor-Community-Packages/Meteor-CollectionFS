@@ -12,7 +12,6 @@ FS.Collection.prototype.insert = function(doc, callback) {
     // Insert the file into db
     console.log('Now doing actual insert into collection');
     fileObj._id = self.files.insert(cloneFileRecord(fileObj), function(err, id) {
-      console.log('Insert callback error:', err);
       console.log('Insert callback result:', id);
       if (err) {
         if (typeof callback === 'function') {

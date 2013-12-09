@@ -30,15 +30,17 @@ var defaultZero = function(val) {
 
 cloneFileUnit = function(unit) {
   if (_.isObject(unit)) {
-    return {
-      _id: unit._id && '' + unit._id,
+    var newUnit = {
       name: '' + unit.name,
       type: '' + unit.type,
       size: defaultZero(unit.size),
       utime: new Date(unit.utime)
     };
+    if (unit._id)
+      newUnit._id = '' + unit._id;
+    return newUnit;
   }
-  return {};
+  return null;
 };
 
 cloneFileAttempt = function(attempt) {
@@ -50,7 +52,7 @@ cloneFileAttempt = function(attempt) {
       doneTrying: attempt.doneTrying
     };
   }
-  return {}; 
+  return {};
 };
 
 cloneFileRecord = function(rec) {
@@ -63,28 +65,35 @@ cloneFileRecord = function(rec) {
     result.metadata = rec.metadata;
   }
   // clone master
-  result.master = cloneFileUnit(rec.master);
+  // It's important to keep this undefined if it is
+  if (typeof rec.master !== "undefined") {
+    result.master = cloneFileUnit(rec.master);
+  }
 
   // clone copies
-  result.copies = {};
-  _.each(rec.copies, function(value, key) {
-    result.copies[key] = cloneFileUnit(value);
-  });
+  if (rec.copies) {
+    result.copies = {};
+    _.each(rec.copies, function(value, key) {
+      result.copies[key] = cloneFileUnit(value);
+    });
+  }
 
   // clone failures
-  result.failures = {};
+  if (rec.failures) {
+    result.failures = {};
 
-  result.failures.master = cloneFileAttempt(rec.failures.master);
+    result.failures.master = cloneFileAttempt(rec.failures.master);
 
-  result.failures.copies = {};
-  _.each(rec.failures.copies, function(value, key) {
-    result.failures.copies[key] = cloneFileAttempt(value);
-  });
+    result.failures.copies = {};
+    _.each(rec.failures.copies, function(value, key) {
+      result.failures.copies[key] = cloneFileAttempt(value);
+    });
+  }
 
   if (Meteor.isServer) {
     if (_.isArray(rec.chunks)) {
       result.chunks = [];
-      _.each(rec.chunks, function (chunk, i) {
+      _.each(rec.chunks, function(chunk, i) {
         result.chunks[i] = {
           start: chunk.start,
           tempFile: chunk.tempFile
