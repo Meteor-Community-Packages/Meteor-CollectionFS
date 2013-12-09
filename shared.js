@@ -71,7 +71,7 @@ cloneFileRecord = function(rec) {
   }
 
   // clone copies
-  if (rec.copies) {
+  if (!_.isEmpty(rec.copies)) {
     result.copies = {};
     _.each(rec.copies, function(value, key) {
       result.copies[key] = cloneFileUnit(value);
@@ -79,15 +79,19 @@ cloneFileRecord = function(rec) {
   }
 
   // clone failures
-  if (rec.failures) {
+  if (!_.isEmpty(rec.failures)) {
     result.failures = {};
+    
+    if (!rec.failures.master) {
+      result.failures.master = cloneFileAttempt(rec.failures.master);
+    }
 
-    result.failures.master = cloneFileAttempt(rec.failures.master);
-
-    result.failures.copies = {};
-    _.each(rec.failures.copies, function(value, key) {
-      result.failures.copies[key] = cloneFileAttempt(value);
-    });
+    if (!_.isEmpty(rec.failures.copies)) {
+      result.failures.copies = {};
+      _.each(rec.failures.copies, function(value, key) {
+        result.failures.copies[key] = cloneFileAttempt(value);
+      });
+    }
   }
 
   if (Meteor.isServer) {
