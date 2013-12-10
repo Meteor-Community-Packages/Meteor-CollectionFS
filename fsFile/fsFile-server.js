@@ -10,6 +10,13 @@ FS.File.prototype.saveChunk = function(binary, start, callback) {
     throw new Error("FS.File.saveChunk requires a callback");
   }
 
+  // It's a single-chunk upload. No need for temp files.
+  if (start === 0 && total === self.size) {
+    self.setDataFromBinary(binary);
+    callback(null, true);
+    return;
+  }
+
   var chunks = self.chunks || [], chunk, tempFile;
   for (var i = 0, ln = chunks.length; i < ln; i++) {
     chunk = chunks[i];

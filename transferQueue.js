@@ -73,26 +73,21 @@ TransferQueue.prototype.cacheUpload = function(fsFile, start, callback) {
 
 TransferQueue.prototype.markChunkUploaded = function(fsFile, start, callback) {
   var self = this;
-  if (typeof start === "number") {
-    // Mark each chunk done for progress tracking
-    self.collection.update({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"}, {$set: {done: true}}, function(e, r) {
-      if (e) {
-        callback(e);
+  // Mark each chunk done for progress tracking
+  self.collection.update({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"}, {$set: {done: true}}, function(e, r) {
+    if (e) {
+      callback(e);
+    } else {
+      var totalChunks = Math.ceil(fsFile.size / chunkSize);
+      var doneChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload", done: true});
+      if (totalChunks === doneChunks.count()) {
+        console.log("Upload finished after", (((new Date).getTime()) - uploadStartTime), "ms");
+        self.unCacheUpload(fsFile, callback);
       } else {
-        var totalChunks = Math.ceil(fsFile.size / chunkSize);
-        var doneChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload", done: true});
-        if (totalChunks === doneChunks.count()) {
-          console.log("Upload finished after", (((new Date).getTime()) - uploadStartTime), "ms");
-          self.unCacheUpload(fsFile, callback);
-        } else {
-          callback();
-        }
+        callback();
       }
-    });
-  } else {
-    // No need to mark anything done since it was quick
-    self.unCacheUpload(fsFile, callback);
-  }
+    }
+  });
 };
 
 TransferQueue.prototype.unCacheUpload = function(fsFile, callback) {
@@ -161,15 +156,14 @@ TransferQueue.prototype.unCacheDownload = function(fsFile, selector, callback) {
   self.collection.remove({fileId: fsFile._id, collectionName: fsFile.collectionName, selector: selector, type: "download"}, callback);
 };
 
-var uploadChunk = function(tQueue, fsFile, start, end) {
+var uploadChunk = function(tQueue, fsFile, start, end, added) {
   var collection = _collections[fsFile.collectionName];
-  console.log("uploadChunk");
   if (typeof collection === 'undefined') {
     throw new Error('TransferQueue upload failed FS.Collection "' + fsFile.collectionName + '" not found');
   }
   tQueue.cacheUpload(fsFile, start, function() {
     tQueue.queue.add(function(complete) {
-      console.log("uploading bytes " + (start || 0) + " to " + Math.min(end, fsFile.size) + " of " + fsFile.size);
+      console.log("uploading bytes " + start + " to " + Math.min(end, fsFile.size) + " of " + fsFile.size);
       fsFile.getBinary(start, end, function(err, data) {
         if (err) {
           complete();
@@ -189,45 +183,41 @@ var uploadChunk = function(tQueue, fsFile, start, end) {
                 });
       });
     });
-    if (end >= fsFile.size) {
-      tQueue.queue.run();
-    }
+    added();
   });
-};
-
-// This is done as a recursive function rather than a loop so that
-// the closure variables will be correct when the queue tasks are run.
-var uploadChunks = function(tQueue, fsFile, size, chunks, chunk) {
-  size = size || fsFile.size;
-  if (typeof size !== 'number') {
-    throw new Error('TransferQueue upload failed: fsFile size not set');
-  }
-
-  chunks = chunks || Math.ceil(size / chunkSize);
-  chunk = chunk || 0;
-  var start = chunk * chunkSize;
-  var end = start + chunkSize;
-  if (chunks === 1) {
-    start = null; //It's a small file. Upload all data in a single method call
-  }
-  uploadChunk(tQueue, fsFile, start, end);
-  if (chunk < chunks - 1) {
-    uploadChunks(tQueue, fsFile, size, chunks, chunk + 1);
-  }
 };
 
 TransferQueue.prototype.uploadFile = function(fsFile) {
-  var self = this;
+  var self = this, size = fsFile.size;
+  if (typeof size !== 'number') {
+    throw new Error('TransferQueue upload failed: fsFile size not set');
+  }
   console.log('transferQueue: uploadFile');
+
   uploadStartTime = Date.now();
-  Meteor.setTimeout(function() {
-    uploadChunks(self, fsFile);
-  });
+  var chunks = Math.ceil(size / chunkSize), addedChunks = 0;
+  
+  function chunkAdded() {
+    addedChunks++;
+    if (addedChunks === chunks) {
+      self.queue.run();
+    }
+  }
+  
+  for (var chunk = 0; chunk < chunks; chunk++) {
+    var start = chunk * chunkSize;
+    var end = start + chunkSize;
+    Meteor.setTimeout(function(tQueue, fsFile, start, end, chunkAdded) {
+      return function() {
+        uploadChunk(tQueue, fsFile, start, end, chunkAdded);
+      };
+    }(self, fsFile, start, end, chunkAdded), 0);
+  }
 };
 
 // Downloading is a bit different from uploading. We cache data as it comes back
 // rather than before making the method calls.
-var downloadChunk = function(tQueue, fsFile, selector, start, isLast) {
+var downloadChunk = function(tQueue, fsFile, selector, start, added) {
   var collection = _collections[fsFile.collectionName];
   if (typeof collection === 'undefined') {
     throw new Error('TransferQueue upload failed FS.Collection "' + fsFile.collectionName + '" not found');
@@ -235,11 +225,9 @@ var downloadChunk = function(tQueue, fsFile, selector, start, isLast) {
 
   tQueue.cacheDownload(fsFile, selector, start, function(err) {
     tQueue.queue.add(function(complete) {
+      console.log("downloading bytes starting from " + start);
       Meteor.apply(collection.methodName + '/get',
               [fsFile, selector, start],
-              {
-                wait: true
-              },
       function(err, data) {
         if (err) {
           complete();
@@ -251,40 +239,8 @@ var downloadChunk = function(tQueue, fsFile, selector, start, isLast) {
         }
       });
     });
-    isLast && tQueue.queue.run();
+    added();
   });
-};
-
-// This is done as a recursive function rather than a loop so that
-// the closure variables will be correct when the queue tasks are run.
-var downloadChunks = function(tQueue, fsFile, selector, size, chunks, chunk) {
-  if (typeof size !== 'number') {
-    if (selector) {
-      size = fsFile.copies[selector].size;
-    } else {
-      size = fsFile.master.size;
-    }
-  }
-
-  if (typeof size !== 'number') {
-    throw new Error('TransferQueue download failed: fsFile size not set');
-  }
-
-  chunks = chunks || Math.ceil(size / chunkSize);
-  chunk = chunk || 0;
-
-  var start = chunk * chunkSize;
-  var end = start + chunkSize;
-  console.log("downloadChunks: chunk " + chunk + " of " + chunks + " where start is " + start + " and end is " + end + " and file size is " + fsFile.size);
-  if (chunks === 1) {
-    start = null; //It's a small file. Upload all data in a single method call
-  }
-
-  var done = (chunk >= chunks - 1);
-  downloadChunk(tQueue, fsFile, selector, start, done);
-  if (!done) {
-    downloadChunks(tQueue, fsFile, selector, size, chunks, chunk + 1);
-  }
 };
 
 TransferQueue.prototype.downloadFile = function(/* fsFile, copyName */) {
@@ -296,13 +252,37 @@ TransferQueue.prototype.downloadFile = function(/* fsFile, copyName */) {
   if (args instanceof Error)
     throw args;
   var fsFile = args.fsFile,
-          copyName = args.copyName;
+          copyName = args.copyName, size;
+
+  if (copyName) {
+    size = fsFile.copies[copyName].size;
+  } else {
+    size = fsFile.master.size;
+  }
+
+  if (typeof size !== 'number') {
+    throw new Error('TransferQueue download failed: fsFile size not set');
+  }
 
   // Load via DDP
   console.log('transferQueue: downloadFile');
-  Meteor.setTimeout(function() {
-    downloadChunks(self, fsFile, copyName);
-  });
+  var chunks = Math.ceil(size / chunkSize), addedChunks = 0;
+  
+  function chunkAdded() {
+    addedChunks++;
+    if (addedChunks === chunks) {
+      self.queue.run();
+    }
+  }
+  
+  for (var chunk = 0; chunk < chunks; chunk++) {
+    var start = chunk * chunkSize;
+    Meteor.setTimeout(function(tQueue, fsFile, copyName, start, chunkAdded) {
+      return function() {
+        downloadChunk(tQueue, fsFile, copyName, start, chunkAdded);
+      };
+    }(self, fsFile, copyName, start, chunkAdded), 0);
+  }
 };
 
 TransferQueue.prototype.isUploadingFile = function(fsFile) {

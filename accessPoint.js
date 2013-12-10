@@ -4,11 +4,14 @@
 //
 // #############################################################################
 
-var APUpload = function(fsFile, data, start, userId) {
+var APUpload = function(fsFile, data, start) {
   var self = this;
   check(fsFile, FS.File);
   if (!EJSON.isBinary(data))
     throw new Error("APUpload expects binary data");
+  
+  if (typeof start !== "number")
+    start = 0;
 
   var collection = _collections[fsFile.collectionName];
   if (typeof collection === 'undefined' || collection === null) {
@@ -32,29 +35,19 @@ var APUpload = function(fsFile, data, start, userId) {
 
   fsFile.reload(); //update properties from the linked server collection
 
-  if (typeof start === "number") {
-    console.log("Received chunk of size " + data.length + " at start " + start + " for " + fsFile._id);
-    // Chunked Upload
-    fsFile.saveChunk(data, start, function(err, done) {
-      if (err) {
-        throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
-      }
-      if (done) {
-        self.unblock();
-        console.log("Received all chunks for " + fsFile._id);
-        // Save file to master store and save any additional copies
-        fsFile.put();
-      }
-    });
-  } else {
-    console.log("Received all data for " + fsFile._id + " in one chunk");
-    self.unblock();
-    // Load binary data into fsFile
-    fsFile.setDataFromBinary(data);
-
-    // Save file to master store and save any additional copies
-    fsFile.put();
-  }
+  console.log("Received chunk of size " + data.length + " at start " + start + " for " + fsFile._id);
+  // Save chunk and, if it's the last chunk, kick off storage
+  fsFile.saveChunk(data, start, function(err, done) {
+    if (err) {
+      throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
+    }
+    if (done) {
+      self.unblock();
+      console.log("Received all chunks for " + fsFile._id);
+      // Save file to master store and save any additional copies
+      fsFile.put();
+    }
+  });
 };
 
 // Returns the data for selector,
@@ -147,7 +140,7 @@ var APhandler = function(collection, download) {
         self.addHeader('Content-Disposition', 'attachment; filename="' +
                 'download.' + file.getExtension() + '"');
       }
-      
+
       self.setStatusCode(200);
       return APDownload.call(self, file, copyName, query.start, query.end);
     }
