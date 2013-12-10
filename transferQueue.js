@@ -169,7 +169,7 @@ var uploadChunk = function(tQueue, fsFile, start, end) {
   }
   tQueue.cacheUpload(fsFile, start, function() {
     tQueue.queue.add(function(complete) {
-      console.log("uploading bytes " + start + " to " + end + " of " + fsFile.size);
+      console.log("uploading bytes " + (start || 0) + " to " + Math.min(end, fsFile.size) + " of " + fsFile.size);
       fsFile.getBinary(start, end, function(err, data) {
         if (err) {
           complete();
