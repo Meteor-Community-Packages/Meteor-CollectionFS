@@ -103,7 +103,7 @@ FS.File.prototype.remove = function() {
   var count;
   // Remove any associated temp files
   if (Meteor.isServer) {
-    self.deleteTempFiles(function (err) {
+    self.deleteTempFiles(function(err) {
       if (err) {
         console.log(err);
       }
@@ -195,7 +195,7 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
 FS.File.prototype.url = function(copyName, auth, download) {
   var self = this;
 
-  var urlPrefix = (download)?'/download/':'/';
+  var urlPrefix = (download) ? '/download/' : '/';
 
   if (copyName && (!self.copies || !self.copies[copyName])) {
     return null;
@@ -261,10 +261,18 @@ FS.File.prototype.put = function(callback) {
     FS.uploadQueue.uploadFile(self);
     callback(null, self._id);
   } else if (Meteor.isServer) {
-    // We let the collection handle the storage adapters
-    collection.saveMaster(self, {missing: true});
-    collection.saveCopies(self, {missing: true});
-    callback(null, self._id);
+    // Force bytesUploaded to be equal to the file size in case
+    // this was a server insert or a non-chunked client upload.
+    self.update({$set: {bytesUploaded: self.size}}, function(err) {
+      if (err) {
+        callback(err);
+      } else {
+        // Now let the collection handle the storage adapters
+        collection.saveMaster(self, {missing: true});
+        collection.saveCopies(self, {missing: true});
+        callback(null, self._id);
+      }
+    });
   }
 };
 
