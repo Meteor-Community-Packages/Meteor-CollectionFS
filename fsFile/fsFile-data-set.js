@@ -35,16 +35,15 @@ FS.File.prototype.setDataFromArrayBuffer = function(arrayBuffer, type) {
   }
 };
 
-/*
- * Client methods for setting binary data
- */
+// Converts ArrayBuffer or Buffer retrieved from URL to EJSON.binary data and sets it
+// callback(err)
+FS.File.prototype.setDataFromUrl = function(url, callback) {
+  var self = this;
+  callback = callback || defaultCallback;
 
-if (Meteor.isClient) {
-  // Converts ArrayBuffer retrieved from URL to EJSON.binary data and sets it
-  // callback(err)
-  FS.File.prototype.setDataFromUrl = function(url, callback) {
-    var self = this;
-    callback = callback || defaultCallback;
+  // XXX If Meteor PR #1620 is ever released, we can do a single HTTP.get
+  // here for both client and server.
+  if (Meteor.isClient) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.responseType = "arraybuffer";
@@ -56,8 +55,24 @@ if (Meteor.isClient) {
       callback(err);
     };
     xhr.send();
-  };
-}
+  } else {
+    request({
+      url: url,
+      method: "GET",
+      encoding: null,
+      jar: false
+    }, Meteor.bindEnvironment(function(err, res, body) {
+      if (err) {
+        callback(err);
+      } else {
+        self.setDataFromBuffer(body, res.headers['content-type']);
+        callback();
+      }
+    }, function(err) {
+      callback(err);
+    }));
+  }
+};
 
 /*
  * Server methods for setting binary data

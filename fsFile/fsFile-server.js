@@ -186,9 +186,26 @@ FS.File.prototype.failedPermanently = function(copyName) {
 // Load data from a local path into a new FS.File and pass it to callback
 // callback(err, fsFile)
 FS.File.fromFile = function(filePath, filename, callback) {
+  callback = callback || defaultCallback;
   filename = filename || path.basename(filePath);
   var fsFile = new FS.File({name: filename});
   fsFile.setDataFromFile(filePath, function(err) {
+    if (err) {
+      callback(err);
+    } else {
+      callback(null, fsFile);
+    }
+  });
+};
+
+// Load data from a URL into a new FS.File and pass it to callback
+// callback(err, fsFile)
+FS.File.fromUrl = function(url, filename, callback) {
+  callback = callback || defaultCallback;
+  check(url, String);
+  check(filename, String);
+  var fsFile = new FS.File({name: filename});
+  fsFile.setDataFromUrl(url, function(err) {
     if (err) {
       callback(err);
     } else {
