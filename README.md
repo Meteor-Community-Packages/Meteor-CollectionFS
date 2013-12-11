@@ -13,14 +13,68 @@ created.
 
 ## Installation
 
-NOTE: For testing, use this in smart.json:
+### Current Instructions
+
+Right now this branch should be used for testing or experimentation only.
+As such, you cannot yet use `mrt add` to install.
+
+Assuming you've created a new Meteor app or have an existing one, first
+manually edit the `smart.json` file for the app. Create it if necessary.
+It should look something like this.
 
 ```js
-"collectionFS": {
-  "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
-  "branch": "devel-merge"
+{
+  "packages": {
+    "collectionFS": {
+      "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
+      "branch": "devel-merge"
+    },
+    "cfs-gridfs": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
+      "branch": "master"
+    },
+    "cfs-filesystem": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-filesystem.git",
+      "branch": "master"
+    },
+    "cfs-handlebars": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-handlebars.git",
+      "branch": "master"
+    },
+    "cfs-graphicsmagick": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-graphicsmagick.git",
+      "branch": "master"
+    }
+  }
 }
 ```
+
+'collectionFS' is the main package. Beyond that, you only need to add the
+packages you want to use. See the Storage Adapters
+section for a list of the available storage adapter packages. Most people
+will probably want `cfs-handlebars`. If you're dealing with image files,
+you'll probably want `cfs-graphicsmagick`. Note that you'll have to also install
+GraphicsMagick and/or ImageMagick on the server or development machine. See
+the README for the `cfs-graphicsmagick` package. All the packages have their
+own README files you should read.
+
+After updating `smart.json`, run some commands:
+
+```bash
+$ cd <app dir>
+$ mrt update
+$ meteor add collectionFS
+$ meteor add <package name>
+```
+
+You must call `meteor add` for all packages that you manually added to `smart.json`.
+
+Then you should be good to go. To pull down the most recent updates to every package,
+just run `mrt update` again at any time.
+
+If you're having trouble, you can alternatively try cloning [this repo](https://github.com/copleykj/CollectionFS-Demo).
+
+### Eventual Instructions
 
 Install using Meteorite. When in a Meteorite-managed app directory, enter:
 
