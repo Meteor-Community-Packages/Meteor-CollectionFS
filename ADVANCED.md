@@ -30,13 +30,6 @@ Here's an explanation of what they are named and what their documents look like.
 {
   _id: "",
   collectionName: "",
-  master: {
-    _id: "", //the store ID
-    name: "",
-    type: "",
-    size: 0,
-    utime: Date
-  },
   copies: {
     copyName: {
       _id: "", //the store ID
@@ -51,11 +44,6 @@ Here's an explanation of what they are named and what their documents look like.
   size: 0,
   utime: Date,
   failures: {
-    master: {
-      count: 0,
-      firstAttempt: Date,
-      lastAttempt: Date
-    },
     copies: {
       copyName: {
         count: 0,
@@ -181,17 +169,13 @@ collection is lost but maybe all we need to do is ground it with grounddb?
 
 A single FileWorker is created on the server. It attempts to save missing data
 for all CFS. Every 5 secs (not configurable right now but could be),
-it looks for any file in any CFS that is fully uploaded but wasn't able to
-be saved to either the master store or a copy store. It them attempts to save
-to these stores again, up until the maxTries for that master/copy.
+it looks for any file in any CFS that is fully uploaded but has missing copies.
+It them attempts to save the missing copies again, up until the maxTries for
+that copy.
 
-* When attempting to save to the master store at a later time, the data is loaded
-from the temporary file. The temporary file is never deleted until the master
-store has successfully saved. If the master store can't save after max tries,
-the temp file is deleted and the FS.File is deleted from the CFS.
-* When attempting to save to a copy store at a later time, the data is loaded
-from the master store. If the data can't be saved to the copy store after max
-tries, that copy just won't exist, but the FS.File remains in the CFS.
+When attempting to save at a later time, the data is loaded
+from the temporary file. The temporary file is never deleted until all copies
+have been successfully saved or have failed permanently.
 
 ## PowerQueue
 

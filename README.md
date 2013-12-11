@@ -72,7 +72,8 @@ You must call `meteor add` for all packages that you manually added to `smart.js
 Then you should be good to go. To pull down the most recent updates to every package,
 just run `mrt update` again at any time.
 
-If you're having trouble, you can alternatively try cloning [this repo](https://github.com/copleykj/CollectionFS-Demo).
+If you're having trouble, you can alternatively try cloning
+[this repo](https://github.com/copleykj/CollectionFS-Demo).
 
 ### Eventual Instructions
 
@@ -159,17 +160,14 @@ accept a `FS.File`, too, but you must load data into it first.
 ## After the Upload
 
 After the server receives the `FS.File` and all the corresponding binary file
-data, it saves the master copy of the file in the store that you specified. Then
-it saves any additional copies that you've requested, for example, image thumbnails.
+data, it saves copies of the file in the stores that you specified.
 
-If any storage adapters fail to save the master or any of the copies in the
+If any storage adapters fail to save any of the copies in the
 designated store, the server will periodically retry saving them. After a
-configurable number of failed attempts at saving, the server will give up. At
-this point, if the master copy has still not been saved, the `FS.File` will
-be deleted from the FS.Collection.
+configurable number of failed attempts at saving, the server will give up.
 
 To configure the maximum number of save attempts, use the `maxTries` option. You
-can specify this for the master copy and/or for any of the additional copies. The
+can specify a general value or separate values for any specific copies. The
 default is 5.
 
 ## Storage Adapters
@@ -183,7 +181,7 @@ packages. Refer to the package documentation for usage instructions.
 
 Storage adapters also handle retrieving the file data and removing the file data
 when you delete the file. Some of them support synchronization, where updates
-to the master store are automatically synchronized with the linked FS.Collection.
+to the store are automatically synchronized with the linked FS.Collection.
 
 ## File Manipulation
 
@@ -193,12 +191,14 @@ compress it, etc. before allowing the storage adapter to save it. You may also
 want to convert to another content type or change the filename. You can do all
 of this by defining a `beforeSave` method.
 
-A `beforeSave` method can be defined for the master copy and/or for any of the
-additional copies. It does not receive any arguments, but its context is the
+A `beforeSave` method can be defined for any copy. It does not receive any
+arguments, but its context is the
 `FS.File` being saved, which you can alter as necessary.
 
-The most common scenario is image manipulation, and for this there is a convenient
-package, [cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick), that allows you to easily call `GraphicsMagick` methods on the `FS.File`
+The most common scenario is image manipulation, and for this there is a
+convenient package,
+[cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick),
+that allows you to easily call `GraphicsMagick` methods on the `FS.File`
 data. Here's an example:
 
 ```js
@@ -213,12 +213,14 @@ Images = new FS.Collection("images", {
 It's pretty easy to understand. First call `gm()` on the `FS.File` to enter
 a special GraphicsMagick context, then call any methods from the node `gm` package,
 and finally call `save()` to update the `FS.File` data with those modifications.
-Refer to the [cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick) package documentation for more information.
+Refer to the
+[cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick)
+package documentation for more information.
 
 ## Filtering
 
-You may specify filters to allow (or deny) only certain content types, file extensions,
-or file sizes in a FS.Collection. Use the `filter` option.
+You may specify filters to allow (or deny) only certain content types,
+file extensions, or file sizes in a FS.Collection. Use the `filter` option.
 
 ```js
 Images = new FS.Collection("images", {
@@ -251,18 +253,20 @@ If a file extension or content type matches any of those listed in allow,
 it is allowed. If not, it is denied. If it matches both allow and deny,
 it is denied. Typically, you would use only allow or only deny,
 but not both. If you do not pass the `filter` option, all files are allowed,
-as long as they pass the tests in your FS.Collection.allow() and FS.Collection.deny()
-functions.
+as long as they pass the tests in your FS.Collection.allow() and
+FS.Collection.deny() functions.
 
 The file extensions must be specified without a leading period.
 
-*Tip: You can do more advanced filtering in your master `beforeSave` function. If you return
-`false` from a master `beforeSave` function, the file is removed. If you return
-`false` from the `beforeSave` function for a copy, that copy will not be created.*
+*Tip: You can do more advanced filtering in your `beforeSave` function.
+If you return `false` from the `beforeSave` function for a copy,
+that copy will never be created.*
 
 ## Handlebars
 
-To simplify your life, consider using the [cfs-handlebars](https://github.com/CollectionFS/Meteor-cfs-handlebars) package, which provides
+To simplify your life, consider using the
+[cfs-handlebars](https://github.com/CollectionFS/Meteor-cfs-handlebars)
+package, which provides
 several helpers to easily display `FS.File` information, create file inputs,
 create download or delete buttons, show file transfer progress, and more.
 

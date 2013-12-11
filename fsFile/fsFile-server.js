@@ -127,60 +127,48 @@ FS.File.prototype.deleteTempFiles = function(callback) {
 
 // If copyName isn't a string, will log the failure to master
 FS.File.prototype.logCopyFailure = function(copyName) {
-  var self = this, currentCount, collection, maxTries;
+  var self = this, collection;
+
+  if (typeof copyName !== "string") {
+    return;
+  }
 
   self.useCollection('FS.File logCopyFailure of _id: "' + self._id + '"', function() {
     collection = this.files;
   });
 
-  var now = new Date;
-  if (typeof copyName === "string") {
-    copyName = "copies." + copyName;
-    currentCount = (self.failures && self.failures.copies && self.failures.copies[copyName] && typeof self.failures.copies[copyName].count === "number") ? self.failures.copies[copyName].count : 0;
-    maxTries = collection.options.copies[copyName].maxTries;
-  } else {
-    copyName = "master";
-    currentCount = (self.failures && self.failures.master && typeof self.failures.master.count === "number") ? self.failures.master.count : 0;
-    maxTries = collection.options.maxTries;
-    if (currentCount + 1 >= maxTries) {
-      // we're done trying and this is the master, so we should delete the file
-      // from the CFS and quit
-      self.remove();
-      return;
-    } else {
-      // Make sure we have a temporary file saved since we will be
-      // trying the save again.
-      self.saveBufferToTempFile(function(err) {
-        if (err) {
-          console.log("Error saving temp file for later master attempts:", err);
-        }
-      });
+  // Make sure we have a temporary file saved since we will be
+  // trying the save again.
+  self.saveBufferToTempFile(function(err) {
+    if (err) {
+      console.log("Error saving temp file for later store attempts:", err);
     }
-  }
+  });
+
+  var now = new Date;
+  var currentCount = (self.failures && self.failures.copies && self.failures.copies[copyName] && typeof self.failures.copies[copyName].count === "number") ? self.failures.copies[copyName].count : 0;
+  var maxTries = collection.options.copies[copyName].maxTries;
 
   var modifier = {};
   modifier.$set = {};
-  modifier.$set['failures.' + copyName + '.lastAttempt'] = now;
+  modifier.$set['failures.copies.' + copyName + '.lastAttempt'] = now;
   if (currentCount === 0) {
-    modifier.$set['failures.' + copyName + '.firstAttempt'] = now;
+    modifier.$set['failures.copies.' + copyName + '.firstAttempt'] = now;
   }
-  modifier.$set['failures.' + copyName + '.count'] = currentCount + 1;
-  modifier.$set['failures.' + copyName + '.doneTrying'] = (currentCount + 1 >= maxTries);
+  modifier.$set['failures.copies.' + copyName + '.count'] = currentCount + 1;
+  modifier.$set['failures.copies.' + copyName + '.doneTrying'] = (currentCount + 1 >= maxTries);
   self.update(modifier);
 };
 
 FS.File.prototype.failedPermanently = function(copyName) {
   var self = this;
-  if (typeof copyName === "string") {
-    return (self.failures
-            && self.failures.copies
-            && self.failures.copies[copyName]
-            && self.failures.copies[copyName].doneTrying);
-  } else {
-    return (self.failures
-            && self.failures.master
-            && self.failures.master.doneTrying);
+  if (typeof copyName !== "string") {
+    copyName = "_master";
   }
+  return (self.failures
+          && self.failures.copies
+          && self.failures.copies[copyName]
+          && self.failures.copies[copyName].doneTrying);
 };
 
 // Load data from a local path into a new FS.File and pass it to callback

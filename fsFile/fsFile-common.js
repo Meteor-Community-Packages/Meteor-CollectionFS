@@ -150,6 +150,10 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
   if (start instanceof Number && end instanceof Number) {
     partial = true;
   }
+  
+  if (typeof copyName !== "string") {
+    copyName = "_master";
+  }
 
   // On the client we download the file via transfer queue
   if (Meteor.isClient) {
@@ -159,14 +163,14 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
       var store = this.getStoreForCopy(copyName);
 
       if (typeof store === 'undefined' || store === null) {
-        return handleError(callback, 'FS.File.get could not find "' + (copyName || 'master') + '" Storage Adapter on FS.Collection "' + this.name + '"');
+        return handleError(callback, 'FS.File.get could not find "' + copyName + '" Storage Adapter on FS.Collection "' + this.name + '"');
       }
 
       // On server we contact the storage adapter
       if (callback) {
         if (partial) {
           if (!(typeof store.getBytes === "function")) {
-            callback(new Error('FS.File.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval'));
+            callback(new Error('FS.File.get storage adapter for "' + copyName + '" does not support partial retrieval'));
             return;
           }
           store.getBytes(self, start, end, {copyName: copyName}, function(err, bytesRead, buffer) {
@@ -186,7 +190,7 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
       } else {
         if (partial) {
           if (!(typeof store.getBytes === "function")) {
-            throw new Error('FS.File.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval');
+            throw new Error('FS.File.get storage adapter for "' + copyName + '" does not support partial retrieval');
           }
           //if callback is undefined, getBuffer will be synchrononous
           var buffer = store.getBytes(self, start, end, {copyName: copyName});
@@ -205,6 +209,10 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
 // use authentication on client set auth to true or token
 FS.File.prototype.url = function(copyName, auth, download) {
   var self = this;
+  
+  if (typeof copyName !== "string") {
+    copyName = "_master";
+  }
 
   if (!self.hasCopy(copyName)) {
     return null;
@@ -232,7 +240,7 @@ FS.File.prototype.url = function(copyName, auth, download) {
 
     // Construct the http method url
     var urlPrefix = (download) ? '/download/' : '/';
-    if (copyName) {
+    if (copyName && copyName !== "_master") {
       return this.httpUrl + urlPrefix + self._id + '/' + copyName + authToken;
     } else {
       return this.httpUrl + urlPrefix + self._id + authToken;
@@ -268,7 +276,6 @@ FS.File.prototype.put = function(callback) {
       } else {
         // Now let the collection handle the storage adapters
         self.useCollection('FS.File.put', function() {
-          this.saveMaster(self, {missing: true});
           this.saveCopies(self, {missing: true});
           callback(null, self._id);
         }, callback);
@@ -345,16 +352,15 @@ FS.File.prototype.isUploaded = function() {
 };
 
 FS.File.prototype.hasMaster = function() {
-  return this.hasCopy();
+  return this.hasCopy("_master");
 };
 
 FS.File.prototype.hasCopy = function(copyName) {
   var self = this;
   if (typeof copyName === "string") {
     return (self.copies && !_.isEmpty(self.copies[copyName]));
-  } else {
-    return !_.isEmpty(self.master);
   }
+  return false;
 };
 
 FS.File.prototype.fileIsAllowed = function() {

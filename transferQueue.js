@@ -53,7 +53,7 @@ TransferQueue = function(isUpload) {
     }
 
     self.collection.find({type: "download", data: null}).forEach(function(doc) {
-      downloadChunk(self, doc.fo, doc.selector, doc.start);
+      downloadChunk(self, doc.fo, doc.copyName, doc.start);
     });
   });
 };
@@ -95,35 +95,38 @@ TransferQueue.prototype.unCacheUpload = function(fsFile, callback) {
   self.collection.remove({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload"}, callback);
 };
 
-TransferQueue.prototype.cacheDownload = function(fsFile, selector, start, callback) {
+TransferQueue.prototype.cacheDownload = function(fsFile, copyName, start, callback) {
   var self = this;
-  if (self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, selector: selector, start: start, type: "download"})) {
+  if (self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, start: start, type: "download"})) {
     // If already cached, don't do it again
     callback();
     return;
   }
-  self.collection.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, selector: selector, start: start, type: "download"}, callback);
+  self.collection.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, start: start, type: "download"}, callback);
 };
 
-TransferQueue.prototype.addDownloadedData = function(fsFile, selector, start, data, callback) {
+TransferQueue.prototype.addDownloadedData = function(fsFile, copyName, start, data, callback) {
   var self = this;
+
+  if (typeof copyName !== "string") {
+    copyName = "_master";
+  }
 
   function save(data) {
     fsFile.setDataFromBinary(data);
-    var filename = (typeof selector === "string") ? fsFile.copies[selector].name : fsFile.master.name;
-    fsFile.saveLocal(filename);
+    fsFile.saveLocal(fsFile.copies[copyName].name);
     // Now that we've saved it, clear the cache
-    self.unCacheDownload(fsFile, selector, callback);
+    self.unCacheDownload(fsFile, copyName, callback);
   }
 
   if (typeof start === "number") {
-    self.collection.update({fileId: fsFile._id, collectionName: fsFile.collectionName, selector: selector, start: start, type: "download"}, {$set: {data: data}}, function(err) {
+    self.collection.update({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, start: start, type: "download"}, {$set: {data: data}}, function(err) {
       if (err) {
         callback(err);
         return;
       }
       var totalChunks = Math.ceil(fsFile.size / chunkSize);
-      var cachedChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, selector: selector, type: "download", data: {$exists: true}}, {sort: {start: 1}});
+      var cachedChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, type: "download", data: {$exists: true}}, {sort: {start: 1}});
       var cnt = cachedChunks.count();
       console.log("Downloaded", cnt, "of", totalChunks);
       if (totalChunks === cnt) {
@@ -151,9 +154,9 @@ TransferQueue.prototype.addDownloadedData = function(fsFile, selector, start, da
   }
 };
 
-TransferQueue.prototype.unCacheDownload = function(fsFile, selector, callback) {
+TransferQueue.prototype.unCacheDownload = function(fsFile, copyName, callback) {
   var self = this;
-  self.collection.remove({fileId: fsFile._id, collectionName: fsFile.collectionName, selector: selector, type: "download"}, callback);
+  self.collection.remove({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, type: "download"}, callback);
 };
 
 var uploadChunk = function(tQueue, fsFile, start, end, added) {
@@ -216,20 +219,20 @@ TransferQueue.prototype.uploadFile = function(fsFile) {
 
 // Downloading is a bit different from uploading. We cache data as it comes back
 // rather than before making the method calls.
-var downloadChunk = function(tQueue, fsFile, selector, start, added) {
+var downloadChunk = function(tQueue, fsFile, copyName, start, added) {
   fsFile.useCollection('TransferQueue download', function() {
     var collection = this;
-    tQueue.cacheDownload(fsFile, selector, start, function(err) {
+    tQueue.cacheDownload(fsFile, copyName, start, function(err) {
       tQueue.queue.add(function(complete) {
         console.log("downloading bytes starting from " + start);
         Meteor.apply(collection.methodName + '/get',
-                [fsFile, selector, start],
+                [fsFile, copyName, start],
                 function(err, data) {
                   if (err) {
                     complete();
                     throw err;
                   } else {
-                    tQueue.addDownloadedData(fsFile, selector, start, data, function(err) {
+                    tQueue.addDownloadedData(fsFile, copyName, start, data, function(err) {
                       complete();
                     });
                   }
@@ -249,16 +252,22 @@ TransferQueue.prototype.downloadFile = function(/* fsFile, copyName */) {
   if (args instanceof Error)
     throw args;
   var fsFile = args.fsFile,
-          copyName = args.copyName, size;
+          copyName = args.copyName;
 
-  if (copyName) {
-    size = fsFile.copies[copyName].size;
-  } else {
-    size = fsFile.master.size;
+  if (typeof copyName !== "string") {
+    copyName = "_master";
   }
 
+  var copyInfo = fsFile.copies[copyName];
+
+  if (!copyInfo) {
+    throw new Error('TransferQueue download failed: no info for copy ' + copyName);
+  }
+
+  var size = copyInfo.size;
+
   if (typeof size !== 'number') {
-    throw new Error('TransferQueue download failed: fsFile size not set');
+    throw new Error('TransferQueue download failed: fsFile size not set for copy ' + copyName);
   }
 
   // Load via DDP
@@ -287,10 +296,12 @@ TransferQueue.prototype.isUploadingFile = function(fsFile) {
   return !!self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload"});
 };
 
-TransferQueue.prototype.isDownloadingFile = function(fsFile, selector) {
+TransferQueue.prototype.isDownloadingFile = function(fsFile, copyName) {
   var self = this;
-  selector = selector || null;
-  return !!self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, selector: selector, type: "download"});
+  if (typeof copyName !== "string") {
+    copyName = "_master";
+  }
+  return !!self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, type: "download"});
 };
 
 TransferQueue.prototype.isPaused = function() {
@@ -342,7 +353,7 @@ TransferQueue.prototype.cancel = function() {
 };
 
 // Reactive status percent for the queue in total
-TransferQueue.prototype.progress = function(fsFile, selector) {
+TransferQueue.prototype.progress = function(fsFile, copyName) {
   var self = this;
   if (self._progressPercentDeps) {
     self._progressPercentDeps.depend();
@@ -353,9 +364,11 @@ TransferQueue.prototype.progress = function(fsFile, selector) {
       var uploadedChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload", done: true}).count();
       return Math.round(uploadedChunks / totalChunks * 100);
     } else {
-      selector = selector || null;
+      if (typeof copyName !== "string") {
+        copyName = "_master";
+      }
       var totalChunks = Math.ceil(fsFile.size / chunkSize);
-      var downloadedChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, selector: selector, type: "download", data: {$exists: true}}).count();
+      var downloadedChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, type: "download", data: {$exists: true}}).count();
       return Math.round(downloadedChunks / totalChunks * 100);
     }
   } else {

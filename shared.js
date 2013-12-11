@@ -64,11 +64,6 @@ cloneFileRecord = function(rec) {
   if (_.isObject(rec.metadata)) {
     result.metadata = rec.metadata;
   }
-  // clone master
-  // It's important to keep this undefined if it is
-  if (typeof rec.master !== "undefined") {
-    result.master = cloneFileUnit(rec.master);
-  }
 
   // clone copies
   if (!_.isEmpty(rec.copies)) {
@@ -81,10 +76,6 @@ cloneFileRecord = function(rec) {
   // clone failures
   if (!_.isEmpty(rec.failures)) {
     result.failures = {};
-    
-    if (!rec.failures.master) {
-      result.failures.master = cloneFileAttempt(rec.failures.master);
-    }
 
     if (!_.isEmpty(rec.failures.copies)) {
       result.failures.copies = {};

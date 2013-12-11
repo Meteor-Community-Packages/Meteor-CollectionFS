@@ -70,15 +70,13 @@ FS.StorageAdapter = function(name, options, api) {
   };
 
   var getFileId = function(fsFile, copyName) {
-    var copyInfo;
-    if (copyName) {
-      if (!fsFile.copies) {
-        return null;
-      }
-      copyInfo = fsFile.copies[copyName];
-    } else {
-      copyInfo = fsFile.master;
+    if (!fsFile.copies) {
+      return null;
     }
+    if (typeof copyName !== "string") {
+      copyName = "_master";
+    }
+    var copyInfo = fsFile.copies[copyName];
     if (!copyInfo) {
       return null;
     }

@@ -15,7 +15,7 @@ FS.Collection = function(name, options) {
     beforeSave: null, //optional
     sync: null, //optional
     maxTries: 5, //optional
-    copies: null //optional
+    copies: {} //optional
   };
 
   // Extend and overwrite options
@@ -24,7 +24,7 @@ FS.Collection = function(name, options) {
   self.name = name;
 
   self.methodName = '/cfs/files/' + name;
-  
+
   // On the client, we just need the httpUrl set
   if (Meteor.isClient && self.options.useHTTP) {
     self.httpUrl = self.methodName;
@@ -64,7 +64,29 @@ FS.Collection = function(name, options) {
           throw new Error('You must specify a store for the "' + copyName + '" copy');
         }
       }
+    } else {
+      self.options.copies = {};
     }
+
+    // For internal use, we will move master store information
+    // into options.copies._master
+    self.options.copies._master = {
+      store: self.options.store
+    };
+    delete self.options.store;
+    if (self.options.beforeSave) {
+      self.options.copies._master.beforeSave = self.options.beforeSave;
+      delete self.options.beforeSave;
+    }
+    if (self.options.maxTries) {
+      self.options.copies._master.maxTries = self.options.maxTries;
+      delete self.options.maxTries;
+    }
+    if (self.options.sync) {
+      self.options.copies._master.sync = self.options.sync;
+      delete self.options.sync;
+    }
+
     if (self.options.useDDP) {
       // Add ddp mount point + /get /put
       Meteor.methods(accessPointDDP(self.methodName));
@@ -161,8 +183,6 @@ FS.Collection = function(name, options) {
       },
       removed: function(oldDoc) {
         console.log('remove: ' + oldDoc._id);
-        //delete master
-        self.options.store.remove(oldDoc, {ignoreMissing: true, copyName: null});
         //delete all copies
         _.each(self.options.copies, function(copyDefinition, copyName) {
           copyDefinition.store.remove(oldDoc, {ignoreMissing: true, copyName: copyName});
@@ -170,56 +190,74 @@ FS.Collection = function(name, options) {
       }
     });
 
-    // Tell master storage adapter how to sync
-    if (self.options.sync) {
-      self.options.store.sync({
-        insert: function(storeId, info, buffer) {
-          // Create a FS.File that already has info for the master copy
-          var fsFile = new FS.File({
-            name: info.name,
-            type: info.type,
-            size: info.size,
-            utime: info.utime,
-            master: {
+    // Tell synchronized stores how to sync
+    _.each(self.options.copies, function(copyDefinition, copyName) {
+      if (copyDefinition.sync) {
+        copyDefinition.store.sync({
+          insert: function(storeId, info, buffer) {
+            // Create a FS.File that already has info for the synchronized copy
+            var fileInfo = {
+              name: info.name,
+              type: info.type,
+              size: info.size,
+              utime: info.utime,
+              copies: {}
+            };
+            fileInfo.copies[copyName] = {
               _id: storeId,
               name: info.name,
               type: info.type,
               size: info.size,
               utime: info.utime
-            }
-          });
+            };
+            var fsFile = new FS.File(fileInfo);
 
-          // Load the master buffer into the file object
-          fsFile.setDataFromBuffer(buffer, info.type);
+            // Load the buffer into the file object
+            fsFile.setDataFromBuffer(buffer, info.type);
 
-          // Save into the sync'd FS.Collection.
-          self.insert(fsFile);
-        },
-        update: function(storeId, info) {
-          // Get the FS.File
-          var fsFile = self.findOne({'master._id': storeId});
+            // Save into the sync'd FS.Collection.
+            self.insert(fsFile);
+          },
+          update: function(storeId, info) {
+            // Get the FS.File
+            var selector = {};
+            selector['copies.' + copyName + '._id'] = storeId;
+            var fsFile = self.findOne(selector);
+            
+            if (!fsFile)
+              return;
 
-          // Update info for the master store since that is the synchronized data
-          // we just received. Also, set info into the generic info since we're
-          // treating this like an upload. Finally, clear out other copy info
-          // so that the file worker will create new copies.
-          fsFile.update({$set: {
+            // Update info for this store since that is the synchronized data
+            // we just received. Also, set info into the generic info since we're
+            // treating this like an upload. Finally, clear out other copy info
+            // so that the file worker will create new copies.
+            var fileInfo = {
               name: info.name,
               type: info.type,
               size: info.size,
               utime: info.utime,
-              'master.name': info.name,
-              'master.type': info.type,
-              'master.size': info.size,
-              'master.utime': info.utime
-            }, $unset: {copies: ''}});
-        },
-        remove: function(storeId) {
-          //TODO possibly should just remove this copy?
-          self.remove({'master._id': storeId});
-        }
-      });
-    }
+              copies: {}
+            };
+            fileInfo.copies[copyName] = {
+              _id: storeId,
+              name: info.name,
+              type: info.type,
+              size: info.size,
+              utime: info.utime
+            };
+            fsFile.update({$set: fileInfo});
+          },
+          remove: function(storeId) {
+            // TODO This will remove all copies.
+            // Should we remove only the synchronized copy?
+            var selector = {};
+            selector['copies.' + copyName + '._id'] = storeId;
+            self.remove(selector);
+          }
+        });
+      }
+    });
+
   } // EO Server
 
 };

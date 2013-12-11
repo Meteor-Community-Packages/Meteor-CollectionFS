@@ -49,53 +49,11 @@ function saveCopy(fsFile, store, beforeSave) {
   }
 }
 
-// This function is called to save the master copy. It may be safely
-// called multiple times with the "missing" option set. It is synchronous.
-FS.Collection.prototype.saveMaster = function(fsFile, options) {
-  var self = this;
-  options = options || {};
-
-  var copyInfo = fsFile.master;
-
-  // If master has not already been saved or we want to overwrite it
-  if (!options.missing || (copyInfo === void 0 && !fsFile.failedPermanently())) {
-    console.log('creating master copy');
-
-    var result = saveCopy(fsFile, self.options.store, self.options.beforeSave);
-    if (result === false) {
-      // The master beforeSave returned false; delete the whole record.
-      fsFile.remove();
-    } else if (result === null) {
-      // Temporary failure; let the fsFile log it and potentially decide
-      // to give up.
-      fsFile.logCopyFailure();
-    } else {
-      // Success. Update the file object
-      fsFile.update({$set: {master: result}}, function(err, result) {
-        if (err) {
-          console.log(err);
-        }
-        fsFile.deleteTempFiles(function(err) {
-          if (err) {
-            console.log(err);
-          }
-        });
-      });
-    }
-  }
-};
-
 // This function is called to create all copies or only missing copies. It may be safely
 // called multiple times with the "missing" option set. It is synchronous.
 FS.Collection.prototype.saveCopies = function(fsFile, options) {
   var self = this;
   options = options || {};
-
-  // If the supplied fsFile does not have a buffer loaded already,
-  // load it from the master store.
-  if (!fsFile.hasData()) {
-    fsFile.setDataFromBinary(fsFile.get());
-  }
 
   // Loop through copies defined in CFS options
   _.each(self.options.copies, function(copyDefinition, copyName) {
@@ -124,12 +82,11 @@ FS.Collection.prototype.saveCopies = function(fsFile, options) {
 
 FS.Collection.prototype.getStoreForCopy = function(copyName) {
   var self = this;
-  if (copyName) {
-    if (typeof self.options.copies[copyName] !== "object" || self.options.copies[copyName] === null) {
-      throw new Error('getStoreForCopy: copy "' + copyName + '" is not defined');
-    }
-    return self.options.copies[copyName].store;
-  } else {
-    return self.options.store;
+  if (typeof copyName !== "string") {
+    copyName = "_master";
   }
+  if (typeof self.options.copies[copyName] !== "object" || self.options.copies[copyName] === null) {
+    throw new Error('getStoreForCopy: copy "' + copyName + '" is not defined');
+  }
+  return self.options.copies[copyName].store;
 };

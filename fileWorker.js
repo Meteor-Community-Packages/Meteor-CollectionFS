@@ -24,21 +24,13 @@ FileWorker.prototype.stop = function() {
 // previous queue tasks are still running.
 FileWorker.prototype.checkForMissingCopies = function() {
   var self = this;
-  
+
   // Loop through all defined FS.Collection
   _.each(_collections, function(cfs, cfsName) {
-    //console.log("FileWorker checking for missing copies in the " + cfsName + " collection...");
-    // First priority is missing master, oldest first.
-    // The collection handles the details of max tries and sets doneTrying.
-    cfs.find({'failures.master.count': {$gt: 0}, 'failures.master.doneTrying': false}, {sort: [['failures.master.firstAttempt', 'asc'], ['failures.master.lastAttempt', 'asc']]}).forEach(function(fsFile) {
-      console.log("FileWorker trying to save master for " + fsFile._id + " in " + cfs.name);
-      cfs.saveMaster(fsFile, {missing: true});
-    });
-
-    // Second priority is missing copies, oldest first, only if the master was saved.
+    // Find missing copies, oldest first.
     // The collection handles the details of max tries and sets doneTrying.
     for (var copyName in cfs.options.copies) {
-      var selector = {'failures.master': null};
+      var selector = {};
       selector['failures.copies.' + copyName + '.count'] = {$gt: 0};
       selector['failures.copies.' + copyName + '.doneTrying'] = false;
       cfs.find(selector, {sort: [['failures.copies.' + copyName + '.firstAttempt', 'asc'], ['failures.copies.' + copyName + '.lastAttempt', 'asc']]}).forEach(function(fsFile) {
@@ -47,6 +39,14 @@ FileWorker.prototype.checkForMissingCopies = function() {
       });
     }
   });
+
+  // TODO Delete temp files that are no longer needed
+  // If all copies are doneTrying or have been saved
+//  fsFile.deleteTempFiles(function(err) {
+//    if (err) {
+//      console.log(err);
+//    }
+//  });
 
   if (self.running) {
     // Check again every 5 seconds

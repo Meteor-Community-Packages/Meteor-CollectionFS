@@ -9,7 +9,7 @@ var APUpload = function(fsFile, data, start) {
   check(fsFile, FS.File);
   if (!EJSON.isBinary(data))
     throw new Error("APUpload expects binary data");
-  
+
   if (typeof start !== "number")
     start = 0;
 
@@ -44,14 +44,13 @@ var APUpload = function(fsFile, data, start) {
     if (done) {
       self.unblock();
       console.log("Received all chunks for " + fsFile._id);
-      // Save file to master store and save any additional copies
+      // Save file to stores
       fsFile.put();
     }
   });
 };
 
-// Returns the data for selector,
-// or data from master store if selector is not set
+// Returns the data for the copyName copy of fsFile
 var APDownload = function(fsFile, copyName, start, end) {
   var self = this;
   self.unblock();
@@ -125,20 +124,21 @@ var APhandler = function(collection, download) {
 
     // If http get then return file
     if (self.method.toLowerCase() === 'get') {
-      var type, copyInfo;
-      if (copyName) {
-        copyInfo = file.copies[copyName];
-        if (copyInfo) {
-          type = copyInfo.type;
-        }
+      var type, copyInfo, filename;
+      if (typeof copyName !== "string") {
+        copyName = "_master";
       }
-      type = type || file.type;
+      copyInfo = file.copies[copyName];
+      if (copyInfo) {
+        type = copyInfo.type;
+        filename = copyInfo.name;
+      }
       if (typeof type === "string") {
         self.setContentType(type);
       }
       if (download) {
         self.addHeader('Content-Disposition', 'attachment; filename="' +
-                'download.' + file.getExtension() + '"');
+                filename + '"');
       }
 
       self.setStatusCode(200);
