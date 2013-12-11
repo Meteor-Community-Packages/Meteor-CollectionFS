@@ -24,23 +24,37 @@ FS.File = function(ref) {
 };
 
 // This is a collection wrapper with error messages, primarily for internal use
-FS.File.prototype.useCollection = function(title, func) {
+FS.File.prototype.useCollection = function(title, func, onError) {
   // Get the collection reference
   var self = this;
   var collection = _collections[self.collectionName];
   if (collection) {
     try {
-      return func.apply(collection.files);
+      return func.apply(collection);
     } catch (err) {
-      throw new Error(title + ', Error: ' + (err.stack || err.message));
+      if (typeof onError === "function") {
+        onError(err);
+      } else {
+        throw new Error(title + ', Error: ' + (err.stack || err.message));
+      }
     }
   } else {
     if (self.collectionName) {
       // if images.files we use the images part since this is known to the user
       var prefix = self.collectionName.split('.')[0];
-      throw new Error(title + ', Error: FS.Collection "' + prefix + '" not found');
+      var err = new Error(title + ', Error: FS.Collection "' + prefix + '" not found');
+      if (typeof onError === "function") {
+        onError(err);
+      } else {
+        throw err;
+      }
     } else {
-      throw new Error(title + ', Error: No FS.Collection found');
+      var err = new Error(title + ', Error: No FS.Collection found');
+      if (typeof onError === "function") {
+        onError(err);
+      } else {
+        throw err;
+      }
     }
   }
 };
@@ -48,7 +62,7 @@ FS.File.prototype.useCollection = function(title, func) {
 FS.File.prototype.reload = function() {
   var self = this;
   self.useCollection('FS.File reload of _id: "' + self._id + '"', function() {
-    var ref = this.findOne({_id: self._id});
+    var ref = this.files.findOne({_id: self._id});
     if (ref) {
       _.extend(self, cloneFileRecord(ref));
     }
@@ -71,7 +85,7 @@ FS.File.prototype.update = function(modifier, options, callback) {
   // Apply title for error messages
   return self.useCollection('FS.File update of _id: "' + self._id + '"', function() {
     // this is our collection
-    var collection = this;
+    var collection = this.files;
     if (callback) {
       return collection.update({_id: self._id}, modifier, options, function(err, count) {
         if (count) {
@@ -112,7 +126,7 @@ FS.File.prototype.remove = function() {
   // Apply title for error messages
   self.useCollection('FS.File remove _id: "' + self._id + '"', function() {
     // this is our collection
-    count = this.remove({_id: self._id});
+    count = this.files.remove({_id: self._id});
     delete self._id;
     delete self.binary;
   });
@@ -141,52 +155,49 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
   if (Meteor.isClient) {
     FS.downloadQueue.downloadFile(self, copyName);
   } else if (Meteor.isServer) {
-    var collection = _collections[self.collectionName];
-    if (typeof collection === 'undefined' || collection === null) {
-      return handleError(callback, 'FS.File.get no collection assigned');
-    }
+    return self.useCollection('FS.File.get', function() {
+      var store = this.getStoreForCopy(copyName);
 
-    var store = collection.getStoreForCopy(copyName);
-
-    if (typeof store === 'undefined' || store === null) {
-      return handleError(callback, 'FS.File.get could not find "' + (copyName || 'master') + '" Storage Adapter on FS.Collection "' + collection.name + '"');
-    }
-
-    // On server we contact the storage adapter
-    if (callback) {
-      if (partial) {
-        if (!(typeof store.getBytes === "function")) {
-          callback(new Error('FS.File.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval'));
-          return;
-        }
-        store.getBytes(self, start, end, {copyName: copyName}, function(err, bytesRead, buffer) {
-          if (buffer) {
-            buffer = bufferToBinary(buffer);
-          }
-          callback(err, bytesRead, buffer);
-        });
-      } else {
-        store.getBuffer(self, {copyName: copyName}, function(err, buffer) {
-          if (buffer) {
-            buffer = bufferToBinary(buffer);
-          }
-          callback(err, buffer);
-        });
+      if (typeof store === 'undefined' || store === null) {
+        return handleError(callback, 'FS.File.get could not find "' + (copyName || 'master') + '" Storage Adapter on FS.Collection "' + this.name + '"');
       }
-    } else {
-      if (partial) {
-        if (!(typeof store.getBytes === "function")) {
-          throw new Error('FS.File.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval');
+
+      // On server we contact the storage adapter
+      if (callback) {
+        if (partial) {
+          if (!(typeof store.getBytes === "function")) {
+            callback(new Error('FS.File.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval'));
+            return;
+          }
+          store.getBytes(self, start, end, {copyName: copyName}, function(err, bytesRead, buffer) {
+            if (buffer) {
+              buffer = bufferToBinary(buffer);
+            }
+            callback(err, bytesRead, buffer);
+          });
+        } else {
+          store.getBuffer(self, {copyName: copyName}, function(err, buffer) {
+            if (buffer) {
+              buffer = bufferToBinary(buffer);
+            }
+            callback(err, buffer);
+          });
         }
-        //if callback is undefined, getBuffer will be synchrononous
-        var buffer = store.getBytes(self, start, end, {copyName: copyName});
-        return bufferToBinary(buffer);
       } else {
-        //if callback is undefined, getBuffer will be synchrononous
-        var buffer = store.getBuffer(self, {copyName: copyName});
-        return bufferToBinary(buffer);
+        if (partial) {
+          if (!(typeof store.getBytes === "function")) {
+            throw new Error('FS.File.get storage adapter for "' + (copyName || 'master') + '" does not support partial retrieval');
+          }
+          //if callback is undefined, getBuffer will be synchrononous
+          var buffer = store.getBytes(self, start, end, {copyName: copyName});
+          return bufferToBinary(buffer);
+        } else {
+          //if callback is undefined, getBuffer will be synchrononous
+          var buffer = store.getBuffer(self, {copyName: copyName});
+          return bufferToBinary(buffer);
+        }
       }
-    }
+    }, callback);
   }
 };
 
@@ -195,46 +206,38 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
 FS.File.prototype.url = function(copyName, auth, download) {
   var self = this;
 
-  var urlPrefix = (download) ? '/download/' : '/';
-
-  if (copyName && (!self.copies || !self.copies[copyName])) {
+  if (!self.hasCopy(copyName)) {
     return null;
   }
 
-  if (!copyName && !self.master) {
-    return null;
-  }
+  return self.useCollection('FS.File.url', function() {
+    if (!this.httpUrl) {
+      throw new Error('FS.File.url FS.Collection "' + this.name + '" has no HTTP access point; set useHTTP option to true');
+    }
+    var authToken = '';
 
-  var collection = _collections[self.collectionName];
-  if (typeof collection === 'undefined') {
-    throw new Error('FS.File.url no collection assigned');
-  }
+    // TODO: Could we somehow figure out if the collection requires login?
+    if (typeof auth !== 'undefined') {
+      if (auth === true) {
+        authToken = (typeof Accounts !== "undefined" && Accounts._storedLoginToken()) || '';
+      } else {
+        authToken = auth || '';
+      }
 
-  if (!collection.httpUrl) {
-    throw new Error('FS.File.url FS.Collection "' + collection.name + '" has no HTTP access point; set useHTTP option to true');
-  }
-  var authToken = '';
+      if (authToken !== '') {
+        // Construct the token string to append to url
+        authToken = '?token=' + authToken;
+      }
+    }
 
-  // TODO: Could we somehow figure out if the collection requires login?
-  if (typeof auth !== 'undefined') {
-    if (auth === true) {
-      authToken = (typeof Accounts !== "undefined" && Accounts._storedLoginToken()) || '';
+    // Construct the http method url
+    var urlPrefix = (download) ? '/download/' : '/';
+    if (copyName) {
+      return this.httpUrl + urlPrefix + self._id + '/' + copyName + authToken;
     } else {
-      authToken = auth || '';
+      return this.httpUrl + urlPrefix + self._id + authToken;
     }
-
-    if (authToken !== '') {
-      // Construct the token string to append to url
-      authToken = '?token=' + authToken;
-    }
-  }
-
-  // Construct the http method url
-  if (copyName) {
-    return collection.httpUrl + urlPrefix + self._id + '/' + copyName + authToken;
-  } else {
-    return collection.httpUrl + urlPrefix + self._id + authToken;
-  }
+  });
 };
 
 // Construct a download url
@@ -248,12 +251,8 @@ FS.File.prototype.put = function(callback) {
 
   callback = callback || defaultCallback;
 
-  // Get collection reference
-  var collection = _collections[self.collectionName];
-
-  // We have to have the file in the FS.Collection first
-  if (!self._id || !collection) {
-    callback(new Error("FS.File put needs collection and _id"));
+  if (!self._id) {
+    callback(new Error("FS.File.put needs _id"));
     return;
   }
 
@@ -268,9 +267,11 @@ FS.File.prototype.put = function(callback) {
         callback(err);
       } else {
         // Now let the collection handle the storage adapters
-        collection.saveMaster(self, {missing: true});
-        collection.saveCopies(self, {missing: true});
-        callback(null, self._id);
+        self.useCollection('FS.File.put', function() {
+          this.saveMaster(self, {missing: true});
+          this.saveCopies(self, {missing: true});
+          callback(null, self._id);
+        }, callback);
       }
     });
   }
@@ -344,58 +345,59 @@ FS.File.prototype.isUploaded = function() {
 };
 
 FS.File.prototype.hasMaster = function() {
-  var self = this;
-  return (typeof self.master === "object");
+  return this.hasCopy();
 };
 
 FS.File.prototype.hasCopy = function(copyName) {
   var self = this;
-  return (self.copies && self.copies[copyName] && typeof self.copies[copyName] === "object");
+  if (typeof copyName === "string") {
+    return (self.copies && !_.isEmpty(self.copies[copyName]));
+  } else {
+    return !_.isEmpty(self.master);
+  }
 };
 
 FS.File.prototype.fileIsAllowed = function() {
   var self = this;
-  var collection = _collections[self.collectionName];
-  if (typeof collection === 'undefined') {
-    throw new Error('FS.File.fileIsAllowed no collection assigned');
-  }
-  var filter = collection.options.filter;
-  if (!filter) {
+  return self.useCollection('FS.File.fileIsAllowed', function() {
+    var filter = this.options.filter;
+    if (!filter) {
+      return true;
+    }
+    var fileSize = self.size, contentType = self.type;
+    if (!contentType || !self.name || !fileSize || isNaN(fileSize)) {
+      if (typeof filter.onInvalid === "function") {
+        filter.onInvalid("File is missing required information");
+      }
+      return false;
+    }
+    if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
+      if (typeof filter.onInvalid === "function") {
+        filter.onInvalid("File is too big");
+      }
+      return false;
+    }
+    var saveAllFileExtensions = (filter.allow.extensions.length === 0);
+    var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
+    var ext = self.getExtension();
+    if (!((saveAllFileExtensions ||
+            _.indexOf(filter.allow.extensions, ext) !== -1) &&
+            _.indexOf(filter.deny.extensions, ext) === -1)) {
+      if (typeof filter.onInvalid === "function") {
+        filter.onInvalid("Files with extension " + ext + " are not allowed");
+      }
+      return false;
+    }
+    if (!((saveAllContentTypes ||
+            contentTypeInList(filter.allow.contentTypes, contentType)) &&
+            !contentTypeInList(filter.deny.contentTypes, contentType))) {
+      if (typeof filter.onInvalid === "function") {
+        filter.onInvalid("Files of type " + contentType + " are not allowed");
+      }
+      return false;
+    }
     return true;
-  }
-  var fileSize = self.size, contentType = self.type;
-  if (!contentType || !self.name || !fileSize || isNaN(fileSize)) {
-    if (typeof filter.onInvalid === "function") {
-      filter.onInvalid("File is missing required information");
-    }
-    return false;
-  }
-  if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
-    if (typeof filter.onInvalid === "function") {
-      filter.onInvalid("File is too big");
-    }
-    return false;
-  }
-  var saveAllFileExtensions = (filter.allow.extensions.length === 0);
-  var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
-  var ext = self.getExtension();
-  if (!((saveAllFileExtensions ||
-          _.indexOf(filter.allow.extensions, ext) !== -1) &&
-          _.indexOf(filter.deny.extensions, ext) === -1)) {
-    if (typeof filter.onInvalid === "function") {
-      filter.onInvalid("Files with extension " + ext + " are not allowed");
-    }
-    return false;
-  }
-  if (!((saveAllContentTypes ||
-          contentTypeInList(filter.allow.contentTypes, contentType)) &&
-          !contentTypeInList(filter.deny.contentTypes, contentType))) {
-    if (typeof filter.onInvalid === "function") {
-      filter.onInvalid("Files of type " + contentType + " are not allowed");
-    }
-    return false;
-  }
-  return true;
+  });
 };
 
 var contentTypeInList = function(list, contentType) {

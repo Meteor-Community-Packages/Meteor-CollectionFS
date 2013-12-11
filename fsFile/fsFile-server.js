@@ -130,7 +130,7 @@ FS.File.prototype.logCopyFailure = function(copyName) {
   var self = this, currentCount, collection, maxTries;
 
   self.useCollection('FS.File logCopyFailure of _id: "' + self._id + '"', function() {
-    collection = this;
+    collection = this.files;
   });
 
   var now = new Date;
