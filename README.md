@@ -262,6 +262,51 @@ The file extensions must be specified without a leading period.
 If you return `false` from the `beforeSave` function for a copy,
 that copy will never be created.*
 
+## Security
+
+File uploads and downloads are can be secured using standard Meteor `allow`
+and `deny` methods. To best understand how CollectionFS security works, you
+must first understand that there are two ways in which a user could interact
+with a file:
+
+* She could view or edit information *about* the file or any
+custom metadata you've attached to the file record.
+* She could view or edit the *actual file data*.
+
+You may find it necessary to secure file records with different criteria
+from that of file data. This is easy to do.
+
+Here's an overview of the various ways of securing various aspects of files:
+
+* To determine who can *see* file metadata, such as filename, size, content type,
+and any custom metadata that you set, use normal Meteor publish/subscribe
+to publish and subscribe to an `FS.Collection` cursor. This does not allow the
+user to *download* the file data.
+* To determine who can *download* the actual file, use "download" allow/deny
+functions. This is a custom type of allow/deny function provided by CollectionFS.
+The first argument is the userId and the second argument is the FS.File being
+requested for download.
+* To determine who can *set* file metadata, insert files, and upload file data,
+use "insert" allow/deny functions.
+* To determine who can *set* file metadata, update files, and upload replacement
+file data, use "update" allow/deny functions.
+* To determine who can *remove* files, which removes all file data and file
+metadata, use "remove" allow/deny functions.
+
+### Securing Based on User Information
+
+To secure a file based on a user "owner" or "role" or some other piece of custom
+metadata, you must set this information on the file when originally inserting it.
+You can then check it in your allow/deny functions.
+
+```js
+var fsFile = new FS.File(event.target.files[0]);
+fsFile.metadata = {owner: Meteor.userId()};
+fsCollection.insert(fsFile, function (err) {
+  if (err) throw err;
+});
+```
+
 ## Handlebars
 
 To simplify your life, consider using the
