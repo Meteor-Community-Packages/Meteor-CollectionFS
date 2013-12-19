@@ -5,13 +5,13 @@ Package.describe({
 Npm.depends({
   mmmagic: "0.3.4",
   temp: "0.6.0"
-  //tmp: "0.0.21"
 });
 
 Package.on_use(function(api) {
   "use strict";
   
-  api.use(['deps', 'underscore', 'mongo-livedata', 'ejson', 'collection-hooks', 'http-methods', 'power-queue']);
+  api.use(['deps', 'underscore', 'check', 'mongo-livedata',
+    'ejson', 'collection-hooks', 'http-methods', 'power-queue']);
   if (api.export) {
     api.export('FS');
   }
@@ -40,6 +40,7 @@ Package.on_use(function(api) {
     'fsFile/fsFile-server.js',
     'fsFile/fsFile-ejson.js',
     'storageAdapter.js',
+    'tempStore.js',
     'accessPoint.js',
     'fsCollection/common.js',
     'fsCollection/api.common.js',

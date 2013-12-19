@@ -36,16 +36,25 @@ var APUpload = function(fsFile, data, start) {
   fsFile.reload(); //update properties from the linked server collection
 
   console.log("Received chunk of size " + data.length + " at start " + start + " for " + fsFile._id);
+
   // Save chunk and, if it's the last chunk, kick off storage
-  fsFile.saveChunk(data, start, function(err, done) {
+  TempStore.saveChunk(fsFile, data, start, function(err, done) {
     if (err) {
       throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
     }
     if (done) {
-      self.unblock();
+      // We are done loading all bytes
+      // so we should load the temp files into the actual fsFile now
       console.log("Received all chunks for " + fsFile._id);
-      // Save file to stores
-      fsFile.put();
+      self.unblock();
+      TempStore.getDataForFile(fsFile, function(err, fsFileWithData) {
+        if (err) {
+          throw err;
+        } else {
+          // Save file to stores
+          fsFileWithData.put();
+        }
+      });
     }
   });
 };

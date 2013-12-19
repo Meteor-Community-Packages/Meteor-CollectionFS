@@ -1,23 +1,21 @@
 function loadBuffer(fsFile, callback) {
   var fsFileClone = fsFile.clone();
 
-  function copyData() {
+  if (fsFile.hasData()) {
     fsFileClone.setDataFromBinary(fsFile.getBinary());
     callback(null, fsFileClone);
-  }
-
-  if (fsFile.hasData()) {
-    return copyData();
+    return;
   }
 
   // If the supplied fsFile does not have a buffer loaded already,
   // try to load it from the temporary file.
   console.log("attempting to load buffer from temp file");
-  fsFile.setDataFromTempFile(function(err) {
+  TempStore.getDataForFile(fsFile, function (err, fsFileWithData) {
     if (err) {
       callback(err);
     } else {
-      copyData();
+      fsFileClone.setDataFromBinary(fsFileWithData.getBinary());
+      callback(null, fsFileClone);
     }
   });
 }

@@ -117,11 +117,7 @@ FS.File.prototype.remove = function() {
   var count;
   // Remove any associated temp files
   if (Meteor.isServer) {
-    self.deleteTempFiles(function(err) {
-      if (err) {
-        console.log(err);
-      }
-    });
+    TempStore.deleteChunks(self);
   }
   // Apply title for error messages
   self.useCollection('FS.File remove _id: "' + self._id + '"', function() {

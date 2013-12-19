@@ -1,66 +1,3 @@
-// Save a chunk of the total binary data into a temp file on the filesystem.
-// Using temp file allows us to easily resume uploads, even if the server
-// restarts, and to keep the working memory clear.
-// callback(err, allBytesLoaded)
-FS.File.prototype.saveChunk = function(binary, start, callback) {
-  var self = this;
-  var total = binary.length;
-
-  if (typeof callback !== "function") {
-    throw new Error("FS.File.saveChunk requires a callback");
-  }
-
-  // It's a single-chunk upload. No need for temp files.
-  if (start === 0 && total === self.size) {
-    self.setDataFromBinary(binary);
-    callback(null, true);
-    return;
-  }
-
-  var chunks = self.chunks || [], chunk, tempFile;
-  for (var i = 0, ln = chunks.length; i < ln; i++) {
-    chunk = chunks[i];
-    if (chunk.start === start) {
-      tempFile = chunk.tempFile;
-      break;
-    }
-  }
-  if (!tempFile) {
-    console.log("Creating new temp file for", self._id);
-    tempFile = tmp.path({suffix: '.bin'});
-    self.update({$push: {chunks: {start: start, tempFile: tempFile}}});
-    console.log("Create new temp file", tempFile);
-  }
-
-  // Call node writeFile
-  fs.writeFile(tempFile, binaryToBuffer(binary), Meteor.bindEnvironment(function(err) {
-    if (err) {
-      callback(err);
-    } else {
-      self.update({$inc: {bytesUploaded: total}}, function(err) {
-        if (err) {
-          callback(err);
-        } else {
-          console.log("Uploaded " + self.bytesUploaded + " of " + self.size + " bytes");
-          if (self.bytesUploaded === self.size) {
-            // We are done loading all bytes
-            // so we should load the temp files into the actual fsFile now
-            self.setDataFromTempFiles(function(err) {
-              if (err) {
-                callback(err);
-              } else {
-                callback(null, true);
-              }
-            });
-          }
-        }
-      });
-    }
-  }, function(err) {
-    callback(err);
-  }));
-};
-
 // callback(err)
 FS.File.prototype.saveDataToFile = function(filePath, callback) {
   var self = this, buffer = self.getBuffer();
@@ -78,53 +15,6 @@ FS.File.prototype.saveDataToFile = function(filePath, callback) {
   }));
 };
 
-// callback(err)
-FS.File.prototype.saveDataToTempFile = function(callback) {
-  var self = this;
-  self.saveChunk(self.getBinary(), 0, callback);
-};
-
-// callback(err)
-FS.File.prototype.deleteTempFiles = function(callback) {
-  var self = this, stop = false, count, deletedCount = 0;
-
-  if (!self.chunks) {
-    callback();
-    return;
-  }
-
-  var count = self.chunks.length;
-  if (!count) {
-    callback();
-    return;
-  }
-
-  function success() {
-    deletedCount++;
-    if (deletedCount === count) {
-      self.update({$unset: {chunks: 1}});
-      callback();
-    }
-  }
-
-  _.each(self.chunks, function(chunk) {
-    if (!stop) {
-      fs.unlink(chunk.tempFile, Meteor.bindEnvironment(function(err) {
-        console.log("deleted temp file ", chunk.tempFile);
-        if (err) {
-          callback(err);
-          stop = true;
-        } else {
-          success();
-        }
-      }, function(err) {
-        callback(err);
-        stop = true;
-      }));
-    }
-  });
-};
-
 // If copyName isn't a string, will log the failure to master
 FS.File.prototype.logCopyFailure = function(copyName) {
   var self = this, collection;
@@ -139,11 +29,7 @@ FS.File.prototype.logCopyFailure = function(copyName) {
 
   // Make sure we have a temporary file saved since we will be
   // trying the save again.
-  self.saveBufferToTempFile(function(err) {
-    if (err) {
-      console.log("Error saving temp file for later store attempts:", err);
-    }
-  });
+  TempStore.ensureForFile(self);
 
   var now = new Date;
   var currentCount = (self.failures && self.failures.copies && self.failures.copies[copyName] && typeof self.failures.copies[copyName].count === "number") ? self.failures.copies[copyName].count : 0;
