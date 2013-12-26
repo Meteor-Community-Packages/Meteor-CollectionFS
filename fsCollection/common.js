@@ -10,6 +10,10 @@ FS.Collection = function(name, options) {
   self.options = {
     useDDP: true,
     useHTTP: false,
+    accessPoints: {
+      DDP: accessPointsDDP(self),
+      HTTP: accessPointsHTTP(self)
+    },
     filter: null, //optional
     store: null, //required
     beforeSave: null, //optional
@@ -87,17 +91,14 @@ FS.Collection = function(name, options) {
       delete self.options.sync;
     }
 
+    // Add DDP and HTTP access points
     if (self.options.useDDP) {
-      // Add ddp mount point + /get /put
-      Meteor.methods(accessPointDDP(self.methodName));
+      Meteor.methods(self.options.accessPoints.DDP);
     }
     if (self.options.useHTTP) {
-      // Add http mount point
-      // Provide the upload and download server methods
       if (typeof HTTP !== 'undefined' && typeof HTTP.methods === 'function') {
-        // Set httpUrl
         self.httpUrl = self.methodName;
-        Meteor.isServer && HTTP.methods(accessPointHTTP(self));
+        Meteor.isServer && HTTP.methods(self.options.accessPoints.HTTP);
       }
     }
 

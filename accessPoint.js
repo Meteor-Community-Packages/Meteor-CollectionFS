@@ -1,9 +1,3 @@
-// #############################################################################
-//
-// Access Point
-//
-// #############################################################################
-
 var APUpload = function(fsFile, data, start) {
   var self = this;
   check(fsFile, FS.File);
@@ -164,17 +158,17 @@ var APhandler = function(collection, download) {
   };
 };
 
-accessPointDDP = function(name) {
+accessPointsDDP = function(cfs) {
   var result = {};
   // We namespace with using the current Meteor convention - this could
   // change
-  result[name + '/put'] = APUpload;
-  result[name + '/get'] = APDownload;
-  result[name + '/del'] = APDelete;
+  result[cfs.methodName + '/put'] = APUpload;
+  result[cfs.methodName + '/get'] = APDownload;
+  result[cfs.methodName + '/del'] = APDelete;
   return result;
 };
 
-accessPointHTTP = function(cfs) {
+accessPointsHTTP = function(cfs) {
   var result = {};
   // We namespace with using the current Meteor convention - this could
   // change
