@@ -11,8 +11,8 @@ FS.Collection = function(name, options) {
     useDDP: true,
     useHTTP: false,
     accessPoints: {
-      DDP: accessPointsDDP(self),
-      HTTP: accessPointsHTTP(self)
+      DDP: null, //will set to default below
+      HTTP: null //will set to default below
     },
     filter: null, //optional
     store: null, //required
@@ -26,31 +26,19 @@ FS.Collection = function(name, options) {
   _.extend(self.options, options);
 
   self.name = name;
-
   self.methodName = '/cfs/files/' + name;
+  self.httpUrl = self.options.useHTTP ? self.methodName : null;
 
-  // On the client, we just need the httpUrl set
-  if (Meteor.isClient && self.options.useHTTP) {
-    self.httpUrl = self.methodName;
-  }
-
-  // When on the server we expect copies in options - otherwise we just recieve
-  // the file but dont use it for anything
   if (Meteor.isServer) {
+    // Add default access points if user did not supply any
+    self.options.accessPoints = self.options.accessPoints || {};
+    self.options.accessPoints.DDP = self.options.accessPoints.DDP || accessPointsDDP(self);
+    self.options.accessPoints.HTTP = self.options.accessPoints.HTTP || accessPointsHTTP(self);
+    
+    // Make sure a master store has been supplied
     if (!(self.options.store instanceof FS.StorageAdapter)) {
       throw new Error("You must specify a master store. Please consult the documentation.");
     }
-
-    // #####################################################################
-    //
-    // Add SA observers
-    // if a copy is set to sync SA changes we have to sync all other sync
-    // copies SA if the change is newer than the existing and we recreate
-    // the rest of the copies
-    //
-    // This task is added to the queue
-    //
-    // #####################################################################
 
     // Allow user to use shortcut syntax, but switch to full syntax for
     // subsequent internal use.
@@ -90,16 +78,15 @@ FS.Collection = function(name, options) {
       self.options.copies._master.sync = self.options.sync;
       delete self.options.sync;
     }
+    
+    // D
 
     // Add DDP and HTTP access points
-    if (self.options.useDDP) {
-      Meteor.methods(self.options.accessPoints.DDP);
-    }
-    if (self.options.useHTTP) {
-      if (typeof HTTP !== 'undefined' && typeof HTTP.methods === 'function') {
-        self.httpUrl = self.methodName;
-        Meteor.isServer && HTTP.methods(self.options.accessPoints.HTTP);
-      }
+    self.options.useDDP && Meteor.methods(self.options.accessPoints.DDP);
+    if (self.options.useHTTP
+            && typeof HTTP !== 'undefined'
+            && typeof HTTP.methods === 'function') {
+      HTTP.methods(self.options.accessPoints.HTTP);
     }
 
   } // EO is Server
@@ -224,7 +211,7 @@ FS.Collection = function(name, options) {
             var selector = {};
             selector['copies.' + copyName + '._id'] = storeId;
             var fsFile = self.findOne(selector);
-            
+
             if (!fsFile)
               return;
 
