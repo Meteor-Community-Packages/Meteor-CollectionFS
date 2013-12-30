@@ -13,19 +13,12 @@ UploadTransferQueue = function() {
 
   // Persistent but client-only collection
   self.collection = new Meteor.Collection(name, {connection: null});
-  
+
   // Pass through some queue properties
   self.pause = self.queue.pause;
   self.resume = self.queue.resume;
   self.isPaused = self.queue.isPaused;
   self.isRunning = self.queue.isRunning;
-
-  Meteor.startup(function() {
-    // Resume unfinished downloads when clients restart
-    self.collection.find({type: "download", data: null}).forEach(function(doc) {
-      downloadChunk(self, doc.fo, doc.copyName, doc.start);
-    });
-  });
 };
 
 UploadTransferQueue.prototype.uploadFile = function(fsFile) {
@@ -53,9 +46,9 @@ UploadTransferQueue.prototype.uploadFile = function(fsFile) {
 UploadTransferQueue.prototype.progress = function(fsFile, copyName) {
   var self = this;
   if (fsFile) {
-      var totalChunks = Math.ceil(fsFile.size / chunkSize);
-      var uploadedChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload", done: true}).count();
-      return Math.round(uploadedChunks / totalChunks * 100);
+    var totalChunks = Math.ceil(fsFile.size / chunkSize);
+    var uploadedChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, done: true}).count();
+    return Math.round(uploadedChunks / totalChunks * 100);
   } else {
     return self.queue.progress();
   }
@@ -64,52 +57,36 @@ UploadTransferQueue.prototype.progress = function(fsFile, copyName) {
 UploadTransferQueue.prototype.cancel = function() {
   var self = this;
   self.queue.reset();
-    self.collection.remove({type: "upload"});
+  
+  // TODO: Delete partially-uploaded files
+  
+  self.collection.remove({});
 };
 
 UploadTransferQueue.prototype.isUploadingFile = function(fsFile) {
   var self = this;
-  return !!self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload"});
-};
-
-UploadTransferQueue.prototype.markChunkUploaded = function(fsFile, start, callback) {
-  var self = this;
-  // Mark each chunk done for progress tracking
-  self.collection.update({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"}, {$set: {done: true}}, function(e, r) {
-    if (e) {
-      callback(e);
-    } else {
-      var totalChunks = Math.ceil(fsFile.size / chunkSize);
-      var doneChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload", done: true});
-      if (totalChunks === doneChunks.count()) {
-        console.log("Upload finished after", (((new Date).getTime()) - uploadStartTime), "ms");
-        self.unCacheUpload(fsFile, callback);
-      } else {
-        callback();
-      }
-    }
-  });
+  return !!self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName});
 };
 
 // Private
 
 var cacheUpload = function(col, fsFile, start, callback) {
-  if (col.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"})) {
+  if (col.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start})) {
     // If already cached, don't do it again
     callback();
   } else {
-    col.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"}, callback);
+    col.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start}, callback);
   }
 };
 
 var unCacheUpload = function(col, fsFile, callback) {
-  col.remove({fileId: fsFile._id, collectionName: fsFile.collectionName, type: "upload"}, callback);
+  col.remove({fileId: fsFile._id, collectionName: fsFile.collectionName}, callback);
 };
 
 var uploadChunk = function(tQueue, fsFile, start, end) {
   fsFile.useCollection('TransferQueue upload', function() {
     var collection = this;
-    tQueue.cacheUpload(fsFile, start, function() {
+    cacheUpload(tQueue.collection, fsFile, start, function() {
       tQueue.queue.add(function(complete) {
         console.log("uploading bytes " + start + " to " + Math.min(end, fsFile.size) + " of " + fsFile.size);
         fsFile.getBinary(start, end, function(err, data) {
@@ -124,7 +101,7 @@ var uploadChunk = function(tQueue, fsFile, start, end) {
                     var e = new Date;
                     console.log("server took " + (e.getTime() - b.getTime()) + "ms");
                     if (!err) {
-                      tQueue.markChunkUploaded(fsFile, start, function() {
+                      markChunkUploaded(tQueue.collection, fsFile, start, function() {
                         complete();
                       });
                     }
@@ -132,5 +109,23 @@ var uploadChunk = function(tQueue, fsFile, start, end) {
         });
       });
     });
+  });
+};
+
+var markChunkUploaded = function(col, fsFile, start, callback) {
+  // Mark each chunk done for progress tracking
+  col.update({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start}, {$set: {done: true}}, function(e, r) {
+    if (e) {
+      callback(e);
+    } else {
+      var totalChunks = Math.ceil(fsFile.size / chunkSize);
+      var doneChunks = col.find({fileId: fsFile._id, collectionName: fsFile.collectionName, done: true});
+      if (totalChunks === doneChunks.count()) {
+        console.log("Upload finished after", (((new Date).getTime()) - uploadStartTime), "ms");
+        unCacheUpload(col, fsFile, callback);
+      } else {
+        callback();
+      }
+    }
   });
 };
