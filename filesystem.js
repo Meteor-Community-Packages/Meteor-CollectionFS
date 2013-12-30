@@ -38,7 +38,7 @@ FS.FileSystemStore = function(name, pathname) {
       var filepath = path.join(absolutePath, fileKey);
 
       // Call node readFile
-      if (start instanceof Number && end instanceof Number) {
+      if (typeof start === "number" && typeof end === "number") {
         var size = end - start;
         var buffer = new Buffer(size);
         //open file for reading
@@ -52,7 +52,7 @@ FS.FileSystemStore = function(name, pathname) {
             fs.close(fd, function(err) {
               if (err)
                 console.log("FileSystemStore getBytes: Error closing file");
-              callback(null, bytesRead, buffer);
+              callback(null, buffer);
             });
           });
         });
