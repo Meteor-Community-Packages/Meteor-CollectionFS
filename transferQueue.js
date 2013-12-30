@@ -10,48 +10,22 @@ TransferQueue = function(isUpload) {
     name = 'DownloadTransferQueue';
     self.isUploadQueue = false;
   }
-  self.queue = new PowerQueue(name);
+  self.queue = new PowerQueue({
+    name: name,
+    autostart: true
+  });
 
   // Persistent but client-only collection
   self.collection = new Meteor.Collection(name, {connection: null});
+  
+  // Pass through some queue properties
+  self.pause = self.queue.pause;
+  self.resume = self.queue.resume;
+  self.isPaused = self.queue.isPaused;
+  self.isRunning = self.queue.isRunning;
 
-  // This "paused" is slightly different from that of self.queue because
-  // this one indicates whether the user wants the queue to be paused
-  // whereas the other indicates whether the queue is actually paused,
-  // which could be because of having no tasks to run.
-  self._paused = false;
-  self._progressPercent = 100;
-  self._perFileProgress = {};
-  if (Meteor.isClient) {
-    self._progressPercentDeps = new Deps.Dependency();
-    self._pausedDeps = new Deps.Dependency();
-    self._queuePausedDeps = new Deps.Dependency();
-  }
-
-  // Make queue update reactive queue progress / status
-  self.queue.progress = function(left, total) {
-    var c = total - left;
-    var p = (total === 0) ? 0 : Math.round(c / total * 100);
-    if (p !== self._progressPercent) {
-      self._progressPercent = p;
-      if (self._progressPercentDeps) {
-        self._progressPercentDeps.changed();
-      }
-      if (self._queuePausedDeps) {
-        self._queuePausedDeps.changed();
-      }
-    }
-  };
-
-  // If there are any uploads or downloads in the cache,
-  // finish them at client load.
   Meteor.startup(function() {
-    if (self._progressPercentDeps) {
-      self.collection.find().observeChanges(function() {
-        self._progressPercentDeps.changed();
-      });
-    }
-
+    // Resume unfinished downloads when clients restart
     self.collection.find({type: "download", data: null}).forEach(function(doc) {
       downloadChunk(self, doc.fo, doc.copyName, doc.start);
     });
@@ -60,14 +34,11 @@ TransferQueue = function(isUpload) {
 
 TransferQueue.prototype.cacheUpload = function(fsFile, start, callback) {
   var self = this;
-  var existing = self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"});
-  if (existing) {
+  if (self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"})) {
     // If already cached, don't do it again
     callback();
   } else {
-    self.collection.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"}, function(e, r) {
-      callback(e, r);
-    });
+    self.collection.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start, type: "upload"}, callback);
   }
 };
 
@@ -100,9 +71,9 @@ TransferQueue.prototype.cacheDownload = function(fsFile, copyName, start, callba
   if (self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, start: start, type: "download"})) {
     // If already cached, don't do it again
     callback();
-    return;
+  } else {
+    self.collection.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, start: start, type: "download"}, callback);
   }
-  self.collection.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, start: start, type: "download"}, callback);
 };
 
 TransferQueue.prototype.addDownloadedData = function(fsFile, copyName, start, data, callback) {
@@ -184,7 +155,7 @@ var uploadChunk = function(tQueue, fsFile, start, end, added) {
                   });
         });
       });
-      added();
+      //added();
     });
   });
 };
@@ -194,16 +165,15 @@ TransferQueue.prototype.uploadFile = function(fsFile) {
   if (typeof size !== 'number') {
     throw new Error('TransferQueue upload failed: fsFile size not set');
   }
-  console.log('transferQueue: uploadFile');
 
   uploadStartTime = Date.now();
   var chunks = Math.ceil(size / chunkSize), addedChunks = 0;
 
   function chunkAdded() {
-    addedChunks++;
-    if (addedChunks === chunks) {
-      self.queue.run();
-    }
+//    addedChunks++;
+//    if (addedChunks === chunks) {
+//      self.queue.run();
+//    }
   }
 
   for (var chunk = 0; chunk < chunks; chunk++) {
@@ -238,7 +208,7 @@ var downloadChunk = function(tQueue, fsFile, copyName, start, added) {
                   }
                 });
       });
-      added();
+      //added();
     });
   });
 };
@@ -271,14 +241,13 @@ TransferQueue.prototype.downloadFile = function(/* fsFile, copyName */) {
   }
 
   // Load via DDP
-  console.log('transferQueue: downloadFile');
   var chunks = Math.ceil(size / chunkSize), addedChunks = 0;
 
   function chunkAdded() {
-    addedChunks++;
-    if (addedChunks === chunks) {
-      self.queue.run();
-    }
+//    addedChunks++;
+//    if (addedChunks === chunks) {
+//      self.queue.run();
+//    }
   }
 
   for (var chunk = 0; chunk < chunks; chunk++) {
@@ -304,40 +273,6 @@ TransferQueue.prototype.isDownloadingFile = function(fsFile, copyName) {
   return !!self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, type: "download"});
 };
 
-TransferQueue.prototype.isPaused = function() {
-  var self = this;
-  if (self._pausedDeps) {
-    self._pausedDeps.depend();
-  }
-  return self._paused;
-};
-
-TransferQueue.prototype.isRunning = function() {
-  var self = this;
-  if (self._queuePausedDeps) {
-    self._queuePausedDeps.depend();
-  }
-  return !self.queue.paused;
-};
-
-TransferQueue.prototype.pause = function() {
-  var self = this;
-  self.queue.pause();
-  self._paused = true;
-  if (self._pausedDeps) {
-    self._pausedDeps.changed();
-  }
-};
-
-TransferQueue.prototype.resume = function() {
-  var self = this;
-  self.queue.run();
-  self._paused = false;
-  if (self._pausedDeps) {
-    self._pausedDeps.changed();
-  }
-};
-
 TransferQueue.prototype.cancel = function() {
   var self = this;
   self.queue.reset();
@@ -346,18 +281,12 @@ TransferQueue.prototype.cancel = function() {
   } else {
     self.collection.remove({type: "download"});
   }
-  self._paused = false;
-  if (self._pausedDeps) {
-    self._pausedDeps.changed();
-  }
 };
 
-// Reactive status percent for the queue in total
+// Reactive status percent for the queue in total or a
+// specific file
 TransferQueue.prototype.progress = function(fsFile, copyName) {
   var self = this;
-  if (self._progressPercentDeps) {
-    self._progressPercentDeps.depend();
-  }
   if (fsFile) {
     if (self.isUploadQueue) {
       var totalChunks = Math.ceil(fsFile.size / chunkSize);
@@ -372,6 +301,6 @@ TransferQueue.prototype.progress = function(fsFile, copyName) {
       return Math.round(downloadedChunks / totalChunks * 100);
     }
   } else {
-    return self._progressPercent;
+    return self.queue.progress();
   }
 };
