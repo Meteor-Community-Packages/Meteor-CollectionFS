@@ -39,7 +39,6 @@ FS.GridFSStore = function(name) {
           r++;
         }
       }
-
       callback(null, result);
     },
     getBytes: function(id, start, end, callback) {
@@ -56,7 +55,7 @@ FS.GridFSStore = function(name) {
       while (current <= last) {
         chunk = chunksCollection.findOne({files_id: id, n: current});
         if (!chunk || !chunk.data) {
-          callback(new Error("GridFS corrupt chunk data"));
+          callback(new Error("GridFS corrupt chunk data for chunk " + current));
           return;
         }
         data = chunk.data;
@@ -70,6 +69,7 @@ FS.GridFSStore = function(name) {
             break;
           }
         }
+        current++;
       }
       callback(null, result);
     },
