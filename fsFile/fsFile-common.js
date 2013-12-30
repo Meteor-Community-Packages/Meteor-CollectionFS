@@ -129,75 +129,52 @@ FS.File.prototype.remove = function() {
   return count;
 };
 
-// Client: Downloads the binary data for the copy and then saves it
-// Server: Returns the Buffer data for the copy (synchronous) or passes it to an optional callback
-FS.File.prototype.get = function(/* copyName, start, end, callback */) {
+// Client: Instructs the DownloadTransferQueue to begin downloading the file copy
+// Server: Returns the Buffer data for the copy
+FS.File.prototype.get = function(/* copyName, start, end*/) {
   var self = this;
   var args = parseArguments(arguments,
-          [["copyName"], ["start"], ["end"], ["callback"]],
-          [String, Number, Number, Function]);
+          [["copyName"], ["start"], ["end"]],
+          [String, Number, Number]);
   if (args instanceof Error)
     throw args;
-  var copyName = args.copyName,
-          callback = args.callback,
-          start = args.start,
-          end = args.end,
-          partial = false;
-  if (start instanceof Number && end instanceof Number) {
-    partial = true;
-  }
-  
+  var copyName = args.copyName;
+  var start = args.start;
+  var end = args.end;
+  var partial = (typeof start === "number" && typeof end === "number");
+
   if (typeof copyName !== "string") {
     copyName = "_master";
   }
+  
 
   // On the client we download the file via transfer queue
   if (Meteor.isClient) {
     FS.downloadQueue.downloadFile(self, copyName);
-  } else if (Meteor.isServer) {
+  }
+
+  // On server we contact the storage adapter
+  else if (Meteor.isServer) {
     return self.useCollection('FS.File.get', function() {
       var store = this.getStoreForCopy(copyName);
 
       if (typeof store === 'undefined' || store === null) {
-        return handleError(callback, 'FS.File.get could not find "' + copyName + '" Storage Adapter on FS.Collection "' + this.name + '"');
+        throw new Error('FS.File.get could not find "' + copyName + '" Storage Adapter on FS.Collection "' + this.name + '"');
       }
 
-      // On server we contact the storage adapter
-      if (callback) {
-        if (partial) {
-          if (!(typeof store.getBytes === "function")) {
-            callback(new Error('FS.File.get storage adapter for "' + copyName + '" does not support partial retrieval'));
-            return;
-          }
-          store.getBytes(self, start, end, {copyName: copyName}, function(err, bytesRead, buffer) {
-            if (buffer) {
-              buffer = bufferToBinary(buffer);
-            }
-            callback(err, bytesRead, buffer);
-          });
-        } else {
-          store.getBuffer(self, {copyName: copyName}, function(err, buffer) {
-            if (buffer) {
-              buffer = bufferToBinary(buffer);
-            }
-            callback(err, buffer);
-          });
+      if (partial) {
+        if (!(typeof store.getBytes === "function")) {
+          throw new Error('FS.File.get: storage adapter for "' + copyName + '" does not support partial retrieval');
         }
+        end = (end > self.size - 1) ? self.size : end;
+        var buffer = store.getBytes(self, start, end, {copyName: copyName});
+        return bufferToBinary(buffer);
       } else {
-        if (partial) {
-          if (!(typeof store.getBytes === "function")) {
-            throw new Error('FS.File.get storage adapter for "' + copyName + '" does not support partial retrieval');
-          }
-          //if callback is undefined, getBuffer will be synchrononous
-          var buffer = store.getBytes(self, start, end, {copyName: copyName});
-          return bufferToBinary(buffer);
-        } else {
-          //if callback is undefined, getBuffer will be synchrononous
-          var buffer = store.getBuffer(self, {copyName: copyName});
-          return bufferToBinary(buffer);
-        }
+        var buffer = store.getBuffer(self, {copyName: copyName});
+        return bufferToBinary(buffer);
       }
-    }, callback);
+
+    });
   }
 };
 
@@ -205,7 +182,7 @@ FS.File.prototype.get = function(/* copyName, start, end, callback */) {
 // use authentication on client set auth to true or token
 FS.File.prototype.url = function(copyName, auth, download) {
   var self = this;
-  
+
   if (typeof copyName !== "string") {
     copyName = "_master";
   }
@@ -250,7 +227,6 @@ FS.File.prototype.downloadUrl = function(copyName, auth) {
 };
 
 FS.File.prototype.put = function(callback) {
-  console.log('PUT---------');
   var self = this;
 
   callback = callback || defaultCallback;

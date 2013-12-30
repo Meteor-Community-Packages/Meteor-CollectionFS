@@ -129,7 +129,7 @@ var downloadChunk = function(tQueue, fsFile, copyName, start) {
       tQueue.queue.add(function(complete) {
         console.log("downloading bytes starting from " + start);
         Meteor.apply(collection.methodName + '/get',
-                [fsFile, copyName, start],
+                [fsFile, copyName, start, start + chunkSize],
                 function(err, data) {
                   if (err) {
                     complete();
