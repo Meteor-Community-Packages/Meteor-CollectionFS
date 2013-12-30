@@ -1,9 +1,9 @@
 if (Meteor.isClient) {
   // There is a single uploads transfer queue per client (not per CFS)
-  FS.downloadQueue = new TransferQueue();
+  FS.downloadQueue = new DownloadTransferQueue();
 
   // There is a single downloads transfer queue per client (not per CFS)
-  FS.uploadQueue = new TransferQueue(true);
+  FS.uploadQueue = new UploadTransferQueue();
 }
 
 FS.File = function(ref) {

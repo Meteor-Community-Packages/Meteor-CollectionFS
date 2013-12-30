@@ -140,10 +140,6 @@ Client <---- (ddp/http) --- | CFS access point |
 
 There are two transfer queues, one for uploads and one for downloads,
 because that made some of the progress reactivity stuff easier.
-They are just two separate instances of a TransferQueue, so it's a bit strange
-in that TransferQueue includes code for both uploads and downloads,
-but each instance only uses one or the other. There might be some less
-confusing way to do that.
 
 The TransferQueue looks at the file size on the client and automatically
 decides whether to do chunked upload/download vs. a single DDP call.
