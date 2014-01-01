@@ -116,7 +116,6 @@ var Images = new FS.Collection("images");
 
 ```js
 var Images = new FS.Collection("images", {
-  useHTTP: true,
   store: new FS.FileSystemStore("images", "~/uploads")
 });
 ```
@@ -315,10 +314,17 @@ package, which provides
 several helpers to easily display `FS.File` information, create file inputs,
 create download or delete buttons, show file transfer progress, and more.
 
-## FS.File Reference
+## Custom Connections
 
-TODO
+To use a custom DDP connection for uploads or downloads, override the default
+transfer queue with your own, passing in your custom connection:
 
-## FS.Collection Reference
+```js
+if (Meteor.isClient) {
+  // There is a single uploads transfer queue per client (not per FS.Collection)
+  FS.downloadQueue = new DownloadTransferQueue({ connection: DDP.connect(myUrl) });
 
-TODO
+  // There is a single downloads transfer queue per client (not per FS.Collection)
+  FS.uploadQueue = new UploadTransferQueue({ connection: DDP.connect(myUrl) });
+}
+```
