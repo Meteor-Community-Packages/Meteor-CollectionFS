@@ -9,7 +9,7 @@ FS.Collection = function(name, options) {
 
   self.options = {
     useDDP: true,
-    useHTTP: false,
+    useHTTP: true,
     accessPoints: {
       DDP: null, //will set to default below
       HTTP: null //will set to default below
