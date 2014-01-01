@@ -3,10 +3,12 @@
  */
 
 var chunkSize = 0.5 * 1024 * 1024; // 0.5MB; can be changed
-var uploadStartTime; // for testing
 
-UploadTransferQueue = function() {
+UploadTransferQueue = function(opts) {
   var self = this, name = 'UploadTransferQueue';
+  opts = opts || {};
+  self.connection = opts.connection || DDP.connect(Meteor.connection._stream.rawUrl);
+  
   self.queue = new PowerQueue({
     name: name
   });
@@ -27,7 +29,6 @@ UploadTransferQueue.prototype.uploadFile = function(fsFile) {
     throw new Error('TransferQueue upload failed: fsFile size not set');
   }
 
-  uploadStartTime = Date.now();
   var chunks = Math.ceil(size / chunkSize);
 
   for (var chunk = 0; chunk < chunks; chunk++) {
@@ -95,7 +96,7 @@ var uploadChunk = function(tQueue, fsFile, start, end) {
             throw err;
           }
           var b = new Date;
-          Meteor.apply(collection.methodName + '/put',
+          tQueue.connection.apply(collection.methodName + '/put',
                   [fsFile, data, start],
                   function(err) {
                     var e = new Date;
@@ -121,7 +122,6 @@ var markChunkUploaded = function(col, fsFile, start, callback) {
       var totalChunks = Math.ceil(fsFile.size / chunkSize);
       var doneChunks = col.find({fileId: fsFile._id, collectionName: fsFile.collectionName, done: true});
       if (totalChunks === doneChunks.count()) {
-        console.log("Upload finished after", (((new Date).getTime()) - uploadStartTime), "ms");
         unCacheUpload(col, fsFile, callback);
       } else {
         callback();

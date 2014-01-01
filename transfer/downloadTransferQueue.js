@@ -5,8 +5,11 @@
 var chunkSize = 0.5 * 1024 * 1024; // 0.5MB; can be changed
 var cachedChunks = {};
 
-DownloadTransferQueue = function() {
+DownloadTransferQueue = function(opts) {
   var self = this, name = 'DownloadTransferQueue';
+  opts = opts || {};
+  self.connection = opts.connection || DDP.connect(Meteor.connection._stream.rawUrl);
+  
   self.queue = new PowerQueue({
     name: name
   });
@@ -128,7 +131,7 @@ var downloadChunk = function(tQueue, fsFile, copyName, start) {
     cacheDownload(tQueue.collection, fsFile, copyName, start, function(err) {
       tQueue.queue.add(function(complete) {
         console.log("downloading bytes starting from " + start);
-        Meteor.apply(collection.methodName + '/get',
+        tQueue.connection.apply(collection.methodName + '/get',
                 [fsFile, copyName, start, start + chunkSize],
                 function(err, data) {
                   if (err) {
