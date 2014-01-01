@@ -180,14 +180,15 @@ FS.File.prototype.get = function(/* copyName, start, end*/) {
 
 // Return the http url for getting the file - on server set auth if wanting to
 // use authentication on client set auth to true or token
-FS.File.prototype.url = function(copyName, auth, download) {
-  var self = this;
+FS.File.prototype.url = function(options) {
+  var self = this, options = options || {};
+  options = _.extend({
+    copy: "_master",
+    auth: null,
+    download: false
+  }, options.hash || options); // check for "hash" prop if called as helper
 
-  if (typeof copyName !== "string") {
-    copyName = "_master";
-  }
-
-  if (!self.hasCopy(copyName)) {
+  if (!self.hasCopy(options.copy)) {
     return null;
   }
 
@@ -198,11 +199,11 @@ FS.File.prototype.url = function(copyName, auth, download) {
     var authToken = '';
 
     // TODO: Could we somehow figure out if the collection requires login?
-    if (typeof auth !== 'undefined') {
-      if (auth === true) {
+    if (options.auth) {
+      if (options.auth === true) {
         authToken = (typeof Accounts !== "undefined" && Accounts._storedLoginToken()) || '';
       } else {
-        authToken = auth || '';
+        authToken = options.auth || '';
       }
 
       if (authToken !== '') {
@@ -212,9 +213,9 @@ FS.File.prototype.url = function(copyName, auth, download) {
     }
 
     // Construct the http method url
-    var urlPrefix = (download) ? '/download/' : '/';
-    if (copyName && copyName !== "_master") {
-      return this.httpUrl + urlPrefix + self._id + '/' + copyName + authToken;
+    var urlPrefix = (options.download) ? '/download/' : '/';
+    if (options.copy && options.copy !== "_master") {
+      return this.httpUrl + urlPrefix + self._id + '/' + options.copy + authToken;
     } else {
       return this.httpUrl + urlPrefix + self._id + authToken;
     }
@@ -222,8 +223,11 @@ FS.File.prototype.url = function(copyName, auth, download) {
 };
 
 // Construct a download url
-FS.File.prototype.downloadUrl = function(copyName, auth) {
-  return FS.File.prototype.url.call(this, copyName, auth, true);
+FS.File.prototype.downloadUrl = function(options) {
+  options = options || {};
+  options = options.hash || options;
+  options.download = true;
+  return FS.File.prototype.url.call(this, options);
 };
 
 FS.File.prototype.put = function(callback) {
