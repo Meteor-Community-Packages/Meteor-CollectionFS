@@ -328,3 +328,11 @@ if (Meteor.isClient) {
   FS.uploadQueue = new UploadTransferQueue({ connection: DDP.connect(myUrl) });
 }
 ```
+
+## Drag and Drop
+
+Easily insert dropped files into an FS.Collection with the acceptDropsOn method:
+
+Images.acceptDropsOn("myTemplate", "div.imageDropArea", {owner: Meteor.userId()}, function (err, res) {
+  res && console.log("Inserted dropped image. New ID is", res);
+});
