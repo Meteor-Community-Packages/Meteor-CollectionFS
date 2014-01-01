@@ -71,8 +71,13 @@ Here is a [live example](http://collectionfs.meteor.com/) of a file manager app 
 First, install Meteorite from [atmosphere.meteor.com](https://atmosphere.meteor.com) if you haven't already. Meteorite is a Meteor package manager that allows you to install many unofficial packages, including CollectionFS.
 
 Then:
+```bash
+$ mrt add collectionFS
 ```
-mrt add collectionFS
+
+If you want to access files saved to the filesystem by URL, you must also add the `cfs-public-folder` package:
+```bash
+$ mrt add cfs-public-folder
 ```
 
 ###Step 2: Create a CollectionFS Model (client and server)
@@ -504,6 +509,8 @@ ContactsFS = new CollectionFS('contacts', { maxFilehandlers: 1 });
 ```
 
 ###Filehandler Examples
+
+NOTE: One example below uses ImageMagick and another uses GraphicsMagick. To use the ImageMagick example, you must install the [ImageMagick](http://www.imagemagick.org/script/index.php) application on your server or development machine, and then run `mrt add imagemagick`. To use the GraphicsMagick example, you must install the [GraphicsMagick](http://www.graphicsmagick.org/) application on your server or development machine, and then run `mrt add graphicsmagick`.
 
 ```js
 Filesystem.fileHandlers({
