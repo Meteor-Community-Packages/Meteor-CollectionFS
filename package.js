@@ -10,7 +10,7 @@ Npm.depends({
 Package.on_use(function(api) {
   "use strict";
   
-  api.use(['deps', 'underscore', 'check', 'mongo-livedata',
+  api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata',
     'ejson', 'collection-hooks', 'http-methods', 'power-queue']);
   if (api.export) {
     api.export('FS');
