@@ -11,20 +11,22 @@ var APUpload = function(fsFile, data, start) {
   if (typeof collection === 'undefined' || collection === null) {
     throw new Meteor.Error(500, "FS.File has no collection");
   }
-
-  // Call user validators; use the "insert" validators
-  // since uploading is part of insert.
-  // Any deny returns true means denied.
-  if (_.any(collection.files._validators.insert.deny, function(validator) {
-    return validator(self.userId, fsFile);
-  })) {
-    throw new Meteor.Error(403, "Access denied");
-  }
-  // Any allow returns true means proceed. Throw error if they all fail.
-  if (_.all(collection.files._validators.insert.allow, function(validator) {
-    return !validator(self.userId, fsFile);
-  })) {
-    throw new Meteor.Error(403, "Access denied");
+  
+  if (typeof Package !== 'object' || !Package.insecure) {
+    // Call user validators; use the "insert" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(collection.files._validators.insert.deny, function(validator) {
+      return validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(collection.files._validators.insert.allow, function(validator) {
+      return !validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
   }
 
   fsFile.reload(); //update properties from the linked server collection
@@ -62,20 +64,22 @@ var APDownload = function(fsFile, copyName, start, end) {
   if (typeof collection === 'undefined' || collection === null) {
     throw new Meteor.Error(500, "FS.File has no collection");
   }
-
-  // Call user validators; use the custom "download" validators
-  // since uploading is part of insert.
-  // Any deny returns true means denied.
-  if (_.any(collection._validators.download.deny, function(validator) {
-    return validator(self.userId, fsFile);
-  })) {
-    throw new Meteor.Error(403, "Access denied");
-  }
-  // Any allow returns true means proceed. Throw error if they all fail.
-  if (_.all(collection._validators.download.allow, function(validator) {
-    return !validator(self.userId, fsFile);
-  })) {
-    throw new Meteor.Error(403, "Access denied");
+  
+  if (typeof Package !== 'object' || !Package.insecure) {
+    // Call user validators; use the custom "download" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(collection._validators.download.deny, function(validator) {
+      return validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(collection._validators.download.allow, function(validator) {
+      return !validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
   }
 
   return fsFile.get(copyName, start, end);
@@ -93,19 +97,21 @@ var APDelete = function(fsFile) {
     throw new Meteor.Error(500, "FS.File has no collection");
   }
 
-  // Call user validators; use the "remove" validators
-  // since uploading is part of insert.
-  // Any deny returns true means denied.
-  if (_.any(collection.files._validators.remove.deny, function(validator) {
-    return validator(self.userId, fsFile);
-  })) {
-    throw new Meteor.Error(403, "Access denied");
-  }
-  // Any allow returns true means proceed. Throw error if they all fail.
-  if (_.all(collection.files._validators.remove.allow, function(validator) {
-    return !validator(self.userId, fsFile);
-  })) {
-    throw new Meteor.Error(403, "Access denied");
+  if (typeof Package !== 'object' || !Package.insecure) {
+    // Call user validators; use the "remove" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(collection.files._validators.remove.deny, function(validator) {
+      return validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(collection.files._validators.remove.allow, function(validator) {
+      return !validator(self.userId, fsFile);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
   }
 
   return fsFile.remove();
