@@ -181,7 +181,8 @@ FS.File.prototype.get = function(/* copyName, start, end*/) {
 // Return the http url for getting the file - on server set auth if wanting to
 // use authentication on client set auth to true or token
 FS.File.prototype.url = function(options) {
-  var self = this, options = options || {};
+  var self = this;
+  options = options || {};
   options = _.extend({
     copy: "_master",
     auth: null,
