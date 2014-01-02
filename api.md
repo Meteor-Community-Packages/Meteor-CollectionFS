@@ -1,4 +1,3 @@
--
 
 ## <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ##
 -
@@ -46,6 +45,7 @@ images.acceptDropsOn('hello', '#dropzone');
 ```
 
 > ```FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadata) { ...``` [fsCollection/api.client.js:99](fsCollection/api.client.js#L99)
+
 -
 
 ## <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ##
@@ -80,3 +80,5 @@ images.acceptUploadFrom('hello', '#files');
 ```
 
 > ```FS.Collection.prototype.acceptUploadFrom = function(templateName, selector, metadata) { ...``` [fsCollection/api.client.js:154](fsCollection/api.client.js#L154)
+
+-
