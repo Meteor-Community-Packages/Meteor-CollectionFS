@@ -1,5 +1,5 @@
 
-## <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ##
+#### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 
 __Arguments__
 
@@ -45,7 +45,7 @@ images.acceptDropsOn('hello', '#dropzone');
 
 > ```FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadata) { ...``` [fsCollection/api.client.js:99](fsCollection/api.client.js#L99)
 
-## <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ##
+#### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 
 __Arguments__
 
