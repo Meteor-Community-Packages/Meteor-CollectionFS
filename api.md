@@ -1,5 +1,5 @@
 
-## <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ##
+#### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
 
 __Arguments__
@@ -48,7 +48,7 @@ images.acceptDropsOn('hello', '#dropzone');
 
 -
 
-## <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ##
+#### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
 
 __Arguments__
