@@ -211,6 +211,7 @@ window.saveAs = window.saveAs
 	view.addEventListener("unload", process_deletion_queue, false);
 	return saveAs;
 }(self));
+-
 
 
 ---
@@ -220,6 +221,7 @@ window.saveAs = window.saveAs
 -
 
 #### <a name="_eventCallback"></a>_eventCallback(templateName, selector, dataContext, evt, temp, fsFile)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+-
 *This method is private*
 
 __Arguments__
@@ -242,6 +244,7 @@ File that triggered the event
 > ```var _eventCallback = function(templateName, selector, dataContext, evt, temp, fsFile) { ...``` [fsCollection/api.client.js:10](fsCollection/api.client.js#L10)
 
 #### <a name="_eachFile"></a>_eachFile(files, metadata, callback)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+-
 *This method is private*
 
 __Arguments__
@@ -258,6 +261,7 @@ Function to pass the prepared `FS.File` object
 > ```var _eachFile = function(files, metadata, callback) { ...``` [fsCollection/api.client.js:36](fsCollection/api.client.js#L36)
 
 #### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+-
 
 __Arguments__
 
@@ -304,6 +308,7 @@ images.acceptDropsOn('hello', '#dropzone');
 > ```FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadata) { ...``` [fsCollection/api.client.js:99](fsCollection/api.client.js#L99)
 
 #### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+-
 
 __Arguments__
 
@@ -353,5 +358,6 @@ attempting to write multiple incoming chunks to different positions in a
 single temporary file, which can lead to write conflicts.
 Using temp files also allows us to easily resume uploads, even if the server 
 restarts, and to keep the working memory clear.
+-
 
 > ```TempStore = { ...``` [tempStore.js:16](tempStore.js#L16)
