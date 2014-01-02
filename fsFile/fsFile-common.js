@@ -111,7 +111,7 @@ FS.File.prototype.update = function(modifier, options, callback) {
   });
 };
 
-// Remove the file TODO: self destruct?
+// Remove the file
 FS.File.prototype.remove = function() {
   var self = this;
   var count;
