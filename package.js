@@ -9,10 +9,9 @@ Npm.depends({
 
 Package.on_use(function(api) {
   "use strict";
-  api.use(['collectionFS'], 'server');
-  api.add_files([
-    'filesystem.js'
-  ], 'server');
+  api.use('collectionFS');
+  api.add_files('filesystem.js', 'server');
+  api.add_files('filesystem.client.js', 'client');
 });
 
 Package.on_test(function(api) {
