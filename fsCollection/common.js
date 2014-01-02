@@ -93,14 +93,20 @@ FS.Collection = function(name, options) {
 
   var collectionName = name + '.files';
 
-  // Create the ".files" and use fsFile
-  self.files = new Meteor.Collection(collectionName, {
+  var _filesOptions = {
     transform: function(doc) {
       var result = new FS.File(doc);
       result.collectionName = collectionName;
       return result;
     }
-  });
+  };
+  // Create the ".files" and use fsFile
+  if (Package.join) {
+    // We support Join if used in the app
+    self.files = new Join.Collection(collectionName, _filesOptions);
+  } else {
+    self.files = new Meteor.Collection(collectionName, _filesOptions);
+  }
 
   // For storing custom allow/deny functions
   self._validators = {

@@ -12,6 +12,10 @@ Package.on_use(function(api) {
   
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata',
     'ejson', 'collection-hooks', 'http-methods', 'power-queue']);
+
+  // Make a weak dependency to support Join for joining data
+  api.use(['join'], { weak: true });
+  
   if (api.export) {
     api.export('FS');
   }
