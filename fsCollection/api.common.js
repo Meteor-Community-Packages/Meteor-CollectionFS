@@ -42,7 +42,7 @@ FS.Collection.prototype.insert = function(doc, callback) {
   }
 
   // We return the FS.File
-  return doc;
+  return fileObj;
 };
 
 // Call update on files collection
