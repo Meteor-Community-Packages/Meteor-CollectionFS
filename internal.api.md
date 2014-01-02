@@ -3,7 +3,7 @@
 
 -
 
-#### <a name=""></a>&nbsp;&nbsp;<sub><i>undefined</i></sub> ####
+### <a name=""></a>&nbsp;&nbsp;<sub><i>undefined</i></sub> ###
 FileSaver.js
 A saveAs() FileSaver implementation.
 2013-01-23
@@ -220,7 +220,7 @@ window.saveAs = window.saveAs
 
 -
 
-#### <a name="_eventCallback"></a>_eventCallback(templateName, selector, dataContext, evt, temp, fsFile)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+### <a name="_eventCallback"></a>_eventCallback(templateName, selector, dataContext, evt, temp, fsFile)&nbsp;&nbsp;<sub><i>Client</i></sub> ###
 -
 *This method is private*
 
@@ -243,7 +243,7 @@ File that triggered the event
 
 > ```var _eventCallback = function(templateName, selector, dataContext, evt, temp, fsFile) { ...``` [fsCollection/api.client.js:10](fsCollection/api.client.js#L10)
 
-#### <a name="_eachFile"></a>_eachFile(files, metadata, callback)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+### <a name="_eachFile"></a>_eachFile(files, metadata, callback)&nbsp;&nbsp;<sub><i>Client</i></sub> ###
 -
 *This method is private*
 
@@ -260,7 +260,7 @@ Function to pass the prepared `FS.File` object
 
 > ```var _eachFile = function(files, metadata, callback) { ...``` [fsCollection/api.client.js:36](fsCollection/api.client.js#L36)
 
-#### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ###
 -
 
 __Arguments__
@@ -307,7 +307,7 @@ images.acceptDropsOn('hello', '#dropzone');
 
 > ```FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadata) { ...``` [fsCollection/api.client.js:99](fsCollection/api.client.js#L99)
 
-#### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ###
 -
 
 __Arguments__
@@ -347,7 +347,7 @@ images.acceptUploadFrom('hello', '#files');
 
 -
 
-#### <a name="TempStore"></a>TempStore {any}&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+### <a name="TempStore"></a>TempStore {any}&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 Temporary storage is used for chunked uploads until all chunks are received
 and all copies have been made or given up. In some cases, the original file
 is stored only in temporary storage (for example, if all copies do some
