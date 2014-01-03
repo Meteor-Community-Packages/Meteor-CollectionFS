@@ -4,6 +4,7 @@
 -
 
 #### <a name=""></a>&nbsp;&nbsp;<sub><i>undefined</i></sub> ####
+```
 FileSaver.js
 A saveAs() FileSaver implementation.
 2013-01-23
@@ -211,6 +212,7 @@ window.saveAs = window.saveAs
 	view.addEventListener("unload", process_deletion_queue, false);
 	return saveAs;
 }(self));
+```
 -
 
 -
@@ -233,10 +235,6 @@ window.saveAs = window.saveAs
 > ```FS.File.prototype.reload = function() { ...``` [fsFile/fsFile-common.js:68](fsFile/fsFile-common.js#L68)
 
 -
-
--
-Since the client can't block and we need to update self after being
-sure the update went through, we need a callback
 
 -
 Client: Instructs the DownloadTransferQueue to begin downloading the file copy
@@ -263,10 +261,6 @@ Should headers be set to force a download
 -
 Return the http url for getting the file - on server set auth if wanting to
 use authentication on client set auth to true or token
-
--
-check for "hash" prop if called as helper
-We check if the copy is found
 
 #### <a name="FS.File.prototype.downloadUrl"></a>FS.File.prototype.downloadUrl([options], [auth])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
@@ -309,10 +303,6 @@ fo.put(function(err, id) {
 > ```FS.File.prototype.put = function(callback) { ...``` [fsFile/fsFile-common.js:264](fsFile/fsFile-common.js#L264)
 
 -
-
--
-Force bytesUploaded to be equal to the file size in case
-this was a server insert or a non-chunked client upload.
 
 #### <a name="FS.File.prototype.getExtension"></a>FS.File.prototype.getExtension()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
@@ -505,6 +495,7 @@ images.acceptUploadFrom('hello', '#files');
 -
 
 #### <a name="TempStore"></a>TempStore {any}&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+```
 Temporary storage is used for chunked uploads until all chunks are received
 and all copies have been made or given up. In some cases, the original file
 is stored only in temporary storage (for example, if all copies do some
@@ -515,6 +506,7 @@ attempting to write multiple incoming chunks to different positions in a
 single temporary file, which can lead to write conflicts.
 Using temp files also allows us to easily resume uploads, even if the server 
 restarts, and to keep the working memory clear.
+```
 -
 
 > ```TempStore = { ...``` [tempStore.js:16](tempStore.js#L16)

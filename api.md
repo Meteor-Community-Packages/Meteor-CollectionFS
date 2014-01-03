@@ -12,10 +12,6 @@
 -
 
 -
-Since the client can't block and we need to update self after being
-sure the update went through, we need a callback
-
--
 Client: Instructs the DownloadTransferQueue to begin downloading the file copy
 Server: Returns the Buffer data for the copy
 
@@ -40,10 +36,6 @@ Should headers be set to force a download
 -
 Return the http url for getting the file - on server set auth if wanting to
 use authentication on client set auth to true or token
-
--
-check for "hash" prop if called as helper
-We check if the copy is found
 
 #### <a name="FS.File.prototype.downloadUrl"></a>FS.File.prototype.downloadUrl([options], [auth])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
@@ -86,10 +78,6 @@ fo.put(function(err, id) {
 > ```FS.File.prototype.put = function(callback) { ...``` [fsFile/fsFile-common.js:264](fsFile/fsFile-common.js#L264)
 
 -
-
--
-Force bytesUploaded to be equal to the file size in case
-this was a server insert or a non-chunked client upload.
 
 #### <a name="FS.File.prototype.getExtension"></a>FS.File.prototype.getExtension()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
