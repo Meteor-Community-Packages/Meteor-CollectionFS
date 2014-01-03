@@ -1,6 +1,12 @@
+/** @method FS.Collection.prototype.insert Insert `file` or `FS.File` into collection
+  * @param {FS.File|File} fileRef File data reference
+  * @param {function} [callback] Callback `function(error, fileObj)`
+  * @returns {FS.File} The `file object`
+  * [Meteor docs](http://docs.meteor.com/#insert)
+  */  
   // Collection Wrappers
   // Call insert on files collection
-FS.Collection.prototype.insert = function(doc, callback) {
+FS.Collection.prototype.insert = function(fileRef, callback) {
   console.log('FS.Collection insert-------------');
   var self = this;
   var fileObj;
@@ -15,7 +21,7 @@ FS.Collection.prototype.insert = function(doc, callback) {
       console.log('Insert callback result:', id);
       if (err) {
         if (typeof callback === 'function') {
-          callback(err, id);
+          callback(err, fileObj);
         } else {
           throw err;
         }
@@ -25,12 +31,12 @@ FS.Collection.prototype.insert = function(doc, callback) {
     });
   };
 
-  if (doc instanceof FS.File) {
-    fileObj = doc;
+  if (fileRef instanceof FS.File) {
+    fileObj = fileRef;
     doInsert();
-  } else if (Meteor.isClient && typeof File !== "undefined" && doc instanceof File) {
+  } else if (Meteor.isClient && typeof File !== "undefined" && fileRef instanceof File) {
     // For convenience, allow File to be passed directly on the client
-    fileObj = new FS.File(doc);
+    fileObj = new FS.File(fileRef);
     doInsert();
   } else {
     var e = new Error('FS.Collection insert expects FS.File');
@@ -45,6 +51,12 @@ FS.Collection.prototype.insert = function(doc, callback) {
   return fileObj;
 };
 
+/** @method FS.Collection.prototype.update Update the file record
+  * @param {FS.File|object} selector
+  * @param {object} modifier
+  * @param {object} options
+  * [Meteor docs](http://docs.meteor.com/#update)
+  */
 // Call update on files collection
 FS.Collection.prototype.update = function(selector, modifier, options) {
   var self = this;
@@ -52,7 +64,7 @@ FS.Collection.prototype.update = function(selector, modifier, options) {
     // We use the FS.File handle and makes sure the file belongs to this
     // FS.Collection
     if (selector.collectionName === self.files._name) {
-      selector.update(modifier, options);
+      return selector.update(modifier, options);
     } else {
       // User tried to save a file in the wrong FS.Collection
       throw new Error('FS.Collection cannot update file belongs to: "' + selector.collectionName + '" not: "' + self.files._name + '"');
@@ -63,6 +75,12 @@ FS.Collection.prototype.update = function(selector, modifier, options) {
   }
 };
 
+/** @method FS.Collection.prototype.update Update the file record
+  * @param {FS.File|object} selector
+  * @param {object} modifier
+  * @param {object} options
+  * [Meteor docs](http://docs.meteor.com/#remove)
+  */
 // Call remove on files collection
 FS.Collection.prototype.remove = function(selector, callback) {
   var self = this;
@@ -77,6 +95,7 @@ FS.Collection.prototype.remove = function(selector, callback) {
 
 /** @method FS.Collection.prototype.findOne
   * @param {[selector](http://docs.meteor.com/#selectors)} selector
+  * [Meteor docs](http://docs.meteor.com/#findone)
   * Example:
 ```js
   var images = new FS.Collection( ... );
@@ -92,6 +111,7 @@ FS.Collection.prototype.findOne = function(selector) {
 
 /** @method FS.Collection.prototype.find
   * @param {[selector](http://docs.meteor.com/#selectors)} selector
+  * [Meteor docs](http://docs.meteor.com/#find)
   * Example:
 ```js
   var images = new FS.Collection( ... );
@@ -106,12 +126,13 @@ FS.Collection.prototype.find = function(selector) {
 };
 
 /** @method FS.Collection.prototype.allow
-  * @param {[options](http://docs.meteor.com/#allow)} options
+  * @param {object} options
   * @param {function} options.download Function that checks if the file contents may be downloaded
   * @param {function} options.insert
   * @param {function} options.update
   * @param {function} options.remove Functions that look at a proposed modification to the database and return true if it should be allowed
   * @param {[string]} [options.fetch] Optional performance enhancement. Limits the fields that will be fetched from the database for inspection by your update and remove functions
+  * [Meteor docs](http://docs.meteor.com/#allow)
   * Example:
 ```js
   var images = new FS.Collection( ... );
@@ -139,6 +160,26 @@ FS.Collection.prototype.allow = function(options) {
   return self.files.allow.call(self.files, options);
 };
 
+/** @method FS.Collection.prototype.deny
+  * @param {object} options
+  * @param {function} options.download Function that checks if the file contents may be downloaded
+  * @param {function} options.insert
+  * @param {function} options.update
+  * @param {function} options.remove Functions that look at a proposed modification to the database and return true if it should be denyed
+  * @param {[string]} [options.fetch] Optional performance enhancement. Limits the fields that will be fetched from the database for inspection by your update and remove functions
+  * [Meteor docs](http://docs.meteor.com/#deny)
+  * Example:
+```js
+  var images = new FS.Collection( ... );
+  // Get the all file objects
+  var files = images.deny({
+    insert: function(userId, doc) { return true; },
+    update: function(userId, doc, fields, modifier) { return true; },
+    remove: function(userId, doc) { return true; },
+    download: function(userId, fileObj) { return true; },
+  });
+```
+  */
 FS.Collection.prototype.deny = function(options) {
   var self = this;
 

@@ -135,6 +135,23 @@ If the copy exists or not
 
 ---
 
+#### <a name="FS.Collection.prototype.insert"></a>*fsCollection*.insert(fileRef, [callback])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __insert__ is defined in `prototype` of `FS.Collection`*
+
+__Arguments__
+
+* __fileRef__ *{[FS.File](#FS.File)|[File](#File)}*  
+File data reference
+* __callback__ *{function}*    (Optional)
+Callback `function(error, fileObj)`
+
+-
+
+> ```FS.Collection.prototype.insert = function(fileRef, callback) { ...``` [fsCollection/api.common.js:7](fsCollection/api.common.js#L7)
+
+-
+
 #### <a name="FS.Collection.prototype.findOne"></a>*fsCollection*.findOne(selector)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __findOne__ is defined in `prototype` of `FS.Collection`*
@@ -151,7 +168,7 @@ var images = new FS.Collection( ... );
 var fo = images.findOne({ _id: 'NpnskCt6ippN6CgD8' });
 ```
 
-> ```FS.Collection.prototype.findOne = function(selector) { ...``` [fsCollection/api.common.js:88](fsCollection/api.common.js#L88)
+> ```FS.Collection.prototype.findOne = function(selector) { ...``` [fsCollection/api.common.js:92](fsCollection/api.common.js#L92)
 
 -
 
@@ -171,7 +188,7 @@ var images = new FS.Collection( ... );
 var files = images.find({ _id: 'NpnskCt6ippN6CgD8' }).fetch();
 ```
 
-> ```FS.Collection.prototype.find = function(selector) { ...``` [fsCollection/api.common.js:103](fsCollection/api.common.js#L103)
+> ```FS.Collection.prototype.find = function(selector) { ...``` [fsCollection/api.common.js:107](fsCollection/api.common.js#L107)
 
 -
 
@@ -204,7 +221,7 @@ var files = images.allow({
  });
 ```
 
-> ```FS.Collection.prototype.allow = function(options) { ...``` [fsCollection/api.common.js:127](fsCollection/api.common.js#L127)
+> ```FS.Collection.prototype.allow = function(options) { ...``` [fsCollection/api.common.js:131](fsCollection/api.common.js#L131)
 
 -
 
@@ -213,7 +230,7 @@ var files = images.allow({
 
 #### <a name="FS.Collection.acceptDropsOn"></a>*fsCollection*.acceptDropsOn(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
-*This method __acceptDropsOn__ is defined in `prototype` of `FS.Collection`*
+*This method __acceptDropsOn__ is defined in `FS.Collection`*
 
 __Arguments__
 
@@ -263,7 +280,7 @@ images.acceptDropsOn('hello', '#dropzone');
 
 #### <a name="FS.Collection.acceptUploadFrom"></a>*fsCollection*.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
-*This method __acceptUploadFrom__ is defined in `prototype` of `FS.Collection`*
+*This method __acceptUploadFrom__ is defined in `FS.Collection`*
 
 __Arguments__
 
