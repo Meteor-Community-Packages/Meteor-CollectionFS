@@ -54,7 +54,7 @@ var _eachFile = function(files, metadata, callback) {
   }
 };
 
-/** @method FS.Collection.acceptUploadFrom Accept file uploads from element in template
+/** @method FS.Collection.acceptDropsOn Accept file uploads from element in template
   * @param {string} templateName Name of template to apply events on
   * @param {string} selector The element selector eg. "#uploadField"
   * @param {object|function} [metadata] Data/getter to attach to the file objects

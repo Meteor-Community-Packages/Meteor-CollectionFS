@@ -266,7 +266,7 @@ Function to pass the prepared `FS.File` object
 
 -
 
-#### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+#### <a name="FS.Collection.acceptDropsOn"></a>FS.Collection.acceptDropsOn(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
 
 __Arguments__
