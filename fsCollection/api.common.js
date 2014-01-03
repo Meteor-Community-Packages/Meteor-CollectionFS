@@ -75,18 +75,55 @@ FS.Collection.prototype.remove = function(selector, callback) {
   }
 };
 
+/** @method FS.Collection.prototype.findOne
+  * @param {[selector](http://docs.meteor.com/#selectors)} name comment
+  * Example:
+```js
+  var images = new FS.Collection( ... );
+  // Get the file object
+  var fo = images.findOne({ _id: 'NpnskCt6ippN6CgD8' });
+```
+  */
 // Call findOne on files collection
 FS.Collection.prototype.findOne = function(selector) {
   var self = this;
   return self.files.findOne.apply(self.files, arguments);
 };
 
+/** @method FS.Collection.prototype.find
+  * @param {[selector](http://docs.meteor.com/#selectors)} selector
+  * Example:
+```js
+  var images = new FS.Collection( ... );
+  // Get the all file objects
+  var files = images.find({ _id: 'NpnskCt6ippN6CgD8' }).fetch();
+```
+  */
 // Call find on files collection
 FS.Collection.prototype.find = function(selector) {
   var self = this;
   return self.files.find.apply(self.files, arguments);
 };
 
+/** @method FS.Collection.prototype.allow
+  * @param {[selector](http://docs.meteor.com/#selectors)} selector
+  * @param {function} options.download Function that checks if the file contents may be downloaded
+  * @param {function} options.insert
+  * @param {function} options.update
+  * @param {function} options.remove Functions that look at a proposed modification to the database and return true if it should be allowed
+  * @param {[string]} [options.fetch] Optional performance enhancement. Limits the fields that will be fetched from the database for inspection by your update and remove functions
+  * Example:
+```js
+  var images = new FS.Collection( ... );
+  // Get the all file objects
+  var files = images.allow({
+    insert: function(userId, doc) { return true; },
+    update: function(userId, doc, fields, modifier) { return true; },
+    remove: function(userId, doc) { return true; },
+    download: function(userId, fileObj) { return true; },
+  });
+```
+  */
 FS.Collection.prototype.allow = function(options) {
   var self = this;
 

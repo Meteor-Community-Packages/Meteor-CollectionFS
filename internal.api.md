@@ -224,11 +224,12 @@ window.saveAs = window.saveAs
 
 -
 
-#### <a name="FS.File.prototype.reload"></a>FS.File.prototype.reload()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.reload"></a>*fsFile*.reload()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 > __Warning!__
 > This method "FS.File.prototype.reload" has deprecated from the api
 > We should not maintain duplicate data
+*This method __reload__ is defined in `prototype` of `FS.File`*
 > This function is deprecating - but we cannot remove it before all
 > references are updated to use `FS.File.fetch()`
 
@@ -240,8 +241,9 @@ window.saveAs = window.saveAs
 Client: Instructs the DownloadTransferQueue to begin downloading the file copy
 Server: Returns the Buffer data for the copy
 
-#### <a name="FS.File.prototype.url"></a>FS.File.prototype.url([options], [auth], [download])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.url"></a>*fsFile*.url([options], [auth], [download])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
+*This method __url__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
 
@@ -262,11 +264,12 @@ Should headers be set to force a download
 Return the http url for getting the file - on server set auth if wanting to
 use authentication on client set auth to true or token
 
-#### <a name="FS.File.prototype.downloadUrl"></a>FS.File.prototype.downloadUrl([options], [auth])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.downloadUrl"></a>*fsFile*.downloadUrl([options], [auth])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 > __Warning!__
 > This method "FS.File.prototype.downloadUrl" has deprecated from the api
 > Use The hybrid helper `FS.File.url`
+*This method __downloadUrl__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
 
@@ -281,8 +284,9 @@ Wether or not the authenticate
 
 -
 
-#### <a name="FS.File.prototype.put"></a>FS.File.prototype.put([callback])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.put"></a>*fsFile*.put([callback])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
+*This method __put__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
 
@@ -304,8 +308,9 @@ fo.put(function(err, id) {
 
 -
 
-#### <a name="FS.File.prototype.getExtension"></a>FS.File.prototype.getExtension()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.getExtension"></a>*fsFile*.getExtension()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
+*This method __getExtension__ is defined in `prototype` of `FS.File`*
 
 __Returns__  *{string | null}*
 The extension eg.: `jpg`
@@ -318,8 +323,9 @@ __TODO__
 
 -
 
-#### <a name="FS.File.prototype.fetch"></a>FS.File.prototype.fetch()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.fetch"></a>*fsFile*.fetch()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
+*This method __fetch__ is defined in `prototype` of `FS.File`*
 
 __Returns__  *{object}*
 The filerecord
@@ -328,8 +334,9 @@ The filerecord
 
 -
 
-#### <a name="FS.File.prototype.hasCopy"></a>FS.File.prototype.hasCopy(copyName, optimistic)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.hasCopy"></a>*fsFile*.hasCopy(copyName, optimistic)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
+*This method __hasCopy__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
 
@@ -349,6 +356,79 @@ If the copy exists or not
 > copy supplied by the user exists.
 
 > ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:391](fsFile/fsFile-common.js#L391)
+
+-
+
+
+---
+> File: ["fsCollection/api.common.js"](fsCollection/api.common.js)
+> Where: {client|server}
+
+-
+Collection Wrappers
+Call insert on files collection
+
+#### <a name="FS.Collection.prototype.findOne"></a>*fsCollection*.findOne(name)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __findOne__ is defined in `prototype` of `FS.Collection`*
+
+__Arguments__
+
+* __name__ *{[selector](http://docs.meteor.com/#selectors)}*  
+comment
+
+-
+Example:
+```js
+var images = new FS.Collection( ... );
+// Get the file object
+var fo = images.findOne({ _id: 'NpnskCt6ippN6CgD8' });
+```
+
+> ```FS.Collection.prototype.findOne = function(selector) { ...``` [fsCollection/api.common.js:88](fsCollection/api.common.js#L88)
+
+-
+
+#### <a name="FS.Collection.prototype.find"></a>*fsCollection*.find(selector)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __find__ is defined in `prototype` of `FS.Collection`*
+
+__Arguments__
+
+* __selector__ *{[selector](http://docs.meteor.com/#selectors)}*  
+-
+Example:
+```js
+var images = new FS.Collection( ... );
+// Get the all file objects
+var files = images.find({ _id: 'NpnskCt6ippN6CgD8' }).fetch();
+```
+
+> ```FS.Collection.prototype.find = function(selector) { ...``` [fsCollection/api.common.js:103](fsCollection/api.common.js#L103)
+
+-
+
+#### <a name="FS.Collection.prototype.allow"></a>*fsCollection*.allow(selector, options, options, options, options, options)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __allow__ is defined in `prototype` of `FS.Collection`*
+
+__Arguments__
+
+* __selector__ *{[selector](http://docs.meteor.com/#selectors)}*  * __options__ *{object}*  * __options__ *{object}*  * __options__ *{object}*  * __options__ *{object}*  * __options__ *{object}*  
+-
+Example:
+```js
+var images = new FS.Collection( ... );
+// Get the all file objects
+var files = images.allow({
+  insert: function(userId, doc) { return true; },
+  update: function(userId, doc, fields, modifier) { return true; },
+  remove: function(userId, doc) { return true; },
+  download: function(userId, fileObj) { return true; },
+});
+```
+
+> ```FS.Collection.prototype.allow = function(options) { ...``` [fsCollection/api.common.js:127](fsCollection/api.common.js#L127)
 
 -
 
@@ -403,8 +483,9 @@ Function to pass the prepared `FS.File` object
 
 -
 
-#### <a name="FS.Collection.acceptDropsOn"></a>FS.Collection.acceptDropsOn(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+#### <a name="FS.Collection.acceptDropsOn"></a>*fsCollection*.acceptDropsOn(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
+*This method __acceptDropsOn__ is defined in `prototype` of `FS.Collection`*
 
 __Arguments__
 
@@ -452,8 +533,9 @@ images.acceptDropsOn('hello', '#dropzone');
 
 -
 
-#### <a name="FS.Collection.acceptUploadFrom"></a>FS.Collection.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+#### <a name="FS.Collection.acceptUploadFrom"></a>*fsCollection*.acceptUploadFrom(templateName, selector, [metadata])&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
+*This method __acceptUploadFrom__ is defined in `prototype` of `FS.Collection`*
 
 __Arguments__
 
