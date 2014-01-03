@@ -187,9 +187,10 @@ FS.File.prototype.get = function(/* copyName, start, end*/) {
   * @param {string} [options.copy="_master"] The copy of the file to get
   * @param {boolean} [auth=null] Wether or not the authenticate
   * @param {boolean} [download=true] Should headers be set to force a download
+  *
+  * Return the http url for getting the file - on server set auth if wanting to
+  * use authentication on client set auth to true or token
   */
-// Return the http url for getting the file - on server set auth if wanting to
-// use authentication on client set auth to true or token
 FS.File.prototype.url = function(options) {
   var self = this;
   options = options || {};

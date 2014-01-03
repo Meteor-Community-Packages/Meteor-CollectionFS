@@ -1,5 +1,5 @@
-// Collection Wrappers
-// Call insert on files collection
+  // Collection Wrappers
+  // Call insert on files collection
 FS.Collection.prototype.insert = function(doc, callback) {
   console.log('FS.Collection insert-------------');
   var self = this;

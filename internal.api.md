@@ -257,14 +257,12 @@ Wether or not the authenticate
 Should headers be set to force a download
 
 -
-
-> ```FS.File.prototype.url = function(options) { ...``` [fsFile/fsFile-common.js:193](fsFile/fsFile-common.js#L193)
-
--
-
--
 Return the http url for getting the file - on server set auth if wanting to
 use authentication on client set auth to true or token
+
+> ```FS.File.prototype.url = function(options) { ...``` [fsFile/fsFile-common.js:194](fsFile/fsFile-common.js#L194)
+
+-
 
 #### <a name="FS.File.prototype.downloadUrl"></a>*fsFile*.downloadUrl([options], [auth])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
@@ -284,7 +282,7 @@ Wether or not the authenticate
 
 -
 
-> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile/fsFile-common.js:244](fsFile/fsFile-common.js#L244)
+> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile/fsFile-common.js:245](fsFile/fsFile-common.js#L245)
 
 -
 
@@ -308,7 +306,7 @@ fo.put(function(err, id) {
 });
 ```
 
-> ```FS.File.prototype.put = function(callback) { ...``` [fsFile/fsFile-common.js:264](fsFile/fsFile-common.js#L264)
+> ```FS.File.prototype.put = function(callback) { ...``` [fsFile/fsFile-common.js:265](fsFile/fsFile-common.js#L265)
 
 -
 
@@ -323,7 +321,7 @@ __TODO__
 * We have to make this function be able to get the name from `self.fetch()`
 ```
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:299](fsFile/fsFile-common.js#L299)
+> ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:300](fsFile/fsFile-common.js#L300)
 
 -
 
@@ -334,7 +332,7 @@ __TODO__
 __Returns__  *{object}*
 The filerecord
 
-> ```FS.File.prototype.fetch = function() { ...``` [fsFile/fsFile-common.js:373](fsFile/fsFile-common.js#L373)
+> ```FS.File.prototype.fetch = function() { ...``` [fsFile/fsFile-common.js:374](fsFile/fsFile-common.js#L374)
 
 -
 
@@ -359,7 +357,7 @@ If the copy exists or not
 > could exist. This is the case in `FS.File.url` we are optimistic that the
 > copy supplied by the user exists.
 
-> ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:391](fsFile/fsFile-common.js#L391)
+> ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:392](fsFile/fsFile-common.js#L392)
 
 -
 
@@ -369,8 +367,6 @@ If the copy exists or not
 > Where: {client|server}
 
 -
-Collection Wrappers
-Call insert on files collection
 
 #### <a name="FS.Collection.prototype.findOne"></a>*fsCollection*.findOne(selector)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
