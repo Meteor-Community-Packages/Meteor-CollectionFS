@@ -59,14 +59,18 @@ FS.File.prototype.useCollection = function(title, func, onError) {
   }
 };
 
+/** @FS.File.prototype.reload Updates the "in FS.File instance object"
+  * @deprecated We should not maintain duplicate data
+  *
+  * > This function is deprecating - but we cannot remove it before all
+  * > references are updated to use `FS.File.fetch()`
+  */
 FS.File.prototype.reload = function() {
   var self = this;
-  self.useCollection('FS.File reload of _id: "' + self._id + '"', function() {
-    var ref = this.files.findOne({_id: self._id});
-    if (ref) {
-      _.extend(self, cloneFileRecord(ref));
-    }
-  });
+  var ref = self.fetch();
+  if (ref) {
+    _.extend(self, cloneFileRecord(ref));
+  }
 };
 
 // Update the fileRecord
@@ -178,6 +182,12 @@ FS.File.prototype.get = function(/* copyName, start, end*/) {
   }
 };
 
+/** @FS.File.prototype.url Construct the file url
+  * @param {object} [options]
+  * @param {string} [options.copy="_master"] The copy of the file to get
+  * @param {boolean} [auth=null] Wether or not the authenticate
+  * @param {boolean} [download=true] Should headers be set to force a download
+  */
 // Return the http url for getting the file - on server set auth if wanting to
 // use authentication on client set auth to true or token
 FS.File.prototype.url = function(options) {
@@ -189,7 +199,8 @@ FS.File.prototype.url = function(options) {
     download: false
   }, options.hash || options); // check for "hash" prop if called as helper
 
-  if (!self.hasCopy(options.copy)) {
+  // We check if the copy is found
+  if (!self.hasCopy(options.copy, true)) {
     return null;
   }
 
@@ -223,6 +234,12 @@ FS.File.prototype.url = function(options) {
   });
 };
 
+/** @FS.File.prototype.downloadUrl Get the download url
+  * @param {object} [options]
+  * @param {string} [options.copy="_master"] The copy of the file to get
+  * @param {boolean} [auth=null] Wether or not the authenticate
+  * @deprecated Use The hybrid helper `FS.File.url`
+  */
 // Construct a download url
 FS.File.prototype.downloadUrl = function(options) {
   options = options || {};
@@ -231,6 +248,19 @@ FS.File.prototype.downloadUrl = function(options) {
   return FS.File.prototype.url.call(this, options);
 };
 
+/** @method FS.File.prototype.put Stores the file data
+  * @param {function} [callback] Callback for returning errors and id
+  *
+```
+  fo.put(function(err, id) {
+    if (err) {
+      console.log('Got an error');
+    } else {
+      console.log('Passed on the file id: ' + id);
+    }
+  });
+```
+  */
 FS.File.prototype.put = function(callback) {
   var self = this;
 
@@ -261,6 +291,11 @@ FS.File.prototype.put = function(callback) {
   }
 };
 
+/** @FS.File.prototype.getExtension Returns the file extension
+  * @returns {string | null} The extension eg.: `jpg`
+  *
+  * @todo We have to make this function be able to get the name from `self.fetch()`
+  */
 FS.File.prototype.getExtension = function() {
   var self = this;
   var name = self.name;
@@ -332,10 +367,36 @@ FS.File.prototype.hasMaster = function() {
   return this.hasCopy("_master");
 };
 
-FS.File.prototype.hasCopy = function(copyName) {
+/** @method FS.File.prototype.fetch Returns the fileRecord
+  * @returns {object} The filerecord
+  */
+FS.File.prototype.fetch = function() {
   var self = this;
+  return self.useCollection('FS.File fetch of _id: "' + self._id + '"', function() {
+    return this.files.findOne({_id: self._id});
+  });
+};
+
+/** @method FS.File.prototype.hasCopy
+  * @param {string} copyName Name of the copy to check for
+  * @param {boolean} optimistic In case that the file record is not found, read below
+  * @returns {boolean} If the copy exists or not
+  *
+  * > Note: If the file is not published to the client or simply not found:
+  * > this method cannot know for sure if it exists or not. The `optimistic`
+  * > param is the boolean value to return. Are we `optimistic` that the copy
+  * > could exist. This is the case in `FS.File.url` we are optimistic that the
+  * > copy supplied by the user exists.
+  */
+FS.File.prototype.hasCopy = function(copyName, optimistic) {
+  var self = this;
+  var fileRecord = self.fetch();
+  // If we havent the published data then
+  if (typeof fileRecord === 'undefined') {
+    return !!optimistic;
+  }
   if (typeof copyName === "string") {
-    return (self.copies && !_.isEmpty(self.copies[copyName]));
+    return (fileRecord.copies && !_.isEmpty(fileRecord.copies[copyName]));
   }
   return false;
 };
