@@ -248,7 +248,8 @@ Server: Returns the Buffer data for the copy
 
 __Arguments__
 
-* __options__ *{object}*    (Optional)    - __copy__ *{string}*    (Default = "_master")
+* __options__ *{object}*    (Optional)
+    - __copy__ *{string}*    (Default = "_master")
 The copy of the file to get
 * __auth__ *{boolean}*    (Optional = null)
 Wether or not the authenticate
@@ -275,7 +276,8 @@ use authentication on client set auth to true or token
 
 __Arguments__
 
-* __options__ *{object}*    (Optional)    - __copy__ *{string}*    (Default = "_master")
+* __options__ *{object}*    (Optional)
+    - __copy__ *{string}*    (Default = "_master")
 The copy of the file to get
 * __auth__ *{boolean}*    (Optional = null)
 Wether or not the authenticate
@@ -370,14 +372,13 @@ If the copy exists or not
 Collection Wrappers
 Call insert on files collection
 
-#### <a name="FS.Collection.prototype.findOne"></a>*fsCollection*.findOne(name)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.Collection.prototype.findOne"></a>*fsCollection*.findOne(selector)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __findOne__ is defined in `prototype` of `FS.Collection`*
 
 __Arguments__
 
-* __name__ *{[selector](http://docs.meteor.com/#selectors)}*  
-comment
+* __selector__ *{[selector](http://docs.meteor.com/#selectors)}*  
 
 -
 Example:
@@ -398,6 +399,7 @@ var fo = images.findOne({ _id: 'NpnskCt6ippN6CgD8' });
 __Arguments__
 
 * __selector__ *{[selector](http://docs.meteor.com/#selectors)}*  
+
 -
 Example:
 ```js
@@ -410,13 +412,22 @@ var files = images.find({ _id: 'NpnskCt6ippN6CgD8' }).fetch();
 
 -
 
-#### <a name="FS.Collection.prototype.allow"></a>*fsCollection*.allow(selector, options, options, options, options, options)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.Collection.prototype.allow"></a>*fsCollection*.allow(options)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __allow__ is defined in `prototype` of `FS.Collection`*
 
 __Arguments__
 
-* __selector__ *{[selector](http://docs.meteor.com/#selectors)}*  * __options__ *{object}*  * __options__ *{object}*  * __options__ *{object}*  * __options__ *{object}*  * __options__ *{object}*  
+* __options__ *{[options](http://docs.meteor.com/#allow)}*  
+    - __download__ *{function}*  
+Function that checks if the file contents may be downloaded
+    - __insert__ *{function}*  
+    - __update__ *{function}*  
+    - __remove__ *{function}*  
+Functions that look at a proposed modification to the database and return true if it should be allowed
+    - __fetch__ *{[string]}*    (Optional)
+Optional performance enhancement. Limits the fields that will be fetched from the database for inspection by your update and remove functions
+
 -
 Example:
 ```js

@@ -76,7 +76,7 @@ FS.Collection.prototype.remove = function(selector, callback) {
 };
 
 /** @method FS.Collection.prototype.findOne
-  * @param {[selector](http://docs.meteor.com/#selectors)} name comment
+  * @param {[selector](http://docs.meteor.com/#selectors)} selector
   * Example:
 ```js
   var images = new FS.Collection( ... );
@@ -106,7 +106,7 @@ FS.Collection.prototype.find = function(selector) {
 };
 
 /** @method FS.Collection.prototype.allow
-  * @param {[selector](http://docs.meteor.com/#selectors)} selector
+  * @param {[options](http://docs.meteor.com/#allow)} options
   * @param {function} options.download Function that checks if the file contents may be downloaded
   * @param {function} options.insert
   * @param {function} options.update
