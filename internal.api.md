@@ -229,6 +229,7 @@ window.saveAs = window.saveAs
 > __Warning!__
 > This method "FS.File.prototype.reload" has deprecated from the api
 > We should not maintain duplicate data
+
 *This method __reload__ is defined in `prototype` of `FS.File`*
 > This function is deprecating - but we cannot remove it before all
 > references are updated to use `FS.File.fetch()`
@@ -269,6 +270,7 @@ use authentication on client set auth to true or token
 > __Warning!__
 > This method "FS.File.prototype.downloadUrl" has deprecated from the api
 > Use The hybrid helper `FS.File.url`
+
 *This method __downloadUrl__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
