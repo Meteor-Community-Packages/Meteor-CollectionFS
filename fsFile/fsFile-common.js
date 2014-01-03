@@ -59,7 +59,7 @@ FS.File.prototype.useCollection = function(title, func, onError) {
   }
 };
 
-/** @FS.File.prototype.reload Updates the "in FS.File instance object"
+/** @method FS.File.prototype.reload Updates the "in FS.File instance object"
   * @deprecated We should not maintain duplicate data
   *
   * > This function is deprecating - but we cannot remove it before all
@@ -182,7 +182,7 @@ FS.File.prototype.get = function(/* copyName, start, end*/) {
   }
 };
 
-/** @FS.File.prototype.url Construct the file url
+/** @method FS.File.prototype.url Construct the file url
   * @param {object} [options]
   * @param {string} [options.copy="_master"] The copy of the file to get
   * @param {boolean} [auth=null] Wether or not the authenticate
@@ -234,7 +234,7 @@ FS.File.prototype.url = function(options) {
   });
 };
 
-/** @FS.File.prototype.downloadUrl Get the download url
+/** @method FS.File.prototype.downloadUrl Get the download url
   * @param {object} [options]
   * @param {string} [options.copy="_master"] The copy of the file to get
   * @param {boolean} [auth=null] Wether or not the authenticate
@@ -291,7 +291,7 @@ FS.File.prototype.put = function(callback) {
   }
 };
 
-/** @FS.File.prototype.getExtension Returns the file extension
+/** @method FS.File.prototype.getExtension Returns the file extension
   * @returns {string | null} The extension eg.: `jpg`
   *
   * @todo We have to make this function be able to get the name from `self.fetch()`

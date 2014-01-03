@@ -1,9 +1,8 @@
 
-#### <a name="FS.File.prototype.reload"></a>FS.File.prototype.reload {any}&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
-@FS.File.prototype.reload Updates the "in FS.File instance object"
+#### <a name="FS.File.prototype.reload"></a>FS.File.prototype.reload()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 > __Warning!__
-> This property "FS.File.prototype.reload" has deprecated from the api
+> This method "FS.File.prototype.reload" has deprecated from the api
 > We should not maintain duplicate data
 > This function is deprecating - but we cannot remove it before all
 > references are updated to use `FS.File.fetch()`
@@ -21,7 +20,6 @@ Client: Instructs the DownloadTransferQueue to begin downloading the file copy
 Server: Returns the Buffer data for the copy
 
 #### <a name="FS.File.prototype.url"></a>FS.File.prototype.url([options], [auth], [download])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
-@FS.File.prototype.url Construct the file url
 -
 
 __Arguments__
@@ -48,7 +46,6 @@ check for "hash" prop if called as helper
 We check if the copy is found
 
 #### <a name="FS.File.prototype.downloadUrl"></a>FS.File.prototype.downloadUrl([options], [auth])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
-@FS.File.prototype.downloadUrl Get the download url
 -
 > __Warning!__
 > This method "FS.File.prototype.downloadUrl" has deprecated from the api
@@ -95,7 +92,6 @@ Force bytesUploaded to be equal to the file size in case
 this was a server insert or a non-chunked client upload.
 
 #### <a name="FS.File.prototype.getExtension"></a>FS.File.prototype.getExtension()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
-@FS.File.prototype.getExtension Returns the file extension
 -
 
 __Returns__  *{string | null}*
