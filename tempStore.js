@@ -1,21 +1,29 @@
-/* 
- * Temporary storage is used for chunked uploads until all chunks are received
- * and all copies have been made or given up. In some cases, the original file
- * is stored only in temporary storage (for example, if all copies do some
- * manipulation in beforeSave). This is why we use the temporary file as the
- * basis for each saved copy, and then remove it after all copies are saved.
- * 
- * Every chunk is saved as an individual temporary file. This is safer than
- * attempting to write multiple incoming chunks to different positions in a
- * single temporary file, which can lead to write conflicts.
- * 
- * Using temp files also allows us to easily resume uploads, even if the server 
- * restarts, and to keep the working memory clear.
- */
-
+// #Temporary Storage 
+// Temporary storage is used for chunked uploads until all chunks are received
+// and all copies have been made or given up. In some cases, the original file
+// is stored only in temporary storage (for example, if all copies do some
+// manipulation in beforeSave). This is why we use the temporary file as the
+// basis for each saved copy, and then remove it after all copies are saved.
+// 
+// Every chunk is saved as an individual temporary file. This is safer than
+// attempting to write multiple incoming chunks to different positions in a
+// single temporary file, which can lead to write conflicts.
+// 
+// Using temp files also allows us to easily resume uploads, even if the server 
+// restarts, and to keep the working memory clear.
+ 
+/** @namespace TempStore
+  * @property TempStore
+  * @type {object}
+  */
 TempStore = {
   
-  // callback(err, allBytesLoaded)
+  /** @method TempStore.saveChunk
+    * @param {FS.File} fsFile
+    * @param {binary} binary
+    * @param {number} start
+    * @param {function} callback(err, allBytesLoaded)
+    */
   saveChunk: function(fsFile, binary, start, callback) {
     var total = binary.length;
 
@@ -57,8 +65,11 @@ TempStore = {
       callback(err);
     }));
   },
-  
-  // callback(err, fsFileWithData)
+
+  /** @method TempStore.getDataForFile
+    * @param {FS.File} fsFile
+    * @param {function} callback(err, fsFileWithData)
+    */  
   getDataForFile: function(fsFile, callback) {
     fsFile.binary = EJSON.newBinary(fsFile.size);
     var total = 0, stop = false;
@@ -88,7 +99,10 @@ TempStore = {
     });
   },
   
-  // callback(err)
+  /** @method TempStore.deleteChunks
+    * @param {FS.File} fsFile
+    * @param {function} callback(err)
+    */
   deleteChunks: function(fsFile, callback) {
     var stop = false, count, deletedCount = 0;
     
@@ -132,6 +146,10 @@ TempStore = {
     });
   },
   
+  /** @method TempStore.ensureForFile
+    * @param {FS.File} fsFile
+    * @param {function} callback(err, allBytesLoaded)
+    */  
   ensureForFile: function (fsFile, callback) {
     callback = callback || defaultCallback;
     fsFile.getBinary(null, null, function (err, binary) {

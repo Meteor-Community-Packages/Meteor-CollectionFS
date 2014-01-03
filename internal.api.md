@@ -676,22 +676,85 @@ images.acceptUploadFrom('hello', '#files');
 > Where: {server}
 
 -
-
-#### <a name="TempStore"></a>TempStore {any}&nbsp;&nbsp;<sub><i>Server</i></sub> ####
-```
+#Temporary Storage 
 Temporary storage is used for chunked uploads until all chunks are received
 and all copies have been made or given up. In some cases, the original file
 is stored only in temporary storage (for example, if all copies do some
 manipulation in beforeSave). This is why we use the temporary file as the
 basis for each saved copy, and then remove it after all copies are saved.
+
 Every chunk is saved as an individual temporary file. This is safer than
 attempting to write multiple incoming chunks to different positions in a
 single temporary file, which can lead to write conflicts.
+
 Using temp files also allows us to easily resume uploads, even if the server 
 restarts, and to keep the working memory clear.
-```
+
+#### <a name="TempStore"></a>TempStore {object}&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 
-> ```TempStore = { ...``` [tempStore.js:16](tempStore.js#L16)
+> ```TempStore = { ...``` [tempStore.js:19](tempStore.js#L19)
+
+-
+
+#### <a name="TempStore.saveChunk"></a>*tempstore*.saveChunk(fsFile, binary, start, callback(err, allBytesLoaded))&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+-
+*This method __saveChunk__ is defined in `TempStore`*
+
+__Arguments__
+
+* __fsFile__ *{[FS.File](#FS.File)}*  
+* __binary__ *{binary}*  
+* __start__ *{number}*  
+* __callback(err, allBytesLoaded)__ *{function}*  
+
+-
+
+> ```saveChunk: function(fsFile, binary, start, callback) { ...``` [tempStore.js:27](tempStore.js#L27)
+
+-
+
+#### <a name="TempStore.getDataForFile"></a>*tempstore*.getDataForFile(fsFile, callback(err, fsFileWithData))&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+-
+*This method __getDataForFile__ is defined in `TempStore`*
+
+__Arguments__
+
+* __fsFile__ *{[FS.File](#FS.File)}*  
+* __callback(err, fsFileWithData)__ *{function}*  
+
+-
+
+> ```getDataForFile: function(fsFile, callback) { ...``` [tempStore.js:73](tempStore.js#L73)
+
+-
+
+#### <a name="TempStore.deleteChunks"></a>*tempstore*.deleteChunks(fsFile, callback(err))&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+-
+*This method __deleteChunks__ is defined in `TempStore`*
+
+__Arguments__
+
+* __fsFile__ *{[FS.File](#FS.File)}*  
+* __callback(err)__ *{function}*  
+
+-
+
+> ```deleteChunks: function(fsFile, callback) { ...``` [tempStore.js:106](tempStore.js#L106)
+
+-
+
+#### <a name="TempStore.ensureForFile"></a>*tempstore*.ensureForFile(fsFile, callback(err, allBytesLoaded))&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+-
+*This method __ensureForFile__ is defined in `TempStore`*
+
+__Arguments__
+
+* __fsFile__ *{[FS.File](#FS.File)}*  
+* __callback(err, allBytesLoaded)__ *{function}*  
+
+-
+
+> ```ensureForFile: function (fsFile, callback) { ...``` [tempStore.js:153](tempStore.js#L153)
 
 -
