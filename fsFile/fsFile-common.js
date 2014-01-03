@@ -294,7 +294,6 @@ FS.File.prototype.put = function(callback) {
 
 /** @method FS.File.prototype.getExtension Returns the file extension
   * @returns {string | null} The extension eg.: `jpg`
-  *
   * @todo We have to make this function be able to get the name from `self.fetch()`
   */
 FS.File.prototype.getExtension = function() {

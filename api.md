@@ -92,7 +92,7 @@ fo.put(function(err, id) {
 __Returns__  *{string | null}*
 The extension eg.: `jpg`
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:300](fsFile/fsFile-common.js#L300)
+> ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:299](fsFile/fsFile-common.js#L299)
 
 -
 
@@ -103,7 +103,7 @@ The extension eg.: `jpg`
 __Returns__  *{object}*
 The filerecord
 
-> ```FS.File.prototype.fetch = function() { ...``` [fsFile/fsFile-common.js:374](fsFile/fsFile-common.js#L374)
+> ```FS.File.prototype.fetch = function() { ...``` [fsFile/fsFile-common.js:373](fsFile/fsFile-common.js#L373)
 
 -
 
@@ -128,7 +128,7 @@ If the copy exists or not
 > could exist. This is the case in `FS.File.url` we are optimistic that the
 > copy supplied by the user exists.
 
-> ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:392](fsFile/fsFile-common.js#L392)
+> ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:391](fsFile/fsFile-common.js#L391)
 
 -
 
@@ -148,7 +148,45 @@ Callback `function(error, fileObj)`
 
 -
 
-> ```FS.Collection.prototype.insert = function(fileRef, callback) { ...``` [fsCollection/api.common.js:7](fsCollection/api.common.js#L7)
+__Returns__  *{FS.File}*
+The `file object`
+[Meteor docs](http://docs.meteor.com/#insert)
+
+> ```FS.Collection.prototype.insert = function(fileRef, callback) { ...``` [fsCollection/api.common.js:9](fsCollection/api.common.js#L9)
+
+-
+
+#### <a name="FS.Collection.prototype.update"></a>*fsCollection*.update(selector, modifier, options)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __update__ is defined in `prototype` of `FS.Collection`*
+
+__Arguments__
+
+* __selector__ *{[FS.File](#FS.File)|object}*  
+* __modifier__ *{object}*  
+* __options__ *{object}*  
+
+-
+[Meteor docs](http://docs.meteor.com/#update)
+
+> ```FS.Collection.prototype.update = function(selector, modifier, options) { ...``` [fsCollection/api.common.js:61](fsCollection/api.common.js#L61)
+
+-
+
+#### <a name="FS.Collection.prototype.update"></a>*fsCollection*.update(selector, modifier, options)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __update__ is defined in `prototype` of `FS.Collection`*
+
+__Arguments__
+
+* __selector__ *{[FS.File](#FS.File)|object}*  
+* __modifier__ *{object}*  
+* __options__ *{object}*  
+
+-
+[Meteor docs](http://docs.meteor.com/#remove)
+
+> ```FS.Collection.prototype.remove = function(selector, callback) { ...``` [fsCollection/api.common.js:85](fsCollection/api.common.js#L85)
 
 -
 
@@ -161,6 +199,7 @@ __Arguments__
 * __selector__ *{[selector](http://docs.meteor.com/#selectors)}*  
 
 -
+[Meteor docs](http://docs.meteor.com/#findone)
 Example:
 ```js
 var images = new FS.Collection( ... );
@@ -168,7 +207,7 @@ var images = new FS.Collection( ... );
 var fo = images.findOne({ _id: 'NpnskCt6ippN6CgD8' });
 ```
 
-> ```FS.Collection.prototype.findOne = function(selector) { ...``` [fsCollection/api.common.js:92](fsCollection/api.common.js#L92)
+> ```FS.Collection.prototype.findOne = function(selector) { ...``` [fsCollection/api.common.js:107](fsCollection/api.common.js#L107)
 
 -
 
@@ -181,6 +220,7 @@ __Arguments__
 * __selector__ *{[selector](http://docs.meteor.com/#selectors)}*  
 
 -
+[Meteor docs](http://docs.meteor.com/#find)
 Example:
 ```js
 var images = new FS.Collection( ... );
@@ -188,7 +228,7 @@ var images = new FS.Collection( ... );
 var files = images.find({ _id: 'NpnskCt6ippN6CgD8' }).fetch();
 ```
 
-> ```FS.Collection.prototype.find = function(selector) { ...``` [fsCollection/api.common.js:107](fsCollection/api.common.js#L107)
+> ```FS.Collection.prototype.find = function(selector) { ...``` [fsCollection/api.common.js:123](fsCollection/api.common.js#L123)
 
 -
 
@@ -198,7 +238,7 @@ var files = images.find({ _id: 'NpnskCt6ippN6CgD8' }).fetch();
 
 __Arguments__
 
-* __options__ *{[options](http://docs.meteor.com/#allow)}*  
+* __options__ *{object}*  
     - __download__ *{function}*  
 Function that checks if the file contents may be downloaded
     - __insert__ *{function}*  
@@ -209,6 +249,7 @@ Functions that look at a proposed modification to the database and return true i
 Optional performance enhancement. Limits the fields that will be fetched from the database for inspection by your update and remove functions
 
 -
+[Meteor docs](http://docs.meteor.com/#allow)
 Example:
 ```js
 var images = new FS.Collection( ... );
@@ -221,7 +262,41 @@ var files = images.allow({
  });
 ```
 
-> ```FS.Collection.prototype.allow = function(options) { ...``` [fsCollection/api.common.js:131](fsCollection/api.common.js#L131)
+> ```FS.Collection.prototype.allow = function(options) { ...``` [fsCollection/api.common.js:148](fsCollection/api.common.js#L148)
+
+-
+
+#### <a name="FS.Collection.prototype.deny"></a>*fsCollection*.deny(options)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __deny__ is defined in `prototype` of `FS.Collection`*
+
+__Arguments__
+
+* __options__ *{object}*  
+    - __download__ *{function}*  
+Function that checks if the file contents may be downloaded
+    - __insert__ *{function}*  
+    - __update__ *{function}*  
+    - __remove__ *{function}*  
+Functions that look at a proposed modification to the database and return true if it should be denyed
+    - __fetch__ *{[string]}*    (Optional)
+Optional performance enhancement. Limits the fields that will be fetched from the database for inspection by your update and remove functions
+
+-
+[Meteor docs](http://docs.meteor.com/#deny)
+Example:
+```js
+var images = new FS.Collection( ... );
+// Get the all file objects
+var files = images.deny({
+   insert: function(userId, doc) { return true; },
+   update: function(userId, doc, fields, modifier) { return true; },
+   remove: function(userId, doc) { return true; },
+   download: function(userId, fileObj) { return true; },
+ });
+```
+
+> ```FS.Collection.prototype.deny = function(options) { ...``` [fsCollection/api.common.js:183](fsCollection/api.common.js#L183)
 
 -
 
