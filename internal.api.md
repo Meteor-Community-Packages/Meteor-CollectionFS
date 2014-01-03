@@ -697,7 +697,7 @@ restarts, and to keep the working memory clear.
 
 -
 
-#### <a name="TempStore.saveChunk"></a>*tempstore*.saveChunk(fsFile, binary, start, callback(err, allBytesLoaded))&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="TempStore.saveChunk"></a>*tempstore*.saveChunk(fsFile, binary, start, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method __saveChunk__ is defined in `TempStore`*
 
@@ -706,7 +706,8 @@ __Arguments__
 * __fsFile__ *{[FS.File](#FS.File)}*  
 * __binary__ *{binary}*  
 * __start__ *{number}*  
-* __callback(err, allBytesLoaded)__ *{function}*  
+* __callback__ *{function}*  
+callback(err, allBytesLoaded)
 
 -
 
@@ -714,14 +715,15 @@ __Arguments__
 
 -
 
-#### <a name="TempStore.getDataForFile"></a>*tempstore*.getDataForFile(fsFile, callback(err, fsFileWithData))&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="TempStore.getDataForFile"></a>*tempstore*.getDataForFile(fsFile, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method __getDataForFile__ is defined in `TempStore`*
 
 __Arguments__
 
 * __fsFile__ *{[FS.File](#FS.File)}*  
-* __callback(err, fsFileWithData)__ *{function}*  
+* __callback__ *{function}*  
+callback(err, fsFileWithData)
 
 -
 
@@ -729,14 +731,15 @@ __Arguments__
 
 -
 
-#### <a name="TempStore.deleteChunks"></a>*tempstore*.deleteChunks(fsFile, callback(err))&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="TempStore.deleteChunks"></a>*tempstore*.deleteChunks(fsFile, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method __deleteChunks__ is defined in `TempStore`*
 
 __Arguments__
 
 * __fsFile__ *{[FS.File](#FS.File)}*  
-* __callback(err)__ *{function}*  
+* __callback__ *{function}*  
+callback(err)
 
 -
 
@@ -744,14 +747,15 @@ __Arguments__
 
 -
 
-#### <a name="TempStore.ensureForFile"></a>*tempstore*.ensureForFile(fsFile, callback(err, allBytesLoaded))&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="TempStore.ensureForFile"></a>*tempstore*.ensureForFile(fsFile, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method __ensureForFile__ is defined in `TempStore`*
 
 __Arguments__
 
 * __fsFile__ *{[FS.File](#FS.File)}*  
-* __callback(err, allBytesLoaded)__ *{function}*  
+* __callback__ *{function}*  
+callback(err, allBytesLoaded)
 
 -
 

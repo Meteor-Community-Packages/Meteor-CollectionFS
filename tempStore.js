@@ -22,7 +22,7 @@ TempStore = {
     * @param {FS.File} fsFile
     * @param {binary} binary
     * @param {number} start
-    * @param {function} callback(err, allBytesLoaded)
+    * @param {function} callback callback(err, allBytesLoaded)
     */
   saveChunk: function(fsFile, binary, start, callback) {
     var total = binary.length;
@@ -68,7 +68,7 @@ TempStore = {
 
   /** @method TempStore.getDataForFile
     * @param {FS.File} fsFile
-    * @param {function} callback(err, fsFileWithData)
+    * @param {function} callback callback(err, fsFileWithData)
     */  
   getDataForFile: function(fsFile, callback) {
     fsFile.binary = EJSON.newBinary(fsFile.size);
@@ -101,7 +101,7 @@ TempStore = {
   
   /** @method TempStore.deleteChunks
     * @param {FS.File} fsFile
-    * @param {function} callback(err)
+    * @param {function} callback callback(err)
     */
   deleteChunks: function(fsFile, callback) {
     var stop = false, count, deletedCount = 0;
@@ -145,10 +145,10 @@ TempStore = {
       }
     });
   },
-  
+
   /** @method TempStore.ensureForFile
     * @param {FS.File} fsFile
-    * @param {function} callback(err, allBytesLoaded)
+    * @param {function} callback callback(err, allBytesLoaded)
     */  
   ensureForFile: function (fsFile, callback) {
     callback = callback || defaultCallback;
