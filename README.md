@@ -1,7 +1,7 @@
 CollectionFS
 =========================
 
-NOTE: This branch is under active development right now (2013-11-20). It has
+NOTE: This branch is under active development right now (2014-1-5). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
