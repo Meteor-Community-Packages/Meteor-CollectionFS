@@ -331,10 +331,4 @@ if (Meteor.isClient) {
 
 ## Drag and Drop
 
-Easily insert dropped files into an FS.Collection with the acceptDropsOn method:
-
-```js
-Images.acceptDropsOn("myTemplate", "div.imageDropArea", { owner: Meteor.userId() }, function (err, res) {
-  res && console.log("Inserted dropped image. New ID is", res);
-});
-```
+You can easily insert dropped files into an FS.Collection with the [acceptDropsOn method](api.md#FS.Collection.acceptDropsOn).
