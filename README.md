@@ -263,7 +263,7 @@ that copy will never be created.*
 
 ## Security
 
-File uploads and downloads are can be secured using standard Meteor `allow`
+File uploads and downloads can be secured using standard Meteor `allow`
 and `deny` methods. To best understand how CollectionFS security works, you
 must first understand that there are two ways in which a user could interact
 with a file:
@@ -333,6 +333,8 @@ if (Meteor.isClient) {
 
 Easily insert dropped files into an FS.Collection with the acceptDropsOn method:
 
-Images.acceptDropsOn("myTemplate", "div.imageDropArea", {owner: Meteor.userId()}, function (err, res) {
+```js
+Images.acceptDropsOn("myTemplate", "div.imageDropArea", { owner: Meteor.userId() }, function (err, res) {
   res && console.log("Inserted dropped image. New ID is", res);
 });
+```
