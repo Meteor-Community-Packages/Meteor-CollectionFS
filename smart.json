@@ -11,6 +11,10 @@
     "power-queue": {
       "git": "https://github.com/CollectionFS/Meteor-powerqueue.git",
       "branch": "master"
-    }
+    },
+    "join": {
+      "git": "https://github.com/CollectionFS/Meteor-join.git",
+      "branch": "master"
+    }    
   }
 }
