@@ -32,26 +32,33 @@ Here's an explanation of what they are named and what their documents look like.
   collectionName: "",
   copies: {
     copyName: {
-      _id: "", //the store ID
-      name: "",
-      type: "",
-      size: 0,
-      utime: Date
+      _id: String, // the store ID
+      name: String, // as saved in this store, potentially changed by beforeSave
+      type: String, // as saved in this store, potentially changed by beforeSave
+      size: Number, // as saved in this store, potentially changed by beforeSave
+      utime: Date // when saved in this store
     }
   },
-  name: "",
-  type: "",
-  size: 0,
-  utime: Date,
+  name: String, // of the originally uploaded file
+  type: String, // of the originally uploaded file
+  size: Number, // of the originally uploaded file
+  utime: Date, // of the originally uploaded file
   failures: {
     copies: {
       copyName: {
-        count: 0,
+        count: Number,
         firstAttempt: Date,
-        lastAttempt: Date
+        lastAttempt: Date,
+        doneTrying: Boolean
       }
     }
-  }
+  },
+  chunks: [
+    {
+      start: Number, // the byte position at which this chunk starts in the complete file
+      tempFile: String // the file path for the temporary chunk file stored in the temp dir
+    }
+  ]
 }
 ```
 
@@ -60,9 +67,9 @@ Here's an explanation of what they are named and what their documents look like.
 ```js
 {
   _id: "",
-  cfs: "", //the FS.Collection name
-  cfsId: "", //the _id in the CFS collection
-  filename: "" //actual filename that was stored
+  cfs: "", // the FS.Collection name
+  cfsId: "", // the _id in the CFS collection
+  filename: "" // actual filename that was stored
 }
 ```
 
@@ -136,51 +143,118 @@ Client <---- (ddp/http) --- | CFS access point |
                 External server––––––––––––––O
 ```
 
-## Transfer Queues
+## The Upload Process (DDP)
 
-There are two transfer queues, one for uploads and one for downloads,
-because that made some of the progress reactivity stuff easier.
+Here's a closer look at what happens when a file is uploaded.
 
-The TransferQueue looks at the file size on the client and automatically
-decides whether to do chunked upload/download vs. a single DDP call.
+### Step 1: Insert
 
-* *Uploads:* For a single-call upload, it has all the data, so it immediately
-passes it to the beforeSave function and storage adapters. For chunked uploads,
-it will stream each chunk into a temporary file on the filesystem, keeping
-track with a `bytesUploaded` property in the FS.File. After the whole file
-has been saved to the temp file (`bytesUploaded === size`), it will load back
-from the temp file and pass
-everything to the beforeSave function and storage adapters. Using this temp
-file keeps memory usage low and allows uploads to resume after the server
-restarts (theoretically, I didn't test yet).
-* *Downloads:* For a single-call download, it just takes the returned data
-and tells the browser to save it. For chunked downloads, the data is saved
-into a temporary unmanaged client collection, which is used to track progress.
-When all data has been stored in the collection, it is combined and given to
-the browser to save. The idea is for this to be a collection that persists if
-the client reloads, such that downloads can be resumed. Currently I think the
-collection is lost but maybe all we need to do is ground it with grounddb?
+All uploads initiate on a client. If a file is inserted on the server, the
+data is already on the server, so no upload process is necessary.
 
-## The FileWorker
+An upload begins when you call `insert()` on an `FS.Collection` instance. The
+`insert` method inserts the file's metadata into the underlying collection on
+the client. If that is successful, it immediately calls `put()` on the `FS.File`
+instance. This in turn calls `FS.uploadQueue.uploadFile()`, which kicks off
+the data upload.
 
-A single FileWorker is created on the server. It attempts to save missing data
-for all CFS. Every 5 secs (not configurable right now but could be),
-it looks for any file in any CFS that is fully uploaded but has missing copies.
-It them attempts to save the missing copies again, up until the maxTries for
-that copy.
+### Step 2: Transfer
 
-When attempting to save at a later time, the data is loaded
-from the temporary file. The temporary file is never deleted until all copies
-have been successfully saved or have failed permanently.
+The upload transfer queue's `uploadFile` method uses the file size and a
+pre-defined chunk size to determine how many chunks the file will be broken into.
+It then adds one task to its PowerQueue instance per chunk. Each chunk task does
+the following:
 
-## PowerQueue
+1. Extracts the necessary subset (chunk) of data from the file.
+2. Passes the data chunk to a server method over DDP.
+3. Marks the chunk uploaded in a client-only tracking collection if the server
+method reports no errors.
 
-The PowerQueue code is really just the simple queue from the prototype.
-It works well, but if it was made into more of the true PowerQueue that was
-conceived, that might simplify some of the TransferQueue code.
+PowerQueue's reactive methods are used to report total progress for all current
+uploads, but the custom client-only tracking collection is used to report progress
+per file. (TODO: update this after PQ sub-queues are done and the transfer
+queues are updated to use them)
+
+### Step 3: Receive
+
+Each data chunk is received by a DDP access point (a server method defined in
+accessPoint.js). This method does the following:
+
+1. Checks that incoming arguments are of the correct type.
+2. If the `insecure` package is not used, checks the `insert` allow and deny
+functions. If insertion is denied, the method throws an access denied error.
+3. Passes the data chunk to the temporary store.
+4. If the temporary store reports that it now has all chunks for the file,
+retrieves the complete file from the temporary store and calls `fsFile.put()`
+to begin the process of saving it to each of the defined stores.
+
+### Step 4: Temporarily Store
+
+The temporary store is managed by the `TempStore` object. When the server method
+calls `TempStore.saveChunk()`, the chunk data is saved to a randomly named
+temporary file in the server operating system's default temporary directory.
+The path to this file is saved in the `chunks` array on the corresponding FS.File.
+(The `chunks` property is available on an FS.File instance only on the server
+because it is used strictly for server-side tracking.)
+
+`saveChunk` calls a callback after saving the chunk. The second argument of
+this callback is `true` if all chunks for the given file are now saved in the
+temporary store (i.e., all chunks were uploaded so all file data is now present
+on the server).
+
+Using a temporary filesystem store like this ensures that chunks remain available
+after an app or server restart, allowing the client to resume uploads. Chunks
+are saved to the app server filesystem rather than GridFS in your MongoDB because it
+is theoretically faster, especially when the mongo database is on a separate server.
+
+NOTE: The first version of temp storage appended/wrote to a single temp file
+per uploaded file, but there are issues with file locking and writing to
+specific start-points in an existing file. By switching to 1 chunk = 1 temp
+file, we have the freedom to have parallel chunk uploads in any order without
+fear of file lock contention, and it's still really fast.
+
+### Step 5: Store
+
+After the server method calls `put()` on the complete uploaded file, this in
+turn calls `saveCopies()` on its associated `FS.Collection` instance. `saveCopies`
+loops through each copy/store you defined in the options and saves the file
+to that store. If you defined a `beforeSave` function for the store, the file
+passes through that function first. If a `beforeSave` returns `false`, this is
+recorded in the `FS.File` instance and the file will never be saved to that store.
+
+* If the store reports that it successfully saved the file, a reference string,
+returned by the store, is stored in `fsFile.copies[copyName]`. This string will
+be anything that the store wants to return, so long as it can be used later to
+retrieve that same file.
+* If the store reports that it was not able to save the file, the error is logged
+in the `FS.File` instance. If the total number of failures exceeds the `maxTries`
+setting for the store, a `doneTrying` flag is set to `true`. When `doneTrying`
+is `false`, the FileWorker may attempt to save again later. (See the next step.)
+
+### Step 6: Retry
+
+The `FileWorker` (in fileWorker.js), searches all `FS.Collection` every 5
+seconds (not configurable right now but could be) to see if there are any
+storage failures that meet the criteria to be
+retried (namely, if failure count > 0 and doneTrying is false). The file worker
+then calls `saveCopies` for each file that is identified. (See the previous step.)
+
+The `FileWorker` also does one more thing. If it identifies any files that have
+been successfully saved to all defined stores, or that have failed to save the
+maximum number of times for a store, or that won't be saved to a store because
+`beforeSave` returned `false`, then it tells `TempStore` to delete all the
+temporary chunks for that file. They are no longer needed.
+
+Note: One the temporary chunks are deleted, the "original" file will be no longer
+available if all stores are modifying the original using a `beforeSave` function.
+
+## The Download Process (DDP)
+
+Here's a closer look at what happens when a file is downloaded.
+
+TODO Explain with similar layout to "The Upload Process" section
 
 ## Wish List
 
 * Dynamic file manipulation
-* Drag/drop upload component
 * Paste box upload component
