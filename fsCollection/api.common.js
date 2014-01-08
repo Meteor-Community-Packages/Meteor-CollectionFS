@@ -16,6 +16,8 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     fileObj.collectionName = self.files._name;
 
     // Insert the file into db
+    // We call cloneFileRecord as an easy way of extracting the properties
+    // that need saving.
     console.log('Now doing actual insert into collection');
     fileObj._id = self.files.insert(cloneFileRecord(fileObj), function(err, id) {
       console.log('Insert callback result:', id);

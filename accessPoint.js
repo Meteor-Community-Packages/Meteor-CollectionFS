@@ -6,11 +6,9 @@ var APUpload = function(fsFile, data, start) {
 
   if (typeof start !== "number")
     start = 0;
-
-  var collection = _collections[fsFile.collectionName];
-  if (typeof collection === 'undefined' || collection === null) {
-    throw new Meteor.Error(500, "FS.File has no collection");
-  }
+  
+  // Load the complete FS.File instance from the linked collection
+  fsFile = fsFile.fetch();
   
   if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the "insert" validators
@@ -29,10 +27,6 @@ var APUpload = function(fsFile, data, start) {
     }
   }
 
-  fsFile.reload(); //update properties from the linked server collection
-
-  console.log("Received chunk of size " + data.length + " at start " + start + " for " + fsFile._id);
-
   // Save chunk and, if it's the last chunk, kick off storage
   TempStore.saveChunk(fsFile, data, start, function(err, done) {
     if (err) {
@@ -41,7 +35,6 @@ var APUpload = function(fsFile, data, start) {
     if (done) {
       // We are done loading all bytes
       // so we should load the temp files into the actual fsFile now
-      console.log("Received all chunks for " + fsFile._id);
       self.unblock();
       TempStore.getDataForFile(fsFile, function(err, fsFileWithData) {
         if (err) {
@@ -58,12 +51,15 @@ var APUpload = function(fsFile, data, start) {
 // Returns the data for the copyName copy of fsFile
 var APDownload = function(fsFile, copyName, start, end) {
   var self = this;
+  check(fsFile, FS.File);
+  check(copyName, String);
+  check(start, Number);
+  check(end, Number);
+  
   self.unblock();
 
-  var collection = _collections[fsFile.collectionName];
-  if (typeof collection === 'undefined' || collection === null) {
-    throw new Meteor.Error(500, "FS.File has no collection");
-  }
+  // Load the complete FS.File instance from the linked collection
+  fsFile = fsFile.fetch();
   
   if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the custom "download" validators
@@ -90,12 +86,12 @@ var APDownload = function(fsFile, copyName, start, end) {
 // selector is passed. We don't allow deleting individual copies.
 var APDelete = function(fsFile) {
   var self = this;
+  check(fsFile, FS.File);
+  
   self.unblock();
 
-  var collection = _collections[fsFile.collectionName];
-  if (typeof collection === 'undefined' || collection === null) {
-    throw new Meteor.Error(500, "FS.File has no collection");
-  }
+  // Load the complete FS.File instance from the linked collection
+  fsFile = fsFile.fetch();
 
   if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the "remove" validators

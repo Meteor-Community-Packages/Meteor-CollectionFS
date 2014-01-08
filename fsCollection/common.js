@@ -78,8 +78,6 @@ FS.Collection = function(name, options) {
       self.options.copies._master.sync = self.options.sync;
       delete self.options.sync;
     }
-    
-    // D
 
     // Add DDP and HTTP access points
     self.options.useDDP && Meteor.methods(self.options.accessPoints.DDP);

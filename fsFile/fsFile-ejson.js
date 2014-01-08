@@ -19,22 +19,12 @@ FS.File.prototype.clone = function() {
 
 // EJSON toJSONValue
 FS.File.prototype.toJSONValue = function() {
-  return cloneFileRecord(this);
+  var self = this;
+  return { _id: self._id, collectionName: self.collectionName };
 };
 
 // EJSON fromJSONValue
 FS.File.fromJSONValue = function(value) {
-  // We should be able to load the files record from the collection
-  var collection = _collections[value.collectionName];
-  if (Meteor.isClient && collection instanceof FS.Collection && value._id) {
-    var fsFile = collection.findOne({_id: value._id});
-
-    // We found the file record
-    if (fsFile) {
-      return fsFile;
-    }
-  }
-  // Could not find the filerecord so we return the best we can
   return new FS.File(value);
 };
 

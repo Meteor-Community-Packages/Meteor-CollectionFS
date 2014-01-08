@@ -59,20 +59,6 @@ FS.File.prototype.useCollection = function(title, func, onError) {
   }
 };
 
-/** @method FS.File.prototype.reload Updates the "in FS.File instance object"
-  * @deprecated We should not maintain duplicate data
-  *
-  * > This function is deprecating - but we cannot remove it before all
-  * > references are updated to use `FS.File.fetch()`
-  */
-FS.File.prototype.reload = function() {
-  var self = this;
-  var ref = self.fetch();
-  if (ref) {
-    _.extend(self, cloneFileRecord(ref));
-  }
-};
-
 // Update the fileRecord
 FS.File.prototype.update = function(modifier, options, callback) {
   var self = this;
@@ -94,6 +80,7 @@ FS.File.prototype.update = function(modifier, options, callback) {
       return collection.update({_id: self._id}, modifier, options, function(err, count) {
         if (count) {
           // Update self with any changes
+          // TODO would self = self.fetch() work here?
           var ref = collection.findOne({_id: self._id});
           if (ref) {
             _.extend(self, cloneFileRecord(ref));
@@ -105,6 +92,7 @@ FS.File.prototype.update = function(modifier, options, callback) {
       var count = collection.update({_id: self._id}, modifier, options);
       if (count) {
         // Update self with any changes
+        // TODO would self = self.fetch() work here?
         var ref = collection.findOne({_id: self._id});
         if (ref) {
           _.extend(self, cloneFileRecord(ref));
