@@ -115,10 +115,15 @@ _.extend(CollectionFS.prototype, {
 			// 	blob.write(chunk.data, (chunk.n * fileRecord.chunkSize), chunk.data.length, encoding);
 			// }
 			// Finally do the data appending
-			for (var i = 0; i < chunk.data.length; i++) {
-				blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
-				//blob.writeUInt8( ((chunk.n * fileRecord.chunkSize) + i), chunk.data.charCodeAt(i) );
-			}
+                        if (chunk.data instanceof Uint8Array) {
+                          for (var i = 0; i < chunk.data.length; i++) {
+                                  blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data[i];
+                          }
+                        } else {
+                          for (var i = 0; i < chunk.data.length; i++) {
+                                  blob[(chunk.n * fileRecord.chunkSize) + i] = chunk.data.charCodeAt(i);
+                          }
+                        }
 		}); //EO find chunks
 
 		return blob;
