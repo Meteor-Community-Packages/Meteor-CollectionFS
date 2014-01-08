@@ -1,6 +1,6 @@
 Package.describe({
     summary: 'Filesystem for Meteor, collectionFS\n'+
-         '\u001b[32mv0.3.6 (under development)\n'+
+         '\u001b[32mv0.3.7 (under development)\n'+
          '\u001b[33m-----------------------------------------\n'+
          '\u001b[0m Filesystem for Meteor, collectionFS      \n'+
          '\u001b[0m                                          \n'+
