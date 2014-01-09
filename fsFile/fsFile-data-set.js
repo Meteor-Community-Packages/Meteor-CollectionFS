@@ -97,13 +97,14 @@ if (Meteor.isServer) {
 
   // Loads buffer from filesystem, converts Buffer to EJSON.binary data, and sets it
   // callback(err)
-  FS.File.prototype.setDataFromFile = function(filePath, callback) {
+  FS.File.prototype.setDataFromFile = function(filePath, type, callback) {
     var self = this;
+    callback = callback || defaultCallback;
 
     // Call node readFile
     fs.readFile(filePath, Meteor.bindEnvironment(function(err, buffer) {
       if (buffer) {
-        self.setDataFromBuffer(buffer);
+        self.setDataFromBuffer(buffer, type);
       }
       callback(err);
     }, function(err) {

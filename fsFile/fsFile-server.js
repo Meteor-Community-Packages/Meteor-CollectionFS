@@ -59,11 +59,11 @@ FS.File.prototype.failedPermanently = function(copyName) {
 
 // Load data from a local path into a new FS.File and pass it to callback
 // callback(err, fsFile)
-FS.File.fromFile = function(filePath, filename, callback) {
+FS.File.fromFile = function(filePath, filename, type, callback) {
   callback = callback || defaultCallback;
   filename = filename || path.basename(filePath);
   var fsFile = new FS.File({name: filename});
-  fsFile.setDataFromFile(filePath, function(err) {
+  fsFile.setDataFromFile(filePath, type, function(err) {
     if (err) {
       callback(err);
     } else {

@@ -238,14 +238,14 @@ FS.File.prototype.downloadUrl = function(options) {
 };
 
 /** @method FS.File.prototype.put Stores the file data
-  * @param {function} [callback] Callback for returning errors and id
+  * @param {function} [callback] Callback for returning errors and updated FS.File
   *
 ```
-  fo.put(function(err, id) {
+  fo.put(function(err, fo) {
     if (err) {
       console.log('Got an error');
     } else {
-      console.log('Passed on the file id: ' + id);
+      console.log('Passed on the file: ' + fo);
     }
   });
 ```
@@ -262,7 +262,7 @@ FS.File.prototype.put = function(callback) {
 
   if (Meteor.isClient && !FS.uploadQueue.isUploadingFile(self)) {
     FS.uploadQueue.uploadFile(self);
-    callback(null, self._id);
+    callback(null, self);
   } else if (Meteor.isServer) {
     // Force bytesUploaded to be equal to the file size in case
     // this was a server insert or a non-chunked client upload.
@@ -273,7 +273,7 @@ FS.File.prototype.put = function(callback) {
         // Now let the collection handle the storage adapters
         self.useCollection('FS.File.put', function() {
           this.saveCopies(self, {missing: true});
-          callback(null, self._id);
+          callback(null, self);
         }, callback);
       }
     });

@@ -7,7 +7,6 @@
   // Collection Wrappers
   // Call insert on files collection
 FS.Collection.prototype.insert = function(fileRef, callback) {
-  console.log('FS.Collection insert-------------');
   var self = this;
   var fileObj;
 
@@ -18,9 +17,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // Insert the file into db
     // We call cloneFileRecord as an easy way of extracting the properties
     // that need saving.
-    console.log('Now doing actual insert into collection');
     fileObj._id = self.files.insert(cloneFileRecord(fileObj), function(err, id) {
-      console.log('Insert callback result:', id);
       if (err) {
         if (typeof callback === 'function') {
           callback(err, fileObj);

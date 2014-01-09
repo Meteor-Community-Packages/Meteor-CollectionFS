@@ -102,7 +102,7 @@ FS.StorageAdapter = function(name, options, api) {
     // Put the file to storage
     // Async
     if (callback) {
-      api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false}, function(err, fileKey, updatedAt) {
+      api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, function(err, fileKey, updatedAt) {
         if (err) {
           // remove the SA file record
           self.files.remove({_id: id});
@@ -132,7 +132,7 @@ FS.StorageAdapter = function(name, options, api) {
     //Sync
     else {
       try {
-        var fileKey = api.putSync.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false});
+        var fileKey = api.putSync.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type});
         // note the file key in the SA file record
         if (fileKey) {
           if (typeof api.statsSync === "function") {

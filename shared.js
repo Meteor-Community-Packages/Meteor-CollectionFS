@@ -31,13 +31,20 @@ var defaultZero = function(val) {
 cloneFileUnit = function(unit) {
   if (_.isObject(unit)) {
     var newUnit = {
-      name: '' + unit.name,
-      type: '' + unit.type,
-      size: defaultZero(unit.size),
-      utime: new Date(unit.utime)
+      size: defaultZero(unit.size)
     };
-    if (unit._id)
+    if (unit._id) {
       newUnit._id = '' + unit._id;
+    }
+    if (unit.name) {
+      newUnit.name = '' + unit.name;
+    }
+    if (unit.type) {
+      newUnit.type = '' + unit.type;
+    }
+    if (unit.utime) {
+      newUnit.utime = unit.utime;
+    }
     return newUnit;
   }
   return null;

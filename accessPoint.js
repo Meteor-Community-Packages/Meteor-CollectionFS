@@ -10,6 +10,9 @@ var APUpload = function(fsFile, data, start) {
   // Load the complete FS.File instance from the linked collection
   fsFile = fsFile.fetch();
   
+  // collection must exist or fetch would have errored
+  var collection = _collections[fsFile.collectionName];
+  
   if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the "insert" validators
     // since uploading is part of insert.
@@ -53,13 +56,16 @@ var APDownload = function(fsFile, copyName, start, end) {
   var self = this;
   check(fsFile, FS.File);
   check(copyName, String);
-  check(start, Number);
-  check(end, Number);
+  check(start, Match.Optional(Number));
+  check(end, Match.Optional(Number));
   
   self.unblock();
 
   // Load the complete FS.File instance from the linked collection
   fsFile = fsFile.fetch();
+  
+  // collection must exist or fetch would have errored
+  var collection = _collections[fsFile.collectionName];
   
   if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the custom "download" validators
@@ -92,6 +98,9 @@ var APDelete = function(fsFile) {
 
   // Load the complete FS.File instance from the linked collection
   fsFile = fsFile.fetch();
+  
+  // collection must exist or fetch would have errored
+  var collection = _collections[fsFile.collectionName];
 
   if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the "remove" validators
