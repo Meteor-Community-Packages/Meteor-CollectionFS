@@ -6,13 +6,13 @@ var APUpload = function(fsFile, data, start) {
 
   if (typeof start !== "number")
     start = 0;
-  
+
   // Load the complete FS.File instance from the linked collection
   fsFile = fsFile.fetch();
-  
+
   // collection must exist or fetch would have errored
   var collection = _collections[fsFile.collectionName];
-  
+
   if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the "insert" validators
     // since uploading is part of insert.
@@ -58,15 +58,15 @@ var APDownload = function(fsFile, copyName, start, end) {
   check(copyName, String);
   check(start, Match.Optional(Number));
   check(end, Match.Optional(Number));
-  
+
   self.unblock();
 
   // Load the complete FS.File instance from the linked collection
   fsFile = fsFile.fetch();
-  
+
   // collection must exist or fetch would have errored
   var collection = _collections[fsFile.collectionName];
-  
+
   if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the custom "download" validators
     // since uploading is part of insert.
@@ -93,12 +93,12 @@ var APDownload = function(fsFile, copyName, start, end) {
 var APDelete = function(fsFile) {
   var self = this;
   check(fsFile, FS.File);
-  
+
   self.unblock();
 
   // Load the complete FS.File instance from the linked collection
   fsFile = fsFile.fetch();
-  
+
   // collection must exist or fetch would have errored
   var collection = _collections[fsFile.collectionName];
 
@@ -122,54 +122,71 @@ var APDelete = function(fsFile) {
   return fsFile.remove();
 };
 
-var APhandler = function(collection, download) {
+var APhandler = function(collection, download, options) {
+  options.httpHeaders = options.httpHeaders || [];
+
   return function(data) {
     var self = this;
     var query = self.query || {};
+    
     var id = self.params.id;
-    var copyName = self.params.selector;
+    if (! id) {
+      throw new Meteor.Error(400, "Bad Request", "No file ID specified");
+    }
 
     // Get the fsFile
     var file = collection.findOne({_id: '' + id});
-
-    if (!file) {
+    if (! file) {
       throw new Meteor.Error(404, "Not Found", "There is no file with ID " + id);
     }
 
-    // If http get then return file
+    // If HTTP GET then return file
     if (self.method.toLowerCase() === 'get') {
-      var type, copyInfo, filename;
+      var copyInfo, filename;
+
+      var copyName = self.params.selector;
       if (typeof copyName !== "string") {
         copyName = "_master";
       }
+
       copyInfo = file.copies[copyName];
-      if (copyInfo) {
-        type = copyInfo.type;
-        filename = copyInfo.name;
+      if (! copyInfo) {
+        throw new Meteor.Error(404, "Not Found", "Invalid selector: " + copyName);
       }
-      if (typeof type === "string") {
-        self.setContentType(type);
+      
+      filename = copyInfo.name;
+      if (typeof copyInfo.type === "string") {
+        self.setContentType(copyInfo.type);
       }
-      if (download) {
-        self.addHeader('Content-Disposition', 'attachment; filename="' +
-                filename + '"');
-      }
+
+      // Add 'Content-Disposition' header if requested a download/attachment URL
+      download && self.addHeader(
+              'Content-Disposition',
+              'attachment; filename="' + filename + '"'
+              );
+
+      // Add any other custom headers
+      _.each(options.httpHeaders, function(header) {
+        self.addHeader(header[0], header[1]);
+      });
 
       self.setStatusCode(200);
       return APDownload.call(self, file, copyName, query.start, query.end);
     }
 
+    // If HTTP PUT then put the data for the file
     else if (self.method.toLowerCase() === 'put') {
       return APUpload.call(self, file, data);
     }
 
+    // If HTTP DEL then delete the file
     else if (self.method.toLowerCase() === 'del') {
       return APDelete.call(self, file);
     }
   };
 };
 
-accessPointsDDP = function(cfs) {
+accessPointsDDP = function(cfs, options) {
   var result = {};
   // We namespace with using the current Meteor convention - this could
   // change
@@ -179,13 +196,13 @@ accessPointsDDP = function(cfs) {
   return result;
 };
 
-accessPointsHTTP = function(cfs) {
+accessPointsHTTP = function(cfs, options) {
   var result = {};
   // We namespace with using the current Meteor convention - this could
   // change
-  result[cfs.httpUrl + '/download/:id'] = APhandler(cfs, true);
-  result[cfs.httpUrl + '/download/:id/:selector'] = APhandler(cfs, true);
-  result[cfs.httpUrl + '/:id'] = APhandler(cfs);
-  result[cfs.httpUrl + '/:id/:selector'] = APhandler(cfs);
+  result[cfs.httpUrl + '/download/:id'] = APhandler(cfs, true, options);
+  result[cfs.httpUrl + '/download/:id/:selector'] = APhandler(cfs, true, options);
+  result[cfs.httpUrl + '/:id'] = APhandler(cfs, false, options);
+  result[cfs.httpUrl + '/:id/:selector'] = APhandler(cfs, false, options);
   return result;
 };

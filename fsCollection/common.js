@@ -14,6 +14,7 @@ FS.Collection = function(name, options) {
       DDP: null, //will set to default below
       HTTP: null //will set to default below
     },
+    httpHeaders: [], //optional
     filter: null, //optional
     store: null, //required
     beforeSave: null, //optional
@@ -32,8 +33,10 @@ FS.Collection = function(name, options) {
   if (Meteor.isServer) {
     // Add default access points if user did not supply any
     self.options.accessPoints = self.options.accessPoints || {};
-    self.options.accessPoints.DDP = self.options.accessPoints.DDP || accessPointsDDP(self);
-    self.options.accessPoints.HTTP = self.options.accessPoints.HTTP || accessPointsHTTP(self);
+    self.options.accessPoints.DDP = self.options.accessPoints.DDP ||
+            accessPointsDDP(self);
+    self.options.accessPoints.HTTP = self.options.accessPoints.HTTP ||
+            accessPointsHTTP(self, {httpHeaders: self.options.httpHeaders});
     
     // Make sure a master store has been supplied
     if (!(self.options.store instanceof FS.StorageAdapter)) {
