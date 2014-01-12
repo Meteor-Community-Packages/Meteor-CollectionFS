@@ -146,7 +146,7 @@ if (typeof Handlebars !== 'undefined') {
         return new Handlebars.SafeString(Template._cfsQueueProgressBar({
             collection: collection,
             fileId: fileId,
-            attributes: (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '')
+            attributes: (hash.id ? ' id="' + hash.id + '"' : '') + (hash['class'] ? ' class="' + hash['class'] + '"' : '')
         }));
     });
 
@@ -269,8 +269,8 @@ if (typeof Handlebars !== 'undefined') {
         if (!fileId) {
             return false;
         }
-        hash.class = hash.class ? hash.class + ' cfsDownloadButton' : 'cfsDownloadButton';
-        atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '');
+        hash['class'] = hash['class'] ? hash['class'] + ' cfsDownloadButton' : 'cfsDownloadButton';
+        atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash['class'] ? ' class="' + hash['class'] + '"' : '');
         hash.content = hash.content || "Download";
         return new Handlebars.SafeString(Template._cfsDownloadButton({
             collection: collection,
@@ -342,8 +342,8 @@ if (typeof Handlebars !== 'undefined') {
         var html, hash = options.hash, styles, atts;
         switch (hash.type) {
             case "file":
-                hash.class = hash.class ? hash.class + ' cfsFileInput' : 'cfsFileInput';
-                atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash.class ? ' class="' + hash.class + '"' : '') + (hash.name ? ' name="' + hash.name + '"' : '') + (hash.multiple ? ' multiple' : '');
+                hash['class']  = hash['class'] ? hash['class'] + ' cfsFileInput' : 'cfsFileInput';
+                atts = (hash.id ? ' id="' + hash.id + '"' : '') + (hash['class'] ? ' class="' + hash['class'] + '"' : '') + (hash.name ? ' name="' + hash.name + '"' : '') + (hash.multiple ? ' multiple' : '');
                 html = Template._cfsFileInput({
                     collection: collection,
                     multiple: hash.multiple,
