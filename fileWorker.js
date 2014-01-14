@@ -1,3 +1,7 @@
+// TODO: Use power queue to handle throttling etc.
+// Use observe to monitor changes and have it create tasks for the power queue
+// to perform.
+
 FileWorker = function() {
   var self = this;
   self.running = false;
@@ -61,7 +65,7 @@ FileWorker.prototype.checkForMissingCopies = function() {
     // Loop through all defined copies for the FS.Collection
     for (var copyName in cfs.options.copies) {
       var selector = {};
-
+      
       // Find missing copies, oldest first.
       // The collection handles the details of max tries and sets doneTrying.
       selector['failures.copies.' + copyName + '.count'] = {$gt: 0};
@@ -89,6 +93,7 @@ FileWorker.prototype.checkForMissingCopies = function() {
 
     // Delete temp files that are no longer needed
     cfs.find(tempSelector).forEach(function(fsFile) {
+      console.log('Delete TempStore for file id: ' + fsFile._id);
       TempStore.deleteChunks(fsFile);
     });
 

@@ -1,125 +1,139 @@
-var APUpload = function(fsFile, data, start) {
+var APUpload = function(fileObj, data, start) {
   var self = this;
-  check(fsFile, FS.File);
+  check(fileObj, FS.File);
   if (!EJSON.isBinary(data))
     throw new Error("APUpload expects binary data");
 
   if (typeof start !== "number")
     start = 0;
 
-  // Load the complete FS.File instance from the linked collection
-  fsFile = fsFile.fetch();
+  if (fileObj.isMounted()) {
 
-  // collection must exist or fetch would have errored
-  var collection = _collections[fsFile.collectionName];
+    // Load the complete FS.File instance from the linked collection
+    fileObj.getFileRecord();
 
-  if (typeof Package !== 'object' || !Package.insecure) {
-    // Call user validators; use the "insert" validators
-    // since uploading is part of insert.
-    // Any deny returns true means denied.
-    if (_.any(collection.files._validators.insert.deny, function(validator) {
-      return validator(self.userId, fsFile);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
+    // collection exist since fileObj is mounted on an collection
+    var collection = fileObj.getCollection();
+    if (typeof Package !== 'object' || !Package.insecure) {
+      // Call user validators; use the "insert" validators
+      // since uploading is part of insert.
+      // Any deny returns true means denied.
+      if (_.any(collection.files._validators.insert.deny, function(validator) {
+        return validator(self.userId, fileObj);
+      })) {
+        throw new Meteor.Error(403, "Access denied");
+      }
+      // Any allow returns true means proceed. Throw error if they all fail.
+      if (_.all(collection.files._validators.insert.allow, function(validator) {
+        return !validator(self.userId, fileObj);
+      })) {
+        throw new Meteor.Error(403, "Access denied");
+      }
     }
-    // Any allow returns true means proceed. Throw error if they all fail.
-    if (_.all(collection.files._validators.insert.allow, function(validator) {
-      return !validator(self.userId, fsFile);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-  }
+    // Save chunk and, if it's the last chunk, kick off storage
+    TempStore.saveChunk(fileObj, data, start, function(err, done) {
+      if (err) {
+        throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
+      }
+      if (done) {
+        // We are done loading all bytes
+        // so we should load the temp files into the actual fileObj now
+        self.unblock();
+        TempStore.getDataForFile(fileObj, function(err, fileObjWithData) {
+          if (err) {
+            throw err;
+          } else {
+            // Save file to stores
+            fileObjWithData.put();
+          }
+        });
+      }
+    });
 
-  // Save chunk and, if it's the last chunk, kick off storage
-  TempStore.saveChunk(fsFile, data, start, function(err, done) {
-    if (err) {
-      throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
-    }
-    if (done) {
-      // We are done loading all bytes
-      // so we should load the temp files into the actual fsFile now
-      self.unblock();
-      TempStore.getDataForFile(fsFile, function(err, fsFileWithData) {
-        if (err) {
-          throw err;
-        } else {
-          // Save file to stores
-          fsFileWithData.put();
-        }
-      });
-    }
-  });
+  } // EO is Mounted
+
 };
 
-// Returns the data for the copyName copy of fsFile
-var APDownload = function(fsFile, copyName, start, end) {
+// Returns the data for the copyName copy of fileObj
+var APDownload = function(fileObj, copyName, start, end) {
   var self = this;
-  check(fsFile, FS.File);
+  check(fileObj, FS.File);
   check(copyName, String);
   check(start, Match.Optional(Number));
   check(end, Match.Optional(Number));
 
   self.unblock();
 
-  // Load the complete FS.File instance from the linked collection
-  fsFile = fsFile.fetch();
+  if (fileObj.isMounted()) {
 
-  // collection must exist or fetch would have errored
-  var collection = _collections[fsFile.collectionName];
+    // Load the complete FS.File instance from the linked collection
+    //fileObj = fileObj.getFileRecord();
 
-  if (typeof Package !== 'object' || !Package.insecure) {
-    // Call user validators; use the custom "download" validators
-    // since uploading is part of insert.
-    // Any deny returns true means denied.
-    if (_.any(collection._validators.download.deny, function(validator) {
-      return validator(self.userId, fsFile);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
+    // collection exist since fileObj is mounted on an collection
+    var collection = fileObj.getCollection();
+
+    if (typeof Package !== 'object' || !Package.insecure) {
+      // Call user validators; use the custom "download" validators
+      // since uploading is part of insert.
+      // Any deny returns true means denied.
+      if (_.any(collection._validators.download.deny, function(validator) {
+        return validator(self.userId, fileObj);
+      })) {
+        throw new Meteor.Error(403, "Access denied");
+      }
+      // Any allow returns true means proceed. Throw error if they all fail.
+      if (_.all(collection._validators.download.allow, function(validator) {
+        return !validator(self.userId, fileObj);
+      })) {
+        throw new Meteor.Error(403, "Access denied");
+      }
     }
-    // Any allow returns true means proceed. Throw error if they all fail.
-    if (_.all(collection._validators.download.allow, function(validator) {
-      return !validator(self.userId, fsFile);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-  }
 
-  return fsFile.get(copyName, start, end);
+    return fileObj.get(copyName, start, end);
+
+  } // EO Mounted
+
+  // return; // No file data found
 };
 
-// Deletes fsFile.
+// Deletes fileObj.
 // Always deletes the entire file and all copies, even if a specific
 // selector is passed. We don't allow deleting individual copies.
-var APDelete = function(fsFile) {
+var APDelete = function(fileObj) {
   var self = this;
-  check(fsFile, FS.File);
+  check(fileObj, FS.File);
 
   self.unblock();
 
-  // Load the complete FS.File instance from the linked collection
-  fsFile = fsFile.fetch();
+  if (fileObj.isMounted()) {
 
-  // collection must exist or fetch would have errored
-  var collection = _collections[fsFile.collectionName];
+    // Load the complete FS.File instance from the linked collection
+    //fileObj = fileObj.getFileRecord();
 
-  if (typeof Package !== 'object' || !Package.insecure) {
-    // Call user validators; use the "remove" validators
-    // since uploading is part of insert.
-    // Any deny returns true means denied.
-    if (_.any(collection.files._validators.remove.deny, function(validator) {
-      return validator(self.userId, fsFile);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
+    // collection exist since fileObj is mounted on an collection
+    var collection = fileObj.getCollection();
+
+    if (typeof Package !== 'object' || !Package.insecure) {
+      // Call user validators; use the "remove" validators
+      // since uploading is part of insert.
+      // Any deny returns true means denied.
+      if (_.any(collection.files._validators.remove.deny, function(validator) {
+        return validator(self.userId, fileObj);
+      })) {
+        throw new Meteor.Error(403, "Access denied");
+      }
+      // Any allow returns true means proceed. Throw error if they all fail.
+      if (_.all(collection.files._validators.remove.allow, function(validator) {
+        return !validator(self.userId, fileObj);
+      })) {
+        throw new Meteor.Error(403, "Access denied");
+      }
     }
-    // Any allow returns true means proceed. Throw error if they all fail.
-    if (_.all(collection.files._validators.remove.allow, function(validator) {
-      return !validator(self.userId, fsFile);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-  }
 
-  return fsFile.remove();
+    return fileObj.remove();
+
+  } // EO isMounted
+
 };
 
 var APhandler = function(collection, download, options) {

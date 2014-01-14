@@ -20,7 +20,8 @@ FS.Collection = function(name, options) {
     beforeSave: null, //optional
     sync: null, //optional
     maxTries: 5, //optional
-    copies: {} //optional
+    copies: {}, //optional
+    chunkSize: 0.5 * 1024 * 1024 // 0.5MB; can be changed
   };
 
   // Extend and overwrite options
@@ -96,7 +97,9 @@ FS.Collection = function(name, options) {
 
   var _filesOptions = {
     transform: function(doc) {
-      var result = new FS.File(doc);
+      // This should keep the filerecord in the file object updated in reactive
+      // context
+      var result = new FS.File(doc, true);
       result.collectionName = collectionName;
       return result;
     }

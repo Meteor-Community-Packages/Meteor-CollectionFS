@@ -11,7 +11,9 @@
 // 
 // Using temp files also allows us to easily resume uploads, even if the server 
 // restarts, and to keep the working memory clear.
- 
+
+//   tmp = Npm.require('temp');
+
 /** @namespace TempStore
   * @property TempStore
   * @type {object}
@@ -24,14 +26,14 @@ TempStore = {
     * @param {number} start
     * @param {function} callback callback(err, allBytesLoaded)
     */
-  saveChunk: function(fsFile, binary, start, callback) {
+  saveChunk: function(fileObj, binary, start, callback) {
     var total = binary.length;
 
     if (typeof callback !== "function") {
       throw new Error("FS.File.saveChunk requires a callback");
     }
 
-    var chunks = fsFile.chunks || [], chunk, tempFile;
+    var chunks = fileObj.chunks || [], chunk, tempFile;
     for (var i = 0, ln = chunks.length; i < ln; i++) {
       chunk = chunks[i];
       if (chunk.start === start) {
@@ -41,20 +43,22 @@ TempStore = {
     }
     if (!tempFile) {
       tempFile = tmp.path({suffix: '.bin'});
-      fsFile.update({$push: {chunks: {start: start, tempFile: tempFile}}});
+      fileObj.update({$push: {chunks: {start: start, tempFile: tempFile}}});
     }
-
     // Call node writeFile
     fs.writeFile(tempFile, binaryToBuffer(binary), Meteor.bindEnvironment(function(err) {
       if (err) {
         callback(err);
       } else {
-        fsFile.update({$inc: {bytesUploaded: total}}, function(err) {
+        fileObj.update({$inc: {bytesUploaded: total}}, function(err, count) {
           if (err) {
             callback(err);
           } else {
-            console.log("Uploaded " + fsFile.bytesUploaded + " of " + fsFile.size + " bytes");
-            if (fsFile.bytesUploaded === fsFile.size) {
+            // We pull the fileRecord to make sure all the data chunks have been
+            // recieved - We have to pull the record on the server-side
+            if (count > 0) fileObj.getFileRecord();
+            console.log("Uploaded " + fileObj.bytesUploaded + " of " + fileObj.size + " bytes");
+            if (fileObj.bytesUploaded === fileObj.size) {
               // We are done loading all bytes
               callback(null, true);
             }
@@ -67,24 +71,24 @@ TempStore = {
   },
 
   /** @method TempStore.getDataForFile
-    * @param {FS.File} fsFile
-    * @param {function} callback callback(err, fsFileWithData)
+    * @param {FS.File} fileObj
+    * @param {function} callback callback(err, fileObjWithData)
     */  
-  getDataForFile: function(fsFile, callback) {
-    fsFile.binary = EJSON.newBinary(fsFile.size);
+  getDataForFile: function(fileObj, callback) {
+    fileObj.binary = EJSON.newBinary(fileObj.size);
     var total = 0, stop = false;
-    _.each(fsFile.chunks, function(chunk) {
+    _.each(fileObj.chunks, function(chunk) {
       if (!stop) {
         var start = chunk.start;
         // Call node readFile
         fs.readFile(chunk.tempFile, Meteor.bindEnvironment(function(err, buffer) {
           if (buffer) {
             for (var i = 0, ln = buffer.length; i < ln; i++) {
-              fsFile.binary[start + i] = buffer[i];
+              fileObj.binary[start + i] = buffer[i];
               total++;
             }
-            if (total === fsFile.size) {
-              callback(null, fsFile);
+            if (total === fileObj.size) {
+              callback(null, fileObj);
               stop = true;
             }
           } else {
@@ -100,20 +104,19 @@ TempStore = {
   },
   
   /** @method TempStore.deleteChunks
-    * @param {FS.File} fsFile
+    * @param {FS.File} fileObj
     * @param {function} callback callback(err)
     */
-  deleteChunks: function(fsFile, callback) {
+  deleteChunks: function(fileObj, callback) {
     var stop = false, count, deletedCount = 0;
-    
     callback = callback || defaultCallback;
 
-    if (!fsFile.chunks) {
+    if (!fileObj.chunks) {
       callback();
       return;
     }
 
-    var count = fsFile.chunks.length;
+    var count = fileObj.chunks.length;
     if (!count) {
       callback();
       return;
@@ -122,12 +125,12 @@ TempStore = {
     function success() {
       deletedCount++;
       if (deletedCount === count) {
-        fsFile.update({$unset: {chunks: 1}});
+        fileObj.update({$unset: {chunks: 1}});
         callback();
       }
     }
 
-    _.each(fsFile.chunks, function(chunk) {
+    _.each(fileObj.chunks, function(chunk) {
       if (!fs.existsSync(chunk.tempFile)) {
         success();
       } else if (!stop) {
@@ -147,16 +150,16 @@ TempStore = {
   },
 
   /** @method TempStore.ensureForFile
-    * @param {FS.File} fsFile
+    * @param {FS.File} fileObj
     * @param {function} callback callback(err, allBytesLoaded)
     */  
-  ensureForFile: function (fsFile, callback) {
+  ensureForFile: function (fileObj, callback) {
     callback = callback || defaultCallback;
-    fsFile.getBinary(null, null, function (err, binary) {
+    fileObj.getBinary(null, null, function (err, binary) {
       if (err) {
         callback(err);
       } else {
-        TempStore.saveChunk(fsFile, binary, 0, callback);
+        TempStore.saveChunk(fileObj, binary, 0, callback);
       }
     });
   }

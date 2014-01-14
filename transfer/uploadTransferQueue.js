@@ -1,7 +1,7 @@
 /* 
  * Upload Transfer Queue
  */
-
+// TODO: Refactor chunkSize into FS.Collection options
 var chunkSize = 0.5 * 1024 * 1024; // 0.5MB; can be changed
 
 UploadTransferQueue = function(opts) {
@@ -85,8 +85,8 @@ var unCacheUpload = function(col, fsFile, callback) {
 };
 
 var uploadChunk = function(tQueue, fsFile, start, end) {
-  fsFile.useCollection('TransferQueue upload', function() {
-    var collection = this;
+  if (fsFile.isMounted()) {
+
     cacheUpload(tQueue.collection, fsFile, start, function() {
       tQueue.queue.add(function(complete) {
         console.log("uploading bytes " + start + " to " + Math.min(end, fsFile.size) + " of " + fsFile.size);
@@ -96,7 +96,7 @@ var uploadChunk = function(tQueue, fsFile, start, end) {
             throw err;
           }
           var b = new Date;
-          tQueue.connection.apply(collection.methodName + '/put',
+          tQueue.connection.apply(fsFile.collection.methodName + '/put',
                   [fsFile, data, start],
                   function(err) {
                     var e = new Date;
@@ -110,7 +110,8 @@ var uploadChunk = function(tQueue, fsFile, start, end) {
         });
       });
     });
-  });
+    
+  }
 };
 
 var markChunkUploaded = function(col, fsFile, start, callback) {

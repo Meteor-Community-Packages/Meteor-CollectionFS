@@ -126,12 +126,12 @@ var unCacheDownload = function(col, fsFile, copyName, callback) {
 // Downloading is a bit different from uploading. We cache data as it comes back
 // rather than before making the method calls.
 var downloadChunk = function(tQueue, fsFile, copyName, start) {
-  fsFile.useCollection('TransferQueue download', function() {
-    var collection = this;
+  if (fsFile.isMounted()) {
+
     cacheDownload(tQueue.collection, fsFile, copyName, start, function(err) {
       tQueue.queue.add(function(complete) {
         console.log("downloading bytes starting from " + start);
-        tQueue.connection.apply(collection.methodName + '/get',
+        tQueue.connection.apply(fsFile.collection.methodName + '/get',
                 [fsFile, copyName, start, start + chunkSize],
                 function(err, data) {
                   if (err) {
@@ -145,7 +145,9 @@ var downloadChunk = function(tQueue, fsFile, copyName, start) {
                 });
       });
     });
-  });
+
+  }
+
 };
 
 var addDownloadedData = function(col, fsFile, copyName, start, data, callback) {
