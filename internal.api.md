@@ -158,11 +158,11 @@ __Arguments__
 
 __Returns__  *{number}*
 Count
+Remove the current file
 __TODO__
 ```
 * Test this
 ```
-Remove the current file
 
 > ```FS.File.prototype.remove = function() { ...``` [fsFile/fsFile-common.js:162](fsFile/fsFile-common.js#L162)
 
@@ -178,12 +178,12 @@ __Arguments__
 * __targetCollection__ *{[FS.Collection](#FS.Collection)}*  
 
 -
+Move the file from current collection to another collection
+> Note: Not yet implemented
 __TODO__
 ```
 * Needs to be implemented
 ```
-Move the file from current collection to another collection
-> Note: Not yet implemented
 
 > ```FS.File.prototype.get = function(``` [fsFile/fsFile-common.js:198](fsFile/fsFile-common.js#L198)
 
@@ -204,12 +204,12 @@ Name of the copy version
 
 __Returns__  *{number}*
 Count
+Remove the current file
 __TODO__
 ```
 * Split server and client code
 * Should we consider optionalising instead of arguments - deprecate parseArguments?
 ```
-Remove the current file
 
 > ```FS.File.prototype.get = function(``` [fsFile/fsFile-common.js:198](fsFile/fsFile-common.js#L198)
 
