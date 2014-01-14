@@ -55,12 +55,23 @@ Returns attatched collection or undefined if not mounted
 
 -
 
-#### <a name="FS.File.prototype.getFileRecord"></a>*fsFile*.getFileRecord()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.fetch"></a>*fsFile*.fetch()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 > __Warning!__
-> This method "FS.File.prototype.getFileRecord" has deprecated from the api
+> This method "FS.File.prototype.fetch" has deprecated from the api
 > Refactored into [getFileRecord](#FS.File.prototype.getFileRecord)
 
+*This method __fetch__ is defined in `prototype` of `FS.File`*
+
+__Returns__  *{object}*
+The filerecord
+
+> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile/fsFile-common.js:102](fsFile/fsFile-common.js#L102)
+
+-
+
+#### <a name="FS.File.prototype.getFileRecord"></a>*fsFile*.getFileRecord()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
 *This method __getFileRecord__ is defined in `prototype` of `FS.File`*
 
 __Returns__  *{object}*
@@ -70,12 +81,20 @@ The filerecord
 
 -
 
-#### <a name="FS.File.prototype.update"></a>*fsFile*.update(modifier, [options], [callback])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.useCollection"></a>*fsFile*.useCollection()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 > __Warning!__
-> This method "FS.File.prototype.update" has deprecated from the api
+> This method "FS.File.prototype.useCollection" has deprecated from the api
 > We should use `getCollection()` istead - it practically does the same
 
+*This method __useCollection__ is defined in `prototype` of `FS.File`*
+
+> ```FS.File.prototype.update = function(modifier, options, callback) { ...``` [fsFile/fsFile-common.js:134](fsFile/fsFile-common.js#L134)
+
+-
+
+#### <a name="FS.File.prototype.update"></a>*fsFile*.update(modifier, [options], [callback])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
 *This method __update__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
@@ -99,6 +118,27 @@ Count
 Remove the current file
 
 > ```FS.File.prototype.remove = function() { ...``` [fsFile/fsFile-common.js:162](fsFile/fsFile-common.js#L162)
+
+-
+
+#### <a name="FS.File.prototype.get"></a>*fsFile*.get([copyName], [start], [end])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __get__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __copyName__ *{string}*    (Optional = '_master')
+Name of the copy version
+* __start__ *{number}*    (Optional)
+* __end__ *{number}*    (Optional)
+
+-
+
+__Returns__  *{number}*
+Count
+Remove the current file
+
+> ```FS.File.prototype.get = function(``` [fsFile/fsFile-common.js:198](fsFile/fsFile-common.js#L198)
 
 -
 
