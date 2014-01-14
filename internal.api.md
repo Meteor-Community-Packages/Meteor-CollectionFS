@@ -224,17 +224,145 @@ window.saveAs = window.saveAs
 
 -
 
-#### <a name="FS.File.prototype.reload"></a>*fsFile*.reload()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File"></a>new *fs*.File(ref)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __File__ is defined in `FS`*
+
+__Arguments__
+
+* __ref__ *{object|[File](#File)|[Blob](#Blob)}*  
+File reference
+
+-
+__TODO__
+```
+* Should we refactor the file record into `self.record`?
+```
+
+> ```FS.File = function(ref, createdByTransform) { ...``` [fsFile/fsFile-common.js:15](fsFile/fsFile-common.js#L15)
+
+-
+
+#### <a name="FS.File.prototype.controlledByDeps"></a>*fsFile*.controlledByDeps()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __controlledByDeps__ is defined in `prototype` of `FS.File`*
+
+__Returns__  *{FS.Collection}*
+Returns true if this FS.File is reactive
+> Note: Returns true if this FS.File object was created by a FS.Collection
+> and we are in a reactive computations. What does this mean? Well it should
+> mean that our fileRecord is fully updated by Meteor and we are mounted on
+> a collection
+
+> ```FS.File.prototype.controlledByDeps = function() { ...``` [fsFile/fsFile-common.js:43](fsFile/fsFile-common.js#L43)
+
+-
+
+#### <a name="FS.File.prototype.getCollection"></a>*fsFile*.getCollection()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __getCollection__ is defined in `prototype` of `FS.File`*
+
+__Returns__  *{FS.Collection}*
+Returns attatched collection or undefined if not mounted
+> Note: This will throw an error if collection not found and file is mounted
+(got an invalid collectionName)*
+
+> ```FS.File.prototype.getCollection = function() { ...``` [fsFile/fsFile-common.js:54](fsFile/fsFile-common.js#L54)
+
+-
+
+#### <a name="FS.File.prototype.isMounted"></a>*fsFile*.isMounted()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __isMounted__ is defined in `prototype` of `FS.File`*
+
+__Returns__  *{FS.Collection}*
+Returns attatched collection or undefined if not mounted
+> Note: This will throw an error if collection not found and file is mounted
+(got an invalid collectionName)*
+
+> ```FS.File.prototype.isMounted = FS.File.prototype.getCollection;``` [fsFile/fsFile-common.js:91](fsFile/fsFile-common.js#L91)
+
+-
+
+#### <a name="FS.File.prototype.getFileRecord"></a>*fsFile*.getFileRecord()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 > __Warning!__
-> This method "FS.File.prototype.reload" has deprecated from the api
-> We should not maintain duplicate data
+> This method "FS.File.prototype.getFileRecord" has deprecated from the api
+> Refactored into [getFileRecord](#FS.File.prototype.getFileRecord)
 
-*This method __reload__ is defined in `prototype` of `FS.File`*
-> This function is deprecating - but we cannot remove it before all
-> references are updated to use `FS.File.fetch()`
+*This method __getFileRecord__ is defined in `prototype` of `FS.File`*
 
-> ```FS.File.prototype.reload = function() { ...``` [fsFile/fsFile-common.js:68](fsFile/fsFile-common.js#L68)
+__Returns__  *{object}*
+The filerecord
+
+> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile/fsFile-common.js:102](fsFile/fsFile-common.js#L102)
+
+-
+
+#### <a name="FS.File.prototype.update"></a>*fsFile*.update(modifier, [options], [callback])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+> __Warning!__
+> This method "FS.File.prototype.update" has deprecated from the api
+> We should use `getCollection()` istead - it practically does the same
+
+*This method __update__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __modifier__ *{[modifier](#modifier)}*  
+* __options__ *{object}*    (Optional)
+* __callback__ *{function}*    (Optional)
+
+-
+
+> ```FS.File.prototype.update = function(modifier, options, callback) { ...``` [fsFile/fsFile-common.js:134](fsFile/fsFile-common.js#L134)
+
+-
+
+#### <a name="FS.File.prototype.remove"></a>*fsFile*.remove()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __remove__ is defined in `prototype` of `FS.File`*
+
+__Returns__  *{number}*
+Count
+__TODO__
+```
+* Test this
+```
+Remove the current file
+
+> ```FS.File.prototype.remove = function() { ...``` [fsFile/fsFile-common.js:162](fsFile/fsFile-common.js#L162)
+
+-
+
+#### <a name="FS.File.prototype.get"></a>*fsFile*.get(targetCollection, [copyName], [start], [end])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method is private*
+*This method __get__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __targetCollection__ *{[FS.Collection](#FS.Collection)}*  
+* __copyName__ *{string}*    (Optional = '_master')
+Name of the copy version
+* __start__ *{number}*    (Optional)
+* __end__ *{number}*    (Optional)
+
+-
+
+__Returns__  *{number}*
+Count
+__TODO__
+```
+* Needs to be implemented
+* Split server and client code
+* Should we consider optionalising instead of arguments - deprecate parseArguments?
+```
+Move the file from current collection to another collection
+> Note: Not yet implemented
+Remove the current file
+
+> ```FS.File.prototype.get = function(``` [fsFile/fsFile-common.js:198](fsFile/fsFile-common.js#L198)
 
 -
 
@@ -260,7 +388,7 @@ Should headers be set to force a download
 Return the http url for getting the file - on server set auth if wanting to
 use authentication on client set auth to true or token
 
-> ```FS.File.prototype.url = function(options) { ...``` [fsFile/fsFile-common.js:194](fsFile/fsFile-common.js#L194)
+> ```FS.File.prototype.url = function(options) { ...``` [fsFile/fsFile-common.js:256](fsFile/fsFile-common.js#L256)
 
 -
 
@@ -282,7 +410,7 @@ Wether or not the authenticate
 
 -
 
-> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile/fsFile-common.js:245](fsFile/fsFile-common.js#L245)
+> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile/fsFile-common.js:309](fsFile/fsFile-common.js#L309)
 
 -
 
@@ -293,20 +421,20 @@ Wether or not the authenticate
 __Arguments__
 
 * __callback__ *{function}*    (Optional)
-Callback for returning errors and id
+Callback for returning errors and updated FS.File
 
 -
 ```
-fo.put(function(err, id) {
+fo.put(function(err, fo) {
   if (err) {
     console.log('Got an error');
   } else {
-    console.log('Passed on the file id: ' + id);
+    console.log('Passed on the file: ' + fo);
   }
 });
 ```
 
-> ```FS.File.prototype.put = function(callback) { ...``` [fsFile/fsFile-common.js:265](fsFile/fsFile-common.js#L265)
+> ```FS.File.prototype.put = function(callback) { ...``` [fsFile/fsFile-common.js:329](fsFile/fsFile-common.js#L329)
 
 -
 
@@ -314,25 +442,29 @@ fo.put(function(err, id) {
 -
 *This method __getExtension__ is defined in `prototype` of `FS.File`*
 
-__Returns__  *{string | null}*
-The extension eg.: `jpg`
+__Returns__  *{string}*
+The extension eg.: `jpg` or if not found then an empty string ''
+
+> ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:362](fsFile/fsFile-common.js#L362)
+
+-
+
+#### <a name="FS.File.prototype.toDataUrl"></a>*fsFile*.toDataUrl(callback)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __toDataUrl__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __callback__ *{function}*  
+Callback(err, dataUrl) (callback is optional on server)
+
+-
 __TODO__
 ```
-* We have to make this function be able to get the name from `self.fetch()`
+* Split client and server code
 ```
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:299](fsFile/fsFile-common.js#L299)
-
--
-
-#### <a name="FS.File.prototype.fetch"></a>*fsFile*.fetch()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
--
-*This method __fetch__ is defined in `prototype` of `FS.File`*
-
-__Returns__  *{object}*
-The filerecord
-
-> ```FS.File.prototype.fetch = function() { ...``` [fsFile/fsFile-common.js:373](fsFile/fsFile-common.js#L373)
+> ```FS.File.prototype.toDataUrl = function(callback) { ...``` [fsFile/fsFile-common.js:376](fsFile/fsFile-common.js#L376)
 
 -
 
@@ -357,7 +489,7 @@ If the copy exists or not
 > could exist. This is the case in `FS.File.url` we are optimistic that the
 > copy supplied by the user exists.
 
-> ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:391](fsFile/fsFile-common.js#L391)
+> ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:450](fsFile/fsFile-common.js#L450)
 
 -
 
@@ -402,7 +534,7 @@ __Arguments__
 -
 [Meteor docs](http://docs.meteor.com/#update)
 
-> ```FS.Collection.prototype.update = function(selector, modifier, options) { ...``` [fsCollection/api.common.js:61](fsCollection/api.common.js#L61)
+> ```FS.Collection.prototype.update = function(selector, modifier, options) { ...``` [fsCollection/api.common.js:60](fsCollection/api.common.js#L60)
 
 -
 
@@ -419,7 +551,7 @@ __Arguments__
 -
 [Meteor docs](http://docs.meteor.com/#remove)
 
-> ```FS.Collection.prototype.remove = function(selector, callback) { ...``` [fsCollection/api.common.js:85](fsCollection/api.common.js#L85)
+> ```FS.Collection.prototype.remove = function(selector, callback) { ...``` [fsCollection/api.common.js:84](fsCollection/api.common.js#L84)
 
 -
 
@@ -440,7 +572,7 @@ var images = new FS.Collection( ... );
 var fo = images.findOne({ _id: 'NpnskCt6ippN6CgD8' });
 ```
 
-> ```FS.Collection.prototype.findOne = function(selector) { ...``` [fsCollection/api.common.js:107](fsCollection/api.common.js#L107)
+> ```FS.Collection.prototype.findOne = function(selector) { ...``` [fsCollection/api.common.js:106](fsCollection/api.common.js#L106)
 
 -
 
@@ -461,7 +593,7 @@ var images = new FS.Collection( ... );
 var files = images.find({ _id: 'NpnskCt6ippN6CgD8' }).fetch();
 ```
 
-> ```FS.Collection.prototype.find = function(selector) { ...``` [fsCollection/api.common.js:123](fsCollection/api.common.js#L123)
+> ```FS.Collection.prototype.find = function(selector) { ...``` [fsCollection/api.common.js:122](fsCollection/api.common.js#L122)
 
 -
 
@@ -495,7 +627,7 @@ var files = images.allow({
 });
 ```
 
-> ```FS.Collection.prototype.allow = function(options) { ...``` [fsCollection/api.common.js:148](fsCollection/api.common.js#L148)
+> ```FS.Collection.prototype.allow = function(options) { ...``` [fsCollection/api.common.js:147](fsCollection/api.common.js#L147)
 
 -
 
@@ -529,7 +661,7 @@ var files = images.deny({
 });
 ```
 
-> ```FS.Collection.prototype.deny = function(options) { ...``` [fsCollection/api.common.js:183](fsCollection/api.common.js#L183)
+> ```FS.Collection.prototype.deny = function(options) { ...``` [fsCollection/api.common.js:182](fsCollection/api.common.js#L182)
 
 -
 
@@ -689,11 +821,12 @@ single temporary file, which can lead to write conflicts.
 
 Using temp files also allows us to easily resume uploads, even if the server 
 restarts, and to keep the working memory clear.
+tmp = Npm.require('temp');
 
 #### <a name="TempStore"></a>TempStore {object}&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 
-> ```TempStore = { ...``` [tempStore.js:19](tempStore.js#L19)
+> ```TempStore = { ...``` [tempStore.js:21](tempStore.js#L21)
 
 -
 
@@ -711,54 +844,54 @@ callback(err, allBytesLoaded)
 
 -
 
-> ```saveChunk: function(fsFile, binary, start, callback) { ...``` [tempStore.js:27](tempStore.js#L27)
+> ```saveChunk: function(fileObj, binary, start, callback) { ...``` [tempStore.js:29](tempStore.js#L29)
 
 -
 
-#### <a name="TempStore.getDataForFile"></a>*tempstore*.getDataForFile(fsFile, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="TempStore.getDataForFile"></a>*tempstore*.getDataForFile(fileObj, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method __getDataForFile__ is defined in `TempStore`*
 
 __Arguments__
 
-* __fsFile__ *{[FS.File](#FS.File)}*  
+* __fileObj__ *{[FS.File](#FS.File)}*  
 * __callback__ *{function}*  
-callback(err, fsFileWithData)
+callback(err, fileObjWithData)
 
 -
 
-> ```getDataForFile: function(fsFile, callback) { ...``` [tempStore.js:73](tempStore.js#L73)
+> ```getDataForFile: function(fileObj, callback) { ...``` [tempStore.js:77](tempStore.js#L77)
 
 -
 
-#### <a name="TempStore.deleteChunks"></a>*tempstore*.deleteChunks(fsFile, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="TempStore.deleteChunks"></a>*tempstore*.deleteChunks(fileObj, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method __deleteChunks__ is defined in `TempStore`*
 
 __Arguments__
 
-* __fsFile__ *{[FS.File](#FS.File)}*  
+* __fileObj__ *{[FS.File](#FS.File)}*  
 * __callback__ *{function}*  
 callback(err)
 
 -
 
-> ```deleteChunks: function(fsFile, callback) { ...``` [tempStore.js:106](tempStore.js#L106)
+> ```deleteChunks: function(fileObj, callback) { ...``` [tempStore.js:110](tempStore.js#L110)
 
 -
 
-#### <a name="TempStore.ensureForFile"></a>*tempstore*.ensureForFile(fsFile, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="TempStore.ensureForFile"></a>*tempstore*.ensureForFile(fileObj, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method __ensureForFile__ is defined in `TempStore`*
 
 __Arguments__
 
-* __fsFile__ *{[FS.File](#FS.File)}*  
+* __fileObj__ *{[FS.File](#FS.File)}*  
 * __callback__ *{function}*  
 callback(err, allBytesLoaded)
 
 -
 
-> ```ensureForFile: function (fsFile, callback) { ...``` [tempStore.js:153](tempStore.js#L153)
+> ```ensureForFile: function (fileObj, callback) { ...``` [tempStore.js:156](tempStore.js#L156)
 
 -
