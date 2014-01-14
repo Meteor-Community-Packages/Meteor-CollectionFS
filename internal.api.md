@@ -48,6 +48,7 @@ __Arguments__
 File reference
 
 -
+
 __TODO__
 ```
 * Should we refactor the file record into `self.record`?
@@ -63,7 +64,6 @@ __TODO__
 
 __Returns__  *{FS.Collection}*
 Returns true if this FS.File is reactive
-
 > Note: Returns true if this FS.File object was created by a FS.Collection
 > and we are in a reactive computations. What does this mean? Well it should
 > mean that our fileRecord is fully updated by Meteor and we are mounted on
@@ -79,7 +79,6 @@ Returns true if this FS.File is reactive
 
 __Returns__  *{FS.Collection}*
 Returns attatched collection or undefined if not mounted
-
 > Note: This will throw an error if collection not found and file is mounted
 (got an invalid collectionName)*
 
@@ -93,7 +92,6 @@ Returns attatched collection or undefined if not mounted
 
 __Returns__  *{FS.Collection}*
 Returns attatched collection or undefined if not mounted
-
 > Note: This will throw an error if collection not found and file is mounted
 (got an invalid collectionName)*
 
@@ -112,7 +110,6 @@ Returns attatched collection or undefined if not mounted
 __Returns__  *{object}*
 The filerecord
 
-
 > ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile/fsFile-common.js:102](fsFile/fsFile-common.js#L102)
 
 -
@@ -123,7 +120,6 @@ The filerecord
 
 __Returns__  *{object}*
 The filerecord
-
 
 > ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile/fsFile-common.js:102](fsFile/fsFile-common.js#L102)
 
@@ -164,11 +160,11 @@ __Arguments__
 __Returns__  *{number}*
 Count
 
-Remove the current file
 __TODO__
 ```
 * Test this
 ```
+Remove the current file
 
 > ```FS.File.prototype.remove = function() { ...``` [fsFile/fsFile-common.js:162](fsFile/fsFile-common.js#L162)
 
@@ -184,12 +180,13 @@ __Arguments__
 * __targetCollection__ *{[FS.Collection](#FS.Collection)}*  
 
 -
-Move the file from current collection to another collection
-> Note: Not yet implemented
+
 __TODO__
 ```
 * Needs to be implemented
 ```
+Move the file from current collection to another collection
+> Note: Not yet implemented
 
 > ```FS.File.prototype.get = function(``` [fsFile/fsFile-common.js:198](fsFile/fsFile-common.js#L198)
 
@@ -211,12 +208,12 @@ Name of the copy version
 __Returns__  *{number}*
 Count
 
-Remove the current file
 __TODO__
 ```
 * Split server and client code
 * Should we consider optionalising instead of arguments - deprecate parseArguments?
 ```
+Remove the current file
 
 > ```FS.File.prototype.get = function(``` [fsFile/fsFile-common.js:198](fsFile/fsFile-common.js#L198)
 
@@ -301,7 +298,6 @@ fo.put(function(err, fo) {
 __Returns__  *{string}*
 The extension eg.: `jpg` or if not found then an empty string ''
 
-
 > ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:362](fsFile/fsFile-common.js#L362)
 
 -
@@ -316,6 +312,7 @@ __Arguments__
 Callback(err, dataUrl) (callback is optional on server)
 
 -
+
 __TODO__
 ```
 * Split client and server code
@@ -340,7 +337,6 @@ In case that the file record is not found, read below
 
 __Returns__  *{boolean}*
 If the copy exists or not
-
 > Note: If the file is not published to the client or simply not found:
 > this method cannot know for sure if it exists or not. The `optimistic`
 > param is the boolean value to return. Are we `optimistic` that the copy
@@ -373,7 +369,6 @@ Callback `function(error, fileObj)`
 
 __Returns__  *{FS.File}*
 The `file object`
-
 [Meteor docs](http://docs.meteor.com/#insert)
 
 > ```FS.Collection.prototype.insert = function(fileRef, callback) { ...``` [fsCollection/api.common.js:9](fsCollection/api.common.js#L9)
