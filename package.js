@@ -3,7 +3,7 @@ Package.describe({
 });
 
 Npm.depends({
-  mmmagic: "0.3.4",
+  mmmagic: "0.3.5",
   temp: "0.6.0"
 });
 
