@@ -95,7 +95,7 @@ FS.File.prototype._get = function(options) {
   var self = this;
   // If we have defined a part of the file
   var partial = (typeof options.start === "number" && typeof options.end === "number");
-
+  // On server we contact the storage adapter
   if (self.isMounted()) {
 
     var store = self.collection.getStoreForCopy(options.copyName);
