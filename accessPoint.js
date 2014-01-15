@@ -10,7 +10,7 @@ var APUpload = function(fileObj, data, start) {
   if (fileObj.isMounted()) {
 
     // Load the complete FS.File instance from the linked collection
-    fileObj.getFileRecord();
+    //fileObj.getFileRecord();
 
     // collection exist since fileObj is mounted on an collection
     var collection = fileObj.getCollection();
