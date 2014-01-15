@@ -188,34 +188,29 @@ __TODO__
 Move the file from current collection to another collection
 > Note: Not yet implemented
 
-> ```FS.File.prototype.get = function(``` [fsFile/fsFile-common.js:198](fsFile/fsFile-common.js#L198)
+> ```FS.File.prototype.get = function(options) { ...``` [fsFile/fsFile-common.js:196](fsFile/fsFile-common.js#L196)
 
 -
 
-#### <a name="FS.File.prototype.get"></a>*fsFile*.get([copyName], [start], [end])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.get"></a>*fsFile*.get([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __get__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
 
-* __copyName__ *{string}*    (Optional = '_master')
+* __options__ *{object}*    (Optional)
+    - __copyName__ *{string}*    (Default = '_master')
 Name of the copy version
-* __start__ *{number}*    (Optional)
-* __end__ *{number}*    (Optional)
+    - __start__ *{number}*    (Optional)
+    - __end__ *{number}*    (Optional)
 
 -
 
 __Returns__  *{number}*
 Count
-
-__TODO__
-```
-* Split server and client code
-* Should we consider optionalising instead of arguments - deprecate parseArguments?
-```
 Remove the current file
 
-> ```FS.File.prototype.get = function(``` [fsFile/fsFile-common.js:198](fsFile/fsFile-common.js#L198)
+> ```FS.File.prototype.get = function(options) { ...``` [fsFile/fsFile-common.js:196](fsFile/fsFile-common.js#L196)
 
 -
 
@@ -223,7 +218,7 @@ Remove the current file
 Client: Instructs the DownloadTransferQueue to begin downloading the file copy
 Server: Returns the Buffer data for the copy
 
-#### <a name="FS.File.prototype.url"></a>*fsFile*.url([options], [auth], [download])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.url"></a>*fsFile*.url([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __url__ is defined in `prototype` of `FS.File`*
 
@@ -232,20 +227,20 @@ __Arguments__
 * __options__ *{object}*    (Optional)
     - __copy__ *{string}*    (Default = "_master")
 The copy of the file to get
-* __auth__ *{boolean}*    (Optional = null)
+    - __auth__ *{boolean}*    (Default = null)
 Wether or not the authenticate
-* __download__ *{boolean}*    (Optional = true)
+    - __download__ *{boolean}*    (Default = false)
 Should headers be set to force a download
 
 -
 Return the http url for getting the file - on server set auth if wanting to
 use authentication on client set auth to true or token
 
-> ```FS.File.prototype.url = function(options) { ...``` [fsFile/fsFile-common.js:256](fsFile/fsFile-common.js#L256)
+> ```FS.File.prototype.url = function(options) { ...``` [fsFile/fsFile-common.js:219](fsFile/fsFile-common.js#L219)
 
 -
 
-#### <a name="FS.File.prototype.downloadUrl"></a>*fsFile*.downloadUrl([options], [auth])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File.prototype.downloadUrl"></a>*fsFile*.downloadUrl([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 > __Warning!__
 > This method "FS.File.prototype.downloadUrl" has deprecated from the api
@@ -258,12 +253,12 @@ __Arguments__
 * __options__ *{object}*    (Optional)
     - __copy__ *{string}*    (Default = "_master")
 The copy of the file to get
-* __auth__ *{boolean}*    (Optional = null)
+    - __auth__ *{boolean}*    (Default = null)
 Wether or not the authenticate
 
 -
 
-> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile/fsFile-common.js:309](fsFile/fsFile-common.js#L309)
+> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile/fsFile-common.js:272](fsFile/fsFile-common.js#L272)
 
 -
 
@@ -287,7 +282,7 @@ fo.put(function(err, fo) {
 });
 ```
 
-> ```FS.File.prototype.put = function(callback) { ...``` [fsFile/fsFile-common.js:329](fsFile/fsFile-common.js#L329)
+> ```FS.File.prototype.put = function(callback) { ...``` [fsFile/fsFile-common.js:292](fsFile/fsFile-common.js#L292)
 
 -
 
@@ -298,7 +293,7 @@ fo.put(function(err, fo) {
 __Returns__  *{string}*
 The extension eg.: `jpg` or if not found then an empty string ''
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:362](fsFile/fsFile-common.js#L362)
+> ```FS.File.prototype.getExtension = function() { ...``` [fsFile/fsFile-common.js:325](fsFile/fsFile-common.js#L325)
 
 -
 
@@ -318,7 +313,7 @@ __TODO__
 * Split client and server code
 ```
 
-> ```FS.File.prototype.toDataUrl = function(callback) { ...``` [fsFile/fsFile-common.js:376](fsFile/fsFile-common.js#L376)
+> ```FS.File.prototype.toDataUrl = function(callback) { ...``` [fsFile/fsFile-common.js:339](fsFile/fsFile-common.js#L339)
 
 -
 
@@ -343,7 +338,25 @@ If the copy exists or not
 > could exist. This is the case in `FS.File.url` we are optimistic that the
 > copy supplied by the user exists.
 
-> ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:450](fsFile/fsFile-common.js#L450)
+> ```FS.File.prototype.hasCopy = function(copyName, optimistic) { ...``` [fsFile/fsFile-common.js:413](fsFile/fsFile-common.js#L413)
+
+-
+
+
+---
+> File: ["fsFile/fsFile-client.js"](fsFile/fsFile-client.js)
+> Where: {client}
+
+-
+Load data from a URL into a new FS.File and pass it to callback
+callback(err, fsFile)
+
+#### <a name="FS.File.prototype._get"></a>*fsFile*._get()&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+-
+*This method is private*
+*This method ___get__ is defined in `prototype` of `FS.File`*
+
+> ```FS.File.prototype._get = function(options) { ...``` [fsFile/fsFile-client.js:27](fsFile/fsFile-client.js#L27)
 
 -
 
@@ -658,6 +671,28 @@ images.acceptUploadFrom('hello', '#files');
 
 
 ---
+> File: ["fsFile/fsFile-server.js"](fsFile/fsFile-server.js)
+> Where: {server}
+
+-
+Load data from a local path into a new FS.File and pass it to callback
+callback(err, fsFile)
+
+-
+Load data from a URL into a new FS.File and pass it to callback
+callback(err, fsFile)
+
+#### <a name="FS.File.prototype._get"></a>*fsFile*._get()&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+-
+*This method is private*
+*This method ___get__ is defined in `prototype` of `FS.File`*
+
+> ```FS.File.prototype._get = function(options) { ...``` [fsFile/fsFile-server.js:94](fsFile/fsFile-server.js#L94)
+
+-
+
+
+---
 > File: ["tempStore.js"](tempStore.js)
 > Where: {server}
 
@@ -698,7 +733,12 @@ callback(err, allBytesLoaded)
 
 -
 
-> ```saveChunk: function(fileObj, binary, start, callback) { ...``` [tempStore.js:29](tempStore.js#L29)
+__TODO__
+```
+* In some ways it would make sense to save chunks into temp folder pr. file, naming the chunks `1.bin`, `2.bin` ... `n.bin`
+```
+
+> ```saveChunk: function(fileObj, binary, start, callback) { ...``` [tempStore.js:30](tempStore.js#L30)
 
 -
 
@@ -714,7 +754,12 @@ callback(err, fileObjWithData)
 
 -
 
-> ```getDataForFile: function(fileObj, callback) { ...``` [tempStore.js:77](tempStore.js#L77)
+__TODO__
+```
+* This cannot handle large files eg. 2gb or more?
+```
+
+> ```getDataForFile: function(fileObj, callback) { ...``` [tempStore.js:80](tempStore.js#L80)
 
 -
 
@@ -730,7 +775,7 @@ callback(err)
 
 -
 
-> ```deleteChunks: function(fileObj, callback) { ...``` [tempStore.js:110](tempStore.js#L110)
+> ```deleteChunks: function(fileObj, callback) { ...``` [tempStore.js:113](tempStore.js#L113)
 
 -
 
@@ -746,6 +791,6 @@ callback(err, allBytesLoaded)
 
 -
 
-> ```ensureForFile: function (fileObj, callback) { ...``` [tempStore.js:156](tempStore.js#L156)
+> ```ensureForFile: function (fileObj, callback) { ...``` [tempStore.js:159](tempStore.js#L159)
 
 -

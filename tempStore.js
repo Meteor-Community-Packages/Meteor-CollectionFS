@@ -25,6 +25,7 @@ TempStore = {
     * @param {binary} binary
     * @param {number} start
     * @param {function} callback callback(err, allBytesLoaded)
+    * @todo In some ways it would make sense to save chunks into temp folder pr. file, naming the chunks `1.bin`, `2.bin` ... `n.bin`
     */
   saveChunk: function(fileObj, binary, start, callback) {
     var total = binary.length;
@@ -74,6 +75,7 @@ TempStore = {
   /** @method TempStore.getDataForFile
     * @param {FS.File} fileObj
     * @param {function} callback callback(err, fileObjWithData)
+    * @todo This cannot handle large files eg. 2gb or more?
     */  
   getDataForFile: function(fileObj, callback) {
     fileObj.binary = EJSON.newBinary(fileObj.size);

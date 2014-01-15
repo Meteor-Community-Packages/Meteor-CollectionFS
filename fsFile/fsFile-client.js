@@ -20,3 +20,14 @@ FS.File.prototype.saveLocal = function(filename) {
 
   window.saveAs(self.getBlob(), (filename || self.name));
 };
+
+/** @method FS.File.prototype._get
+  * @private
+  */
+FS.File.prototype._get = function(options) {
+  var self = this;
+  // On the client we download the file via transfer queue
+  if (Meteor.isClient) {
+    FS.downloadQueue.downloadFile(self, options.copyName);
+  }
+};

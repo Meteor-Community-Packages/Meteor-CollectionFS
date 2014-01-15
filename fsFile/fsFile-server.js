@@ -87,3 +87,34 @@ FS.File.fromUrl = function(url, filename, callback) {
     }
   });
 };
+
+/** @method FS.File.prototype._get
+  * @private
+  */
+FS.File.prototype._get = function(options) {
+  var self = this;
+  // If we have defined a part of the file
+  var partial = (typeof options.start === "number" && typeof options.end === "number");
+
+  if (self.isMounted()) {
+
+    var store = self.collection.getStoreForCopy(options.copyName);
+
+    if (typeof store === 'undefined' || store === null) {
+      throw new Error('FS.File.get could not find "' + options.copyName + '" Storage Adapter on FS.Collection "' + this.name + '"');
+    }
+
+    if (partial) {
+      if (!(typeof store.getBytes === "function")) {
+        throw new Error('FS.File.get: storage adapter for "' + options.copyName + '" does not support partial retrieval');
+      }
+      options.end = (options.end > self.size - 1) ? self.size : options.end;
+      var buffer = store.getBytes(self, options.start, options.end, {copyName: options.copyName});
+      return bufferToBinary(buffer);
+    } else {
+      var buffer = store.getBuffer(self, {copyName: options.copyName});
+      return bufferToBinary(buffer);
+    }
+    
+  }
+};

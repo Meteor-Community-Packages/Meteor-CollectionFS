@@ -161,7 +161,6 @@ FS.File.prototype.update = function(modifier, options, callback) {
 // Remove the file
 FS.File.prototype.remove = function() {
   var self = this;
-  var count;
   // Remove any associated temp files
   if (Meteor.isServer) {
     TempStore.deleteChunks(self);
@@ -184,71 +183,35 @@ FS.File.prototype.remove = function() {
   */
 
 /** @method FS.File.prototype.get
-  * @param {string} [copyName='_master'] Name of the copy version
-  * @param {number} [start]
-  * @param {number} [end]
+  * @param {object} [options]
+  * @param {string} [options.copyName='_master'] Name of the copy version
+  * @param {number} [options.start]
+  * @param {number} [options.end]
   * @returns {number} Count
-  * @todo Split server and client code
-  * @todo Should we consider optionalising instead of arguments - deprecate parseArguments?
   * 
   * Remove the current file
   */
 // Client: Instructs the DownloadTransferQueue to begin downloading the file copy
 // Server: Returns the Buffer data for the copy
-FS.File.prototype.get = function(/* copyName, start, end*/) {
+FS.File.prototype.get = function(options) {
   var self = this;
-  var args = parseArguments(arguments,
-          [["copyName"], ["start"], ["end"]],
-          [String, Number, Number]);
-  if (args instanceof Error)
-    throw args;
-  var copyName = args.copyName;
-  var start = args.start;
-  var end = args.end;
-  var partial = (typeof start === "number" && typeof end === "number");
+  // Make sure options are set
+  options = options || {};
 
-  if (typeof copyName !== "string") {
-    copyName = "_master";
+  // Make sure copyName is set - we default to "_master"
+  if (typeof options.copyName !== "string") {
+    options.copyName = "_master";
   }
   
-
-  // On the client we download the file via transfer queue
-  if (Meteor.isClient) {
-    FS.downloadQueue.downloadFile(self, copyName);
-  }
-
-  // On server we contact the storage adapter
-  else if (Meteor.isServer) {
-    if (self.isMounted()) {
-
-      var store = self.collection.getStoreForCopy(copyName);
-
-      if (typeof store === 'undefined' || store === null) {
-        throw new Error('FS.File.get could not find "' + copyName + '" Storage Adapter on FS.Collection "' + this.name + '"');
-      }
-
-      if (partial) {
-        if (!(typeof store.getBytes === "function")) {
-          throw new Error('FS.File.get: storage adapter for "' + copyName + '" does not support partial retrieval');
-        }
-        end = (end > self.size - 1) ? self.size : end;
-        var buffer = store.getBytes(self, start, end, {copyName: copyName});
-        return bufferToBinary(buffer);
-      } else {
-        var buffer = store.getBuffer(self, {copyName: copyName});
-        return bufferToBinary(buffer);
-      }
-      
-    }
-
-  }
+  // Call the client / server dependen code
+  return self._get(options);
 };
 
 /** @method FS.File.prototype.url Construct the file url
   * @param {object} [options]
   * @param {string} [options.copy="_master"] The copy of the file to get
-  * @param {boolean} [auth=null] Wether or not the authenticate
-  * @param {boolean} [download=true] Should headers be set to force a download
+  * @param {boolean} [options.auth=null] Wether or not the authenticate
+  * @param {boolean} [options.download=false] Should headers be set to force a download
   *
   * Return the http url for getting the file - on server set auth if wanting to
   * use authentication on client set auth to true or token
@@ -302,7 +265,7 @@ FS.File.prototype.url = function(options) {
 /** @method FS.File.prototype.downloadUrl Get the download url
   * @param {object} [options]
   * @param {string} [options.copy="_master"] The copy of the file to get
-  * @param {boolean} [auth=null] Wether or not the authenticate
+  * @param {boolean} [options.auth=null] Wether or not the authenticate
   * @deprecated Use The hybrid helper `FS.File.url`
   */
 // Construct a download url
