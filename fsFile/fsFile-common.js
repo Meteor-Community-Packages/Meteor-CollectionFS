@@ -32,6 +32,22 @@ FS.File = function(ref, createdByTransform) {
   }
 };
 
+/** @method FS.File.prototype.uploadProgress
+  * @returns {number} The server confirmed upload progress
+  */
+FS.File.prototype.uploadProgress = function() {
+  var self = this;
+  // If we are passed a file object and the object is mounted on a collection
+  if (self.isMounted()) {
+    
+    // Make sure our file record is updated
+    self.getFileRecord();
+
+    // Return the confirmed progress
+    return Math.round(self.bytesUploaded / self.size * 100);
+  }
+};
+
 /** @method FS.File.prototype.controlledByDeps
   * @returns {FS.Collection} Returns true if this FS.File is reactive
   *
@@ -165,7 +181,7 @@ FS.File.prototype.remove = function() {
   if (Meteor.isServer) {
     TempStore.deleteChunks(self);
   }
-  if (self.isMounted) {
+  if (self.isMounted()) {
     self.collection.files.remove({_id: self._id});
     delete self._id;
     delete self.binary;
@@ -299,7 +315,8 @@ FS.File.prototype.put = function(callback) {
     return;
   }
 
-  if (Meteor.isClient && !FS.uploadQueue.isUploadingFile(self)) {
+  // If on client
+  if (Meteor.isClient) {
     FS.uploadQueue.uploadFile(self);
     callback(null, self);
   } else if (Meteor.isServer) {
@@ -317,6 +334,17 @@ FS.File.prototype.put = function(callback) {
       }
     });
   }
+};
+
+/** @method FS.File.prototype.resume
+  * @private
+  * @param {File | Buffer}
+  * @todo Not yet implemented
+  *
+  * > This function is not yet implemented
+  */
+FS.File.prototype.resume = function(data) {
+
 };
 
 /** @method FS.File.prototype.getExtension Returns the file extension

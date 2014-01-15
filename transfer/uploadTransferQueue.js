@@ -1,132 +1,129 @@
 /* 
  * Upload Transfer Queue
  */
-// TODO: Refactor chunkSize into FS.Collection options
-var chunkSize = 0.5 * 1024 * 1024; // 0.5MB; can be changed
 
-UploadTransferQueue = function(opts) {
-  var self = this, name = 'UploadTransferQueue';
-  opts = opts || {};
-  self.connection = opts.connection || DDP.connect(Meteor.connection._stream.rawUrl);
-  
-  self.queue = new PowerQueue({
-    name: name
-  });
+var _taskHandler = function(task, next) {
 
-  // Persistent but client-only collection
-  self.collection = new Meteor.Collection(name, {connection: null});
-
-  // Pass through some queue properties
-  self.pause = self.queue.pause;
-  self.resume = self.queue.resume;
-  self.isPaused = self.queue.isPaused;
-  self.isRunning = self.queue.isRunning;
-};
-
-UploadTransferQueue.prototype.uploadFile = function(fsFile) {
-  var self = this, size = fsFile.size;
-  if (typeof size !== 'number') {
-    throw new Error('TransferQueue upload failed: fsFile size not set');
-  }
-
-  var chunks = Math.ceil(size / chunkSize);
-
-  for (var chunk = 0; chunk < chunks; chunk++) {
-    var start = chunk * chunkSize;
-    var end = start + chunkSize;
-    Meteor.setTimeout(function(tQueue, fsFile, start, end) {
-      return function() {
-        uploadChunk(tQueue, fsFile, start, end);
-      };
-    }(self, fsFile, start, end), 0);
-  }
-};
-
-// Reactive status percent for the queue in total or a
-// specific file
-UploadTransferQueue.prototype.progress = function(fsFile, copyName) {
-  var self = this;
-  if (fsFile) {
-    var totalChunks = Math.ceil(fsFile.size / chunkSize);
-    var uploadedChunks = self.collection.find({fileId: fsFile._id, collectionName: fsFile.collectionName, done: true}).count();
-    return Math.round(uploadedChunks / totalChunks * 100);
-  } else {
-    return self.queue.progress();
-  }
-};
-
-UploadTransferQueue.prototype.cancel = function() {
-  var self = this;
-  self.queue.reset();
-  
-  // TODO: Delete partially-uploaded files
-  
-  self.collection.remove({});
-};
-
-UploadTransferQueue.prototype.isUploadingFile = function(fsFile) {
-  var self = this;
-  return !!self.collection.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName});
-};
-
-// Private
-
-var cacheUpload = function(col, fsFile, start, callback) {
-  if (col.findOne({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start})) {
-    // If already cached, don't do it again
-    callback();
-  } else {
-    col.insert({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start}, callback);
-  }
-};
-
-var unCacheUpload = function(col, fsFile, callback) {
-  col.remove({fileId: fsFile._id, collectionName: fsFile.collectionName}, callback);
-};
-
-var uploadChunk = function(tQueue, fsFile, start, end) {
-  if (fsFile.isMounted()) {
-
-    cacheUpload(tQueue.collection, fsFile, start, function() {
-      tQueue.queue.add(function(complete) {
-        console.log("uploading bytes " + start + " to " + Math.min(end, fsFile.size) + " of " + fsFile.size);
-        fsFile.getBinary(start, end, function(err, data) {
-          if (err) {
-            complete();
-            throw err;
-          }
-          var b = new Date;
-          tQueue.connection.apply(fsFile.collection.methodName + '/put',
-                  [fsFile, data, start],
-                  function(err) {
-                    var e = new Date;
-                    console.log("server took " + (e.getTime() - b.getTime()) + "ms");
-                    if (!err) {
-                      markChunkUploaded(tQueue.collection, fsFile, start, function() {
-                        complete();
-                      });
-                    }
-                  });
-        });
-      });
-    });
-    
-  }
-};
-
-var markChunkUploaded = function(col, fsFile, start, callback) {
-  // Mark each chunk done for progress tracking
-  col.update({fileId: fsFile._id, collectionName: fsFile.collectionName, start: start}, {$set: {done: true}}, function(e, r) {
-    if (e) {
-      callback(e);
+  console.log("uploading chunk " + task.chunk + ", bytes " + task.start + " to " + Math.min(task.end, task.fileObj.size) + " of " + task.fileObj.size);
+  task.fileObj.getBinary(task.start, task.end, function(err, data) {
+    if (err) {
+      next(err);
     } else {
-      var totalChunks = Math.ceil(fsFile.size / chunkSize);
-      var doneChunks = col.find({fileId: fsFile._id, collectionName: fsFile.collectionName, done: true});
-      if (totalChunks === doneChunks.count()) {
-        unCacheUpload(col, fsFile, callback);
-      } else {
-        callback();
-      }
+      var b = new Date();
+      task.connection.apply(task.methodName,
+              [task.fileObj, data, task.start],
+              function(err) {
+                var e = new Date();
+                console.log("server took " + (e.getTime() - b.getTime()) + "ms");
+                next(err);
+              });
     }
   });
+
+
 };
+
+var _errorHandler = function(data, addTask) {
+  // What to do if file upload failes - we could check connection and pause the
+  // queue?
+  //if (data.connection)
+};
+
+/** @method UploadTransferQueue
+  * @namespace UploadTransferQueue
+  * @private
+  * @param {object} [options]
+  * @param {object} [options.connection=new Meteor.connection]
+  */
+UploadTransferQueue = function(options) {
+  // Rig options
+  options = options || {};
+
+  // Init the power queue
+  var self = new PowerQueue({
+    name: 'UploadTransferQueue'
+  });
+
+  // Create a seperate ddp connection or use the passed in connection
+  self.connection = options.connection || DDP.connect(Meteor.connection._stream.rawUrl);
+
+  // Keep trak of uploaded files via this queue
+  self.files = {};
+
+  self.isUploadingFile = function(fileObj) {
+    // Check if file is already in queue
+    return !!(fileObj && fileObj._id && self.files[fileObj._id]);
+  };
+
+  /** @method UploadTransferQueue.uploadFile
+    * @param {FS.File} File to upload
+    * @todo Only add tasks for the chunks that are missing (for resume)
+    * @todo Check that a file can only be added once - maybe a visual helper on the FS.File?
+    */
+  self.uploadFile = function(fileObj) {
+    // Make sure we are handed a FS.File
+    if (!(fileObj instanceof FS.File)) {
+      throw new Error('Transfer queue expects a FS.File');
+    }
+
+    // Make sure that we have size as number
+    if (typeof fileObj.size !== 'number') {
+      throw new Error('TransferQueue upload failed: fileObj size not set');
+    }
+
+    // We dont add the file if its allready in transfer or if already uploaded
+    if (self.isUploadingFile(fileObj) ||fileObj.size === fileObj.bytesUploaded) {
+      return;
+    }
+
+    // Make sure the file object is mounted on a collection
+    if (fileObj.isMounted()) {
+
+
+      // Get the collection chunk size
+      var chunkSize = fileObj.collection.options.chunkSize;
+      
+      // Calculate the number of chunks to upload
+      var chunks = Math.ceil(fileObj.size / chunkSize);
+
+      // Create a sub queue
+      var chunkQueue = new PowerQueue();
+
+      // Rig the custom task handler
+      chunkQueue.taskHandler = _taskHandler;
+
+      // Rig the error handler
+      chunkQueue.errorHandler = _errorHandler;
+
+      // Rig methodName
+      var methodName = fileObj.collection.methodName + '/put';
+
+      // Set flag that this file is being transfered
+      if (chunks > 0) {
+        self.files[fileObj._id] = true;
+      }
+
+      // Add chunk upload tasks
+      // TODO: Only add the chunks that may be missing
+      for (var chunk = 0; chunk < chunks; chunk++) {
+        // Create and add the task
+        chunkQueue.add({
+          chunk: chunk,
+          name: fileObj.name,
+          methodName: methodName,
+          fileObj: fileObj,
+          start: chunk * chunkSize,
+          end: (chunk + 1) * chunkSize,
+          connection: self.connection
+        });
+      }
+
+      // Add the queue to the main upload queue
+      self.add(chunkQueue);
+    }
+
+  };
+
+  return self;
+};
+

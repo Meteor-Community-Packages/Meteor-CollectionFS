@@ -60,7 +60,7 @@ TempStore = {
             if (count > 0) fileObj.getFileRecord();
             console.log("Uploaded " + fileObj.bytesUploaded + " of " + fileObj.size + " bytes");
 
-            if (fileObj.bytesUploaded === fileObj.size) {
+            if (fileObj.isUploaded()) {
               // We are done loading all bytes
               callback(null, true);
             }
