@@ -52,7 +52,7 @@ UploadTransferQueue = function(options) {
 
   self.isUploadingFile = function(fileObj) {
     // Check if file is already in queue
-    return !!(fileObj && fileObj._id && self.files[fileObj._id]);
+    return !!(fileObj && fileObj._id && fileObj.collectionName && (self.files[fileObj.collectionName] || {})[fileObj._id]);
   };
 
   /** @method UploadTransferQueue.uploadFile
@@ -71,20 +71,21 @@ UploadTransferQueue = function(options) {
       throw new Error('TransferQueue upload failed: fileObj size not set');
     }
 
-    // We dont add the file if its allready in transfer or if already uploaded
-    if (self.isUploadingFile(fileObj) ||fileObj.size === fileObj.bytesUploaded) {
+    // We don't add the file if it's already in transfer or if already uploaded
+    if (self.isUploadingFile(fileObj) || fileObj.isUploaded()) {
       return;
     }
 
     // Make sure the file object is mounted on a collection
     if (fileObj.isMounted()) {
 
-
       // Get the collection chunk size
       var chunkSize = fileObj.collection.options.chunkSize;
       
       // Calculate the number of chunks to upload
       var chunks = Math.ceil(fileObj.size / chunkSize);
+      
+      if (chunks === 0) return;
 
       // Create a sub queue
       var chunkQueue = new PowerQueue();
@@ -99,9 +100,7 @@ UploadTransferQueue = function(options) {
       var methodName = fileObj.collection.methodName + '/put';
 
       // Set flag that this file is being transfered
-      if (chunks > 0) {
-        self.files[fileObj._id] = true;
-      }
+      self.files[fileObj.collectionName][fileObj._id] = true;
 
       // Add chunk upload tasks
       // TODO: Only add the chunks that may be missing
@@ -126,4 +125,3 @@ UploadTransferQueue = function(options) {
 
   return self;
 };
-

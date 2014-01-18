@@ -70,36 +70,28 @@ FS.File.prototype.controlledByDeps = function() {
 FS.File.prototype.getCollection = function() {
   // Get the collection reference
   var self = this;
-  // If we allready made the link then do no more
-  if (self.collection instanceof FS.Collection) {
+  
+  // If we already made the link then do no more
+  if (self.collection) {
     return self.collection;
   }
-  // If we dont have a collectionName then theres not much to do, the file is
+  
+  // If we don't have a collectionName then there's not much to do, the file is
   // not mounted yet
   if (!self.collectionName) {
     // Should not throw an error here - could be common that the file is not
     // yet mounted into a collection
     return;
-    // new Error('FS.File getCollection, Error: No FS.Collection found');
   }
-  // Try to lookup the collectionName
-  var collection = _collections[self.collectionName];
-  // Test if its really a FS.Collection - Is this really needed?
-  if (collection instanceof FS.Collection) {
-    // Link the collection to the file
-    self.collection = collection;
-    // All good we simply return the collection
-    return collection;
-  } else {
-    // This is clearly not intended so we throw an error
-    // if images.files we use the images part since this is known to the user
-    var prefix = self.collectionName.split('.')[0];
-    new Error('FS.File getCollection, Error: FS.Collection "' + prefix + '" not found');
-  }
+
+  // Link the collection to the file
+  self.collection = _collections[self.collectionName];
+  
+  return self.collection; //possibly undefined, but that's desired behavior
 };
 
 /** @method FS.File.prototype.isMounted
-  * @returns {FS.Collection} Returns attatched collection or undefined if not mounted
+  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
   *
   * > Note: This will throw an error if collection not found and file is mounted
   * > *(got an invalid collectionName)*
