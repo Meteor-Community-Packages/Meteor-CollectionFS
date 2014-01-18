@@ -344,12 +344,14 @@ FS.File.prototype.resume = function(data) {
   */
 FS.File.prototype.getExtension = function() {
   var self = this;
-    // Get the name from the fileRecord
-    var name = self.getFileRecord().name || '';
-    // Seekout the . if found
-    var found = name.lastIndexOf('.') + 1;
-    // Return the extension if found else ''
-    return (found > 0 ? name.substr(found) : '');
+  // Make sure our file record is updated
+  self.getFileRecord();
+  // Get name from file record
+  var name = self.name;
+  // Seekout the last '.' if found
+  var found = name.lastIndexOf('.') + 1;
+  // Return the extension if found else ''
+  return (found > 0 ? name.substr(found) : '');
 };
 
 /** @method FS.File.prototype.toDataUrl
