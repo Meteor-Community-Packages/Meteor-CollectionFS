@@ -437,7 +437,7 @@ FS.File.prototype.hasCopy = function(copyName, optimistic) {
   // Make sure we use the updated file record
   self.getFileRecord();
   // If we havent the published data then
-  if (typeof self.copies === 'undefined' || _.isEmpty(self.copies)) {
+  if (_.isEmpty(self.copies)) {
     return !!optimistic;
   }
   if (typeof copyName === "string") {
