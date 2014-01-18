@@ -404,19 +404,42 @@ FS.File.prototype.toDataUrl = function(callback) {
   }
 };
 
-FS.File.prototype.isImage = function() {
-  var self = this;
-  if (typeof self.type !== "string") {
-    return false;
+/** @method FS.File.prototype.isImage Is it an image file?
+  * @param {object} [options]
+  * @param {string} [options.copy="_master"] The copy of the file to check
+  * 
+  * Returns true if the specified copy of this file has an image
+  * content type. By default, checks the _master copy. If the
+  * file object is unmounted or doesn't have that copy, checks
+  * the content type of the original file.
+  * 
+  */
+FS.File.prototype.isImage = function(options) {
+  var self = this, type;
+  options = options || {};
+  var copyName = options.copy || "_master";
+  if (self.hasCopy(copyName)) {
+    type = self.copies[copyName].type;
+  } else {
+    type = self.type;
   }
-  return self.type.indexOf("image/") === 0;
+  if (typeof type === "string") {
+    return self.type.indexOf("image/") === 0;
+  }
+  return false;
 };
 
+/** @method FS.File.prototype.isUploaded Is this file completely uploaded?
+  * @returns {boolean} True if the number of uploaded bytes is equal to the file size.
+  */
 FS.File.prototype.isUploaded = function() {
   var self = this;
   return self.bytesUploaded === self.size;
 };
 
+/** @method FS.File.prototype.hasMaster A copy was saved in the master store.
+  * @returns {boolean} True if a copy of this file was saved in the master store.
+  */
 FS.File.prototype.hasMaster = function() {
   return this.hasCopy("_master");
 };
@@ -446,6 +469,16 @@ FS.File.prototype.hasCopy = function(copyName, optimistic) {
   return false;
 };
 
+/** @method FS.File.prototype.hasMaster Does the attached collection allow this file?
+  * @returns {boolean} True if the attached collection allows this file.
+  * 
+  * Checks based on any filters defined on the attached collection. If the
+  * file is not valid according to the filters, this method returns false
+  * and also calls the filter `onInvalid` method defined for the attached
+  * collection, passing it an English error string that explains why it
+  * failed.
+  * 
+  */
 FS.File.prototype.fileIsAllowed = function() {
   var self = this;
 
