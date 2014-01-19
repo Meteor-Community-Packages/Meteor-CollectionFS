@@ -63,7 +63,7 @@ cloneFileAttempt = function(attempt) {
 };
 
 cloneFileRecord = function(rec) {
-  var result = cloneFileUnit(rec);
+  var result = cloneFileUnit(rec) || {};
   // Base reference
   result.collectionName = '' + rec.collectionName;
   result.bytesUploaded = defaultZero(rec.bytesUploaded);

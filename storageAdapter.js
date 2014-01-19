@@ -70,6 +70,9 @@ FS.StorageAdapter = function(name, options, api) {
   };
 
   var getFileId = function(fsFile, copyName) {
+    // Make sure our file record is updated
+    fsFile.getFileRecord();
+    
     if (!fsFile.copies) {
       return null;
     }
@@ -94,7 +97,7 @@ FS.StorageAdapter = function(name, options, api) {
     options = options || {};
 
     // insert the file ref into the SA file record
-    var id = self.files.insert({createdAt: new Date()});
+    var id = self.files.insert({createdAt: new Date(), size: fsFile.size});
 
     // construct the filename
     var preferredFilename = fsFile.name;
@@ -298,6 +301,8 @@ FS.StorageAdapter = function(name, options, api) {
       if (!fileInfo.key) {
         return handleError(callback, 'Storage Adapter getBytes: The "' + name + '" store does not contain a file with ID ' + id + ' in the "' + name + '" store is missing key');
       }
+      
+      end = Math.min(end, fileInfo.size);
 
       // Async
       if (callback) {

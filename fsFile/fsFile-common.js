@@ -62,10 +62,7 @@ FS.File.prototype.controlledByDeps = function() {
 };
 
 /** @method FS.File.prototype.getCollection
-  * @returns {FS.Collection} Returns attatched collection or undefined if not mounted
-  *
-  * > Note: This will throw an error if collection not found and file is mounted
-  * > *(got an invalid collectionName)*
+  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
   */
 FS.File.prototype.getCollection = function() {
   // Get the collection reference
@@ -128,10 +125,6 @@ FS.File.prototype.getFileRecord = function() {
     return {};
   }
 };
-
-/** @method FS.File.prototype.useCollection
-  * @deprecated We should use `getCollection()` istead - it practically does the same
-  */
 
 /** @method FS.File.prototype.update
   * @param {modifier} modifier

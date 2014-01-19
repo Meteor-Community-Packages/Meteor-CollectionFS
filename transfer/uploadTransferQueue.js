@@ -3,7 +3,6 @@
  */
 
 var _taskHandler = function(task, next) {
-
   console.log("uploading chunk " + task.chunk + ", bytes " + task.start + " to " + Math.min(task.end, task.fileObj.size) + " of " + task.fileObj.size);
   task.fileObj.getBinary(task.start, task.end, function(err, data) {
     if (err) {
@@ -19,7 +18,6 @@ var _taskHandler = function(task, next) {
               });
     }
   });
-
 
 };
 
@@ -88,7 +86,12 @@ UploadTransferQueue = function(options) {
       if (chunks === 0) return;
 
       // Create a sub queue
-      var chunkQueue = new PowerQueue();
+      var chunkQueue = new PowerQueue({
+        onEnded: function () {
+          // Remove from list of files being uploaded
+          self.files[fileObj.collectionName][fileObj._id] = false;
+        }
+      });
 
       // Rig the custom task handler
       chunkQueue.taskHandler = _taskHandler;
@@ -100,6 +103,7 @@ UploadTransferQueue = function(options) {
       var methodName = fileObj.collection.methodName + '/put';
 
       // Set flag that this file is being transfered
+      self.files[fileObj.collectionName] = self.files[fileObj.collectionName] || {};
       self.files[fileObj.collectionName][fileObj._id] = true;
 
       // Add chunk upload tasks

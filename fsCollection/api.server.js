@@ -64,7 +64,7 @@ FS.Collection.prototype.saveCopies = function(fsFile, options) {
       if (result === null) {
         // Temporary failure; let the fsFile log it and potentially decide
         // to give up.
-        fsFile.logCopyFailure(copyName);
+        fsFile.logCopyFailure(copyName, copyDefinition.maxTries);
       } else {
         // Update the main file object
         // copyInfo might be false, which indicates that this copy

@@ -12,14 +12,14 @@ var _eventCallback = function(templateName, selector, dataContext, evt, temp, fs
     if (err) {
       // Fire uploadError event
       _.each(Template[templateName]._events, function(eventObject) {
-        if (eventObject.events == 'uploadFailed' && eventObject.selector === selector) {
+        if (eventObject.events === 'uploadFailed' && eventObject.selector === selector) {
           eventObject.handler.apply(dataContext, [{ error: err, file: fsFile }, temp]);
         }
       });      
     } else {
       // Fire uploaded
       _.each(Template[templateName]._events, function(eventObject) {
-        if (eventObject.events == 'uploaded' && eventObject.selector === selector) {
+        if (eventObject.events === 'uploaded' && eventObject.selector === selector) {
           eventObject.handler.apply(dataContext, [{ error: null, file: fsFile }, temp]);
         }
       });
@@ -97,7 +97,9 @@ var _eachFile = function(files, metadata, callback) {
 ```
   */
 FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadata) {
-  var self = this, events = {}, metadata = metadata || {};
+  var self = this, events = {};
+  
+  metadata = metadata || {}
 
   // Prevent default drag and drop
   function noopHandler(evt) {
@@ -109,7 +111,7 @@ FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadat
   function dropped(evt, temp) {
     noopHandler(evt);
     var dataContext = this;
-    var files = evt.originalEvent.dataTransfer.files;
+    var files = (evt.originalEvent || evt).dataTransfer.files;
 
     _eachFile(files, metadata, function(fsFile) {
       self.insert(fsFile, _eventCallback(templateName, selector, dataContext, evt, temp, fsFile));

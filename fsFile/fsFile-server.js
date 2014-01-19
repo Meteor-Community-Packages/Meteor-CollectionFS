@@ -15,17 +15,13 @@ FS.File.prototype.saveDataToFile = function(filePath, callback) {
   }));
 };
 
-// If copyName isn't a string, will log the failure to master
-FS.File.prototype.logCopyFailure = function(copyName) {
-  var self = this, collection;
+// Notes a details about a storage adapter failure within the file record
+FS.File.prototype.logCopyFailure = function(copyName, maxTries) {
+  var self = this;
 
-  if (typeof copyName !== "string") {
-    return;
+  if (self.hasCopy(copyName)) {
+    throw new Error("logCopyFailure: invalid copyName");
   }
-
-  self.useCollection('FS.File logCopyFailure of _id: "' + self._id + '"', function() {
-    collection = this.files;
-  });
 
   // Make sure we have a temporary file saved since we will be
   // trying the save again.
@@ -33,7 +29,7 @@ FS.File.prototype.logCopyFailure = function(copyName) {
 
   var now = new Date;
   var currentCount = (self.failures && self.failures.copies && self.failures.copies[copyName] && typeof self.failures.copies[copyName].count === "number") ? self.failures.copies[copyName].count : 0;
-  var maxTries = collection.options.copies[copyName].maxTries;
+  maxTries = maxTries || 5;
 
   var modifier = {};
   modifier.$set = {};
@@ -108,7 +104,6 @@ FS.File.prototype._get = function(options) {
       if (!(typeof store.getBytes === "function")) {
         throw new Error('FS.File.get: storage adapter for "' + options.copyName + '" does not support partial retrieval');
       }
-      options.end = (options.end > self.size - 1) ? self.size : options.end;
       var buffer = store.getBytes(self, options.start, options.end, {copyName: options.copyName});
       return bufferToBinary(buffer);
     } else {

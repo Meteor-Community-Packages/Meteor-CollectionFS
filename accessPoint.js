@@ -54,7 +54,9 @@ var APUpload = function(fileObj, data, start) {
 
 };
 
-// Returns the data for the copyName copy of fileObj
+// Returns the data, or partial data, for the copyName copy of fileObj.
+// Simply returns the result of fileObj.get() after checking "download"
+// allow/deny functions.
 var APDownload = function(fileObj, copyName, start, end) {
   var self = this;
   check(fileObj, FS.File);
@@ -64,36 +66,36 @@ var APDownload = function(fileObj, copyName, start, end) {
 
   self.unblock();
 
-  if (fileObj.isMounted()) {
+  var collection = fileObj.getCollection();
+  if (! collection) {
+    return; // No file data found
+  }
 
-    // Load the complete FS.File instance from the linked collection
-    //fileObj = fileObj.getFileRecord();
-
-    // collection exist since fileObj is mounted on an collection
+  if (typeof Package !== 'object' || !Package.insecure) {
+    // Get the attached collection
     var collection = fileObj.getCollection();
 
-    if (typeof Package !== 'object' || !Package.insecure) {
-      // Call user validators; use the custom "download" validators
-      // since uploading is part of insert.
-      // Any deny returns true means denied.
-      if (_.any(collection._validators.download.deny, function(validator) {
-        return validator(self.userId, fileObj);
-      })) {
-        throw new Meteor.Error(403, "Access denied");
-      }
-      // Any allow returns true means proceed. Throw error if they all fail.
-      if (_.all(collection._validators.download.allow, function(validator) {
-        return !validator(self.userId, fileObj);
-      })) {
-        throw new Meteor.Error(403, "Access denied");
-      }
+    // Call user validators; use the custom "download" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(collection._validators.download.deny, function(validator) {
+      return validator(self.userId, fileObj);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
     }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(collection._validators.download.allow, function(validator) {
+      return !validator(self.userId, fileObj);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+  }
 
-    return fileObj.get(copyName, start, end);
-
-  } // EO Mounted
-
-  // return; // No file data found
+  return fileObj.get({
+    copyName: copyName,
+    start: start,
+    end: end
+  });
 };
 
 // Deletes fileObj.
@@ -142,15 +144,15 @@ var APhandler = function(collection, download, options) {
   return function(data) {
     var self = this;
     var query = self.query || {};
-    
+
     var id = self.params.id;
-    if (! id) {
+    if (!id) {
       throw new Meteor.Error(400, "Bad Request", "No file ID specified");
     }
 
     // Get the fsFile
     var file = collection.findOne({_id: '' + id});
-    if (! file) {
+    if (!file) {
       throw new Meteor.Error(404, "Not Found", "There is no file with ID " + id);
     }
 
@@ -164,10 +166,10 @@ var APhandler = function(collection, download, options) {
       }
 
       copyInfo = file.copies[copyName];
-      if (! copyInfo) {
+      if (!copyInfo) {
         throw new Meteor.Error(404, "Not Found", "Invalid selector: " + copyName);
       }
-      
+
       filename = copyInfo.name;
       if (typeof copyInfo.type === "string") {
         self.setContentType(copyInfo.type);
