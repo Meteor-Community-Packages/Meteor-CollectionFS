@@ -11,7 +11,7 @@ Package.on_use(function(api) {
   "use strict";
   
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata',
-    'ejson', 'collection-hooks', 'http-methods', 'reactive-list', 'power-queue']);
+    'ejson', 'collection-hooks', 'http-methods', 'reactive-list', 'micro-queue', 'power-queue']);
 
   // Make a weak dependency to support Join for joining data
   api.use(['join'], { weak: true });

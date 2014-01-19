@@ -39,7 +39,14 @@ UploadTransferQueue = function(options) {
 
   // Init the power queue
   var self = new PowerQueue({
-    name: 'UploadTransferQueue'
+    name: 'UploadTransferQueue',
+    spinalQueue: MicroQueue,
+    maxProcessing: 5,
+    maxFailures: 5,
+    jumpOnFailure: true,
+    autostart: true,
+    isPaused: false,
+    filo: false
   });
 
   // Create a seperate ddp connection or use the passed in connection
@@ -90,7 +97,14 @@ UploadTransferQueue = function(options) {
         onEnded: function () {
           // Remove from list of files being uploaded
           self.files[fileObj.collectionName][fileObj._id] = false;
-        }
+        },
+        spinalQueue: MicroQueue,
+        maxProcessing: 5,
+        maxFailures: 5,
+        jumpOnFailure: true,
+        autostart: true,
+        isPaused: false,
+        filo: false
       });
 
       // Rig the custom task handler
