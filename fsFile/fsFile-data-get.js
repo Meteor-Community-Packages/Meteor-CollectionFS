@@ -22,14 +22,8 @@ FS.File.prototype.getBinary = function(start, end, callback) {
 
   function read(blob) {
     var reader = new FileReader();
-    reader.onloadend = function() {
-      var arrayBuffer = reader.result;
-      var arrayBufferView = new Uint8Array(arrayBuffer);
-      var len = arrayBuffer.byteLength;
-      var bin = EJSON.newBinary(len);
-      for (var i = 0; i < len; i++) {
-        bin[i] = arrayBufferView[i];
-      }
+    reader.onloadend = function(evt) {
+      var bin = new Uint8Array(evt.target.result);
       callback(null, bin);
     };
     reader.onerror = function(err) {
