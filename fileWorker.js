@@ -71,7 +71,7 @@ FileWorker.prototype.checkForMissingCopies = function() {
       selector['failures.copies.' + copyName + '.count'] = {$gt: 0};
       selector['failures.copies.' + copyName + '.doneTrying'] = false;
       cfs.find(selector, {sort: [['failures.copies.' + copyName + '.firstAttempt', 'asc'], ['failures.copies.' + copyName + '.lastAttempt', 'asc']]}).forEach(function(fsFile) {
-        console.log("FileWorker trying to save copy " + copyName + " for " + fsFile._id + " in " + cfs.name);
+        FS.debug && console.log("FileWorker trying to save copy " + copyName + " for " + fsFile._id + " in " + cfs.name);
         cfs.saveCopies(fsFile, {missing: true});
       });
 
@@ -93,7 +93,7 @@ FileWorker.prototype.checkForMissingCopies = function() {
 
     // Delete temp files that are no longer needed
     cfs.find(tempSelector).forEach(function(fsFile) {
-      console.log('Delete TempStore for file id: ' + fsFile._id);
+      FS.debug && console.log('Delete TempStore for file id: ' + fsFile._id);
       TempStore.deleteChunks(fsFile);
     });
 

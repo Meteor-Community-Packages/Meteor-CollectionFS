@@ -25,12 +25,12 @@ FS.File.prototype.getBinary = function(start, end, callback) {
     reader.onloadend = function() {
       var arrayBuffer = reader.result;
       var arrayBufferView = new Uint8Array(arrayBuffer);
-      var len = arrayBuffer.byteLength;
-      var bin = EJSON.newBinary(len);
-      for (var i = 0; i < len; i++) {
-        bin[i] = arrayBufferView[i];
-      }
-      callback(null, bin);
+//      var len = arrayBuffer.byteLength;
+//      var bin = EJSON.newBinary(len);
+//      for (var i = 0; i < len; i++) {
+//        bin[i] = arrayBufferView[i];
+//      }
+      callback(null, arrayBufferView);
     };
     reader.onerror = function(err) {
       callback(err);
@@ -57,7 +57,7 @@ FS.File.prototype.getBinary = function(start, end, callback) {
     if (start >= dl) {
       callback(new Error("FS.File getBinary: start position beyond end of data (" + dl + ")"));
     }
-    end = (end > dl) ? dl : end;
+    end = Math.min(dl, end);
 
     if (Meteor.isClient && self.blob) {
       if (typeof FileReader === "undefined") {

@@ -58,7 +58,7 @@ TempStore = {
             // We pull the fileRecord to make sure all the data chunks have been
             // recieved - We have to pull the record on the server-side
             if (count > 0) fileObj.getFileRecord();
-            console.log("Uploaded " + fileObj.bytesUploaded + " of " + fileObj.size + " bytes");
+            FS.debug && console.log("Uploaded " + fileObj.bytesUploaded + " of " + fileObj.size + " bytes");
 
             if (fileObj.isUploaded()) {
               // We are done loading all bytes

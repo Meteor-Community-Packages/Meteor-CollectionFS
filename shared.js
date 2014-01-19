@@ -91,18 +91,19 @@ cloneFileRecord = function(rec) {
       });
     }
   }
-
-  if (Meteor.isServer) {
-    if (_.isArray(rec.chunks)) {
-      result.chunks = [];
-      _.each(rec.chunks, function(chunk, i) {
-        result.chunks[i] = {
-          start: chunk.start,
-          tempFile: chunk.tempFile
-        };
-      });
-    }
+  
+  if (_.isArray(rec.chunks)) {
+    result.chunks = [];
+    _.each(rec.chunks, function(chunk, i) {
+      result.chunks[i] = {
+        start: chunk.start
+      };
+      if (Meteor.isServer) {
+        result.chunks[i].tempFile = chunk.tempFile;
+      }
+    });
   }
+  
   return result;
 };
 

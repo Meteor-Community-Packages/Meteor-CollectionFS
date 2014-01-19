@@ -87,7 +87,7 @@ FS.StorageAdapter = function(name, options, api) {
   };
 
   self.insert = function(fsFile, options, callback) {
-    console.log("---SA INSERT");
+    FS.debug && console.log("---SA INSERT");
     foCheck(fsFile, "insert");
 
     if (!callback && typeof options === "function") {
@@ -158,7 +158,7 @@ FS.StorageAdapter = function(name, options, api) {
   };
 
   self.update = function(fsFile, options, callback) {
-    console.log("---SA UPDATE");
+    FS.debug && console.log("---SA UPDATE");
     foCheck(fsFile, "update");
 
     if (!callback && typeof options === "function") {
@@ -210,7 +210,7 @@ FS.StorageAdapter = function(name, options, api) {
   };
 
   self.remove = function(fsFile, options, callback) {
-    console.log("---SA REMOVE");
+    FS.debug && console.log("---SA REMOVE");
     foCheck(fsFile, "remove");
 
     if (!callback && typeof options === "function") {
@@ -339,7 +339,7 @@ FS.StorageAdapter = function(name, options, api) {
           // TODO does not work because watcher usually sees file before
           // fileInfo.updateAt is set?
           if (fileInfo.updatedAt && fileInfo.updatedAt.getTime() === info.utime.getTime()) {
-            console.log("Update is not external; will not sync");
+            FS.debug && console.log("Update is not external; will not sync");
             return;
           }
           self.files.update({_id: fileInfo._id}, {$set: {updatedAt: info.utime}});

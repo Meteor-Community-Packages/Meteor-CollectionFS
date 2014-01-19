@@ -130,7 +130,7 @@ var downloadChunk = function(tQueue, fsFile, copyName, start) {
 
     cacheDownload(tQueue.collection, fsFile, copyName, start, function(err) {
       tQueue.queue.add(function(complete) {
-        console.log("downloading bytes starting from " + start);
+        FS.debug && console.log("downloading bytes starting from " + start);
         tQueue.connection.apply(fsFile.collection.methodName + '/get',
                 [fsFile, copyName, start, start + chunkSize],
                 function(err, data) {
