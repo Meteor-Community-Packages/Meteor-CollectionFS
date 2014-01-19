@@ -51,7 +51,7 @@ FS.File.prototype.getBinary = function(start, end, callback) {
     if (start >= dl) {
       callback(new Error("FS.File getBinary: start position beyond end of data (" + dl + ")"));
     }
-    end = (end > dl) ? dl : end;
+    end = Math.min(dl, end);
 
     if (Meteor.isClient && self.blob) {
       if (typeof FileReader === "undefined") {

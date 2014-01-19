@@ -22,14 +22,23 @@ FS.File = function(ref, createdByTransform) {
 
   // Extend self with filerecord related data
   _.extend(self, cloneFileRecord(ref));
+  
+  /** @method FS.File.prototype._attachFile
+    * @param {File|Blob} ref File or Blob instance to attach 
+    * @private
+    */
+  self._attachFile = function (ref) {
+    var self = this;
+    if (typeof File !== "undefined" && ref instanceof File) {
+      self.utime = ref.lastModifiedDate;
+      self.blob = ref; // File inherits from Blob so this is OK
+    } else if (typeof Blob !== "undefined" && ref instanceof Blob) {
+      self.utime = new Date;
+      self.blob = ref;
+    }
+  };
 
-  if (typeof File !== "undefined" && ref instanceof File) {
-    self.utime = ref.lastModifiedDate;
-    self.blob = ref; // File inherits from Blob so this is OK
-  } else if (typeof Blob !== "undefined" && ref instanceof Blob) {
-    self.utime = new Date;
-    self.blob = ref;
-  }
+  self._attachFile(ref);
 };
 
 /** @method FS.File.prototype.uploadProgress
@@ -113,7 +122,7 @@ FS.File.prototype.getFileRecord = function() {
   }
   // Go for manually updating the file record
   if (self.isMounted()) {
-    console.log('GET FILERECORD: ' + self._id);
+    FS.debug && console.log('GET FILERECORD: ' + self._id);
 
     // Return the fileRecord or an empty object
     var fileRecord = self.collection.files.findOne({_id: self._id}) || {};
@@ -134,7 +143,7 @@ FS.File.prototype.getFileRecord = function() {
 // Update the fileRecord
 FS.File.prototype.update = function(modifier, options, callback) {
   var self = this;
-  console.log('UPDATE: ' + JSON.stringify(modifier));
+  FS.debug && console.log('UPDATE: ' + JSON.stringify(modifier));
   // Make sure we have options and callback
   if (!callback && typeof options === 'function') {
     callback = options;
@@ -322,14 +331,17 @@ FS.File.prototype.put = function(callback) {
 };
 
 /** @method FS.File.prototype.resume
-  * @private
-  * @param {File | Buffer}
-  * @todo Not yet implemented
+  * @param {File|Blob|Buffer} ref
+  * @todo WIP, Not yet implemented for server
   *
-  * > This function is not yet implemented
+  * > This function is not yet implemented for server
   */
-FS.File.prototype.resume = function(data) {
-
+FS.File.prototype.resume = function(ref) {
+  var self = this;
+  if (Meteor.isClient) {
+    self._attachFile(ref);
+    FS.uploadQueue.resumeUploadingFile(self);
+  }
 };
 
 /** @method FS.File.prototype.getExtension Returns the file extension
@@ -427,7 +439,24 @@ FS.File.prototype.isImage = function(options) {
   */
 FS.File.prototype.isUploaded = function() {
   var self = this;
+  
+  // Make sure we use the updated file record
+  self.getFileRecord();
+  
   return self.bytesUploaded === self.size;
+};
+
+/** @method FS.File.prototype.chunkIsUploaded Is the chunk completely uploaded?
+  * @param {number} start
+  * @returns {boolean} True if the chunk starting at start has already been uploaded successfully.
+  */
+FS.File.prototype.chunkIsUploaded = function(start) {
+  var self = this;
+  
+  // Make sure we use the updated file record
+  self.getFileRecord();
+  
+  return !!_.findWhere(self.chunks, {start: start});
 };
 
 /** @method FS.File.prototype.hasMaster A copy was saved in the master store.

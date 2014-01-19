@@ -174,13 +174,13 @@ FS.Collection = function(name, options) {
     var cursor = self.files.find();
     var handle = cursor.observe({
       added: function(doc) {
-        console.log('added: ' + doc._id);
+        FS.debug && console.log('added: ' + doc._id);
       },
       changed: function(newDoc, oldDoc) {
-        console.log('changed: ' + oldDoc._id);
+        FS.debug && console.log('changed: ' + oldDoc._id);
       },
       removed: function(oldDoc) {
-        console.log('remove: ' + oldDoc._id);
+        FS.debug && console.log('remove: ' + oldDoc._id);
         //delete all copies
         _.each(self.options.copies, function(copyDefinition, copyName) {
           copyDefinition.store.remove(oldDoc, {ignoreMissing: true, copyName: copyName});

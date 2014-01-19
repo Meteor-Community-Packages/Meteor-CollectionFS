@@ -9,7 +9,7 @@ function loadBuffer(fsFile, callback) {
 
   // If the supplied fsFile does not have a buffer loaded already,
   // try to load it from the temporary file.
-  console.log("attempting to load buffer from temp file");
+  FS.debug && console.log("attempting to load buffer from temp file");
   TempStore.getDataForFile(fsFile, function (err, fsFileWithData) {
     if (err) {
       callback(err);
@@ -58,7 +58,7 @@ FS.Collection.prototype.saveCopies = function(fsFile, options) {
     var copyInfo = fsFile.copies && fsFile.copies[copyName];
     // If copy has not already been saved or we want to overwrite it
     if (!options.missing || (copyInfo === void 0 && !fsFile.failedPermanently(copyName))) {
-      console.log('creating copy ' + copyName);
+      FS.debug && console.log('creating copy ' + copyName);
 
       var result = saveCopy(fsFile, copyDefinition.store, copyDefinition.beforeSave);
       if (result === null) {

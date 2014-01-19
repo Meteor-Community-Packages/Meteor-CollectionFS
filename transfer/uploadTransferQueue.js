@@ -3,7 +3,7 @@
  */
 
 var _taskHandler = function(task, next) {
-  console.log("uploading chunk " + task.chunk + ", bytes " + task.start + " to " + Math.min(task.end, task.fileObj.size) + " of " + task.fileObj.size);
+  FS.debug && console.log("uploading chunk " + task.chunk + ", bytes " + task.start + " to " + Math.min(task.end, task.fileObj.size) + " of " + task.fileObj.size);
   task.fileObj.getBinary(task.start, task.end, function(err, data) {
     if (err) {
       next(err);
@@ -13,7 +13,8 @@ var _taskHandler = function(task, next) {
               [task.fileObj, data, task.start],
               function(err) {
                 var e = new Date();
-                console.log("server took " + (e.getTime() - b.getTime()) + "ms");
+                FS.debug && console.log("server took " + (e.getTime() - b.getTime()) + "ms");
+                task = null;
                 next(err);
               });
     }
@@ -59,10 +60,29 @@ UploadTransferQueue = function(options) {
     // Check if file is already in queue
     return !!(fileObj && fileObj._id && fileObj.collectionName && (self.files[fileObj.collectionName] || {})[fileObj._id]);
   };
+  
+  /** @method UploadTransferQueue.resumeUploadingFile
+    * @param {FS.File} File to resume uploading
+    * @todo Not sure if this is the best way to handle resumes
+    */
+  self.resumeUploadingFile = function (fileObj) {
+    // Make sure we are handed a FS.File
+    if (!(fileObj instanceof FS.File)) {
+      throw new Error('Transfer queue expects a FS.File');
+    }
+    
+    if (fileObj.isMounted()) {
+      // This might still be true, preventing upload, if
+      // there was a server restart without client restart.
+      self.files[fileObj.collectionName] = self.files[fileObj.collectionName] || {};
+      self.files[fileObj.collectionName][fileObj._id] = false;
+      // Kick off normal upload
+      self.uploadFile(fileObj);
+    }
+  };
 
   /** @method UploadTransferQueue.uploadFile
     * @param {FS.File} File to upload
-    * @todo Only add tasks for the chunks that are missing (for resume)
     * @todo Check that a file can only be added once - maybe a visual helper on the FS.File?
     */
   self.uploadFile = function(fileObj) {
@@ -121,18 +141,20 @@ UploadTransferQueue = function(options) {
       self.files[fileObj.collectionName][fileObj._id] = true;
 
       // Add chunk upload tasks
-      // TODO: Only add the chunks that may be missing
-      for (var chunk = 0; chunk < chunks; chunk++) {
-        // Create and add the task
-        chunkQueue.add({
-          chunk: chunk,
-          name: fileObj.name,
-          methodName: methodName,
-          fileObj: fileObj,
-          start: chunk * chunkSize,
-          end: (chunk + 1) * chunkSize,
-          connection: self.connection
-        });
+      for (var chunk = 0, start; chunk < chunks; chunk++) {
+        start = chunk * chunkSize;
+        if (! fileObj.chunkIsUploaded(start)) {
+          // Create and add the task
+          chunkQueue.add({
+            chunk: chunk,
+            name: fileObj.name,
+            methodName: methodName,
+            fileObj: fileObj,
+            start: start,
+            end: (chunk + 1) * chunkSize,
+            connection: self.connection
+          });
+        }
       }
 
       // Add the queue to the main upload queue

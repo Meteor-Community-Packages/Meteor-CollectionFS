@@ -1,5 +1,13 @@
-// Load data from a URL into a new FS.File and pass it to callback
-// callback(err, fsFile)
+/** @method FS.File.fromUrl
+ * @param {String} url
+ * @param {String} filename
+ * @param {Function} callback
+ * @return {undefined}
+ * 
+ * Loads data from `url` into a new FS.File with `name = filename`,
+ * and then passes the new FS.File instance to `callback(err, fsFile)`.
+ * 
+ */
 FS.File.fromUrl = function(url, filename, callback) {
   callback = callback || defaultCallback;
   var fsFile = new FS.File({name: filename});
@@ -12,6 +20,15 @@ FS.File.fromUrl = function(url, filename, callback) {
   });
 };
 
+/** @method FS.File.prototype.saveLocal
+ * @param {String} [filename]
+ * @return {undefined}
+ * 
+ * Tells the browser to save the file like a normal downloaded file,
+ * using the provided filename, or the `name` property if `filename`
+ * is not provided.
+ * 
+ */
 FS.File.prototype.saveLocal = function(filename) {
   var self = this;
 
