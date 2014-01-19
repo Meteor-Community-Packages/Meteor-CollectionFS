@@ -11,11 +11,15 @@ var _taskHandler = function(task, next) {
       var b = new Date();
       task.connection.apply(task.methodName,
               [task.fileObj, data, task.start],
-              function(err) {
-                var e = new Date();
-                FS.debug && console.log("server took " + (e.getTime() - b.getTime()) + "ms");
-                task = null;
-                next(err);
+              { // We pass in options
+                wait: false, // Dont queue this on the client
+                onResultReceived: function(err, result) {
+                  // This callback is called as soon as the data is recieved
+                  var e = new Date();
+                  FS.debug && console.log("server took " + (e.getTime() - b.getTime()) + "ms");
+                  task = null;
+                  next(err);
+                }
               });
     }
   });
@@ -41,7 +45,7 @@ UploadTransferQueue = function(options) {
   // Init the power queue
   var self = new PowerQueue({
     name: 'UploadTransferQueue',
-    spinalQueue: MicroQueue,
+    spinalQueue: ReactiveList,
     maxProcessing: 5,
     maxFailures: 5,
     jumpOnFailure: true,
@@ -118,7 +122,7 @@ UploadTransferQueue = function(options) {
           // Remove from list of files being uploaded
           self.files[fileObj.collectionName][fileObj._id] = false;
         },
-        spinalQueue: MicroQueue,
+        spinalQueue: ReactiveList,
         maxProcessing: 5,
         maxFailures: 5,
         jumpOnFailure: true,
