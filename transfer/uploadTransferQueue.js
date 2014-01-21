@@ -56,6 +56,9 @@ UploadTransferQueue = function(options) {
 
   // Create a seperate ddp connection or use the passed in connection
   self.connection = options.connection || DDP.connect(Meteor.connection._stream.rawUrl);
+  
+  // Tie login for this connection to login for the main connection
+  connectionLogin(self.connection);
 
   // Keep trak of uploaded files via this queue
   self.files = {};

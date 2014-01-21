@@ -138,3 +138,25 @@ bufferToBinary = function(data) {
   }
   return binary;
 };
+
+connectionLogin = function(connection) {
+
+  // Monitor logout from main connection
+  Meteor.startup(function() {
+    Deps.autorun(function() {
+      var userId = Meteor.userId();
+      if (userId) {
+        connection.onReconnect = function() {
+          var token = Accounts._storedLoginToken();
+          connection.apply('login', [{resume: token}], function(err, result) {
+            !err && result && connection.setUserId(result.id);
+          });
+        };
+      } else {
+        connection.onReconnect = null;
+        connection.setUserId(null);
+      }
+    });
+  });
+
+};

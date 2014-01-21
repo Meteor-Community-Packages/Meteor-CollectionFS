@@ -9,7 +9,10 @@ DownloadTransferQueue = function(opts) {
   var self = this, name = 'DownloadTransferQueue';
   opts = opts || {};
   self.connection = opts.connection || DDP.connect(Meteor.connection._stream.rawUrl);
-  
+
+  // Tie login for this connection to login for the main connection
+  connectionLogin(self.connection);
+
   self.queue = new PowerQueue({
     name: name
   });
@@ -154,7 +157,7 @@ var addDownloadedData = function(col, fsFile, copyName, start, data, callback) {
   if (typeof copyName !== "string") {
     copyName = "_master";
   }
-  
+
   col.update({fileId: fsFile._id, collectionName: fsFile.collectionName, copyName: copyName, start: start}, {$set: {data: true}}, function(err) {
     if (err) {
       callback(err);
