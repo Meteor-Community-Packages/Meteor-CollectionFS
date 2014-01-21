@@ -245,20 +245,20 @@ FS.File.prototype.url = function(options) {
     if (!self.collection.httpUrl) {
       throw new Error('FS.File.url FS.Collection "' + self.collection.name + '" has no HTTP access point; set useHTTP option to true');
     }
-    var authToken = '';
-
+    
     // TODO: Could we somehow figure out if the collection requires login?
-    if (options.auth) {
-      if (options.auth === true) {
-        authToken = (typeof Accounts !== "undefined" && Accounts._storedLoginToken()) || '';
-      } else {
-        authToken = options.auth || '';
+    var authToken = '';
+    if (typeof Accounts !== "undefined") {
+      if (options.auth !== false) {
+        authToken = Accounts._storedLoginToken() || '';
       }
-
-      if (authToken !== '') {
-        // Construct the token string to append to url
-        authToken = '?token=' + authToken;
-      }
+    } else if (typeof options.auth === "string") {
+      authToken = options.auth;
+    }
+    
+    if (authToken !== '') {
+      // Construct the token string to append to url
+      authToken = '?token=' + authToken;
     }
 
     // Construct the http method url
