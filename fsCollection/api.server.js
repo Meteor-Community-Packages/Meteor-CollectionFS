@@ -2,6 +2,7 @@ function loadBuffer(fsFile, callback) {
   var fsFileClone = fsFile.clone();
 
   if (fsFile.hasData()) {
+    FS.debug && console.log("TempStore: file has data; attempting to set data from binary");
     fsFileClone.setDataFromBinary(fsFile.getBinary());
     callback(null, fsFileClone);
     return;
@@ -9,11 +10,12 @@ function loadBuffer(fsFile, callback) {
 
   // If the supplied fsFile does not have a buffer loaded already,
   // try to load it from the temporary file.
-  FS.debug && console.log("attempting to load buffer from temp file");
+  FS.debug && console.log("TempStore: attempting to load buffer from temp file");
   TempStore.getDataForFile(fsFile, function (err, fsFileWithData) {
     if (err) {
       callback(err);
     } else {
+      FS.debug && console.log("TempStore: attempting to set data from binary");
       fsFileClone.setDataFromBinary(fsFileWithData.getBinary());
       callback(null, fsFileClone);
     }
@@ -23,8 +25,14 @@ function loadBuffer(fsFile, callback) {
 var loadBufferSync = Meteor._wrapAsync(loadBuffer);
 
 function saveCopy(fsFile, store, beforeSave) {
+  var fsFileClone;
+          
   // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-  var fsFileClone = loadBufferSync(fsFile);
+  try {
+    fsFileClone = loadBufferSync(fsFile);
+  } catch (err) {
+    return false;
+  }
 
   // Call the beforeSave function provided by the user
   if (!beforeSave ||
@@ -47,8 +55,16 @@ function saveCopy(fsFile, store, beforeSave) {
   }
 }
 
-// This function is called to create all copies or only missing copies. It may be safely
-// called multiple times with the "missing" option set. It is synchronous.
+/**
+ * Saves to any stores that data has not yet been saved to. If the
+ * `overwrite` option is `true`, saves to all stores, potentially
+ * overwriting any previously saved data. Synchronous.
+ * 
+ * @param {FS.File} fsFile
+ * @param {Object} options
+ * @param {Boolean} [options.overwrite=false] - Force save to all defined stores?
+ * @returns {undefined}
+ */
 FS.Collection.prototype.saveCopies = function(fsFile, options) {
   var self = this;
   options = options || {};
@@ -57,7 +73,7 @@ FS.Collection.prototype.saveCopies = function(fsFile, options) {
   _.each(self.options.copies, function(copyDefinition, copyName) {
     var copyInfo = fsFile.copies && fsFile.copies[copyName];
     // If copy has not already been saved or we want to overwrite it
-    if (!options.missing || (copyInfo === void 0 && !fsFile.failedPermanently(copyName))) {
+    if (options.overwrite || (copyInfo === void 0 && !fsFile.failedPermanently(copyName))) {
       FS.debug && console.log('creating copy ' + copyName);
 
       var result = saveCopy(fsFile, copyDefinition.store, copyDefinition.beforeSave);
@@ -78,6 +94,11 @@ FS.Collection.prototype.saveCopies = function(fsFile, options) {
   });
 };
 
+/**
+ * Returns the store object given a copy name.
+ * @param {string} copyName
+ * @returns {FS.StorageAdapter} The store for this copy
+ */
 FS.Collection.prototype.getStoreForCopy = function(copyName) {
   var self = this;
   if (typeof copyName !== "string") {

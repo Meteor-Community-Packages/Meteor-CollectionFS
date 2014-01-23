@@ -314,19 +314,10 @@ FS.File.prototype.put = function(callback) {
     FS.uploadQueue.uploadFile(self);
     callback(null, self);
   } else if (Meteor.isServer) {
-    // Force bytesUploaded to be equal to the file size in case
-    // this was a server insert or a non-chunked client upload.
-    self.update({$set: {bytesUploaded: self.size}}, function(err) {
-      if (err) {
-        callback(err);
-      } else {
-        // Now let the collection handle the storage adapters
-        if (self.isMounted()) {
-          self.collection.saveCopies(self, {missing: true});
-          callback(null, self);
-        }
-      }
-    });
+    // Save the binary to a single chunk temp file, so that it is available
+    // when FileWorker calls saveCopies.
+    // This will also trigger file handling from collection observes.
+    TempStore.ensureForFile(self);
   }
 };
 
@@ -468,14 +459,14 @@ FS.File.prototype.hasMaster = function() {
 
 /** @method FS.File.prototype.hasCopy
  * @param {string} copyName Name of the copy to check for
- * @param {boolean} optimistic In case that the file record is not found, read below
+ * @param {boolean} [optimistic=false] In case that the file record is not found, read below
  * @returns {boolean} If the copy exists or not
  *
  * > Note: If the file is not published to the client or simply not found:
- * > this method cannot know for sure if it exists or not. The `optimistic`
- * > param is the boolean value to return. Are we `optimistic` that the copy
- * > could exist. This is the case in `FS.File.url` we are optimistic that the
- * > copy supplied by the user exists.
+ * this method cannot know for sure if it exists or not. The `optimistic`
+ * param is the boolean value to return. Are we `optimistic` that the copy
+ * could exist. This is the case in `FS.File.url` we are optimistic that the
+ * copy supplied by the user exists.
  */
 FS.File.prototype.hasCopy = function(copyName, optimistic) {
   var self = this;

@@ -24,7 +24,7 @@ TempStore = {
     * @param {FS.File} fsFile
     * @param {binary} binary
     * @param {number} start
-    * @param {function} callback callback(err, allBytesLoaded)
+    * @param {function} callback callback(err)
     * @todo In some ways it would make sense to save chunks into temp folder pr. file, naming the chunks `1.bin`, `2.bin` ... `n.bin`
     */
   saveChunk: function(fileObj, binary, start, callback) {
@@ -34,6 +34,7 @@ TempStore = {
       throw new Error("FS.File.saveChunk requires a callback");
     }
 
+    // Get the name of the already-created tempFile for this chunk
     var chunks = fileObj.chunks || [], chunk, tempFile;
     for (var i = 0, ln = chunks.length; i < ln; i++) {
       chunk = chunks[i];
@@ -42,29 +43,22 @@ TempStore = {
         break;
       }
     }
+    
+    // If there is not already a temp file...
     if (!tempFile) {
+      // create it in the OS temp directory with a random unique name ending with ".bin"
       tempFile = tmp.path({suffix: '.bin'});
+      // and make note of its filename in the chunks array
       fileObj.update({$push: {chunks: {start: start, tempFile: tempFile}}});
     }
-    // Call node writeFile
+    
+    // Write the chunk data into the temporary file
     fs.writeFile(tempFile, binaryToBuffer(binary), Meteor.bindEnvironment(function(err) {
       if (err) {
         callback(err);
       } else {
-        fileObj.update({$inc: {bytesUploaded: total}}, function(err, count) {
-          if (err) {
-            callback(err);
-          } else {
-            // We pull the fileRecord to make sure all the data chunks have been
-            // recieved - We have to pull the record on the server-side
-            if (count > 0) fileObj.getFileRecord();
-            FS.debug && console.log("Uploaded " + fileObj.bytesUploaded + " of " + fileObj.size + " bytes");
-
-            if (fileObj.isUploaded()) {
-              // We are done loading all bytes
-              callback(null, true);
-            }
-          }
+        fileObj.update({$inc: {bytesUploaded: total}}, function(err) {
+          callback(err); //don't pass along the second arg
         });
       }
     }, function(err) {
@@ -78,7 +72,12 @@ TempStore = {
     * @todo This cannot handle large files eg. 2gb or more?
     */  
   getDataForFile: function(fileObj, callback) {
-    fileObj.binary = EJSON.newBinary(fileObj.size);
+    
+    if (_.isEmpty(fileObj.chunks)) {
+      callback(new Error('getDataForFile: No temporary chunks!'));
+    }
+    
+    var tempBinary = EJSON.newBinary(fileObj.size);
     var total = 0, stop = false;
     _.each(fileObj.chunks, function(chunk) {
       if (!stop) {
@@ -86,11 +85,15 @@ TempStore = {
         // Call node readFile
         fs.readFile(chunk.tempFile, Meteor.bindEnvironment(function(err, buffer) {
           if (buffer) {
+            // Copy chunk buffer into full file buffer at correct starting position
             for (var i = 0, ln = buffer.length; i < ln; i++) {
-              fileObj.binary[start + i] = buffer[i];
+              tempBinary[start + i] = buffer[i];
               total++;
             }
+            // If all chunks have been copied, set the fileObj
+            // binary and call the callback
             if (total === fileObj.size) {
+              fileObj.binary = tempBinary;
               callback(null, fileObj);
               stop = true;
             }
@@ -154,7 +157,7 @@ TempStore = {
 
   /** @method TempStore.ensureForFile
     * @param {FS.File} fileObj
-    * @param {function} callback callback(err, allBytesLoaded)
+    * @param {function} callback callback(err)
     */  
   ensureForFile: function (fileObj, callback) {
     callback = callback || defaultCallback;

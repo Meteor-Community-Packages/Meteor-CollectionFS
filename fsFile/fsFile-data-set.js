@@ -1,6 +1,9 @@
 /*
  * Common methods for setting binary data
  */
+if (Meteor.isServer) {
+  var request = Npm.require("request");
+}
 
 // Sets EJSON.binary data directly
 FS.File.prototype.setDataFromBinary = function(binary, type) {
@@ -35,8 +38,13 @@ FS.File.prototype.setDataFromArrayBuffer = function(arrayBuffer, type) {
   }
 };
 
-// Converts ArrayBuffer or Buffer retrieved from URL to EJSON.binary data and sets it
-// callback(err)
+/**
+ * Converts ArrayBuffer or Buffer retrieved from URL to EJSON.binary data
+ * and sets it. Asynchronous.
+ * @param {string} url
+ * @param {function} callback - callback(err)
+ * @returns {undefined}
+ */
 FS.File.prototype.setDataFromUrl = function(url, callback) {
   var self = this;
   callback = callback || defaultCallback;

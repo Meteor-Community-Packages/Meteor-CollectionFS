@@ -170,24 +170,6 @@ FS.Collection = function(name, options) {
   _collections[collectionName] = this;
 
   if (Meteor.isServer) {
-    // Rig an observer on the server
-    var cursor = self.files.find();
-    var handle = cursor.observe({
-      added: function(doc) {
-        FS.debug && console.log('added: ' + doc._id);
-      },
-      changed: function(newDoc, oldDoc) {
-        FS.debug && console.log('changed: ' + oldDoc._id);
-      },
-      removed: function(oldDoc) {
-        FS.debug && console.log('remove: ' + oldDoc._id);
-        //delete all copies
-        _.each(self.options.copies, function(copyDefinition, copyName) {
-          copyDefinition.store.remove(oldDoc, {ignoreMissing: true, copyName: copyName});
-        });
-      }
-    });
-
     // Tell synchronized stores how to sync
     _.each(self.options.copies, function(copyDefinition, copyName) {
       if (copyDefinition.sync) {
@@ -255,6 +237,9 @@ FS.Collection = function(name, options) {
         });
       }
     });
+    
+    // Set up observers
+    FileWorker.observe(this);
 
   } // EO Server
 

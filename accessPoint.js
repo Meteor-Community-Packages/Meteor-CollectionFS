@@ -30,23 +30,13 @@ var APUpload = function(fileObj, data, start) {
         throw new Meteor.Error(403, "Access denied");
       }
     }
+    
+    self.unblock();
+    
     // Save chunk and, if it's the last chunk, kick off storage
-    TempStore.saveChunk(fileObj, data, start, function(err, done) {
+    TempStore.saveChunk(fileObj, data, start, function(err) {
       if (err) {
         throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
-      }
-      if (done) {
-        // We are done loading all bytes
-        // so we should load the temp files into the actual fileObj now
-        self.unblock();
-        TempStore.getDataForFile(fileObj, function(err, fileObjWithData) {
-          if (err) {
-            throw err;
-          } else {
-            // Save file to stores
-            fileObjWithData.put();
-          }
-        });
       }
     });
 

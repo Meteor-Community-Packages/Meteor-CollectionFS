@@ -1,112 +1,140 @@
-// TODO: Use power queue to handle throttling etc.
-// Use observe to monitor changes and have it create tasks for the power queue
-// to perform.
+//// TODO: Use power queue to handle throttling etc.
+//// Use observe to monitor changes and have it create tasks for the power queue
+//// to perform.
 
-FileWorker = function() {
-  var self = this;
-  self.running = false;
-};
+FileWorker = {};
 
-FileWorker.prototype.start = function() {
-  var self = this;
-  if (!self.running) {
-    self.running = true;
-    self.checkForMissingCopies();
-  }
-};
-
-FileWorker.prototype.stop = function() {
-  var self = this;
-  self.running = false;
-};
-
-// Note this does not currently use a queue. Everything is synchronous
-// so it probably doesn't need to unless we want progress tracking?
-// Also, if a queue is used, the queue task will have to call
-// checkForMissingCopies when it's done, otherwise it will continually
-// add functions to the queue for the same missing files while the 
-// previous queue tasks are still running.
-FileWorker.prototype.checkForMissingCopies = function() {
-  var self = this;
-
-  // Loop through all defined FS.Collection
-  _.each(_collections, function(cfs, cfsName) {
-
-    // Initialize a selector that will be used to identify files where all
-    // requested copies are either successfully saved or have failed the
-    // max number of times but still have chunks. The resulting selector
-    // should be something like this:
-    //
-    // {
-    //   $and: [
-    //     {chunks: {$exists: true}},
-    //     {
-    //       $or: [
-    //         {
-    //           $and: [
-    //             {
-    //               'copies.copy1': {$ne: null}
-    //             },
-    //             {
-    //               'copies.copy1': {$ne: false}
-    //             }
-    //           ]
-    //         },
-    //         {
-    //           'failures.copies.copy1.doneTrying': true
-    //         }
-    //       ]
-    //     },
-    //     REPEATED FOR EACH COPY
-    //   ]
-    // }
-    var tempSelector = {$and: [{chunks: {$exists: true}}]};
-
-    // Loop through all defined copies for the FS.Collection
-    for (var copyName in cfs.options.copies) {
-      var selector = {};
-      
-      // Find missing copies, oldest first.
-      // The collection handles the details of max tries and sets doneTrying.
-      selector['failures.copies.' + copyName + '.count'] = {$gt: 0};
-      selector['failures.copies.' + copyName + '.doneTrying'] = false;
-      cfs.find(selector, {sort: [['failures.copies.' + copyName + '.firstAttempt', 'asc'], ['failures.copies.' + copyName + '.lastAttempt', 'asc']]}).forEach(function(fsFile) {
-        FS.debug && console.log("FileWorker trying to save copy " + copyName + " for " + fsFile._id + " in " + cfs.name);
-        cfs.saveCopies(fsFile, {missing: true});
-      });
-
-      // Build selector to be used after the loop
-      // for finding completed files, for which temporary chunk files
-      // can be removed.
-      var copyCond = {$or: [{$and: []}]};
-      var tempCond = {};
-      tempCond["copies." + copyName] = {$ne: null};
-      copyCond.$or[0].$and.push(tempCond);
-      tempCond = {};
-      tempCond["copies." + copyName] = {$ne: false};
-      copyCond.$or[0].$and.push(tempCond);
-      tempCond = {};
-      tempCond['failures.copies.' + copyName + '.doneTrying'] = true;
-      copyCond.$or.push(tempCond);
-      tempSelector.$and.push(copyCond);
+/**
+ * Sets up observes on the fsCollection to store file copies and delete
+ * temp files at the appropriate times.
+ * 
+ * @param {FS.Collection} fsCollection
+ * @returns {undefined}
+ */
+FileWorker.observe = function(fsCollection) {
+  
+  // Initiate observe for finding newly uploaded/added files that need to be stored
+  fsCollection.files.find(getReadyQuery(fsCollection.options.copies)).observe({
+    added: function(fsFile) {
+      FS.debug && console.log("FileWorker ADDED - calling saveCopies for", fsFile._id);
+      fsCollection.saveCopies(fsFile);
+    },
+    changed: function(fsFile) {
+      FS.debug && console.log("FileWorker CHANGED - calling saveCopies for", fsFile._id);
+      // Might be in the process of storing copies, and we were notified
+      // because info for one copy was added. We can call saveCopies anyway
+      // and it should be OK, but there might be race conditions. TODO
+      // make this more foolproof.
+      fsCollection.saveCopies(fsFile);
     }
-
-    // Delete temp files that are no longer needed
-    cfs.find(tempSelector).forEach(function(fsFile) {
-      FS.debug && console.log('Delete TempStore for file id: ' + fsFile._id);
-      TempStore.deleteChunks(fsFile);
-    });
-
   });
-
-  if (self.running) {
-    // Check again every 5 seconds
-    Meteor.setTimeout(function() {
-      self.checkForMissingCopies();
-    }, 5000);
-  }
+  
+  // Initiate observe for finding files that have been stored so we can delete
+  // any temp files
+  fsCollection.files.find(getDoneQuery(fsCollection.options.copies)).observe({
+    added: function(fsFile) {
+      FS.debug && console.log("FileWorker ADDED - calling deleteChunks for", fsFile._id);
+      TempStore.deleteChunks(fsFile);
+    }
+  });
+  
+  // Initiate observe for catching files that have been removed and
+  // removing the data from all stores as well
+  fsCollection.files.find().observe({
+    removed: function(fsFile) {
+      FS.debug && console.log('FileWorker REMOVED - removing all stored data for', fsFile._id);
+      //delete all copies
+      _.each(fsCollection.options.copies, function(copyDefinition, copyName) {
+        copyDefinition.store.remove(fsFile, {ignoreMissing: true, copyName: copyName});
+      });
+    }
+  });
 };
 
-// This periodically attempts to save missing files for all FS.Collection
-fileWorker = new FileWorker();
-fileWorker.start();
+/**
+ *  Returns a selector that will be used to identify files that
+ *  have been uploaded but have not yet been stored to one or
+ *  more stores.
+ *  
+ *  {
+ *    $where: "this.bytesUploaded === this.size",
+ *    $or: [
+ *      {
+ *        'copies.copy1`: null,
+ *        'failures.copies.copy1.doneTrying': {$ne: true}
+ *      },
+ *      REPEATED FOR EACH COPY
+ *    ]
+ *  }
+ */
+var getReadyQuery = function getReadyQuery(copies) {
+  var selector = {
+    $where: "this.bytesUploaded === this.size",
+    $or: []
+  };
+  
+  // Add conditions for all defined copies
+  for (var copyName in copies) {
+    var test = {};
+    test['copies.' + copyName] = null;
+    test['failures.copies.' + copyName + '.doneTrying'] = {$ne: true};
+    selector.$or.push(test);
+  }
+  
+  return selector;
+};
+
+/**
+ *  Returns a selector that will be used to identify files where all
+ *  requested copies are either successfully saved or have failed the
+ *  max number of times but still have chunks. The resulting selector
+ *  should be something like this:
+ *  
+ *  {
+ *    $and: [
+ *      {chunks: {$exists: true}},
+ *      {
+ *        $or: [
+ *          {
+ *            $and: [
+ *              {
+ *                'copies.copy1': {$ne: null}
+ *              },
+ *              {
+ *                'copies.copy1': {$ne: false}
+ *              }
+ *            ]
+ *          },
+ *          {
+ *            'failures.copies.copy1.doneTrying': true
+ *          }
+ *        ]
+ *      },
+ *    ]
+ *    REPEATED FOR EACH COPY
+ *  }
+ */
+var getDoneQuery = function getDoneQuery(copies) {
+  var selector = {
+    $and: [
+      {chunks: {$exists: true}}
+    ]
+  };
+  
+  // Add conditions for all defined copies
+  for (var copyName in copies) {
+    var copyCond = {$or: [{$and: []}]};
+    var tempCond = {};
+    tempCond["copies." + copyName] = {$ne: null};
+    copyCond.$or[0].$and.push(tempCond);
+    tempCond = {};
+    tempCond["copies." + copyName] = {$ne: false};
+    copyCond.$or[0].$and.push(tempCond);
+    tempCond = {};
+    tempCond['failures.copies.' + copyName + '.doneTrying'] = true;
+    copyCond.$or.push(tempCond);
+    selector.$and.push(copyCond);
+  }
+  
+  return selector;
+};
