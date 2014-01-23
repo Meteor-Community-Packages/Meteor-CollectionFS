@@ -7,11 +7,11 @@ if (Meteor.isClient) {
 }
 
 /** @method FS.File
-  * @namespace FS.File
-  * @constructor
-  * @param {object|File|Blob} ref File reference
-  * @todo Should we refactor the file record into `self.record`?
-  */
+ * @namespace FS.File
+ * @constructor
+ * @param {object|File|Blob} ref File reference
+ * @todo Should we refactor the file record into `self.record`?
+ */
 FS.File = function(ref, createdByTransform) {
   var self = this;
 
@@ -22,11 +22,11 @@ FS.File = function(ref, createdByTransform) {
 
   // Extend self with filerecord related data
   _.extend(self, cloneFileRecord(ref));
-  
+
   /** @method FS.File.prototype._attachFile
-    * @param {File|Blob} ref File or Blob instance to attach 
-    * @private
-    */
+   * @param {File|Blob} ref File or Blob instance to attach 
+   * @private
+   */
   self._attachFile = function (ref) {
     var self = this;
     if (typeof File !== "undefined" && ref instanceof File) {
@@ -42,13 +42,13 @@ FS.File = function(ref, createdByTransform) {
 };
 
 /** @method FS.File.prototype.uploadProgress
-  * @returns {number} The server confirmed upload progress
-  */
+ * @returns {number} The server confirmed upload progress
+ */
 FS.File.prototype.uploadProgress = function() {
   var self = this;
   // If we are passed a file object and the object is mounted on a collection
   if (self.isMounted()) {
-    
+
     // Make sure our file record is updated
     self.getFileRecord();
 
@@ -58,30 +58,30 @@ FS.File.prototype.uploadProgress = function() {
 };
 
 /** @method FS.File.prototype.controlledByDeps
-  * @returns {FS.Collection} Returns true if this FS.File is reactive
-  *
-  * > Note: Returns true if this FS.File object was created by a FS.Collection
-  * > and we are in a reactive computations. What does this mean? Well it should
-  * > mean that our fileRecord is fully updated by Meteor and we are mounted on
-  * > a collection
-  */
+ * @returns {FS.Collection} Returns true if this FS.File is reactive
+ *
+ * > Note: Returns true if this FS.File object was created by a FS.Collection
+ * > and we are in a reactive computations. What does this mean? Well it should
+ * > mean that our fileRecord is fully updated by Meteor and we are mounted on
+ * > a collection
+ */
 FS.File.prototype.controlledByDeps = function() {
   var self = this;
   return self.createdByTransform && Deps.active;
 };
 
 /** @method FS.File.prototype.getCollection
-  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
-  */
+ * @returns {FS.Collection} Returns attached collection or undefined if not mounted
+ */
 FS.File.prototype.getCollection = function() {
   // Get the collection reference
   var self = this;
-  
+
   // If we already made the link then do no more
   if (self.collection) {
     return self.collection;
   }
-  
+
   // If we don't have a collectionName then there's not much to do, the file is
   // not mounted yet
   if (!self.collectionName) {
@@ -92,27 +92,27 @@ FS.File.prototype.getCollection = function() {
 
   // Link the collection to the file
   self.collection = _collections[self.collectionName];
-  
+
   return self.collection; //possibly undefined, but that's desired behavior
 };
 
 /** @method FS.File.prototype.isMounted
-  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
-  *
-  * > Note: This will throw an error if collection not found and file is mounted
-  * > *(got an invalid collectionName)*
-  */
+ * @returns {FS.Collection} Returns attached collection or undefined if not mounted
+ *
+ * > Note: This will throw an error if collection not found and file is mounted
+ * > *(got an invalid collectionName)*
+ */
 FS.File.prototype.isMounted = FS.File.prototype.getCollection;
 
 /** @method FS.File.prototype.fetch Returns the fileRecord
-  * @returns {object} The filerecord
-  * @deprecated Refactored into [getFileRecord](#FS.File.prototype.getFileRecord)
-  */
+ * @returns {object} The filerecord
+ * @deprecated Refactored into [getFileRecord](#FS.File.prototype.getFileRecord)
+ */
 
 
 /** @method FS.File.prototype.getFileRecord Returns the fileRecord
-  * @returns {object} The filerecord
-  */
+ * @returns {object} The filerecord
+ */
 FS.File.prototype.getFileRecord = function() {
   var self = this;
   // Check if this file object fileRecord is kept updated by Meteor, if so
@@ -136,10 +136,10 @@ FS.File.prototype.getFileRecord = function() {
 };
 
 /** @method FS.File.prototype.update
-  * @param {modifier} modifier
-  * @param {object} [options]
-  * @param {function} [callback]
-  */
+ * @param {modifier} modifier
+ * @param {object} [options]
+ * @param {function} [callback]
+ */
 // Update the fileRecord
 FS.File.prototype.update = function(modifier, options, callback) {
   var self = this;
@@ -163,11 +163,11 @@ FS.File.prototype.update = function(modifier, options, callback) {
 };
 
 /** @method FS.File.prototype.remove
-  * @returns {number} Count
-  * @todo Test this
-  *
-  * Remove the current file
-  */
+ * @returns {number} Count
+ * @todo Test this
+ *
+ * Remove the current file
+ */
 // Remove the file
 FS.File.prototype.remove = function() {
   var self = this;
@@ -183,24 +183,24 @@ FS.File.prototype.remove = function() {
 };
 
 /** @method FS.File.prototype.moveTo
-  * @param {FS.Collection} targetCollection
-  * @private // Marked private until implemented
-  * @todo Needs to be implemented
-  *
-  * Move the file from current collection to another collection
-  *
-  * > Note: Not yet implemented
-  */
+ * @param {FS.Collection} targetCollection
+ * @private // Marked private until implemented
+ * @todo Needs to be implemented
+ *
+ * Move the file from current collection to another collection
+ *
+ * > Note: Not yet implemented
+ */
 
 /** @method FS.File.prototype.get
-  * @param {object} [options]
-  * @param {string} [options.copyName='_master'] Name of the copy version
-  * @param {number} [options.start]
-  * @param {number} [options.end]
-  * @returns {number} Count
-  * 
-  * Remove the current file
-  */
+ * @param {object} [options]
+ * @param {string} [options.copyName='_master'] Name of the copy version
+ * @param {number} [options.start]
+ * @param {number} [options.end]
+ * @returns {number} Count
+ * 
+ * Remove the current file
+ */
 // Client: Instructs the DownloadTransferQueue to begin downloading the file copy
 // Server: Returns the Buffer data for the copy
 FS.File.prototype.get = function(options) {
@@ -212,20 +212,20 @@ FS.File.prototype.get = function(options) {
   if (typeof options.copyName !== "string") {
     options.copyName = "_master";
   }
-  
+
   // Call the client / server dependen code
   return self._get(options);
 };
 
 /** @method FS.File.prototype.url Construct the file url
-  * @param {object} [options]
-  * @param {string} [options.copy="_master"] The copy of the file to get
-  * @param {boolean} [options.auth=null] Wether or not the authenticate
-  * @param {boolean} [options.download=false] Should headers be set to force a download
-  *
-  * Return the http url for getting the file - on server set auth if wanting to
-  * use authentication on client set auth to true or token
-  */
+ * @param {object} [options]
+ * @param {string} [options.copy="_master"] The copy of the file to get
+ * @param {boolean} [options.auth=null] Wether or not the authenticate
+ * @param {boolean} [options.download=false] Should headers be set to force a download
+ *
+ * Return the http url for getting the file - on server set auth if wanting to
+ * use authentication on client set auth to true or token
+ */
 FS.File.prototype.url = function(options) {
   var self = this;
   options = options || {};
@@ -245,7 +245,7 @@ FS.File.prototype.url = function(options) {
     if (!self.collection.httpUrl) {
       throw new Error('FS.File.url FS.Collection "' + self.collection.name + '" has no HTTP access point; set useHTTP option to true');
     }
-    
+
     // TODO: Could we somehow figure out if the collection requires login?
     var authToken = '';
     if (typeof Accounts !== "undefined") {
@@ -255,7 +255,7 @@ FS.File.prototype.url = function(options) {
     } else if (typeof options.auth === "string") {
       authToken = options.auth;
     }
-    
+
     if (authToken !== '') {
       // Construct the token string to append to url
       authToken = '?token=' + authToken;
@@ -269,15 +269,15 @@ FS.File.prototype.url = function(options) {
       return self.collection.httpUrl + urlPrefix + self._id + authToken;
     }
   }
-  
+
 };
 
 /** @method FS.File.prototype.downloadUrl Get the download url
-  * @param {object} [options]
-  * @param {string} [options.copy="_master"] The copy of the file to get
-  * @param {boolean} [options.auth=null] Wether or not the authenticate
-  * @deprecated Use The hybrid helper `FS.File.url`
-  */
+ * @param {object} [options]
+ * @param {string} [options.copy="_master"] The copy of the file to get
+ * @param {boolean} [options.auth=null] Wether or not the authenticate
+ * @deprecated Use The hybrid helper `FS.File.url`
+ */
 // Construct a download url
 FS.File.prototype.downloadUrl = function(options) {
   options = options || {};
@@ -287,18 +287,18 @@ FS.File.prototype.downloadUrl = function(options) {
 };
 
 /** @method FS.File.prototype.put Stores the file data
-  * @param {function} [callback] Callback for returning errors and updated FS.File
-  *
-```
-  fo.put(function(err, fo) {
-    if (err) {
-      console.log('Got an error');
-    } else {
-      console.log('Passed on the file: ' + fo);
-    }
-  });
-```
-  */
+ * @param {function} [callback] Callback for returning errors and updated FS.File
+ *
+ ```
+ fo.put(function(err, fo) {
+ if (err) {
+ console.log('Got an error');
+ } else {
+ console.log('Passed on the file: ' + fo);
+ }
+ });
+ ```
+ */
 FS.File.prototype.put = function(callback) {
   var self = this;
 
@@ -331,11 +331,11 @@ FS.File.prototype.put = function(callback) {
 };
 
 /** @method FS.File.prototype.resume
-  * @param {File|Blob|Buffer} ref
-  * @todo WIP, Not yet implemented for server
-  *
-  * > This function is not yet implemented for server
-  */
+ * @param {File|Blob|Buffer} ref
+ * @todo WIP, Not yet implemented for server
+ *
+ * > This function is not yet implemented for server
+ */
 FS.File.prototype.resume = function(ref) {
   var self = this;
   if (Meteor.isClient) {
@@ -345,8 +345,8 @@ FS.File.prototype.resume = function(ref) {
 };
 
 /** @method FS.File.prototype.getExtension Returns the file extension
-  * @returns {string} The extension eg.: `jpg` or if not found then an empty string ''
-  */
+ * @returns {string} The extension eg.: `jpg` or if not found then an empty string ''
+ */
 FS.File.prototype.getExtension = function() {
   var self = this;
   // Make sure our file record is updated
@@ -360,9 +360,9 @@ FS.File.prototype.getExtension = function() {
 };
 
 /** @method FS.File.prototype.toDataUrl
-  * @param {function} callback Callback(err, dataUrl) (callback is optional on server)
-  * @todo Split client and server code
-  */
+ * @param {function} callback Callback(err, dataUrl) (callback is optional on server)
+ * @todo Split client and server code
+ */
 FS.File.prototype.toDataUrl = function(callback) {
   var self = this;
 
@@ -410,15 +410,15 @@ FS.File.prototype.toDataUrl = function(callback) {
 };
 
 /** @method FS.File.prototype.isImage Is it an image file?
-  * @param {object} [options]
-  * @param {string} [options.copy="_master"] The copy of the file to check
-  * 
-  * Returns true if the specified copy of this file has an image
-  * content type. By default, checks the _master copy. If the
-  * file object is unmounted or doesn't have that copy, checks
-  * the content type of the original file.
-  * 
-  */
+ * @param {object} [options]
+ * @param {string} [options.copy="_master"] The copy of the file to check
+ * 
+ * Returns true if the specified copy of this file has an image
+ * content type. By default, checks the _master copy. If the
+ * file object is unmounted or doesn't have that copy, checks
+ * the content type of the original file.
+ * 
+ */
 FS.File.prototype.isImage = function(options) {
   var self = this, type;
   options = options || {};
@@ -435,48 +435,48 @@ FS.File.prototype.isImage = function(options) {
 };
 
 /** @method FS.File.prototype.isUploaded Is this file completely uploaded?
-  * @returns {boolean} True if the number of uploaded bytes is equal to the file size.
-  */
+ * @returns {boolean} True if the number of uploaded bytes is equal to the file size.
+ */
 FS.File.prototype.isUploaded = function() {
   var self = this;
-  
+
   // Make sure we use the updated file record
   self.getFileRecord();
-  
+
   return self.bytesUploaded === self.size;
 };
 
 /** @method FS.File.prototype.chunkIsUploaded Is the chunk completely uploaded?
-  * @param {number} start
-  * @returns {boolean} True if the chunk starting at start has already been uploaded successfully.
-  */
+ * @param {number} start
+ * @returns {boolean} True if the chunk starting at start has already been uploaded successfully.
+ */
 FS.File.prototype.chunkIsUploaded = function(start) {
   var self = this;
-  
+
   // Make sure we use the updated file record
   self.getFileRecord();
-  
+
   return !!_.findWhere(self.chunks, {start: start});
 };
 
 /** @method FS.File.prototype.hasMaster A copy was saved in the master store.
-  * @returns {boolean} True if a copy of this file was saved in the master store.
-  */
+ * @returns {boolean} True if a copy of this file was saved in the master store.
+ */
 FS.File.prototype.hasMaster = function() {
   return this.hasCopy("_master");
 };
 
 /** @method FS.File.prototype.hasCopy
-  * @param {string} copyName Name of the copy to check for
-  * @param {boolean} optimistic In case that the file record is not found, read below
-  * @returns {boolean} If the copy exists or not
-  *
-  * > Note: If the file is not published to the client or simply not found:
-  * > this method cannot know for sure if it exists or not. The `optimistic`
-  * > param is the boolean value to return. Are we `optimistic` that the copy
-  * > could exist. This is the case in `FS.File.url` we are optimistic that the
-  * > copy supplied by the user exists.
-  */
+ * @param {string} copyName Name of the copy to check for
+ * @param {boolean} optimistic In case that the file record is not found, read below
+ * @returns {boolean} If the copy exists or not
+ *
+ * > Note: If the file is not published to the client or simply not found:
+ * > this method cannot know for sure if it exists or not. The `optimistic`
+ * > param is the boolean value to return. Are we `optimistic` that the copy
+ * > could exist. This is the case in `FS.File.url` we are optimistic that the
+ * > copy supplied by the user exists.
+ */
 FS.File.prototype.hasCopy = function(copyName, optimistic) {
   var self = this;
   // Make sure we use the updated file record
@@ -492,15 +492,15 @@ FS.File.prototype.hasCopy = function(copyName, optimistic) {
 };
 
 /** @method FS.File.prototype.hasMaster Does the attached collection allow this file?
-  * @returns {boolean} True if the attached collection allows this file.
-  * 
-  * Checks based on any filters defined on the attached collection. If the
-  * file is not valid according to the filters, this method returns false
-  * and also calls the filter `onInvalid` method defined for the attached
-  * collection, passing it an English error string that explains why it
-  * failed.
-  * 
-  */
+ * @returns {boolean} True if the attached collection allows this file.
+ * 
+ * Checks based on any filters defined on the attached collection. If the
+ * file is not valid according to the filters, this method returns false
+ * and also calls the filter `onInvalid` method defined for the attached
+ * collection, passing it an English error string that explains why it
+ * failed.
+ * 
+ */
 FS.File.prototype.fileIsAllowed = function() {
   var self = this;
 
@@ -510,17 +510,19 @@ FS.File.prototype.fileIsAllowed = function() {
     if (!filter) {
       return true;
     }
-    var fileSize = self.size, contentType = self.type;
-    if (!contentType || !self.name || !fileSize || isNaN(fileSize)) {
-      if (typeof filter.onInvalid === "function") {
-        filter.onInvalid("File is missing required information");
-      }
+    var filename = self.name;
+    if (!filename) {
+      filter.onInvalid && filter.onInvalid("The file has no name");
       return false;
     }
-    if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
-      if (typeof filter.onInvalid === "function") {
-        filter.onInvalid("File is too big");
-      }
+    var contentType = self.type;
+    if (!contentType) {
+      filter.onInvalid && filter.onInvalid(filename + " has an unknown content type");
+      return false;
+    }
+    var fileSize = self.size;
+    if (!fileSize || isNaN(fileSize)) {
+      filter.onInvalid && filter.onInvalid(filename + " has an unknown file size");
       return false;
     }
     var saveAllFileExtensions = (filter.allow.extensions.length === 0);
@@ -529,17 +531,17 @@ FS.File.prototype.fileIsAllowed = function() {
     if (!((saveAllFileExtensions ||
             _.indexOf(filter.allow.extensions, ext) !== -1) &&
             _.indexOf(filter.deny.extensions, ext) === -1)) {
-      if (typeof filter.onInvalid === "function") {
-        filter.onInvalid("Files with extension " + ext + " are not allowed");
-      }
+      filter.onInvalid && filter.onInvalid(filename + ' has the extension "' + ext + '", which is not allowed');
       return false;
     }
     if (!((saveAllContentTypes ||
             contentTypeInList(filter.allow.contentTypes, contentType)) &&
             !contentTypeInList(filter.deny.contentTypes, contentType))) {
-      if (typeof filter.onInvalid === "function") {
-        filter.onInvalid("Files of type " + contentType + " are not allowed");
-      }
+      filter.onInvalid && filter.onInvalid(filename + ' is of the type "' + contentType + '", which is not allowed');
+      return false;
+    }
+    if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
+      filter.onInvalid && filter.onInvalid(filename + " is too big");
       return false;
     }
     return true;
