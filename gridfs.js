@@ -74,7 +74,7 @@ FS.GridFSStore = function(name) {
       callback(null, result);
     },
     put: function(id, fileKey, buffer, options, callback) {
-      console.log("---GridFS PUT");
+      FS.debug && console.log("---GridFS PUT");
       options = options || {};
       
       // Because we are keying off id, it should be fine to ignore
@@ -94,7 +94,7 @@ FS.GridFSStore = function(name) {
         cPos++;
 
         if (cPos === size) {
-          console.log("---GridFS PUT writing chunk " + n);
+          FS.debug && console.log("---GridFS PUT writing chunk " + n);
           var chunkDoc = {
             files_id: id, // _id of the corresponding files collection entry
             n: n,
