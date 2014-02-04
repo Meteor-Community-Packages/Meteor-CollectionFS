@@ -11,7 +11,6 @@ if (Meteor.isServer) {
   fs = Npm.require('fs');
   path = Npm.require('path');
   tmp = Npm.require('temp');
-  mmm = Npm.require('mmmagic');
 }
 
 // #############################################################################

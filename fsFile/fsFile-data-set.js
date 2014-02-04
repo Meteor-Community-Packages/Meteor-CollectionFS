@@ -3,6 +3,7 @@
  */
 if (Meteor.isServer) {
   var request = Npm.require("request");
+  var mime = Npm.require('mime');
 }
 
 // Sets EJSON.binary data directly
@@ -87,7 +88,13 @@ FS.File.prototype.setDataFromUrl = function(url, callback) {
  */
 
 if (Meteor.isServer) {
-  // Converts Buffer to EJSON.binary data and sets it
+  /**
+   * Converts Buffer to EJSON.binary data and sets it
+   * 
+   * @param {Buffer} buffer - A Node buffer
+   * @param {string} type - The content type of the data that's in the buffer
+   * @returns {undefined}
+   */
   FS.File.prototype.setDataFromBuffer = function(buffer, type) {
     check(buffer, Buffer);
     var self = this;
@@ -96,19 +103,26 @@ if (Meteor.isServer) {
     if (type) {
       self.type = '' + type;
     } else if (typeof self.type !== "string") {
-      // If we don't know the content type, we can inspect the buffer
-      var magic = new mmm.Magic(mmm.MAGIC_MIME_TYPE);
-      var detectSync = Meteor._wrapAsync(magic.detect);
-      self.type = detectSync(buffer);
+      throw new Error('setDataFromBuffer requires a content type');
     }
   };
-
-  // Loads buffer from filesystem, converts Buffer to EJSON.binary data, and sets it
-  // callback(err)
+  
+  /**
+   * Loads buffer from filesystem, converts Buffer to EJSON.binary data, and sets it
+   * 
+   * @param {string} filePath - The path to the file on the server filesystem.
+   * @param {string} [type="guessed from extension"] - The content type of the file
+   * @param {Function} [callback] - A callback that is potentially passed any error.
+   * @returns {undefined}
+   */
   FS.File.prototype.setDataFromFile = function(filePath, type, callback) {
     var self = this;
+    if (typeof type === "function") {
+      callback = type;
+      type = null;
+    }
     callback = callback || defaultCallback;
-
+    type = type || mime.lookup(filePath);
     // Call node readFile
     fs.readFile(filePath, Meteor.bindEnvironment(function(err, buffer) {
       if (buffer) {

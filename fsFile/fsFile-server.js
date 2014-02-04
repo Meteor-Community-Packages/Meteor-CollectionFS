@@ -64,9 +64,6 @@ FS.File.prototype.failedPermanently = function(copyName) {
           && self.failures.copies[copyName].doneTrying);
 };
 
-// 
-// callback(err, fsFile)
-
 /**
  * @callback FS.File~newFsFileCallback
  * @param {Error} error - An error, or null if successful
@@ -74,10 +71,13 @@ FS.File.prototype.failedPermanently = function(copyName) {
  */
 
 /**
- * Loads data from a local path into a new FS.File and passes it to callback
+ * Loads data from a local path into a new FS.File and passes it to callback.
+ * You must specify every argument, but the filename argument may be `null` to
+ * extract it from the filePath.
+ * 
  * @param {string} filePath - The full path to the file on the local filesystem
  * @param {string} [filename="extracted from filePath"] - The name to use for the new FS.File instance
- * @param {string} [type="guess based on the actual data"] - The content type of the file
+ * @param {string} [type="guessed from extension"] - The content type of the file
  * @param {FS.File~newFsFileCallback} callback
  * @return {undefined}
  */
