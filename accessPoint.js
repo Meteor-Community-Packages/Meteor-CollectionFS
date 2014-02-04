@@ -198,7 +198,6 @@ accessPointsDDP = function(cfs, options) {
   // change
   result[cfs.methodName + '/put'] = APUpload;
   result[cfs.methodName + '/get'] = APDownload;
-  result[cfs.methodName + '/del'] = APDelete;
   return result;
 };
 
