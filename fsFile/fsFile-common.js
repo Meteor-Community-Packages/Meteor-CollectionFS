@@ -27,7 +27,7 @@ FS.File = function(ref, createdByTransform) {
    * @param {File|Blob} ref File or Blob instance to attach 
    * @private
    */
-  self._attachFile = function (ref) {
+  self._attachFile = function(ref) {
     var self = this;
     if (typeof File !== "undefined" && ref instanceof File) {
       self.utime = ref.lastModifiedDate;
@@ -155,30 +155,42 @@ FS.File.prototype.update = function(modifier, options, callback) {
     return self.collection.files.update({_id: self._id}, modifier, options, function(err, count) {
       // Update the fileRecord if it was changed and on the client
       // The server-side methods will pull the fileRecord if needed
-      if (count > 0 && Meteor.isClient) self.getFileRecord();
+      if (count > 0 && Meteor.isClient)
+        self.getFileRecord();
       // If we have a callback then call it
-      if (typeof callback === 'function') callback(err, count);
+      if (typeof callback === 'function')
+        callback(err, count);
     });
   }
 };
 
-/** @method FS.File.prototype.remove
+/**
+ * Remove the current file from its FS.Collection
+ * 
+ * @method FS.File.prototype.remove
+ * @param {Function} [callback]
  * @returns {number} Count
- * @todo Test this
- *
- * Remove the current file
  */
-// Remove the file
-FS.File.prototype.remove = function() {
+FS.File.prototype.remove = function(callback) {
   var self = this;
+  callback = callback || defaultCallback;
   // Remove any associated temp files
   if (Meteor.isServer) {
     TempStore.deleteChunks(self);
   }
   if (self.isMounted()) {
-    self.collection.files.remove({_id: self._id});
-    delete self._id;
-    delete self.binary;
+    return self.collection.files.remove({_id: self._id}, function(err, res) {
+      if (!err) {
+        delete self._id;
+        delete self.binary;
+        delete self.collection;
+        delete self.collectionName;
+      }
+      callback(err, res);
+    });
+  } else {
+    callback(new Error("Cannot remove a file that is not associated with a collection"));
+    return;
   }
 };
 
@@ -199,10 +211,9 @@ FS.File.prototype.remove = function() {
  * @param {number} [options.end]
  * @returns {number} Count
  * 
- * Remove the current file
+ * Client: Instructs the DownloadTransferQueue to begin downloading the file copy
+ * Server: Returns the Buffer data for the copy
  */
-// Client: Instructs the DownloadTransferQueue to begin downloading the file copy
-// Server: Returns the Buffer data for the copy
 FS.File.prototype.get = function(options) {
   var self = this;
   // Make sure options are set
@@ -213,7 +224,7 @@ FS.File.prototype.get = function(options) {
     options.copyName = "_master";
   }
 
-  // Call the client / server dependen code
+  // Call the client / server dependent code
   return self._get(options);
 };
 
@@ -278,7 +289,6 @@ FS.File.prototype.url = function(options) {
  * @param {boolean} [options.auth=null] Wether or not the authenticate
  * @deprecated Use The hybrid helper `FS.File.url`
  */
-// Construct a download url
 FS.File.prototype.downloadUrl = function(options) {
   options = options || {};
   options = options.hash || options;

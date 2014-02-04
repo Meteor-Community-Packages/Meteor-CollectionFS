@@ -38,7 +38,7 @@ FS.Collection = function(name, options) {
             accessPointsDDP(self);
     self.options.accessPoints.HTTP = self.options.accessPoints.HTTP ||
             accessPointsHTTP(self, {httpHeaders: self.options.httpHeaders});
-    
+
     // Make sure a master store has been supplied
     if (!(self.options.store instanceof FS.StorageAdapter)) {
       throw new Error("You must specify a master store. Please consult the documentation.");
@@ -149,18 +149,40 @@ FS.Collection = function(name, options) {
     }
   }
 
-  // This uses collection-hooks package.
-  // Prevents insertion on both client and server if filter rules say so
-  self.files.before.insert(function() {
-    var fsFile = this.transform();
-    return fsFile.fileIsAllowed();
+  // Define deny functions to enforce file filters on the server
+  // for inserts and updates that initiate from untrusted code.
+  self.files.deny({
+    insert: function(userId, fsFile) {
+      return !fsFile.fileIsAllowed();
+    },
+    update: function(userId, fsFile, fields, modifier) {
+      // TODO will need some kind of additional security here:
+      // Don't allow them to change the type, size, name, and
+      // anything else that would be security or data integrity issue.
+      return !fsFile.fileIsAllowed();
+    },
+    fetch: []
   });
 
-  self.files.before.update(function() {
-    // TODO will need some kind of security here
-    // Don't allow them to change the type, size, name, and
-    // anything else that would be security or data integrity issue.
-  });
+  // If insecure package is in use, we need to add allow rules that return
+  // true. Otherwise, it would seemingly turn off insecure mode.
+  if (Package && Package.insecure) {
+    self.files.allow({
+      insert: function() {
+        return true;
+      },
+      update: function() {
+        return true;
+      },
+      fetch: [],
+      transform: null
+    });
+  }
+  // If insecure package is NOT in use, then adding the deny function
+  // does not have any effect on the main app's security paradigm. The
+  // user will still be required to add at least one allow function of her
+  // own for each operation for this collection. And the user may still add
+  // additional deny functions, but does not have to.
 
   /*
    * EO FILTER INSERTS
@@ -237,7 +259,7 @@ FS.Collection = function(name, options) {
         });
       }
     });
-    
+
     // Set up observers
     FileWorker.observe(this);
 
