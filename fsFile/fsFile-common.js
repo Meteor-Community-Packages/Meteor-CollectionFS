@@ -345,7 +345,7 @@ FS.File.prototype.resume = function(ref) {
   }
 };
 
-/** @method FS.File.prototype.getExtension Returns the file extension
+/** @method FS.File.prototype.getExtension Returns the lowercase file extension
  * @returns {string} The extension eg.: `jpg` or if not found then an empty string ''
  */
 FS.File.prototype.getExtension = function() {
@@ -357,7 +357,7 @@ FS.File.prototype.getExtension = function() {
   // Seekout the last '.' if found
   var found = name.lastIndexOf('.') + 1;
   // Return the extension if found else ''
-  return (found > 0 ? name.substr(found) : '');
+  return (found > 0 ? name.substr(found).toLowerCase() : '');
 };
 
 /** @method FS.File.prototype.toDataUrl

@@ -137,12 +137,22 @@ FS.Collection = function(name, options) {
     }
     if (!self.options.filter.allow.extensions || !_.isArray(self.options.filter.allow.extensions)) {
       self.options.filter.allow.extensions = [];
+    } else {
+      //convert all to lowercase
+      for (var i = 0, ln = self.options.filter.allow.extensions.length; i < ln; i++) {
+        self.options.filter.allow.extensions[i] = self.options.filter.allow.extensions[i].toLowerCase();
+      }
     }
     if (!self.options.filter.allow.contentTypes || !_.isArray(self.options.filter.allow.contentTypes)) {
       self.options.filter.allow.contentTypes = [];
     }
     if (!self.options.filter.deny.extensions || !_.isArray(self.options.filter.deny.extensions)) {
       self.options.filter.deny.extensions = [];
+    } else {
+      //convert all to lowercase
+      for (var i = 0, ln = self.options.filter.deny.extensions.length; i < ln; i++) {
+        self.options.filter.deny.extensions[i] = self.options.filter.deny.extensions[i].toLowerCase();
+      }
     }
     if (!self.options.filter.deny.contentTypes || !_.isArray(self.options.filter.deny.contentTypes)) {
       self.options.filter.deny.contentTypes = [];
