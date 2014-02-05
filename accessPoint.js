@@ -7,40 +7,40 @@ var APUpload = function(fileObj, data, start) {
   if (typeof start !== "number")
     start = 0;
 
-  if (fileObj.isMounted()) {
+  if (!fileObj.isMounted()) {
+    return; // No file data found
+  }
 
-    // Load the complete FS.File instance from the linked collection
-    //fileObj.getFileRecord();
+  // validators and temp store require that we have the full file record loaded
+  fileObj.getFileRecord();
 
-    // collection exist since fileObj is mounted on an collection
-    var collection = fileObj.getCollection();
-    if (typeof Package !== 'object' || !Package.insecure) {
-      // Call user validators; use the "insert" validators
-      // since uploading is part of insert.
-      // Any deny returns true means denied.
-      if (_.any(collection.files._validators.insert.deny, function(validator) {
-        return validator(self.userId, fileObj);
-      })) {
-        throw new Meteor.Error(403, "Access denied");
-      }
-      // Any allow returns true means proceed. Throw error if they all fail.
-      if (_.all(collection.files._validators.insert.allow, function(validator) {
-        return !validator(self.userId, fileObj);
-      })) {
-        throw new Meteor.Error(403, "Access denied");
-      }
+  if (typeof Package !== 'object' || !Package.insecure) {
+    // Call user validators; use the "insert" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(fileObj.collection.files._validators.insert.deny, function(validator) {
+      return validator(self.userId, fileObj);
+    })) {
+      console.log("upload deny");
+      throw new Meteor.Error(403, "Access denied");
     }
-    
-    self.unblock();
-    
-    // Save chunk and, if it's the last chunk, kick off storage
-    TempStore.saveChunk(fileObj, data, start, function(err) {
-      if (err) {
-        throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
-      }
-    });
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(fileObj.collection.files._validators.insert.allow, function(validator) {
+      return !validator(self.userId, fileObj);
+    })) {
+      console.log("upload allow");
+      throw new Meteor.Error(403, "Access denied");
+    }
+  }
 
-  } // EO is Mounted
+  self.unblock();
+
+  // Save chunk in temporary store
+  TempStore.saveChunk(fileObj, data, start, function(err) {
+    if (err) {
+      throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
+    }
+  });
 
 };
 
@@ -56,25 +56,24 @@ var APDownload = function(fileObj, copyName, start, end) {
 
   self.unblock();
 
-  var collection = fileObj.getCollection();
-  if (! collection) {
+  if (!fileObj.isMounted()) {
     return; // No file data found
   }
 
-  if (typeof Package !== 'object' || !Package.insecure) {
-    // Get the attached collection
-    var collection = fileObj.getCollection();
+  // proper validation requires that we have the full file record loaded
+  fileObj.getFileRecord();
 
+  if (typeof Package !== 'object' || !Package.insecure) {
     // Call user validators; use the custom "download" validators
     // since uploading is part of insert.
     // Any deny returns true means denied.
-    if (_.any(collection._validators.download.deny, function(validator) {
+    if (_.any(fileObj.collection._validators.download.deny, function(validator) {
       return validator(self.userId, fileObj);
     })) {
       throw new Meteor.Error(403, "Access denied");
     }
     // Any allow returns true means proceed. Throw error if they all fail.
-    if (_.all(collection._validators.download.allow, function(validator) {
+    if (_.all(fileObj.collection._validators.download.allow, function(validator) {
       return !validator(self.userId, fileObj);
     })) {
       throw new Meteor.Error(403, "Access denied");
@@ -97,35 +96,31 @@ var APDelete = function(fileObj) {
 
   self.unblock();
 
-  if (fileObj.isMounted()) {
+  if (!fileObj.isMounted()) {
+    return; // No file data found
+  }
+  
+  // proper validation requires that we have the full file record loaded
+  fileObj.getFileRecord();
 
-    // Load the complete FS.File instance from the linked collection
-    //fileObj = fileObj.getFileRecord();
-
-    // collection exist since fileObj is mounted on an collection
-    var collection = fileObj.getCollection();
-
-    if (typeof Package !== 'object' || !Package.insecure) {
-      // Call user validators; use the "remove" validators
-      // since uploading is part of insert.
-      // Any deny returns true means denied.
-      if (_.any(collection.files._validators.remove.deny, function(validator) {
-        return validator(self.userId, fileObj);
-      })) {
-        throw new Meteor.Error(403, "Access denied");
-      }
-      // Any allow returns true means proceed. Throw error if they all fail.
-      if (_.all(collection.files._validators.remove.allow, function(validator) {
-        return !validator(self.userId, fileObj);
-      })) {
-        throw new Meteor.Error(403, "Access denied");
-      }
+  if (typeof Package !== 'object' || !Package.insecure) {
+    // Call user validators; use the "remove" validators
+    // since uploading is part of insert.
+    // Any deny returns true means denied.
+    if (_.any(fileObj.collection.files._validators.remove.deny, function(validator) {
+      return validator(self.userId, fileObj);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
     }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(fileObj.collection.files._validators.remove.allow, function(validator) {
+      return !validator(self.userId, fileObj);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+  }
 
-    return fileObj.remove();
-
-  } // EO isMounted
-
+  return fileObj.remove();
 };
 
 var APhandler = function(collection, download, options) {
