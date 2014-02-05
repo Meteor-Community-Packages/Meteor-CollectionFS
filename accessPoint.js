@@ -21,14 +21,12 @@ var APUpload = function(fileObj, data, start) {
     if (_.any(fileObj.collection.files._validators.insert.deny, function(validator) {
       return validator(self.userId, fileObj);
     })) {
-      console.log("upload deny");
       throw new Meteor.Error(403, "Access denied");
     }
     // Any allow returns true means proceed. Throw error if they all fail.
     if (_.all(fileObj.collection.files._validators.insert.allow, function(validator) {
       return !validator(self.userId, fileObj);
     })) {
-      console.log("upload allow");
       throw new Meteor.Error(403, "Access denied");
     }
   }
