@@ -6,6 +6,8 @@ var APUpload = function(fileObj, data, start) {
 
   if (typeof start !== "number")
     start = 0;
+  
+  self.unblock();
 
   if (!fileObj.isMounted()) {
     return; // No file data found
@@ -30,8 +32,6 @@ var APUpload = function(fileObj, data, start) {
       throw new Meteor.Error(403, "Access denied");
     }
   }
-
-  self.unblock();
 
   // Save chunk in temporary store
   TempStore.saveChunk(fileObj, data, start, function(err) {
