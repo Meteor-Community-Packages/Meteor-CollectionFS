@@ -136,14 +136,16 @@ var downloadChunk = function(tQueue, fsFile, copyName, start) {
         FS.debug && console.log("downloading bytes starting from " + start);
         tQueue.connection.apply(fsFile.collection.methodName + '/get',
                 [fsFile, copyName, start, start + chunkSize],
-                function(err, data) {
-                  if (err) {
-                    complete();
-                    throw err;
-                  } else {
-                    addDownloadedData(tQueue.collection, fsFile, copyName, start, data, function(err) {
+                {
+                  onResultReceived: function(err, data) {
+                    if (err) {
                       complete();
-                    });
+                      throw err;
+                    } else {
+                      addDownloadedData(tQueue.collection, fsFile, copyName, start, data, function(err) {
+                        complete();
+                      });
+                    }
                   }
                 });
       });
