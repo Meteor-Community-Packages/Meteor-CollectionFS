@@ -22,7 +22,7 @@ FS.File.prototype.getBinary = function(start, end, callback) {
 
   function read(blob) {
     var reader = new FileReader();
-    reader.onloadend = function(evt) {
+    reader.onload = function(evt) {
       var bin = new Uint8Array(evt.target.result);
       callback(null, bin);
     };
@@ -50,6 +50,7 @@ FS.File.prototype.getBinary = function(start, end, callback) {
     // Return the requested chunk of binary data
     if (start >= dl) {
       callback(new Error("FS.File getBinary: start position beyond end of data (" + dl + ")"));
+      return;
     }
     end = Math.min(dl, end);
 
