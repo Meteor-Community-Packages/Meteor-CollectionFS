@@ -1,6 +1,6 @@
 var chunkSize = 262144; // 256k is default GridFS chunk size
 
-FS.GridFSStore = function(name) {
+FS.Store.GridFS = function(name, options) {
   var chunksCollection = new Meteor.Collection(name + '.chunks', {
     _preventAutopublish: true
   });
@@ -10,7 +10,7 @@ FS.GridFSStore = function(name) {
     chunksCollection._ensureIndex({files_id: 1, n: 1}, {unique: true});
   }); // EO startup
 
-  return new FS.StorageAdapter(name, {}, {
+  return new FS.StorageAdapter(name, options, {
     typeName: 'storage.gridfs',
     get: function(id, callback) {
       // Find chunks in the CFS for this file

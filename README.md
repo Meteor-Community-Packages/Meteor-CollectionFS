@@ -1,7 +1,7 @@
 cfs-gridfs
 =========================
 
-NOTE: This branch is under active development right now (2013-11-18). It has
+NOTE: This branch is under active development right now (2014-2-10). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -30,11 +30,16 @@ $ mrt add cfs-gridfs
 ## Usage
 
 ```js
+var imageStore = new FS.Store.GridFS("images", {
+  beforeSave: myBeforeSaveFunction, //optional
+  maxTries: 1 //optional, default 5
+});
+
 Images = new FS.Collection("images", {
-  store: new FS.GridFSStore("images")
+  stores: [imageStore]
 });
 ```
 
 ## Notes
 
-A GridFSStore does not support the `sync` option.
+A GridFS store does not currently support the `sync` option.
