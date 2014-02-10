@@ -59,6 +59,7 @@ FileWorker.observe = function(fsCollection) {
  *  
  *  {
  *    $where: "this.bytesUploaded === this.size",
+ *    chunks: {$exists: true},
  *    'copies.copyName`: null,
  *    'failures.copies.copyName.doneTrying': {$ne: true}
  *  }
