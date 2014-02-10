@@ -69,7 +69,7 @@ S3Store options, like so:
 
 ```js
 var imageStore = new FS.Store.S3("images", {
-  region: "my-s3-region", //required
+  region: "my-s3-region", //required, or use endpoint option
   key: "account or IAM key", //required
   secret: "account or IAM secret", //required
   bucket: "mybucket", //required
