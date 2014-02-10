@@ -12,7 +12,8 @@ var _taskHandler = function(task, next) {
       task.connection.apply(task.methodName,
               [task.fileObj, data, task.start],
               { // We pass in options
-                wait: false, // Dont queue this on the client
+                // wait should be false if Meteor issue is fixed: https://github.com/meteor/meteor/issues/1826
+                wait: true, // Dont queue this on the client
                 onResultReceived: function(err, result) {
                   // This callback is called as soon as the data is recieved
                   var e = new Date();
@@ -33,11 +34,11 @@ var _errorHandler = function(data, addTask) {
 };
 
 /** @method UploadTransferQueue
-  * @namespace UploadTransferQueue
-  * @private
-  * @param {object} [options]
-  * @param {object} [options.connection=new Meteor.connection]
-  */
+ * @namespace UploadTransferQueue
+ * @private
+ * @param {object} [options]
+ * @param {object} [options.connection=new Meteor.connection]
+ */
 UploadTransferQueue = function(options) {
   // Rig options
   options = options || {};
@@ -56,7 +57,7 @@ UploadTransferQueue = function(options) {
 
   // Create a seperate ddp connection or use the passed in connection
   self.connection = options.connection || DDP.connect(Meteor.connection._stream.rawUrl);
-  
+
   // Tie login for this connection to login for the main connection
   connectionLogin(self.connection);
 
@@ -67,17 +68,17 @@ UploadTransferQueue = function(options) {
     // Check if file is already in queue
     return !!(fileObj && fileObj._id && fileObj.collectionName && (self.files[fileObj.collectionName] || {})[fileObj._id]);
   };
-  
+
   /** @method UploadTransferQueue.resumeUploadingFile
-    * @param {FS.File} File to resume uploading
-    * @todo Not sure if this is the best way to handle resumes
-    */
+   * @param {FS.File} File to resume uploading
+   * @todo Not sure if this is the best way to handle resumes
+   */
   self.resumeUploadingFile = function (fileObj) {
     // Make sure we are handed a FS.File
     if (!(fileObj instanceof FS.File)) {
       throw new Error('Transfer queue expects a FS.File');
     }
-    
+
     if (fileObj.isMounted()) {
       // This might still be true, preventing upload, if
       // there was a server restart without client restart.
@@ -89,9 +90,9 @@ UploadTransferQueue = function(options) {
   };
 
   /** @method UploadTransferQueue.uploadFile
-    * @param {FS.File} File to upload
-    * @todo Check that a file can only be added once - maybe a visual helper on the FS.File?
-    */
+   * @param {FS.File} File to upload
+   * @todo Check that a file can only be added once - maybe a visual helper on the FS.File?
+   */
   self.uploadFile = function(fileObj) {
     // Make sure we are handed a FS.File
     if (!(fileObj instanceof FS.File)) {
@@ -113,10 +114,10 @@ UploadTransferQueue = function(options) {
 
       // Get the collection chunk size
       var chunkSize = fileObj.collection.options.chunkSize;
-      
+
       // Calculate the number of chunks to upload
       var chunks = Math.ceil(fileObj.size / chunkSize);
-      
+
       if (chunks === 0) return;
 
       // Create a sub queue
