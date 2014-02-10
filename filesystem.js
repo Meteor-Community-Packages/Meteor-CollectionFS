@@ -3,9 +3,14 @@ var path = Npm.require('path');
 var mkdirp = Npm.require('mkdirp');
 var chokidar = Npm.require('chokidar');
 
-FS.FileSystemStore = function(name, pathname) {
+FS.Store.FileSystem = function(name, options) {
+  options = options || {};
+  
   // Pass home ~ in pathname
   var homepath = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
+  
+  // Provide a default FS directory
+  var pathname = options.dir || '~/cfs/files/name';
 
   // Check if we have '~/foo/bar'
   if (pathname.split(path.sep)[0] === '~') {
@@ -19,7 +24,7 @@ FS.FileSystemStore = function(name, pathname) {
   mkdirp.sync(absolutePath);
   console.log(name + ' FileSystem mounted on: ' + absolutePath);
 
-  return new FS.StorageAdapter(name, {}, {
+  return new FS.StorageAdapter(name, options, {
     typeName: 'storage.filesystem',
     get: function(fileKey, callback) {
       // this is the Storage adapter scope
