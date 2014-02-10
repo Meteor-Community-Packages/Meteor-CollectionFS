@@ -1,6 +1,6 @@
 var Knox = Npm.require('knox');
 
-FS.S3Store = function(name, options) {
+FS.Store.S3 = function(name, options) {
   options = _.extend({
     region: null, //required
     key: null, //required
@@ -25,7 +25,7 @@ FS.S3Store = function(name, options) {
 
   var S3 = Knox.createClient(options);
 
-  return new FS.StorageAdapter(name, {}, {
+  return new FS.StorageAdapter(name, options, {
     typeName: 'storage.s3',
     get: function(fileKey, callback) {
       var hasReturned = false; // prevent calling the callback more than once

@@ -1,7 +1,7 @@
 cfs-s3
 =========================
 
-NOTE: This branch is under active development right now (2013-11-18). It has
+NOTE: This branch is under active development right now (2014-2-10). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -31,17 +31,23 @@ $ mrt add cfs-s3
 3. Use when constructing an FS.Collection, like this:
 
 ```js
+var imageStore = new FS.Store.S3("images", {
+  region: "my-s3-region", //required
+  key: "account or IAM key", //required
+  secret: "account or IAM secret", //required
+  bucket: "mybucket", //required
+  'x-amz-acl': myValue //optional, default is 'public-read'
+  beforeSave: myBeforeSaveFunction, //optional
+  maxTries: 1 //optional, default 5
+});
+
 Images = new FS.Collection("images", {
-  store: new FS.S3Store("images", {
-           region: "my-s3-region", //required
-           key: "account or IAM key", //required
-           secret: "account or IAM secret", //required
-           bucket: "mybucket", //required
-           'x-amz-acl': myValue //default is 'public-read'
-         });
+  stores: [imageStore]
 });
 ```
 
 ## Notes
 
-An S3Store does not support the `sync` option.
+* An S3 store does not support the `sync` option.
+* Be sure to define your store in a server file that is not shipped to the
+client since it contains credentials. Wrapping in `Meteor.isServer` is not secure.
