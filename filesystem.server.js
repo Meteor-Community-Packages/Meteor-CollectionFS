@@ -4,13 +4,17 @@ var mkdirp = Npm.require('mkdirp');
 var chokidar = Npm.require('chokidar');
 
 FS.Store.FileSystem = function(name, options) {
+  var self = this;
+  if (!(self instanceof FS.Store.FileSystem))
+    throw new Error('FS.Store.FileSystem missing keyword "new"');
+  
   options = options || {};
   
   // Pass home ~ in pathname
   var homepath = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
   
   // Provide a default FS directory
-  var pathname = options.dir || '~/cfs/files/name';
+  var pathname = options.path || '~/cfs/files/name';
 
   // Check if we have '~/foo/bar'
   if (pathname.split(path.sep)[0] === '~') {
@@ -22,7 +26,7 @@ FS.Store.FileSystem = function(name, options) {
   
   // Ensure the path exists
   mkdirp.sync(absolutePath);
-  console.log(name + ' FileSystem mounted on: ' + absolutePath);
+  FS.debug && console.log(name + ' FileSystem mounted on: ' + absolutePath);
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.filesystem',
@@ -56,7 +60,7 @@ FS.Store.FileSystem = function(name, options) {
               callback(err);
             fs.close(fd, function(err) {
               if (err)
-                console.log("FileSystemStore getBytes: Error closing file");
+                FS.debug && console.log("FileSystemStore getBytes: Error closing file");
               callback(null, buffer);
             });
           });
@@ -121,7 +125,7 @@ FS.Store.FileSystem = function(name, options) {
         return filePath.replace(absolutePath, "");
       }
 
-      console.log('Watching ' + absolutePath);
+      FS.debug && console.log('Watching ' + absolutePath);
 
       // chokidar seems to be most widely used and production ready watcher
       var watcher = chokidar.watch(absolutePath, {ignored: /\/\./, ignoreInitial: true});

@@ -31,7 +31,7 @@ $ mrt add cfs-filesystem
 
 ```js
 var imageStore = new FS.Store.FileSystem("images", {
-  dir: "~/app-files/images", //optional, default '~/cfs/files/name'
+  path: "~/app-files/images", //optional, default '~/cfs/files/name'
   beforeSave: myBeforeSaveFunction, //optional
   maxTries: 1 //optional, default 5
 });

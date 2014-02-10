@@ -1,4 +1,8 @@
-// Warn the user if they try to use the FileSystemStore from the client-side
-FS.FileSystemStore = function() {
-  throw new Error('FS.FileSystemStore cannot be used in client-side code');
+// On the client we have just a shell
+FS.Store.FileSystem = function(name, options) {
+  var self = this;
+  if (!(self instanceof FS.Store.FileSystem))
+    throw new Error('FS.Store.FileSystem missing keyword "new"');
+  
+  _.extend(this, { name: name, sync: false, maxTries: 5 }, options || {});
 };
