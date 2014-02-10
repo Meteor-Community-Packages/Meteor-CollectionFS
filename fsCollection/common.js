@@ -177,11 +177,17 @@ FS.Collection = function(name, options) {
   // If insecure package is in use, we need to add allow rules that return
   // true. Otherwise, it would seemingly turn off insecure mode.
   if (Package && Package.insecure) {
-    self.files.allow({
+    self.allow({
       insert: function() {
         return true;
       },
       update: function() {
+        return true;
+      },
+      remove: function() {
+        return true;
+      },
+      download: function() {
         return true;
       },
       fetch: [],
