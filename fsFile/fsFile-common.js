@@ -206,7 +206,11 @@ FS.File.prototype.remove = function(callback) {
 
 /** @method FS.File.prototype.get
  * @param {object} [options]
- * @param {string} [options.copyName='_master'] Name of the copy version
+ * @param {string} [options.storeName] Name of the store to get from. If not defined
+ * on the client, the first store saved into `fsFile.copies` is used. If not
+ * defined on the server, the first store defined in `options.stores` for the
+ * collection is used. So if there is only one store, you can generally omit
+ * this, but if there are multiple, it's best to specify.
  * @param {number} [options.start]
  * @param {number} [options.end]
  * @returns {number} Count
@@ -219,18 +223,14 @@ FS.File.prototype.get = function(options) {
   // Make sure options are set
   options = options || {};
 
-  // Make sure copyName is set - we default to "_master"
-  if (typeof options.copyName !== "string") {
-    options.copyName = "_master";
-  }
-
   // Call the client / server dependent code
   return self._get(options);
 };
 
 /** @method FS.File.prototype.url Construct the file url
  * @param {object} [options]
- * @param {string} [options.copy="_master"] The copy of the file to get
+ * @param {string} [options.store] Name of the store to get from. If not defined,
+ * the first store defined in `options.stores` for the collection is used.
  * @param {boolean} [options.auth=null] Wether or not the authenticate
  * @param {boolean} [options.download=false] Should headers be set to force a download
  *
@@ -241,17 +241,20 @@ FS.File.prototype.url = function(options) {
   var self = this;
   options = options || {};
   options = _.extend({
-    copy: "_master",
+    store: null,
     auth: null,
     download: false
   }, options.hash || options); // check for "hash" prop if called as helper
 
-  // We check if the copy is found
-  if (!self.hasCopy(options.copy, false)) {
-    return null;
-  }
-
   if (self.isMounted()) {
+    var storeName = options.store;
+
+    // On the client, it's best to always pass the `store` option or
+    // define a defaultStoreName for every FS.Collection. This helps
+    // avoid issues with reactive rendering of images, among other things.
+    if (!storeName && Meteor.isClient) {
+      storeName = self.collection.options.defaultStoreName;
+    }
 
     if (!self.collection.httpUrl) {
       throw new Error('FS.File.url FS.Collection "' + self.collection.name + '" has no HTTP access point; set useHTTP option to true');
@@ -274,18 +277,27 @@ FS.File.prototype.url = function(options) {
 
     // Construct the http method url
     var urlPrefix = (options.download) ? '/download/' : '/';
-    if (options.copy && options.copy !== "_master") {
-      return self.collection.httpUrl + urlPrefix + self._id + '/' + options.copy + authToken;
+    if (typeof storeName === "string" && storeName.length) {
+      if (!self.hasCopy(storeName)) {
+        // We want to return null if we know the URL will be a broken
+        // link because then we can avoid rendering broken links, broken
+        // images, etc.
+        return null;
+      }
+      storeName = '/' + storeName;
     } else {
-      return self.collection.httpUrl + urlPrefix + self._id + authToken;
+      storeName = '';
     }
+
+    return self.collection.httpUrl + urlPrefix + self._id + storeName + authToken;
   }
 
 };
 
 /** @method FS.File.prototype.downloadUrl Get the download url
  * @param {object} [options]
- * @param {string} [options.copy="_master"] The copy of the file to get
+ * @param {string} [options.store] Name of the store to get from. If not defined,
+ * the first store defined in `options.stores` for the collection is used.
  * @param {boolean} [options.auth=null] Wether or not the authenticate
  * @deprecated Use The hybrid helper `FS.File.url`
  */
@@ -410,29 +422,57 @@ FS.File.prototype.toDataUrl = function(callback) {
   }
 };
 
-/** @method FS.File.prototype.isImage Is it an image file?
- * @param {object} [options]
- * @param {string} [options.copy="_master"] The copy of the file to check
- * 
- * Returns true if the specified copy of this file has an image
- * content type. By default, checks the _master copy. If the
- * file object is unmounted or doesn't have that copy, checks
- * the content type of the original file.
- * 
- */
-FS.File.prototype.isImage = function(options) {
-  var self = this, type;
-  options = options || {};
-  var copyName = options.copy || "_master";
-  if (self.hasCopy(copyName)) {
-    type = self.copies[copyName].type;
+function checkContentType(fsFile, storeName, startOfType) {
+  var type;
+  if (storeName && fsFile.hasCopy(storeName)) {
+    type = fsFile.copies[storeName].type;
   } else {
-    type = self.type;
+    type = fsFile.type;
   }
   if (typeof type === "string") {
-    return self.type.indexOf("image/") === 0;
+    return type.indexOf(startOfType) === 0;
   }
   return false;
+}
+;
+
+/** @method FS.File.prototype.isImage Is it an image file?
+ * @param {object} [options]
+ * @param {string} [options.store] The store we're interested in
+ * 
+ * Returns true if the copy of this file in the specified store has an image
+ * content type. If the file object is unmounted or doesn't have a copy for
+ * the specified store, or if you don't specify a store, this method checks
+ * the content type of the original file.
+ */
+FS.File.prototype.isImage = function(options) {
+  return checkContentType(this, (options || {}).store, 'image/');
+};
+
+/** @method FS.File.prototype.isVideo Is it a video file?
+ * @param {object} [options]
+ * @param {string} [options.store] The store we're interested in
+ * 
+ * Returns true if the copy of this file in the specified store has a video
+ * content type. If the file object is unmounted or doesn't have a copy for
+ * the specified store, or if you don't specify a store, this method checks
+ * the content type of the original file.
+ */
+FS.File.prototype.isVideo = function(options) {
+  return checkContentType(this, (options || {}).store, 'video/');
+};
+
+/** @method FS.File.prototype.isAudio Is it an audio file?
+ * @param {object} [options]
+ * @param {string} [options.store] The store we're interested in
+ * 
+ * Returns true if the copy of this file in the specified store has an audio
+ * content type. If the file object is unmounted or doesn't have a copy for
+ * the specified store, or if you don't specify a store, this method checks
+ * the content type of the original file.
+ */
+FS.File.prototype.isAudio = function(options) {
+  return checkContentType(this, (options || {}).store, 'audio/');
 };
 
 /** @method FS.File.prototype.isUploaded Is this file completely uploaded?
@@ -468,7 +508,7 @@ FS.File.prototype.hasMaster = function() {
 };
 
 /** @method FS.File.prototype.hasCopy
- * @param {string} copyName Name of the copy to check for
+ * @param {string} storeName Name of the store to check for a copy of this file
  * @param {boolean} [optimistic=false] In case that the file record is not found, read below
  * @returns {boolean} If the copy exists or not
  *
@@ -478,7 +518,7 @@ FS.File.prototype.hasMaster = function() {
  * could exist. This is the case in `FS.File.url` we are optimistic that the
  * copy supplied by the user exists.
  */
-FS.File.prototype.hasCopy = function(copyName, optimistic) {
+FS.File.prototype.hasCopy = function(storeName, optimistic) {
   var self = this;
   // Make sure we use the updated file record
   self.getFileRecord();
@@ -486,8 +526,8 @@ FS.File.prototype.hasCopy = function(copyName, optimistic) {
   if (_.isEmpty(self.copies)) {
     return !!optimistic;
   }
-  if (typeof copyName === "string") {
-    return (self.copies && !_.isEmpty(self.copies[copyName]));
+  if (typeof storeName === "string") {
+    return (self.copies && !_.isEmpty(self.copies[storeName]));
   }
   return false;
 };

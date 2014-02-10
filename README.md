@@ -109,14 +109,16 @@ The first step in using this package is to define a `FS.Collection`.
 *client.js:*
 
 ```js
-var Images = new FS.Collection("images");
+var Images = new FS.Collection("images", {
+  defaultStoreName: "images"
+});
 ```
 
 *server.js:*
 
 ```js
 var Images = new FS.Collection("images", {
-  store: new FS.FileSystemStore("images", "~/uploads")
+  stores: [new FS.Store.FileSystem("images", {dir: "~/uploads"})]
 });
 ```
 
@@ -165,9 +167,8 @@ If any storage adapters fail to save any of the copies in the
 designated store, the server will periodically retry saving them. After a
 configurable number of failed attempts at saving, the server will give up.
 
-To configure the maximum number of save attempts, use the `maxTries` option. You
-can specify a general value or separate values for any specific copies. The
-default is 5.
+To configure the maximum number of save attempts, use the `maxTries` option
+when creating your store. The default is 5.
 
 ## Storage Adapters
 
@@ -190,7 +191,7 @@ compress it, etc. before allowing the storage adapter to save it. You may also
 want to convert to another content type or change the filename. You can do all
 of this by defining a `beforeSave` method.
 
-A `beforeSave` method can be defined for any copy. It does not receive any
+A `beforeSave` method can be defined for any store. It does not receive any
 arguments, but its context is the
 `FS.File` being saved, which you can alter as necessary.
 
@@ -200,12 +201,18 @@ convenient package,
 that allows you to easily call `GraphicsMagick` methods on the `FS.File`
 data. Here's an example:
 
+*server.js:*
+
 ```js
-Images = new FS.Collection("images", {
-  store: new FS.FileSystemStore("images", "~/uploads"),
+var imageStore = new FS.Store.FileSystem("images", {
+  dir: "~/uploads",
   beforeSave: function () {
     this.gm().resize(60, 60).blur(7, 3).save();
   }
+});
+
+Images = new FS.Collection("images", {
+  stores: [imageStore]
 });
 ```
 
@@ -240,9 +247,9 @@ Images = new FS.Collection("images", {
 });
 ```
 
-To be secure, this must be added on the server; however, using the `filter`
-option on the client will help catch many of the disallowed uploads there,
-allowing you to display a helpful message with your `onInvalid` function.
+To be secure, this must be added on the server; however, you should use the `filter`
+option on the client, too, to help catch many of the disallowed uploads there
+and allow you to display a helpful message with your `onInvalid` function.
 
 You can mix and match filtering based on extension or content types.
 The contentTypes array also supports "image/\*" and "audio/\*" and "video/\*"
@@ -258,8 +265,8 @@ FS.Collection.deny() functions.
 The file extensions must be specified without a leading period.
 
 *Tip: You can do more advanced filtering in your `beforeSave` function.
-If you return `false` from the `beforeSave` function for a copy,
-that copy will never be created.*
+If you return `false` from the `beforeSave` function for a store,
+the file will never be saved in that store.*
 
 ## Security
 

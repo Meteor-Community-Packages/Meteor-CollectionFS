@@ -31,7 +31,7 @@ Here's an explanation of what they are named and what their documents look like.
   _id: "",
   collectionName: "",
   copies: {
-    copyName: {
+    storeName: {
       _id: String, // the store ID
       name: String, // as saved in this store, potentially changed by beforeSave
       type: String, // as saved in this store, potentially changed by beforeSave
@@ -45,7 +45,7 @@ Here's an explanation of what they are named and what their documents look like.
   utime: Date, // of the originally uploaded file
   failures: {
     copies: {
-      copyName: {
+      storeName: {
         count: Number,
         firstAttempt: Date,
         lastAttempt: Date,
@@ -223,7 +223,7 @@ passes through that function first. If a `beforeSave` returns `false`, this is
 recorded in the `FS.File` instance and the file will never be saved to that store.
 
 * If the store reports that it successfully saved the file, a reference string,
-returned by the store, is stored in `fsFile.copies[copyName]`. This string will
+returned by the store, is stored in `fsFile.copies[storeName]`. This string will
 be anything that the store wants to return, so long as it can be used later to
 retrieve that same file.
 * If the store reports that it was not able to save the file, the error is logged

@@ -71,7 +71,7 @@ cloneFileRecord = function(rec) {
     result.metadata = rec.metadata;
   }
 
-  // clone copies
+  // clone info about the copies in the stores
   if (!_.isEmpty(rec.copies)) {
     result.copies = {};
     _.each(rec.copies, function(value, key) {

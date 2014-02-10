@@ -42,13 +42,25 @@ var APUpload = function(fileObj, data, start) {
 
 };
 
-// Returns the data, or partial data, for the copyName copy of fileObj.
-// Simply returns the result of fileObj.get() after checking "download"
-// allow/deny functions.
-var APDownload = function(fileObj, copyName, start, end) {
+// 
+
+/**
+ * Returns the data, or partial data, for the fileObj as stored in the
+ * store with name storeName.
+ * 
+ * Simply returns the result of fileObj.get() after checking "download"
+ * allow/deny functions.
+ * 
+ * @param {FS.File} fileObj
+ * @param {String} storeName
+ * @param {Number} [start]
+ * @param {Number} [end]
+ * @returns {undefined}
+ */
+var APDownload = function(fileObj, storeName, start, end) {
   var self = this;
   check(fileObj, FS.File);
-  check(copyName, String);
+  check(storeName, String);
   check(start, Match.Optional(Number));
   check(end, Match.Optional(Number));
 
@@ -79,15 +91,19 @@ var APDownload = function(fileObj, copyName, start, end) {
   }
 
   return fileObj.get({
-    copyName: copyName,
+    storeName: storeName,
     start: start,
     end: end
   });
 };
 
-// Deletes fileObj.
-// Always deletes the entire file and all copies, even if a specific
-// selector is passed. We don't allow deleting individual copies.
+/**
+ * Deletes fileObj. Always deletes the entire file record and all data from all
+ * defined stores, even if a specific selector is passed. We don't allow
+ * deleting from individual stores.
+ * @param {FS.File} fileObj
+ * @returns {undefined}
+ */
 var APDelete = function(fileObj) {
   var self = this;
   check(fileObj, FS.File);
@@ -143,14 +159,15 @@ var APhandler = function(collection, download, options) {
     if (self.method.toLowerCase() === 'get') {
       var copyInfo, filename;
 
-      var copyName = self.params.selector;
-      if (typeof copyName !== "string") {
-        copyName = "_master";
+      var storeName = self.params.selector;
+      if (typeof storeName !== "string") {
+        // first store is considered the master store by default
+        storeName = collection.options.stores[0].name;
       }
 
-      copyInfo = file.copies[copyName];
+      copyInfo = file.copies[storeName];
       if (!copyInfo) {
-        throw new Meteor.Error(404, "Not Found", "Invalid selector: " + copyName);
+        throw new Meteor.Error(404, "Not Found", "Invalid selector: " + storeName);
       }
 
       filename = copyInfo.name;
@@ -170,7 +187,7 @@ var APhandler = function(collection, download, options) {
       });
 
       self.setStatusCode(200);
-      return APDownload.call(self, file, copyName, query.start, query.end);
+      return APDownload.call(self, file, storeName, query.start, query.end);
     }
 
     // If HTTP PUT then put the data for the file

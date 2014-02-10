@@ -170,3 +170,5 @@ TempStore = {
     });
   }
 };
+
+TempStore.getDataForFileSync = Meteor._wrapAsync(TempStore.getDataForFile);

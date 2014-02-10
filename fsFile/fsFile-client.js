@@ -45,6 +45,6 @@ FS.File.prototype._get = function(options) {
   var self = this;
   // On the client we download the file via transfer queue
   if (Meteor.isClient) {
-    FS.downloadQueue.downloadFile(self, options.copyName);
+    FS.downloadQueue.downloadFile(self, options.storeName);
   }
 };

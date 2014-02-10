@@ -16,13 +16,12 @@ FS.Collection = function(name, options) {
     },
     httpHeaders: [], //optional
     filter: null, //optional
-    store: null, //required
-    beforeSave: null, //optional
-    sync: null, //optional
-    maxTries: 5, //optional
-    copies: {}, //optional
+    stores: [], //required
     chunkSize: 0.5 * 1024 * 1024 // 0.5MB; can be changed
   };
+  
+  // On the client, you may also define options.defaultStoreName to avoid
+  // having to pass a store name for many functions.
 
   // Extend and overwrite options
   _.extend(self.options, options);
@@ -39,48 +38,9 @@ FS.Collection = function(name, options) {
     self.options.accessPoints.HTTP = self.options.accessPoints.HTTP ||
             accessPointsHTTP(self, {httpHeaders: self.options.httpHeaders});
 
-    // Make sure a master store has been supplied
-    if (!(self.options.store instanceof FS.StorageAdapter)) {
-      throw new Error("You must specify a master store. Please consult the documentation.");
-    }
-
-    // Allow user to use shortcut syntax, but switch to full syntax for
-    // subsequent internal use.
-    if (typeof self.options.copies === "object") {
-      var copyOptions;
-      for (var copyName in self.options.copies) {
-        copyOptions = self.options.copies[copyName];
-        if (copyOptions instanceof FS.StorageAdapter) {
-          self.options.copies[copyName] = {
-            store: copyOptions,
-            beforeSave: null,
-            maxTries: self.options.maxTries
-          };
-        } else if (!(copyOptions.store instanceof FS.StorageAdapter)) {
-          throw new Error('You must specify a store for the "' + copyName + '" copy');
-        }
-      }
-    } else {
-      self.options.copies = {};
-    }
-
-    // For internal use, we will move master store information
-    // into options.copies._master
-    self.options.copies._master = {
-      store: self.options.store
-    };
-    delete self.options.store;
-    if (self.options.beforeSave) {
-      self.options.copies._master.beforeSave = self.options.beforeSave;
-      delete self.options.beforeSave;
-    }
-    if (self.options.maxTries) {
-      self.options.copies._master.maxTries = self.options.maxTries;
-      delete self.options.maxTries;
-    }
-    if (self.options.sync) {
-      self.options.copies._master.sync = self.options.sync;
-      delete self.options.sync;
+    // Make at least one store has been supplied
+    if (_.isEmpty(self.options.stores)) {
+      throw new Error("You must specify at least one store. Please consult the documentation.");
     }
 
     // Add DDP and HTTP access points
@@ -104,6 +64,7 @@ FS.Collection = function(name, options) {
       return result;
     }
   };
+  
   // Create the ".files" and use fsFile
   if (Package.join) {
     // We support Join if used in the app
@@ -209,9 +170,9 @@ FS.Collection = function(name, options) {
 
   if (Meteor.isServer) {
     // Tell synchronized stores how to sync
-    _.each(self.options.copies, function(copyDefinition, copyName) {
-      if (copyDefinition.sync) {
-        copyDefinition.store.sync({
+    _.each(self.options.stores, function(store) {
+      if (store.options.sync) {
+        store.sync({
           insert: function(storeId, info, buffer) {
             // Create a FS.File that already has info for the synchronized copy
             var fileInfo = {
@@ -221,7 +182,7 @@ FS.Collection = function(name, options) {
               utime: info.utime,
               copies: {}
             };
-            fileInfo.copies[copyName] = {
+            fileInfo.copies[store.name] = {
               _id: storeId,
               name: info.name,
               type: info.type,
@@ -239,7 +200,7 @@ FS.Collection = function(name, options) {
           update: function(storeId, info) {
             // Get the FS.File
             var selector = {};
-            selector['copies.' + copyName + '._id'] = storeId;
+            selector['copies.' + store.name + '._id'] = storeId;
             var fsFile = self.findOne(selector);
 
             if (!fsFile)
@@ -256,7 +217,7 @@ FS.Collection = function(name, options) {
               utime: info.utime,
               copies: {}
             };
-            fileInfo.copies[copyName] = {
+            fileInfo.copies[store.name] = {
               _id: storeId,
               name: info.name,
               type: info.type,
@@ -269,7 +230,7 @@ FS.Collection = function(name, options) {
             // TODO This will remove all copies.
             // Should we remove only the synchronized copy?
             var selector = {};
-            selector['copies.' + copyName + '._id'] = storeId;
+            selector['copies.' + store.name + '._id'] = storeId;
             self.remove(selector);
           }
         });

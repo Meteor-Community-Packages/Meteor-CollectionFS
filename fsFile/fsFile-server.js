@@ -17,16 +17,16 @@ FS.File.prototype.saveDataToFile = function(filePath, callback) {
 
 /**
  * Notes a details about a storage adapter failure within the file record
- * @param {string} copyName
+ * @param {string} storeName
  * @param {number} maxTries
  * @return {undefined}
  */
-FS.File.prototype.logCopyFailure = function(copyName, maxTries) {
+FS.File.prototype.logCopyFailure = function(storeName, maxTries) {
   var self = this;
 
   // hasCopy will update from the fileRecord
-  if (self.hasCopy(copyName)) {
-    throw new Error("logCopyFailure: invalid copyName");
+  if (self.hasCopy(storeName)) {
+    throw new Error("logCopyFailure: invalid storeName");
   }
 
   // Make sure we have a temporary file saved since we will be
@@ -34,34 +34,31 @@ FS.File.prototype.logCopyFailure = function(copyName, maxTries) {
   TempStore.ensureForFile(self);
 
   var now = new Date;
-  var currentCount = (self.failures && self.failures.copies && self.failures.copies[copyName] && typeof self.failures.copies[copyName].count === "number") ? self.failures.copies[copyName].count : 0;
+  var currentCount = (self.failures && self.failures.copies && self.failures.copies[storeName] && typeof self.failures.copies[storeName].count === "number") ? self.failures.copies[storeName].count : 0;
   maxTries = maxTries || 5;
 
   var modifier = {};
   modifier.$set = {};
-  modifier.$set['failures.copies.' + copyName + '.lastAttempt'] = now;
+  modifier.$set['failures.copies.' + storeName + '.lastAttempt'] = now;
   if (currentCount === 0) {
-    modifier.$set['failures.copies.' + copyName + '.firstAttempt'] = now;
+    modifier.$set['failures.copies.' + storeName + '.firstAttempt'] = now;
   }
-  modifier.$set['failures.copies.' + copyName + '.count'] = currentCount + 1;
-  modifier.$set['failures.copies.' + copyName + '.doneTrying'] = (currentCount + 1 >= maxTries);
+  modifier.$set['failures.copies.' + storeName + '.count'] = currentCount + 1;
+  modifier.$set['failures.copies.' + storeName + '.doneTrying'] = (currentCount + 1 >= maxTries);
   self.update(modifier);
 };
 
 /**
  * Has this store permanently failed?
- * @param {type} [copyName=_master]
+ * @param {String} storeName The name of the store
  * @return {boolean} Has this store failed permanently?
  */
-FS.File.prototype.failedPermanently = function(copyName) {
+FS.File.prototype.failedPermanently = function(storeName) {
   var self = this;
-  if (typeof copyName !== "string") {
-    copyName = "_master";
-  }
   return !!(self.failures
           && self.failures.copies
-          && self.failures.copies[copyName]
-          && self.failures.copies[copyName].doneTrying);
+          && self.failures.copies[storeName]
+          && self.failures.copies[storeName].doneTrying);
 };
 
 /**
@@ -125,20 +122,20 @@ FS.File.prototype._get = function(options) {
   // On server we contact the storage adapter
   if (self.isMounted()) {
 
-    var store = self.collection.getStoreForCopy(options.copyName);
-
-    if (typeof store === 'undefined' || store === null) {
-      throw new Error('FS.File.get could not find "' + options.copyName + '" Storage Adapter on FS.Collection "' + this.name + '"');
+    var store = _storageAdapters[options.storeName || ''];
+    if (!store) {
+      // first store is considered the master store by default
+      store = self.collection.options.stores[0];
     }
 
     if (partial) {
       if (!(typeof store.getBytes === "function")) {
-        throw new Error('FS.File.get: storage adapter for "' + options.copyName + '" does not support partial retrieval');
+        throw new Error('FS.File.get: storage adapter for "' + options.storeName + '" does not support partial retrieval');
       }
-      var buffer = store.getBytes(self, options.start, options.end, {copyName: options.copyName});
+      var buffer = store.getBytes(self, options.start, options.end);
       return bufferToBinary(buffer);
     } else {
-      var buffer = store.getBuffer(self, {copyName: options.copyName});
+      var buffer = store.getBuffer(self);
       return bufferToBinary(buffer);
     }
     

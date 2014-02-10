@@ -15,24 +15,29 @@ FileWorker.observe = function(fsCollection) {
 
   // Initiate observe for finding newly uploaded/added files that need to be stored
   // per store.
-  _.each(fsCollection.options.copies, function(copyDefinition, copyName) {
-    fsCollection.files.find(getReadyQuery(copyName)).observe({
+  _.each(fsCollection.options.stores, function(store) {
+    var storeName = store.name;
+    fsCollection.files.find(getReadyQuery(storeName), {
+      fields: {
+        copies: 0
+      }
+    }).observe({
       added: function(fsFile) {
         // added will catch fresh files
-        FS.debug && console.log("FileWorker ADDED - calling saveCopy", copyName, "for", fsFile._id);
-        fsCollection.saveCopy(fsFile, copyName);
+        FS.debug && console.log("FileWorker ADDED - calling saveCopy", storeName, "for", fsFile._id);
+        fsCollection.saveCopy(fsFile, storeName);
       },
       changed: function(fsFile) {
         // changed will catch failures and retry them
-        FS.debug && console.log("FileWorker CHANGED - calling saveCopy", copyName, "for", fsFile._id);
-        fsCollection.saveCopy(fsFile, copyName);
+        FS.debug && console.log("FileWorker CHANGED - calling saveCopy", storeName, "for", fsFile._id);
+        fsCollection.saveCopy(fsFile, storeName);
       }
     });
   });
 
   // Initiate observe for finding files that have been stored so we can delete
   // any temp files
-  fsCollection.files.find(getDoneQuery(fsCollection.options.copies)).observe({
+  fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
     added: function(fsFile) {
       FS.debug && console.log("FileWorker ADDED - calling deleteChunks for", fsFile._id);
       TempStore.deleteChunks(fsFile);
@@ -44,9 +49,9 @@ FileWorker.observe = function(fsCollection) {
   fsCollection.files.find().observe({
     removed: function(fsFile) {
       FS.debug && console.log('FileWorker REMOVED - removing all stored data for', fsFile._id);
-      //delete all copies
-      _.each(fsCollection.options.copies, function(copyDefinition, copyName) {
-        copyDefinition.store.remove(fsFile, {ignoreMissing: true, copyName: copyName});
+      //delete from all stores
+      _.each(fsCollection.options.stores, function(store) {
+        store.remove(fsFile, {ignoreMissing: true});
       });
     }
   });
@@ -60,27 +65,27 @@ FileWorker.observe = function(fsCollection) {
  *  {
  *    $where: "this.bytesUploaded === this.size",
  *    chunks: {$exists: true},
- *    'copies.copyName`: null,
- *    'failures.copies.copyName.doneTrying': {$ne: true}
+ *    'copies.storeName`: null,
+ *    'failures.copies.storeName.doneTrying': {$ne: true}
  *  }
  *  
- *  @param {string} copyName - The name of the store to observe
+ *  @param {string} storeName - The name of the store to observe
  */
-var getReadyQuery = function getReadyQuery(copyName) {
+var getReadyQuery = function getReadyQuery(storeName) {
   var selector = {
     $where: "this.bytesUploaded === this.size",
     chunks: {$exists: true}
   };
 
-  selector['copies.' + copyName] = null;
-  selector['failures.copies.' + copyName + '.doneTrying'] = {$ne: true};
+  selector['copies.' + storeName] = null;
+  selector['failures.copies.' + storeName + '.doneTrying'] = {$ne: true};
 
   return selector;
 };
 
 /**
  *  Returns a selector that will be used to identify files where all
- *  requested copies are either successfully saved or have failed the
+ *  stores have successfully save or have failed the
  *  max number of times but still have chunks. The resulting selector
  *  should be something like this:
  *  
@@ -92,42 +97,43 @@ var getReadyQuery = function getReadyQuery(copyName) {
  *          {
  *            $and: [
  *              {
- *                'copies.copy1': {$ne: null}
+ *                'copies.storeName': {$ne: null}
  *              },
  *              {
- *                'copies.copy1': {$ne: false}
+ *                'copies.storeName': {$ne: false}
  *              }
  *            ]
  *          },
  *          {
- *            'failures.copies.copy1.doneTrying': true
+ *            'failures.copies.storeName.doneTrying': true
  *          }
  *        ]
  *      },
- *      REPEATED FOR EACH COPY
+ *      REPEATED FOR EACH STORE
  *    ]
  *  }
  *  
- *  @param {Object} copies - The copies object from the FS.Collection options
+ *  @param {Object} stores - The stores object from the FS.Collection options
  */
-var getDoneQuery = function getDoneQuery(copies) {
+var getDoneQuery = function getDoneQuery(stores) {
   var selector = {
     $and: [
       {chunks: {$exists: true}}
     ]
   };
 
-  // Add conditions for all defined copies
-  for (var copyName in copies) {
+  // Add conditions for all defined stores
+  for (var store in stores) {
+    var storeName = store.name;
     var copyCond = {$or: [{$and: []}]};
     var tempCond = {};
-    tempCond["copies." + copyName] = {$ne: null};
+    tempCond["copies." + storeName] = {$ne: null};
     copyCond.$or[0].$and.push(tempCond);
     tempCond = {};
-    tempCond["copies." + copyName] = {$ne: false};
+    tempCond["copies." + storeName] = {$ne: false};
     copyCond.$or[0].$and.push(tempCond);
     tempCond = {};
-    tempCond['failures.copies.' + copyName + '.doneTrying'] = true;
+    tempCond['failures.copies.' + storeName + '.doneTrying'] = true;
     copyCond.$or.push(tempCond);
     selector.$and.push(copyCond);
   }
