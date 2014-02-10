@@ -1,14 +1,17 @@
 var Knox = Npm.require('knox');
 
+function cleanOptions(opts) {
+  _.each(['region', 'key', 'secret', 'bucket', 'style', 'x-amz-acl'], function (prop) {
+    if (prop in opts) {
+      delete opts[prop];
+    }
+  });
+}
+
 FS.Store.S3 = function(name, options) {
-  options = _.extend({
-    region: null, //required
-    key: null, //required
-    secret: null, //required
-    bucket: null, //required
-    style: "path",
-    'x-amz-acl': 'public-read'
-  }, options);
+  var self = this;
+  if (!(self instanceof FS.Store.S3))
+    throw new Error('FS.Store.S3 missing keyword "new"');
   
   // Determine which folder (key prefix) in the bucket to use
   var folder = options.folder;
@@ -23,7 +26,16 @@ FS.Store.S3 = function(name, options) {
     folder = "/";
   }
 
-  var S3 = Knox.createClient(options);
+  var S3 = Knox.createClient(_.extend({
+    region: null, //required
+    key: null, //required
+    secret: null, //required
+    bucket: null, //required
+    style: "path",
+    'x-amz-acl': 'public-read'
+  }, options));
+  
+  cleanOptions(options);
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.s3',

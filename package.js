@@ -8,10 +8,9 @@ Npm.depends({
 
 Package.on_use(function(api) {
   "use strict";
-  api.use(['collectionFS'], 'server');
-  api.add_files([
-    's3.js'
-  ], 'server');
+  api.use(['collectionFS']);
+  api.add_files('s3.server.js', 'server');
+  api.add_files('s3.client.js', 'client');
 });
 
 Package.on_test(function(api) {
