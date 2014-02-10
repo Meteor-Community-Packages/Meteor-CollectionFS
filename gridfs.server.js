@@ -1,6 +1,10 @@
 var chunkSize = 262144; // 256k is default GridFS chunk size
 
 FS.Store.GridFS = function(name, options) {
+  var self = this;
+  if (!(self instanceof FS.Store.GridFS))
+    throw new Error('FS.Store.GridFS missing keyword "new"');
+  
   var chunksCollection = new Meteor.Collection(name + '.chunks', {
     _preventAutopublish: true
   });
