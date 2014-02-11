@@ -1,11 +1,11 @@
 // Exported namespace
 FS = {};
 
+// namespace for adapters
+FS.Store = {}; 
+
 // An internal collection reference
 _collections = {};
-
-// A simple event queue for synchronous tasks
-eventQueue = new PowerQueue('EventQueue');
 
 if (Meteor.isServer) {
   fs = Npm.require('fs');

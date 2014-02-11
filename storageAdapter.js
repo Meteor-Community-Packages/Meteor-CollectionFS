@@ -6,8 +6,6 @@
 
 _storageAdapters = {};
 
-FS.Store = {}; // namespace for adapters
-
 FS.StorageAdapter = function(name, options, api) {
   var self = this;
 
@@ -32,37 +30,18 @@ FS.StorageAdapter = function(name, options, api) {
     throw new Error('FS.StorageAdapter please define an api.typeName string');
   }
 
-  // Name of Storage Adapter name
-  self.name = name;
-
+  // store reference for easy lookup by name
   if (typeof _storageAdapters[name] !== 'undefined') {
     throw new Error('Storage name already exists: "' + name + '"');
   } else {
     _storageAdapters[name] = self;
   }
 
-  // Make sync versions of some API functions
-  api.putSync = Meteor._wrapAsync(api.put);
-  api.getSync = Meteor._wrapAsync(api.get);
-  api.delSync = Meteor._wrapAsync(api.del);
-  if (typeof api.getBytes === "function") {
-    api.getBytesSync = Meteor._wrapAsync(api.getBytes);
-  }
-  if (typeof api.stats === "function") {
-    api.statsSync = Meteor._wrapAsync(api.stats);
-  }
-
-  // a storage adapter is mounted on a name
-  // Default options
-  self.options = {};
-
-  // Extend / overwrite default options
-  _.extend(self.options, options || {});
-
-  // The default collection implementation
-  // This is a list of file information
-  // _id, extension, createdAt, updatedAt
-  self.files = new Meteor.Collection(api.typeName + '.' + name);
+  // extend self with options and other info
+  _.extend(this, options || {}, {
+    name: name,
+    files: new Meteor.Collection(api.typeName + '.' + name)
+  });
 
   var foCheck = function(fsFile, type) {
     if (!(fsFile instanceof FS.File)) {
@@ -93,6 +72,78 @@ FS.StorageAdapter = function(name, options, api) {
     return fsFileClone;
   }
 
+  //internal
+  self._insertAsync = function(fsFile, callback) {
+    // insert the file ref into the SA file record
+    self.files.insert({createdAt: new Date(), size: fsFile.size}, function(err, id) {
+      // prep a function to remove the SA file record we just created if storage fails
+      function removeFileRecord() {
+        self.files.remove({_id: id});
+      }
+
+      // construct the filename
+      var preferredFilename = fsFile.name;
+
+      // Call the beforeSave function provided by the user
+      if (self.beforeSave) {
+        // Get a new copy and a fresh buffer each time in case beforeSave changes anything
+        fsFile = cloneFO(fsFile);
+
+        if (self.beforeSave.apply(fsFile) === false) {
+          callback(null, false);
+          return;
+        }
+      }
+
+      // Prep file info to be returned (info potentially changed by beforeSave)
+      var savedFileInfo = {
+        _id: id,
+        name: fsFile.name,
+        type: fsFile.type,
+        size: fsFile.size
+      };
+
+      // Put the file to storage
+      api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, function putCallback(err, fileKey, updatedAt) {
+        if (err) {
+          removeFileRecord();
+          callback(err, null);
+        } else if (fileKey) {
+          if (self.files.findOne({key: fileKey})) {
+            //file key already used
+            removeFileRecord();
+            callback(new Error("File key " + fileKey + " already saved"));
+            return;
+          }
+
+          function updateFileAndFinish(updatedAt) {
+            self.files.update({_id: id}, {$set: {key: fileKey, updatedAt: updatedAt}}, function(err) {
+              savedFileInfo.utime = updatedAt;
+              callback(err, err ? null : savedFileInfo);
+            });
+          }
+
+          // note the file key and updatedAt in the SA file record
+          if (typeof api.stats === "function") {
+            api.stats.call(self, fileKey, function(err, stats) {
+              if (err) {
+                callback(err, null);
+              } else {
+                updateFileAndFinish(stats.mtime);
+              }
+            });
+          } else {
+            updateFileAndFinish(new Date);
+          }
+        }
+      });
+    });
+
+  };
+
+  //internal
+  self._insertSync = Meteor._wrapAsync(self._insertAsync);
+
   /**
    * Attempts to insert a file into the store, first running the beforeSave
    * function for the store if there is one. If there is a temporary failure,
@@ -116,11 +167,37 @@ FS.StorageAdapter = function(name, options, api) {
       callback = options;
       options = {};
     }
-    options = options || {};
 
-    // insert the file ref into the SA file record
-    var id = self.files.insert({createdAt: new Date(), size: fsFile.size});
+    if (callback) {
+      return self._insertAsync(fsFile, callback);
+    } else {
+      return self._insertSync(fsFile);
+    }
+  };
 
+  //internal
+  self._updateAsync = function(fsFile, callback) {
+
+    var id = getFileId(fsFile);
+    var fileInfo = self.files.findOne({_id: id});
+
+    if (!fileInfo) {
+      callback(new Error('Storage Adapter Update: The "' + self.name + '" store does not contain a file with ID ' + id), false);
+      return;
+    }
+
+    // Call the beforeSave function provided by the user
+    if (self.beforeSave) {
+      // Get a new copy and a fresh buffer each time in case beforeSave changes anything
+      fsFile = cloneFO(fsFile);
+
+      if (self.beforeSave.apply(fsFile) === false) {
+        callback(null, false);
+        return;
+      }
+    }
+
+    // Prep file info to be returned (info potentially changed by beforeSave)
     var savedFileInfo = {
       _id: id,
       name: fsFile.name,
@@ -128,107 +205,54 @@ FS.StorageAdapter = function(name, options, api) {
       size: fsFile.size
     };
 
-    // construct the filename
-    var preferredFilename = fsFile.name;
-
     // Put the file to storage
-    // Async
-    if (callback) {
+    api.put.call(self, id, fileInfo.key, fsFile.getBuffer(), {overwrite: true, type: fsFile.type}, function putCallback(err, fileKey) {
+      if (err) {
+        callback(err, null);
+      } else if (fileKey) {
 
-      function putCallback(err, fileKey, updatedAt) {
-        if (err) {
-          // remove the SA file record
-          self.files.remove({_id: id});
-          callback(err, null);
-        } else if (fileKey) {
-          if (self.files.findOne({key: fileKey})) {
-            //file key already used
-            self.files.remove({_id: id});
-            callback(new Error("File key " + fileKey + " already saved"));
-            return;
-          }
-
-          function updateFileAndFinish(updatedAt) {
-            self.files.update({_id: id}, {$set: {key: fileKey, updatedAt: updatedAt}}, function(err) {
-              savedFileInfo.utime = updatedAt;
-              callback(err, savedFileInfo);
-            });
-          }
-
-          // note the file key and updatedAt in the SA file record
-          if (typeof api.stats === "function") {
-            api.stats.call(self, fileKey, function(err, stats) {
-              if (err) {
-                callback(err);
-              } else {
-                updateFileAndFinish(stats.mtime);
-              }
-            });
-          } else {
-            updateFileAndFinish(new Date);
-          }
-        }
-      }
-
-      // Call the beforeSave function provided by the user
-      if (self.options.beforeSave) {
-        // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-        fsFile = cloneFO(fsFile);
-
-        if (self.options.beforeSave.apply(fsFile) === false) {
-          callback(null, false);
-          return;
-        }
-
-        api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, putCallback);
-      } else {
-        api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, putCallback);
-      }
-    }
-    //Sync
-    else {
-      try {
-        // Call the beforeSave function provided by the user
-        if (self.options.beforeSave) {
-          // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-          fsFile = cloneFO(fsFile);
-
-          if (self.options.beforeSave.apply(fsFile) === false) {
-            return false;
-          }
-        }
-
-        var fileKey = api.putSync.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type});
-
-        if (!fileKey) {
-          return null;
+        function updateFileAndFinish(updatedAt) {
+          self.files.update({_id: id}, {$set: {updatedAt: updatedAt}}, function(err) {
+            savedFileInfo.utime = updatedAt;
+            callback(err, err ? null : savedFileInfo);
+          });
         }
 
         // note the file key and updatedAt in the SA file record
-        var updatedAt;
-        if (typeof api.statsSync === "function") {
-          var stats = api.statsSync.call(self, fileKey);
-          if (stats) {
-            updatedAt = stats.mtime;
-          }
+        if (typeof api.stats === "function") {
+          api.stats.call(self, fileKey, function(err, stats) {
+            if (err) {
+              callback(err, null);
+            } else {
+              updateFileAndFinish(stats.mtime);
+            }
+          });
+        } else {
+          updateFileAndFinish(new Date);
         }
-
-        if (!updatedAt) {
-          updatedAt = new Date;
-        }
-
-        savedFileInfo.utime = updatedAt;
-        self.files.update({_id: id}, {$set: {key: fileKey, updatedAt: updatedAt}});
-      } catch (err) {
-        // remove the SA file record
-        self.files.remove({_id: id});
-        throw err;
       }
-    }
+    });
 
-    return savedFileInfo;
   };
 
+  //internal
+  self._updateSync = Meteor._wrapAsync(self._updateAsync);
+
+  /**
+   * Attempts to update a file in the store, first running the beforeSave
+   * function for the store if there is one. If there is a temporary failure,
+   * returns (or passes to the second argument of the callback) `null`. If there
+   * is a permanant failure or the beforeSave function returns `false`, returns
+   * `false`. If the file is successfully stored, returns an object with file
+   * info that the FS.Collection can save.
+   * 
+   * Also updates the `files` collection for this store to save info about this
+   * file.
+   * 
+   * @param {FS.File} fsFile The FS.File instance to be stored.
+   * @param {Object} [options] Options (currently unused)
+   * @param {Function} [callback] If not provided, will block and return file info.
+   */
   self.update = function(fsFile, options, callback) {
     FS.debug && console.log("---SA UPDATE");
     foCheck(fsFile, "update");
@@ -237,50 +261,55 @@ FS.StorageAdapter = function(name, options, api) {
       callback = options;
       options = {};
     }
-    options = options || {};
+
+    if (callback) {
+      return self._updateAsync(fsFile, callback);
+    } else {
+      return self._updateSync(fsFile);
+    }
+  };
+
+  //internal
+  self._removeAsync = function(fsFile, options, callback) {
 
     var id = getFileId(fsFile);
     var fileInfo = self.files.findOne({_id: id});
 
     if (!fileInfo) {
-      return handleError(callback, 'Storage Adapter Update: The "' + name + '" store does not contain a file with ID ' + id);
+      if (options.ignoreMissing) {
+        callback(null, true);
+      } else {
+        callback(new Error('Storage Adapter Remove: The "' + self.name + '" store does not contain a file with ID ' + id), false);
+      }
+      return;
     }
 
-    // Put the file to storage
-    if (callback) {
-      api.put.call(self, id, fileInfo.key, fsFile.getBuffer(), {overwrite: true}, function(err, fileKey) {
-        if (err) {
-          callback(err);
-        } else if (fileKey) {
-          // note the updatedAt in the SA file record
-          if (typeof api.stats === "function") {
-            api.stats.call(self, fileKey, function(err, stats) {
-              self.files.update({_id: id}, {$set: {updatedAt: stats.mtime}}, callback);
-            });
-          } else {
-            self.files.update({_id: id}, {$set: {updatedAt: new Date}}, callback);
-          }
-        }
-      });
-    }
-    //Sync
-    else {
-      var fileKey = api.putSync.call(self, id, fileInfo.key, fsFile.getBuffer(), {overwrite: true});
-      // note the updatedAt in the SA file record
-      if (fileKey) {
-        if (typeof api.statsSync === "function") {
-          var stats = api.statsSync.call(self, fileKey);
-          if (stats) {
-            self.files.update({_id: id}, {$set: {updatedAt: stats.mtime}});
-          }
-        } else {
-          self.files.update({_id: id}, {$set: {updatedAt: new Date}});
-        }
+    // remove the file from the store
+    api.del.call(self, fileInfo.key, function(err, result) {
+      if (err) {
+        callback(err, false);
+      } else {
+        // remove the SA file record
+        self.files.remove({_id: fileInfo._id}, function(err, result) {
+          callback(err, !err);
+        });
       }
-    }
-    return 1;
+    });
   };
 
+  //internal
+  self._removeSync = Meteor._wrapAsync(self._removeAsync);
+
+  /**
+   * Attempts to remove a file from the store. Returns true if removed, or false.
+   * 
+   * Also removes file info from the `files` collection for this store.
+   * 
+   * @param {FS.File} fsFile The FS.File instance to be stored.
+   * @param {Object} [options] Options
+   * @param {Boolean} [options.ignoreMissing] Set true to treat missing files as a successful deletion. Otherwise throws an error.
+   * @param {Function} [callback] If not provided, will block and return true or false
+   */
   self.remove = function(fsFile, options, callback) {
     FS.debug && console.log("---SA REMOVE");
     foCheck(fsFile, "remove");
@@ -289,41 +318,34 @@ FS.StorageAdapter = function(name, options, api) {
       callback = options;
       options = {};
     }
-
     options = options || {};
 
+    if (callback) {
+      return self._removeAsync(fsFile, options, callback);
+    } else {
+      return self._removeSync(fsFile, options);
+    }
+  };
+
+  //internal
+  self._getBufferAsync = function(fsFile, callback) {
     var id = getFileId(fsFile);
     var fileInfo = self.files.findOne({_id: id});
 
     if (!fileInfo) {
-      if (options.ignoreMissing) {
-        callback && callback(null, true);
-        return true;
-      }
-      return handleError(callback, 'Storage Adapter Remove: The "' + name + '" store does not contain a file with ID ' + id);
+      callback(new Error('Storage Adapter GetBuffer: The "' + self.name + '" store does not contain a file with ID ' + id), null);
+      return;
     }
 
-    // Remove the file from storage
-    // Async
-    if (callback) {
-      api.del.call(self, fileInfo.key, function(err, result) {
-        if (err)
-          return handleError(callback, err);
-
-        // remove the SA file record
-        self.files.remove({_id: fileInfo._id});
-        callback && callback(null, true);
-      });
-    }
-    //Sync
-    else {
-      api.delSync.call(self, fileInfo.key);
-      // remove the SA file record
-      self.files.remove({_id: fileInfo._id});
-    }
+    // get the buffer
+    api.get.call(self, fileInfo.key, callback);
   };
 
+  //internal
+  self._getBufferSync = Meteor._wrapAsync(self._getBufferAsync);
+
   self.getBuffer = function(fsFile, options, callback) {
+    FS.debug && console.log("---SA GET BUFFER");
     foCheck(fsFile, "getBuffer");
 
     if (!callback && typeof options === "function") {
@@ -331,30 +353,35 @@ FS.StorageAdapter = function(name, options, api) {
       options = {};
     }
 
-    options = options || {};
-
-    var id = getFileId(fsFile);
-    var fileInfo = self.files.findOne({_id: id});
-
-    if (!fileInfo) {
-      return handleError(callback, 'Storage Adapter getBuffer: The "' + name + '" store does not contain a file with ID ' + id);
-    }
-    if (!fileInfo.key) {
-      return handleError(callback, 'Storage Adapter getBuffer: The "' + name + '" store does not contain a file with ID ' + id + ' in the "' + name + '" store is missing key');
-    }
-
-    // Async
     if (callback) {
-      return api.get.call(self, fileInfo.key, callback);
-    }
-    // Sync
-    else {
-      return api.getSync.call(self, fileInfo.key);
+      return self._getBufferAsync(fsFile, callback);
+    } else {
+      return self._getBufferSync(fsFile);
     }
   };
 
   if (typeof api.getBytes === 'function') {
+    //internal
+    self._getBytesAsync = function(fsFile, start, end, callback) {
+      var id = getFileId(fsFile);
+      var fileInfo = self.files.findOne({_id: id});
+
+      if (!fileInfo) {
+        callback(new Error('Storage Adapter GetBytes: The "' + self.name + '" store does not contain a file with ID ' + id), null);
+        return;
+      }
+
+      end = Math.min(end, fileInfo.size);
+
+      // get the buffer
+      api.getBytes.call(self, fileInfo.key, start, end, callback);
+    };
+
+    //internal
+    self._getBytesSync = Meteor._wrapAsync(self._getBytesAsync);
+
     self.getBytes = function(fsFile, start, end, options, callback) {
+      FS.debug && console.log("---SA GET BYTES");
       foCheck(fsFile, "getBytes");
 
       if (!callback && typeof options === "function") {
@@ -362,33 +389,20 @@ FS.StorageAdapter = function(name, options, api) {
         options = {};
       }
 
-      options = options || {};
-
-      var id = getFileId(fsFile);
-      var fileInfo = self.files.findOne({_id: id});
-
-      if (!fileInfo) {
-        return handleError(callback, 'Storage Adapter getBytes: The "' + name + '" store does not contain a file with ID ' + id);
-      }
-      if (!fileInfo.key) {
-        return handleError(callback, 'Storage Adapter getBytes: The "' + name + '" store does not contain a file with ID ' + id + ' in the "' + name + '" store is missing key');
-      }
-
-      end = Math.min(end, fileInfo.size);
-
-      // Async
       if (callback) {
-        return api.getBytes.call(self, fileInfo.key, start, end, callback);
-      }
-      // Sync
-      else {
-        return api.getBytesSync.call(self, fileInfo.key, start, end);
+        return self._getBytesAsync(fsFile, start, end, callback);
+      } else {
+        return self._getBytesSync(fsFile, start, end);
       }
     };
   }
 
-  self.sync = function(callbacks) {
+  self.defineSyncCallbacks = function(callbacks) {
     // This is intended to be called one time in the FS.Collection constructor
+
+    if (!self.sync)
+      return; //no error thrown so that FS.Collection constructor can call blindly
+
     callbacks = _.extend({
       insert: null,
       update: null,

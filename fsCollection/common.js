@@ -19,7 +19,7 @@ FS.Collection = function(name, options) {
     stores: [], //required
     chunkSize: 0.5 * 1024 * 1024 // 0.5MB; can be changed
   };
-  
+
   // On the client, you may also define options.defaultStoreName to avoid
   // having to pass a store name for many functions.
 
@@ -64,7 +64,7 @@ FS.Collection = function(name, options) {
       return result;
     }
   };
-  
+
   // Create the ".files" and use fsFile
   if (Package.join) {
     // We support Join if used in the app
@@ -171,70 +171,68 @@ FS.Collection = function(name, options) {
   if (Meteor.isServer) {
     // Tell synchronized stores how to sync
     _.each(self.options.stores, function(store) {
-      if (store.options.sync) {
-        store.sync({
-          insert: function(storeId, info, buffer) {
-            // Create a FS.File that already has info for the synchronized copy
-            var fileInfo = {
-              name: info.name,
-              type: info.type,
-              size: info.size,
-              utime: info.utime,
-              copies: {}
-            };
-            fileInfo.copies[store.name] = {
-              _id: storeId,
-              name: info.name,
-              type: info.type,
-              size: info.size,
-              utime: info.utime
-            };
-            var fsFile = new FS.File(fileInfo);
+      store.defineSyncCallbacks({
+        insert: function(storeId, info, buffer) {
+          // Create a FS.File that already has info for the synchronized copy
+          var fileInfo = {
+            name: info.name,
+            type: info.type,
+            size: info.size,
+            utime: info.utime,
+            copies: {}
+          };
+          fileInfo.copies[store.name] = {
+            _id: storeId,
+            name: info.name,
+            type: info.type,
+            size: info.size,
+            utime: info.utime
+          };
+          var fsFile = new FS.File(fileInfo);
 
-            // Load the buffer into the file object
-            fsFile.setDataFromBuffer(buffer, info.type);
+          // Load the buffer into the file object
+          fsFile.setDataFromBuffer(buffer, info.type);
 
-            // Save into the sync'd FS.Collection.
-            self.insert(fsFile);
-          },
-          update: function(storeId, info) {
-            // Get the FS.File
-            var selector = {};
-            selector['copies.' + store.name + '._id'] = storeId;
-            var fsFile = self.findOne(selector);
+          // Save into the sync'd FS.Collection.
+          self.insert(fsFile);
+        },
+        update: function(storeId, info) {
+          // Get the FS.File
+          var selector = {};
+          selector['copies.' + store.name + '._id'] = storeId;
+          var fsFile = self.findOne(selector);
 
-            if (!fsFile)
-              return;
+          if (!fsFile)
+            return;
 
-            // Update info for this store since that is the synchronized data
-            // we just received. Also, set info into the generic info since we're
-            // treating this like an upload. Finally, clear out other copy info
-            // so that the file worker will create new copies.
-            var fileInfo = {
-              name: info.name,
-              type: info.type,
-              size: info.size,
-              utime: info.utime,
-              copies: {}
-            };
-            fileInfo.copies[store.name] = {
-              _id: storeId,
-              name: info.name,
-              type: info.type,
-              size: info.size,
-              utime: info.utime
-            };
-            fsFile.update({$set: fileInfo});
-          },
-          remove: function(storeId) {
-            // TODO This will remove all copies.
-            // Should we remove only the synchronized copy?
-            var selector = {};
-            selector['copies.' + store.name + '._id'] = storeId;
-            self.remove(selector);
-          }
-        });
-      }
+          // Update info for this store since that is the synchronized data
+          // we just received. Also, set info into the generic info since we're
+          // treating this like an upload. Finally, clear out other copy info
+          // so that the file worker will create new copies.
+          var fileInfo = {
+            name: info.name,
+            type: info.type,
+            size: info.size,
+            utime: info.utime,
+            copies: {}
+          };
+          fileInfo.copies[store.name] = {
+            _id: storeId,
+            name: info.name,
+            type: info.type,
+            size: info.size,
+            utime: info.utime
+          };
+          fsFile.update({$set: fileInfo});
+        },
+        remove: function(storeId) {
+          // TODO This will remove all copies.
+          // Should we remove only the synchronized copy?
+          var selector = {};
+          selector['copies.' + store.name + '._id'] = storeId;
+          self.remove(selector);
+        }
+      });
     });
 
     // Set up observers
