@@ -104,7 +104,7 @@ FS.StorageAdapter = function(name, options, api) {
       };
 
       // Put the file to storage
-      api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, function putCallback(err, fileKey, updatedAt) {
+      api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, function putCallback(err, fileKey) {
         if (err) {
           removeFileRecord();
           callback(err, null);
