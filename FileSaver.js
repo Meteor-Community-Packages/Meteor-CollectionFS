@@ -1,22 +1,27 @@
-/* FileSaver.js
- * A saveAs() FileSaver implementation.
- * 2013-01-23
+/*! FileSaver.js
+ *  A saveAs() FileSaver implementation.
+ *  2014-01-24
  *
- * By Eli Grey, http://eligrey.com
- * License: X11/MIT
- *   See LICENSE.md
+ *  By Eli Grey, http://eligrey.com
+ *  License: X11/MIT
+ *    See LICENSE.md
  */
 
 /*global self */
-/*jslint bitwise: true, regexp: true, confusion: true, es5: true, vars: true, white: true,
-  plusplus: true */
+/*jslint bitwise: true, indent: 4, laxbreak: true, laxcomma: true, smarttabs: true, plusplus: true */
 
 /*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
 
 window.saveAs = window.saveAs
-  || (navigator.msSaveBlob && navigator.msSaveBlob.bind(navigator))
+  // IE 10+ (native saveAs)
+  || (navigator.msSaveOrOpenBlob && navigator.msSaveOrOpenBlob.bind(navigator))
+  // Everyone else
   || (function(view) {
 	"use strict";
+	// IE <10 is explicitly unsupported
+	if (/MSIE [1-9]\./.test(navigator.userAgent)) {
+		return;
+	}
 	var
 		  doc = view.document
 		  // only get URL when necessary in case BlobBuilder.js hasn't overridden it yet
@@ -25,7 +30,7 @@ window.saveAs = window.saveAs
 		}
 		, URL = view.URL || view.webkitURL || view
 		, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
-		, can_use_save_link = "download" in save_link
+		, can_use_save_link = !view.externalHost && "download" in save_link
 		, click = function(node) {
 			var event = doc.createEvent("MouseEvents");
 			event.initMouseEvent(
@@ -36,7 +41,7 @@ window.saveAs = window.saveAs
 		}
 		, webkit_req_fs = view.webkitRequestFileSystem
 		, req_fs = view.requestFileSystem || webkit_req_fs || view.mozRequestFileSystem
-		, throw_outside = function (ex) {
+		, throw_outside = function(ex) {
 			(view.setImmediate || view.setTimeout)(function() {
 				throw ex;
 			}, 0);
@@ -95,8 +100,8 @@ window.saveAs = window.saveAs
 					if (target_view) {
 						target_view.location.href = object_url;
 					} else {
-                        window.open(object_url, "_blank");
-                    }
+						window.open(object_url, "_blank");
+					}
 					filesaver.readyState = filesaver.DONE;
 					dispatch_all();
 				}
@@ -116,9 +121,20 @@ window.saveAs = window.saveAs
 			}
 			if (can_use_save_link) {
 				object_url = get_object_url(blob);
+				// FF for Android has a nasty garbage collection mechanism
+				// that turns all objects that are not pure javascript into 'deadObject'
+				// this means `doc` and `save_link` are unusable and need to be recreated
+				// `view` is usable though:
+				doc = view.document;
+				save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a");
 				save_link.href = object_url;
 				save_link.download = name;
-				click(save_link);
+				var event = doc.createEvent("MouseEvents");
+				event.initMouseEvent(
+					"click", true, false, view, 0, 0, 0, 0, 0
+					, false, false, false, false, 0, null
+				);
+				save_link.dispatchEvent(event);
 				filesaver.readyState = filesaver.DONE;
 				dispatch_all();
 				return;
@@ -213,4 +229,13 @@ window.saveAs = window.saveAs
 
 	view.addEventListener("unload", process_deletion_queue, false);
 	return saveAs;
-}(self));
+}(
+	   typeof self !== "undefined" && self
+	|| typeof window !== "undefined" && window
+	|| this.content
+));
+// `self` is undefined in Firefox for Android content script context
+// while `this` is nsIContentFrameMessageManager
+// with an attribute `content` that corresponds to the window
+
+if (typeof module !== "undefined") module.exports = saveAs;
