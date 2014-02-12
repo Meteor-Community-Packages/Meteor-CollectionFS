@@ -1,0 +1,8 @@
+{
+  "name": "cfs-worker",
+  "description": "CollectionFS, file worker - handles file copies/versions",
+  "homepage": "https://github.com/Meteor-CollectionFS/Meteor-cfs-worker",
+  "author": "CollectionFS core @aldeed & @raix",
+  "version": "0.0.1",
+  "git": "https://github.com/Meteor-CollectionFS/Meteor-cfs-worker.git"
+}
