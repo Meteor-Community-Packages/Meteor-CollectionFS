@@ -40,7 +40,9 @@ FS.StorageAdapter = function(name, options, api) {
   // extend self with options and other info
   _.extend(this, options || {}, {
     name: name,
-    files: new Meteor.Collection(api.typeName + '.' + name)
+    files: new Meteor.Collection(api.typeName + '.' + name, {
+      _preventAutopublish: true
+    })
   });
 
   var foCheck = function(fsFile, type) {
