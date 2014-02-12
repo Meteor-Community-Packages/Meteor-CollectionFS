@@ -1,14 +1,9 @@
 #This is the 0.3.x dev preview!! [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
-It's rough on the edges, please checkout the milestones for progress indication.
 
-## Where can I get the older versions?
-All versions are tagged but might not work with the latest version of Meteor.
+IMPORTANT:
 
-To use the version 1 of `collectionFS` please tryout [Eric's updated fork](https://github.com/aldeed/Meteor-CollectionFS)
-
-We are working hard on the new version, primary focus is on the code at the moment so docs are somewhat limited.
-
-Eric & Morten
+* If you're just getting started with CollectionFS, we highly recommend you check out the [devel-merge branch](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel-merge) instead. It is nearing completion and is much better. Essentially just working on tests and tweaks at this point, though there is always the potential for API changes until it's released.
+* If you need a working v1 of CollectionFS for some reason, you can use [Eric's fork](https://github.com/aldeed/Meteor-CollectionFS).
 
 #CollectionFS
 CollectionFS adds simple yet robust file uploading and downloading abilities to your Meteor web app. It is a mix of [Meteor.Collection](http://docs.meteor.com/#meteor_collection) and MongoDB's [GridFS](http://docs.mongodb.org/manual/core/gridfs/). CollectionFS stores files in your MongoDB database but also provides the ability to easily store files on the server filesystem or a remote filesystem.
@@ -85,7 +80,7 @@ In the client/server Javascript file where you define the data model for your pr
 ```js
 ContactsFS = new CollectionFS('contacts', { autopublish: false });
 ```
-*Setting `autopublish` to false is not required, but you will usually want to do this to limit the number of published documents or define which fields should be published. If you have removed the `autopublish` Meteor package, you do not need to set this since nothing will be autopublished by default.*
+*Setting `autopublish` to false is not required, but you will usually want to do this to limit the number of published documents or define which fields should be published. Note that by default, all CollectionFS documents are automatically published regardless of whether you're using the `autopublish` package.*
 
 It's important to note that CollectionFS extends the collection (in this example, "contacts"), creating contacts.files and contacts.chunks. This means that you can also create a normal `Meteor.Collection` with the same name if necessary for your app. For example:
 ```js
