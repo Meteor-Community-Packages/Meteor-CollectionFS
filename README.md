@@ -356,4 +356,16 @@ if (Meteor.isClient) {
 
 ## Drag and Drop
 
-You can easily insert dropped files into an FS.Collection with the [acceptDropsOn method](api.md#FS.Collection.acceptDropsOn).
+You can easily insert dropped files into an FS.Collection with the
+[acceptDropsOn method](api.md#FS.Collection.acceptDropsOn).
+
+## Optimizing
+
+* When you insert a file, a worker begins saving copies of it to all of the
+stores you define for the collection. The copies are saved to stores in the
+order you list them in the `stores` option array. Thus, you may want to prioritize
+certain stores by listing them first. For example, if you have an images collection
+with a thumbnail store and a large-size store, you may want to list the thumbnail
+store first to ensure that thumbnails appear on screen as soon as possible after
+inserting a new file. Or if you are storing audio files, you may want to prioritize
+a "sample" store over a "full-length" store.
