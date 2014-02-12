@@ -1,0 +1,15 @@
+{
+  "name": "collectionFS",
+  "description": "CollectionFS, S3Cloud Storage adapter",
+  "homepage": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS",
+  "author": "CollectionFS core @aldeed & @raix",
+  "version": "0.0.1",
+  "git": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS.git",
+  "packages": {
+    "http-methods": {},
+    "power-queue": {
+      "git": "https://github.com/CollectionFS/Meteor-powerqueue.git",
+      "branch": "master"
+    }  
+  }
+}
