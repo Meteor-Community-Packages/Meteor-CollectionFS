@@ -118,7 +118,7 @@ var Images = new FS.Collection("images", {
 
 ```js
 var Images = new FS.Collection("images", {
-  stores: [new FS.Store.FileSystem("images", {dir: "~/uploads"})]
+  stores: [new FS.Store.FileSystem("images", {path: "~/uploads"})]
 });
 ```
 
@@ -205,7 +205,7 @@ data. Here's an example:
 
 ```js
 var imageStore = new FS.Store.FileSystem("images", {
-  dir: "~/uploads",
+  path: "~/uploads",
   beforeSave: function () {
     this.gm().resize(60, 60).blur(7, 3).save();
   }
@@ -312,6 +312,24 @@ fsCollection.insert(fsFile, function (err) {
   if (err) throw err;
 });
 ```
+
+## Using `insert` Properly
+
+When you need to insert a file that's located on a client, always call 
+`myFSCollection.insert` on the client. While you could define your own method,
+pass it the `fsFile`, and call `myFSCollection.insert` on the server, the
+difficulty is with getting the data from the client to the server. When you
+pass the fsFile to your method, only the file *info* is sent and not the *data*.
+By contrast, when you do the insert directly on the client, it automatically
+chunks the file's data after insert, and then queues it to be sent chunk by
+chunk to the server. And then there is the matter of recombining all those
+chunks on the server and stuffing the data back into the fsFile. So doing
+client-side inserts actually saves you all of this complex work, and that's
+why we recommend it.
+
+Calling insert on the server should be done only when you have the file
+somewhere on the server filesystem already or you're downloading it from a
+remote URL.
 
 ## Handlebars
 
