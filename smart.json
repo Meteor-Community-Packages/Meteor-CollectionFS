@@ -1,10 +1,10 @@
 {
-  "name": "collectionFS",
-  "description": "CollectionFS, S3Cloud Storage adapter",
-  "homepage": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS",
+  "name": "cfs-collection",
+  "description": "CollectionFS, FS.Collection object",
+  "homepage": "https://github.com/Meteor-CollectionFS/Meteor-cfs-collection",
   "author": "CollectionFS core @aldeed & @raix",
-  "version": "0.0.1",
-  "git": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS.git",
+  "version": "0.0.2",
+  "git": "https://github.com/Meteor-CollectionFS/Meteor-cfs-collection.git",
   "packages": {
     "cfs-base-package": {
       "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
