@@ -6,10 +6,9 @@
   "version": "0.0.1",
   "git": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS.git",
   "packages": {
-    "http-methods": {},
-    "power-queue": {
-      "git": "https://github.com/CollectionFS/Meteor-powerqueue.git",
-      "branch": "master"
-    }  
+    "cfs-base-package": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+      "branch": "master"      
+    }
   }
 }
