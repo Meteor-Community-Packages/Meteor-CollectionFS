@@ -9,6 +9,12 @@ _storageAdapters = {};
 FS.StorageAdapter = function(name, options, api) {
   var self = this;
 
+  // If name is the only argument, a string and the SA allready found
+  // we will just return that SA
+  if (arguments.length === 1 && name === ''+name &&
+          typeof _storageAdapters[name] !== 'undefined')
+    return _storageAdapters[name];
+
   // Check the api
   if (typeof api === 'undefined') {
     throw new Error('FS.StorageAdapter please define an api');
@@ -153,10 +159,10 @@ FS.StorageAdapter = function(name, options, api) {
    * is a permanant failure or the beforeSave function returns `false`, returns
    * `false`. If the file is successfully stored, returns an object with file
    * info that the FS.Collection can save.
-   * 
+   *
    * Also updates the `files` collection for this store to save info about this
    * file.
-   * 
+   *
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options (currently unused)
    * @param {Function} [callback] If not provided, will block and return file info.
@@ -247,10 +253,10 @@ FS.StorageAdapter = function(name, options, api) {
    * is a permanant failure or the beforeSave function returns `false`, returns
    * `false`. If the file is successfully stored, returns an object with file
    * info that the FS.Collection can save.
-   * 
+   *
    * Also updates the `files` collection for this store to save info about this
    * file.
-   * 
+   *
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options (currently unused)
    * @param {Function} [callback] If not provided, will block and return file info.
@@ -304,9 +310,9 @@ FS.StorageAdapter = function(name, options, api) {
 
   /**
    * Attempts to remove a file from the store. Returns true if removed, or false.
-   * 
+   *
    * Also removes file info from the `files` collection for this store.
-   * 
+   *
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options
    * @param {Boolean} [options.ignoreMissing] Set true to treat missing files as a successful deletion. Otherwise throws an error.
