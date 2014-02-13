@@ -4,5 +4,11 @@
   "homepage": "https://github.com/Meteor-CollectionFS/Meteor-cfs-storage-adapter",
   "author": "CollectionFS core @aldeed & @raix",
   "version": "0.0.1",
-  "git": "https://github.com/Meteor-CollectionFS/Meteor-cfs-storage-adapter.git"
+  "git": "https://github.com/Meteor-CollectionFS/Meteor-cfs-storage-adapter.git",
+  "packages": {
+    "cfs-base-package": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+      "branch": "master"      
+    }
+  }  
 }
