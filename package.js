@@ -3,7 +3,7 @@ Package.describe({
 });
 
 Package.on_use(function(api) {
-  api.use('cfs-base-package');
+  api.use(['cfs-base-package', 'cfs-tempstore']);
 
   // XXX: Check these...
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata' ]);

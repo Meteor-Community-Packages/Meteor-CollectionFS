@@ -1,5 +1,4 @@
 var APUpload = function(fileObj, data, start) {
-  console.log('Was called');
   var self = this;
   check(fileObj, FS.File);
   if (!EJSON.isBinary(data))
@@ -35,7 +34,7 @@ var APUpload = function(fileObj, data, start) {
   }
 
   // Save chunk in temporary store
-  TempStore.saveChunk(fileObj, data, start, function(err) {
+  FS.TempStore.saveChunk(fileObj, data, start, function(err) {
     if (err) {
       throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
     }
