@@ -3,8 +3,7 @@ Package.describe({
 });
 
 Package.on_use(function(api) {
-  "use strict";
-  api.use(['collectionFS']);
+  api.use(['cfs-base-package', 'cfs-storage-adapter']);
   api.add_files('gridfs.server.js', 'server');
   api.add_files('gridfs.client.js', 'client');
 });
