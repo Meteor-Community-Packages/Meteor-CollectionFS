@@ -7,9 +7,13 @@
 FS.Collection = function(name, options) {
   var self = this;
 
+  // We make it a bit easier to get started and at the same time make them
+  // aware of what they need to publish
+  var autopublish = !!Package.autopublish;
+
   self.options = {
-    useDDP: true,
-    useHTTP: true,
+    useDDP: autopublish,
+    useHTTP: autopublish,
     accessPoints: {
       DDP: null, //will set to default below
       HTTP: null //will set to default below
