@@ -9,9 +9,7 @@ Npm.depends({
 
 Package.on_use(function(api) {
 
-  api.imply([
-    'cfs-base-package',
-  ]);
+  api.use([ 'cfs-base-package' ]);
 
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata',
     'ejson' ]);
