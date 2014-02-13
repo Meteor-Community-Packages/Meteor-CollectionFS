@@ -7,7 +7,7 @@
   * @param {object} temp The template instance
   * @param {FS.File} fsFile File that triggered the event
   */
-var _eventCallback = function(templateName, selector, dataContext, evt, temp, fsFile) {
+var _eventCallback = function fsEventCallback(templateName, selector, dataContext, evt, temp, fsFile) {
   return function(err, id) {
     if (err) {
       // Fire uploadError event
@@ -15,7 +15,7 @@ var _eventCallback = function(templateName, selector, dataContext, evt, temp, fs
         if (eventObject.events === 'uploadFailed' && eventObject.selector === selector) {
           eventObject.handler.apply(dataContext, [{ error: err, file: fsFile }, temp]);
         }
-      });      
+      });
     } else {
       // Fire uploaded
       _.each(Template[templateName]._events, function(eventObject) {
@@ -65,7 +65,7 @@ var _eachFile = function(files, metadata, callback) {
   * Example:
 ```css
 .dropzone {
-  border: 2px dashed silver; 
+  border: 2px dashed silver;
   height: 5em;
   padding-top: 3em;
 
@@ -98,7 +98,7 @@ var _eachFile = function(files, metadata, callback) {
   */
 FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadata) {
   var self = this, events = {};
-  
+
   metadata = metadata || {}
 
   // Prevent default drag and drop
@@ -113,7 +113,7 @@ FS.Collection.prototype.acceptDropsOn = function(templateName, selector, metadat
     var dataContext = this;
     var files = (evt.originalEvent || evt).dataTransfer.files;
 
-    _eachFile(files, metadata, function(fsFile) {
+    _eachFile(files, metadata, function iterateOverDroppedFiles(fsFile) {
       self.insert(fsFile, _eventCallback(templateName, selector, dataContext, evt, temp, fsFile));
     });
   }
@@ -161,12 +161,12 @@ FS.Collection.prototype.acceptUploadFrom = function(templateName, selector, meta
     var dataContext = this;
     var files = evt.target.files;
 
-    _eachFile(files, metadata, function(fsFile) {
+    _eachFile(files, metadata, function iterateOverSelectedFiles(fsFile) {
       self.insert(fsFile, _eventCallback(templateName, selector, dataContext, evt, temp, fsFile));
     });
   }
 
   events['change ' + selector] = startUpload;
 
-  Template[templateName].events(events); 
+  Template[templateName].events(events);
 };
