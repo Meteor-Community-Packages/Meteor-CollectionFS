@@ -8,7 +8,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
   var self = this;
   var fileObj;
 
-  callback = callback || defaultCallback;
+  callback = callback || FS.Utility.defaultCallback;
 
   var doInsert = function() {
     // Set reference to this collection
@@ -87,7 +87,7 @@ FS.Collection.prototype.remove = function(selector, callback) {
   }
 
   //doesn't work correctly on the client without a callback
-  callback = callback || defaultCallback;
+  callback = callback || FS.Utility.defaultCallback;
   return self.files.remove(selector, callback);
 };
 

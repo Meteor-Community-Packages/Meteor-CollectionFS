@@ -2,7 +2,7 @@
  * Saves to the specified store. If the
  * `overwrite` option is `true`, will save to the store even if we already
  * have, potentially overwriting any previously saved data. Synchronous.
- * 
+ *
  * @param {FS.File} fsFile
  * @param {string} storeName
  * @param {Object} options
@@ -13,7 +13,7 @@ FS.Collection.prototype.saveCopy = function(fsFile, storeName, options) {
   var self = this;
   options = options || {};
   var copyInfo = fsFile.copies && fsFile.copies[storeName];
-  var store = _storageAdapters[storeName];
+  var store = FS.StorageAdapter(storeName);
 
   if (!store) {
     throw new Error('saveCopy: No store named "' + storeName + '" exists');
@@ -26,7 +26,7 @@ FS.Collection.prototype.saveCopy = function(fsFile, storeName, options) {
     // If the supplied fsFile does not have a buffer loaded already,
     // try to load it from the temporary file.
     if (!fsFile.hasData()) {
-      fsFile = TempStore.getDataForFileSync(fsFile);
+      fsFile = FS.TempStore.getDataForFileSync(fsFile);
     }
 
     var result = store.insert(fsFile);
@@ -52,7 +52,7 @@ FS.Collection.prototype.saveCopy = function(fsFile, storeName, options) {
  * Saves to any stores that data has not yet been saved to. If the
  * `overwrite` option is `true`, saves to all stores, potentially
  * overwriting any previously saved data. Synchronous.
- * 
+ *
  * @param {FS.File} fsFile
  * @param {Object} options
  * @param {Boolean} [options.overwrite=false] - Force save to all defined stores?
