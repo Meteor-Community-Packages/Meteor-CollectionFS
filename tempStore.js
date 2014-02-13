@@ -12,15 +12,16 @@
 // Using temp files also allows us to easily resume uploads, even if the server
 // restarts, and to keep the working memory clear.
 
+fs = Npm.require('fs');
 tmp = Npm.require('temp');
 
-/** @namespace TempStore
-  * @property TempStore
+/** @namespace FS.TempStore
+  * @property FS.TempStore
   * @type {object}
   */
-TempStore = {
+FS.TempStore = {
 
-  /** @method TempStore.saveChunk
+  /** @method FS.TempStore.saveChunk
     * @param {FS.File} fsFile
     * @param {binary} binary
     * @param {number} start
@@ -48,12 +49,13 @@ TempStore = {
     if (!tempFile) {
       // create it in the OS temp directory with a random unique name ending with ".bin"
       tempFile = tmp.path({suffix: '.bin'});
+      FS.debug && console.log('Chunk saved ' + tempFile);
       // and make note of its filename in the chunks array
       fileObj.update({$push: {chunks: {start: start, tempFile: tempFile}}});
     }
 
     // Write the chunk data into the temporary file
-    fs.writeFile(tempFile, binaryToBuffer(binary), Meteor.bindEnvironment(function(err) {
+    fs.writeFile(tempFile, FS.Utility.binaryToBuffer(binary), Meteor.bindEnvironment(function(err) {
       if (err) {
         callback(err);
       } else {
@@ -66,13 +68,13 @@ TempStore = {
     }));
   },
 
-  /** @method TempStore.getDataForFile
+  /** @method FS.TempStore.getDataForFile
     * @param {FS.File} fileObj
     * @param {function} callback callback(err, fileObjWithData)
     * @todo This cannot handle large files eg. 2gb or more?
     */
   getDataForFile: function(fileObj, callback) {
-
+    FS.debug && console.log('Get the data from file');
     if (_.isEmpty(fileObj.chunks)) {
       callback(new Error('getDataForFile: No temporary chunks!'));
     }
@@ -109,13 +111,13 @@ TempStore = {
     });
   },
 
-  /** @method TempStore.deleteChunks
+  /** @method FS.TempStore.deleteChunks
     * @param {FS.File} fileObj
     * @param {function} callback callback(err)
     */
   deleteChunks: function(fileObj, callback) {
     var stop = false, count, deletedCount = 0;
-    callback = callback || defaultCallback;
+    callback = callback || FS.Utility.defaultCallback;
 
     if (!fileObj.chunks) {
       callback();
@@ -155,20 +157,20 @@ TempStore = {
     });
   },
 
-  /** @method TempStore.ensureForFile
+  /** @method FS.TempStore.ensureForFile
     * @param {FS.File} fileObj
     * @param {function} callback callback(err)
     */
   ensureForFile: function (fileObj, callback) {
-    callback = callback || defaultCallback;
+    callback = callback || FS.Utility.defaultCallback;
     fileObj.getBinary(null, null, function (err, binary) {
       if (err) {
         callback(err);
       } else {
-        TempStore.saveChunk(fileObj, binary, 0, callback);
+        FS.TempStore.saveChunk(fileObj, binary, 0, callback);
       }
     });
   }
 };
 
-TempStore.getDataForFileSync = Meteor._wrapAsync(TempStore.getDataForFile);
+FS.TempStore.getDataForFileSync = Meteor._wrapAsync(FS.TempStore.getDataForFile);
