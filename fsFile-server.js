@@ -31,7 +31,7 @@ FS.File.prototype.logCopyFailure = function(storeName, maxTries) {
 
   // Make sure we have a temporary file saved since we will be
   // trying the save again.
-  TempStore.ensureForFile(self);
+  FS.TempStore.ensureForFile(self);
 
   var now = new Date;
   var currentCount = (self.failures && self.failures.copies && self.failures.copies[storeName] && typeof self.failures.copies[storeName].count === "number") ? self.failures.copies[storeName].count : 0;
@@ -133,10 +133,10 @@ FS.File.prototype._get = function(options) {
         throw new Error('FS.File.get: storage adapter for "' + options.storeName + '" does not support partial retrieval');
       }
       var buffer = store.getBytes(self, options.start, options.end);
-      return bufferToBinary(buffer);
+      return FS.Utility.bufferToBinary(buffer);
     } else {
       var buffer = store.getBuffer(self);
-      return bufferToBinary(buffer);
+      return FS.Utility.bufferToBinary(buffer);
     }
 
   }

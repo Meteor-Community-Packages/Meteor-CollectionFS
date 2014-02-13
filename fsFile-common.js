@@ -168,7 +168,7 @@ FS.File.prototype.remove = function(callback) {
   callback = callback || FS.Utility.defaultCallback;
   // Remove any associated temp files
   if (Meteor.isServer) {
-    TempStore.deleteChunks(self);
+    FS.TempStore.deleteChunks(self);
   }
   if (self.isMounted()) {
     return self.collection.files.remove({_id: self._id}, function(err, res) {
@@ -331,7 +331,7 @@ FS.File.prototype.put = function(callback) {
     // Save the binary to a single chunk temp file, so that it is available
     // when FileWorker calls saveCopies.
     // This will also trigger file handling from collection observes.
-    TempStore.ensureForFile(self);
+    FS.TempStore.ensureForFile(self);
   }
 };
 
