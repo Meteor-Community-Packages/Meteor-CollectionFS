@@ -31,23 +31,34 @@ FS.Collection = function(name, options) {
   self.httpUrl = self.options.useHTTP ? self.methodName : null;
 
   if (Meteor.isServer) {
-    // Add default access points if user did not supply any
-    self.options.accessPoints = self.options.accessPoints || {};
-    self.options.accessPoints.DDP = self.options.accessPoints.DDP ||
-            FS.AccessPoint.DDP(self);
-    self.options.accessPoints.HTTP = self.options.accessPoints.HTTP ||
-            FS.AccessPoint.HTTP(self, {httpHeaders: self.options.httpHeaders});
 
     // Make at least one store has been supplied
     if (_.isEmpty(self.options.stores)) {
       throw new Error("You must specify at least one store. Please consult the documentation.");
     }
 
-    // Add DDP and HTTP access points
-    self.options.useDDP && Meteor.methods(self.options.accessPoints.DDP);
+    // Add default access points if user did not supply any
+    self.options.accessPoints = self.options.accessPoints || {};
+
+    // Add DDP access points
+    if (self.options.useDDP) {
+      // Get the ddp accesspoint
+      self.options.accessPoints.DDP = self.options.accessPoints.DDP ||
+              FS.AccessPoint.DDP(self);
+      // Mount the ddp methods
+      Meteor.methods(self.options.accessPoints.DDP);
+    }
+
+    // Add HTTP access points
     if (self.options.useHTTP
             && typeof HTTP !== 'undefined'
             && typeof HTTP.methods === 'function') {
+      // Get the http accesspoint
+      self.options.accessPoints.HTTP = self.options.accessPoints.HTTP ||
+              FS.AccessPoint.HTTP(self, {
+                httpHeaders: self.options.httpHeaders
+              });
+      // Mount the http methods
       HTTP.methods(self.options.accessPoints.HTTP);
     }
 

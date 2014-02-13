@@ -9,6 +9,10 @@
     "cfs-base-package": {
       "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
       "branch": "master"      
-    }
+    },
+    "http-methods": {
+      "git": "https://github.com/CollectionFS/Meteor-http-methods.git",
+      "branch": "master" 
+    } 
   }
 }
