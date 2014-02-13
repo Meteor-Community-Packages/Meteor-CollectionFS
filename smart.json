@@ -2,13 +2,13 @@
   "name": "cfs-filesystem",
   "description": "Filesystem storage adapter for CollectionFS",
   "homepage": "https://github.com/CollectionFS/Meteor-cfs-filesystem",
-  "author": "Morten Henriksen (http://gi-software.com)",
+  "author": "CollectionFS core @aldeed & @raix",
   "version": "0.1.0",
   "git": "https://github.com/CollectionFS/Meteor-cfs-filesystem.git",
   "packages": {
-    "collectionFS": {
-      "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
-      "branch": "devel-merge"
+    "cfs-storage-adapter": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
+      "branch": "master"
     }
   }
 }

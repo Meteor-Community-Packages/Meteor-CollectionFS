@@ -8,8 +8,7 @@ Npm.depends({
 });
 
 Package.on_use(function(api) {
-  "use strict";
-  api.use('collectionFS');
+  api.use(['cfs-base-package', 'cfs-storage-adapter']);
   api.add_files('filesystem.server.js', 'server');
   api.add_files('filesystem.client.js', 'client');
 });

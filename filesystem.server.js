@@ -7,12 +7,13 @@ FS.Store.FileSystem = function(name, options) {
   var self = this;
   if (!(self instanceof FS.Store.FileSystem))
     throw new Error('FS.Store.FileSystem missing keyword "new"');
-  
-  options = options || {};
-  
+
+  // We allow options to be string/path empty or options.path
+  options = (options !== ''+options)? options || {} : { path: options };
+
   // Pass home ~ in pathname
   var homepath = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-  
+
   // Provide a default FS directory
   var pathname = options.path || '~/cfs/files/name';
 
@@ -23,7 +24,7 @@ FS.Store.FileSystem = function(name, options) {
 
   // Set absolute path
   var absolutePath = path.resolve(pathname);
-  
+
   // Ensure the path exists
   mkdirp.sync(absolutePath);
   FS.debug && console.log(name + ' FileSystem mounted on: ' + absolutePath);
