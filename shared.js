@@ -13,12 +13,6 @@ FS.Utility = {};
 // An internal collection reference
 FS._collections = {};
 
-if (Meteor.isServer) {
-  fs = Npm.require('fs');
-  path = Npm.require('path');
-  tmp = Npm.require('temp');
-}
-
 // #############################################################################
 //
 // HELPERS
