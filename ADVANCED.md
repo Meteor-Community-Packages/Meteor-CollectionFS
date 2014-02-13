@@ -190,8 +190,8 @@ to begin the process of saving it to each of the defined stores.
 
 ### Step 4: Temporarily Store
 
-The temporary store is managed by the `TempStore` object. When the server method
-calls `TempStore.saveChunk()`, the chunk data is saved to a randomly named
+The temporary store is managed by the `FS.TempStore` object. When the server method
+calls `FS.TempStore.saveChunk()`, the chunk data is saved to a randomly named
 temporary file in the server operating system's default temporary directory.
 The path to this file is saved in the `chunks` array on the corresponding FS.File.
 (The `chunks` property is available on an FS.File instance only on the server
@@ -242,7 +242,7 @@ then calls `saveCopies` for each file that is identified. (See the previous step
 The `FileWorker` also does one more thing. If it identifies any files that have
 been successfully saved to all defined stores, or that have failed to save the
 maximum number of times for a store, or that won't be saved to a store because
-`beforeSave` returned `false`, then it tells `TempStore` to delete all the
+`beforeSave` returned `false`, then it tells `FS.TempStore` to delete all the
 temporary chunks for that file. They are no longer needed.
 
 Note: One the temporary chunks are deleted, the "original" file will be no longer
