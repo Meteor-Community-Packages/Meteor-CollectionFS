@@ -122,7 +122,7 @@ FS.File.prototype._get = function(options) {
   // On server we contact the storage adapter
   if (self.isMounted()) {
 
-    var store = _storageAdapters[options.storeName || ''];
+    var store = FS.StorageAdapter(options.storeName || '');
     if (!store) {
       // first store is considered the master store by default
       store = self.collection.options.stores[0];
