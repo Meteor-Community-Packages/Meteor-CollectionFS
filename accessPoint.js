@@ -272,15 +272,18 @@ FS.AccessPoint.createHTTP = function(cfs, options) {
     baseUrl = '/cfs/files/' + cfs.name;
   }
   
-  // We namespace with using the current Meteor convention - this could
-  // change
-  var methods = {};
-  methods[baseUrl + '/download/:id'] = APhandler(cfs, true, options);
-  methods[baseUrl + '/download/:id/:selector'] = APhandler(cfs, true, options);
-  methods[baseUrl + '/:id'] = APhandler(cfs, false, options);
-  methods[baseUrl + '/:id/:selector'] = APhandler(cfs, false, options);
-  
-  HTTP.methods(methods);
+  // Currently HTTP.methods is not implemented on the client
+  if (Meteor.isServer) {
+    // We namespace with using the current Meteor convention - this could
+    // change
+    var methods = {};
+    methods[baseUrl + '/download/:id'] = APhandler(cfs, true, options);
+    methods[baseUrl + '/download/:id/:selector'] = APhandler(cfs, true, options);
+    methods[baseUrl + '/:id'] = APhandler(cfs, false, options);
+    methods[baseUrl + '/:id/:selector'] = APhandler(cfs, false, options);
+
+    HTTP.methods(methods);
+  }
   
   return baseUrl;
 };
