@@ -8,7 +8,7 @@
   "packages": {
     "collectionFS": {
       "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
-      "branch": "devel-merge"
+      "branch": "devel"
     }
   }
 }
