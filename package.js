@@ -7,6 +7,7 @@ Package.on_use(function(api) {
 
   if (api.export) {
     api.export('FS');
+    api.export('parseArguments');
   }
 
   api.add_files([
