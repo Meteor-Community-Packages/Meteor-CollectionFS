@@ -5,15 +5,11 @@ Package.describe({
 Package.on_use(function(api) {
   api.use(['cfs-base-package', 'cfs-tempstore']);
 
-  // XXX: Check these...
-  api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata' ]);
-
-  api.use(['ejson', 'http-methods']);
-
+  api.use(['ejson', 'underscore', 'check', 'http-methods']);
 
   api.add_files([
-    'accessPoint.js',
-  ], 'server');
+    'accessPoint.js'
+  ], ['server', 'client']);
 });
 
 Package.on_test(function (api) {
