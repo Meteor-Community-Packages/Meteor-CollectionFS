@@ -13,6 +13,7 @@ Package.on_use(function(api) {
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata' ]);
 
   api.add_files([
+    'FileSaver.js',
     'fsFile-common.js',
     'fsFile-data-get.js',
     'fsFile-data-set.js',
