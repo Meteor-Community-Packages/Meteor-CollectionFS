@@ -10,6 +10,10 @@
       "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
       "branch": "master"      
     },
+    "cfs-filesaver": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-filesaver.git",
+      "branch": "master"      
+    },
     "cfs-storage-adapter": {
       "git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
       "branch": "master"      

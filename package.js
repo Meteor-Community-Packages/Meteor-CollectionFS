@@ -11,9 +11,10 @@ Package.on_use(function(api) {
   api.use(['cfs-base-package', 'cfs-storage-adapter']);
 
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata' ]);
+  
+  api.use(['cfs-filesaver'], 'client');
 
   api.add_files([
-    'FileSaver.js',
     'fsFile-common.js',
     'fsFile-data-get.js',
     'fsFile-data-set.js',
