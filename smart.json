@@ -6,14 +6,33 @@
   "version": "0.4.0",
   "git": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS.git",
   "packages": {
-    "http-methods": {},
-    "power-queue": {
-      "git": "https://github.com/CollectionFS/Meteor-powerqueue.git",
+    "cfs-base-package": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
       "branch": "master"
     },
-    "join": {
-      "git": "https://github.com/CollectionFS/Meteor-join.git",
+    "cfs-transfer": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-transfer.git",
       "branch": "master"
-    }    
+    },
+    "cfs-file": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
+      "branch": "master"
+    },
+    "cfs-ejson-file": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-ejson-file.git",
+      "branch": "master"
+    },
+    "cfs-collection": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-collection.git",
+      "branch": "master"
+    },
+    "cfs-access-point": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
+      "branch": "master"
+    },
+    "cfs-worker": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-worker.git",
+      "branch": "master"
+    }
   }
 }
