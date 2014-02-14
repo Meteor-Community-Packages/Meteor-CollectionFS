@@ -8,11 +8,13 @@ Package.on_use(function(api) {
   if (api.export) {
     api.export('FS');
     api.export('_Utility', { testOnly: true });
+    // TODO: Deprecate
+    api.export('parseArguments');
   }
 
   api.add_files([
     'shared.js',
-    'argParser.js'
+    'argParser.js' // TODO: Deprecate
   ], ['client', 'server']);
 });
 
