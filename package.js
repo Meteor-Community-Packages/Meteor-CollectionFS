@@ -7,6 +7,7 @@ Package.on_use(function(api) {
 
   if (api.export) {
     api.export('FS');
+    api.export('_Utility', { testOnly: true });
   }
 
   api.add_files([
@@ -16,11 +17,10 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-  api.use('collectionFS');
+  api.use('cfs-base-package');
   api.use('test-helpers', 'server');
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
            'random', 'deps']);
 
-  api.add_files('tests/server-tests.js', 'server');
-  api.add_files('tests/client-tests.js', 'client');
+  api.add_files('tests/common-tests.js', 'server');
 });

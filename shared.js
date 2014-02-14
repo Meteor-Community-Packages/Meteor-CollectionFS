@@ -13,24 +13,31 @@ FS.Utility = {};
 // An internal collection reference
 FS._collections = {};
 
+// Test scope
+_Utility = {};
+
 // #############################################################################
 //
 // HELPERS
 //
 // #############################################################################
 
+// XXX: should this be exported?? Where is it used?
 var idParse = function(id) {
   return '' + id;
 };
 
-var defaultZero = function(val) {
+/** @method _Utility.defaultZero
+  * @param {Any} val Returns number or 0 if value is a falsy
+  */
+_Utility.defaultZero = function(val) {
   return +(val || 0);
 };
 
-cloneFileUnit = function(unit) {
-  if (_.isObject(unit)) {
+_Utility.cloneFileUnit = function(unit) {
+  if (_.isObject(unit) && !_.isArray(unit)) {
     var newUnit = {
-      size: defaultZero(unit.size)
+      size: _Utility.defaultZero(unit.size)
     };
     if (unit._id) {
       newUnit._id = '' + unit._id;
@@ -49,8 +56,8 @@ cloneFileUnit = function(unit) {
   return null;
 };
 
-cloneFileAttempt = function(attempt) {
-  if (_.isObject(attempt)) {
+_Utility.cloneFileAttempt = function(attempt) {
+  if (_.isObject(attempt) && !_.isArray(attempt)) {
     return {
       count: attempt.count,
       firstAttempt: attempt.firstAttempt,
@@ -62,10 +69,10 @@ cloneFileAttempt = function(attempt) {
 };
 
 FS.Utility.cloneFileRecord = function(rec) {
-  var result = cloneFileUnit(rec) || {};
+  var result = _Utility.cloneFileUnit(rec) || {};
   // Base reference
   result.collectionName = '' + rec.collectionName;
-  result.bytesUploaded = defaultZero(rec.bytesUploaded);
+  result.bytesUploaded = _Utility.defaultZero(rec.bytesUploaded);
 
   if (_.isObject(rec.metadata)) {
     result.metadata = rec.metadata;
@@ -75,7 +82,7 @@ FS.Utility.cloneFileRecord = function(rec) {
   if (!_.isEmpty(rec.copies)) {
     result.copies = {};
     _.each(rec.copies, function(value, key) {
-      result.copies[key] = cloneFileUnit(value);
+      result.copies[key] = _Utility.cloneFileUnit(value);
     });
   }
 
@@ -86,7 +93,7 @@ FS.Utility.cloneFileRecord = function(rec) {
     if (!_.isEmpty(rec.failures.copies)) {
       result.failures.copies = {};
       _.each(rec.failures.copies, function(value, key) {
-        result.failures.copies[key] = cloneFileAttempt(value);
+        result.failures.copies[key] = _Utility.cloneFileAttempt(value);
       });
     }
   }
