@@ -28,7 +28,7 @@ FS.Collection = function(name, options) {
   // having to pass a store name for many functions.
 
   // Extend and overwrite options
-  _.extend(self.options, options);
+  _.extend(self.options, options || {});
 
   self.name = name;
   
