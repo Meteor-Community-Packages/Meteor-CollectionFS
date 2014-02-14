@@ -106,15 +106,7 @@ A document from a `FS.Collection` is represented as a `FS.File`.
 
 The first step in using this package is to define a `FS.Collection`.
 
-*client.js:*
-
-```js
-var Images = new FS.Collection("images", {
-  defaultStoreName: "images"
-});
-```
-
-*server.js:*
+*common.js:*
 
 ```js
 var Images = new FS.Collection("images", {
@@ -352,6 +344,40 @@ if (Meteor.isClient) {
   // There is a single downloads transfer queue per client (not per FS.Collection)
   FS.uploadQueue = new UploadTransferQueue({ connection: DDP.connect(myUrl) });
 }
+```
+
+## Customizing the HTTP URLs and Headers
+
+When you create an FS.Collection, a set of HTTP URLs are automatically mounted
+for you to support HTTP uploads and downloads. If you don't want to allow
+HTTP connections, you can set the `autoMountHTTP` option to `false`.
+
+```js
+var Images = new FS.Collection("images", {
+  stores: [new FS.Store.FileSystem("images")],
+  autoMountHTTP: false
+});
+```
+
+Note that calling `fsFile.url()` will fail if you do this.
+
+Another reason to skip auto-mounting is if you need to customize the HTTP
+endpoints in some way. After creating your collection, you can then set the
+`httpUrl` property on the collection instance directly. For example, you can
+change the base URL or provide custom headers:
+
+```js
+var Images = new FS.Collection("images", {
+  stores: [new FS.Store.FileSystem("images")],
+  autoMountHTTP: false
+});
+
+Images.httpUrl = FS.AccessPoint.createHTTP(Images, {
+  baseUrl: '/files',
+  headers: [
+    ['Cache-Control', 'private, max-age=0, no-cache']
+  ]
+});
 ```
 
 ## Drag and Drop
