@@ -138,7 +138,7 @@ var APDelete = function(fileObj) {
 };
 
 var APhandler = function(collection, download, options) {
-  options.httpHeaders = options.httpHeaders || [];
+  options.headers = options.headers || [];
 
   return function(data) {
     var self = this;
@@ -182,7 +182,7 @@ var APhandler = function(collection, download, options) {
               );
 
       // Add any other custom headers
-      _.each(options.httpHeaders, function(header) {
+      _.each(options.headers, function(header) {
         self.addHeader(header[0], header[1]);
       });
 
@@ -202,27 +202,55 @@ var APhandler = function(collection, download, options) {
   };
 };
 
-/** @method FS.AccessPoint.DDP
- * @param {FS.Collection} cfs FS.Collection to create DDP access point for
- * @param {object} [options] Not used on the DDP access point
+FS.AccessPoint.DDP = {};
+
+/** @method FS.AccessPoint.createDDPPut
+ * @param {object} [options] Options
+ * @param {array} [options.name='/cfs/files/put'] Define a custom method name
  *
- * > Mounts two DDP methods on:
- * > * /cfs/files/collectionName/put
- * > * /cfs/files/collectionName/get
+ * Mounts an upload handler method with the given name
  */
-FS.AccessPoint.DDP = function(cfs, options) {
-  var result = {};
-  // We namespace with using the current Meteor convention - this could
-  // change
-  result[cfs.methodName + '/put'] = APUpload;
-  result[cfs.methodName + '/get'] = APDownload;
-  return result;
+FS.AccessPoint.mountDDPPut = function(options) {
+  options = options || {};
+  
+  var name = options.name;
+  if (typeof name !== "string") {
+    name = '/cfs/files/put';
+  }
+  
+  var methods = {};
+  methods[name] = APUpload;
+  Meteor.methods(methods);
+  
+  FS.AccessPoint.DDP.put = name;
 };
 
-/** @method FS.AccessPoint.HTTP
- * @param {FS.Collection} cfs FS.Collection to create HTTP access point for
+/** @method FS.AccessPoint.createDDPGet
  * @param {object} [options] Options
- * @param {array} [options.httpHeaders] Allows the user to set extra http headers
+ * @param {array} [options.name='/cfs/files/get'] Define a custom method name
+ *
+ * Mounts a download handler method with the given name
+ */
+FS.AccessPoint.mountDDPGet = function(options) {
+  options = options || {};
+  
+  var name = options.name;
+  if (typeof name !== "string") {
+    name = '/cfs/files/get';
+  }
+
+  var methods = {};
+  methods[name] = APDownload;
+  Meteor.methods(methods);
+  
+  FS.AccessPoint.DDP.get = name;
+};
+
+/** @method FS.AccessPoint.mountHTTP
+ * @param {FS.Collection} cfs FS.Collection to mount HTTP access points for
+ * @param {object} [options] Options
+ * @param {array} [options.baseUrl='/cfs/files/collectionName'] Define a custom base URL. Must begin with a '/' but not end with one.
+ * @param {array} [options.headers] Allows the user to set extra http headers
  *
  * > Mounts four HTTP methods:
  * > With download headers set:
@@ -232,15 +260,32 @@ FS.AccessPoint.DDP = function(cfs, options) {
  * > * /cfs/files/collectionName/:id
  * > * /cfs/files/collectionName/:id/selector
  */
-FS.AccessPoint.HTTP = function(cfs, options) {
-  var result = {};
+FS.AccessPoint.createHTTP = function(cfs, options) {
+  options = options || {};
+  
+  if (typeof HTTP === 'undefined' || typeof HTTP.methods !== 'function') {
+    throw new Error('FS.AccessPoint.createHTTP: http-methods package not loaded');
+  }
+  
+  var baseUrl = options.baseUrl;
+  if (typeof baseUrl !== "string") {
+    baseUrl = '/cfs/files/' + cfs.name;
+  }
+  
   // We namespace with using the current Meteor convention - this could
   // change
-  // XXX: at some point we should remove the download flag in favour of just
-  // adding the download headers from here...
-  result[cfs.httpUrl + '/download/:id'] = APhandler(cfs, true, options);
-  result[cfs.httpUrl + '/download/:id/:selector'] = APhandler(cfs, true, options);
-  result[cfs.httpUrl + '/:id'] = APhandler(cfs, false, options);
-  result[cfs.httpUrl + '/:id/:selector'] = APhandler(cfs, false, options);
-  return result;
+  var methods = {};
+  methods[baseUrl + '/download/:id'] = APhandler(cfs, true, options);
+  methods[baseUrl + '/download/:id/:selector'] = APhandler(cfs, true, options);
+  methods[baseUrl + '/:id'] = APhandler(cfs, false, options);
+  methods[baseUrl + '/:id/:selector'] = APhandler(cfs, false, options);
+  
+  HTTP.methods(methods);
+  
+  return baseUrl;
 };
+
+// Mount defaults for use by all collections. You may call these
+// again with custom method names if you don't like the default names.
+FS.AccessPoint.mountDDPPut();
+FS.AccessPoint.mountDDPGet();
