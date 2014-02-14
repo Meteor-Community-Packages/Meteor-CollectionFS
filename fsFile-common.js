@@ -249,7 +249,7 @@ FS.File.prototype.url = function(options) {
     }
 
     if (!self.collection.httpUrl) {
-      throw new Error('FS.File.url FS.Collection "' + self.collection.name + '" has no HTTP access point; set useHTTP option to true');
+      throw new Error('FS.File.url: FS.Collection "' + self.collection.name + '" has no HTTP access point; set httpUrl manually or remove the autoMountHTTP=false option');
     }
 
     // TODO: Could we somehow figure out if the collection requires login?
