@@ -2,7 +2,7 @@
 
 IMPORTANT:
 
-* If you're just getting started with CollectionFS, we highly recommend you check out the [devel-merge branch](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel-merge) instead. It is nearing completion and is much better. Essentially just working on tests and tweaks at this point, though there is always the potential for API changes until it's released.
+* If you're just getting started with CollectionFS, we highly recommend you check out the [devel branch](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel) instead. It is nearing completion and is much better. Essentially just working on tests and tweaks at this point, though there is always the potential for API changes until it's released.
 * If you need a working v1 of CollectionFS for some reason, you can use [Eric's fork](https://github.com/aldeed/Meteor-CollectionFS).
 
 #CollectionFS
