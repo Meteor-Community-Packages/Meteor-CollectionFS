@@ -3,8 +3,7 @@ Package.describe({
 });
 
 Npm.depends({
-  mime: "1.2.11",
-//  temp: "0.6.0"
+  mime: "1.2.11"
 });
 
 Package.on_use(function(api) {
@@ -17,14 +16,14 @@ Package.on_use(function(api) {
     'fsFile-common.js',
     'fsFile-data-get.js',
     'fsFile-data-set.js',
-    'fsFile-client.js',
+    'fsFile-client.js'
   ], 'client');
 
   api.add_files([
     'fsFile-common.js',
     'fsFile-data-get.js',
     'fsFile-data-set.js',
-    'fsFile-server.js',
+    'fsFile-server.js'
   ], 'server');
 });
 
@@ -34,6 +33,6 @@ Package.on_test(function (api) {
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
            'random', 'deps']);
 
-  api.add_files('tests/client-tests.js', 'server');
-  api.add_files('tests/server-tests.js', 'client');
+  api.add_files('tests/server-tests.js', 'server');
+  api.add_files('tests/client-tests.js', 'client');
 });

@@ -20,11 +20,6 @@ Tinytest.add('FS.Collection - server - test environment', function(test) {
  * set FS.File.name to a filename and test that FS.File.getExtension() returns the extension
  * 
  * 
- * FS.Collection Server Tests
- * 
- * Make sure options.filter is respected
- * 
- * 
  */
 
 
