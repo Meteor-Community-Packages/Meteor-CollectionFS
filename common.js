@@ -4,17 +4,21 @@
 //
 // #############################################################################
 
+/**
+ * 
+ * @constructor
+ * @param {string} name A name for the collection
+ * @param {Object} options
+ * @param {Object} options.stores An array of stores in which files should be saved. At least one is required.
+ * @param {Object} [options.filter] Filter definitions
+ * @param {Boolean} [options.autoMountHTTP=true] Set to `false` if you need to mount your own HTTP URLs, such as to specific custom headers.
+ * @param {Number} [options.chunkSize=0.5MB] Override the chunk size in bytes for uploads and downloads
+ * @returns {undefined}
+ */
 FS.Collection = function(name, options) {
   var self = this;
 
   self.options = {
-    useDDP: true,
-    useHTTP: true,
-    accessPoints: {
-      DDP: null, //will set to default below
-      HTTP: null //will set to default below
-    },
-    httpHeaders: [], //optional
     filter: null, //optional
     stores: [], //required
     chunkSize: 0.5 * 1024 * 1024 // 0.5MB; can be changed
@@ -27,42 +31,20 @@ FS.Collection = function(name, options) {
   _.extend(self.options, options);
 
   self.name = name;
-  self.methodName = '/cfs/files/' + name;
-  self.httpUrl = self.options.useHTTP ? self.methodName : null;
+  
+  // We automatically mount some HTTP URLs for this collection. If the user
+  // wants different URLs or wants to supply headers, she can set autoMountHTTP
+  // option to false and then set httpUrl directly.
+  if (self.options.autoMountHTTP !== false) {
+    self.httpUrl = FS.AccessPoint.createHTTP(self);
+  }
 
-  if (Meteor.isServer) {
-
-    // Make at least one store has been supplied
-    if (_.isEmpty(self.options.stores)) {
-      throw new Error("You must specify at least one store. Please consult the documentation.");
-    }
-
-    // Add default access points if user did not supply any
-    self.options.accessPoints = self.options.accessPoints || {};
-
-    // Add DDP access points
-    if (self.options.useDDP) {
-      // Get the ddp accesspoint
-      self.options.accessPoints.DDP = self.options.accessPoints.DDP ||
-              FS.AccessPoint.DDP(self);
-      // Mount the ddp methods
-      Meteor.methods(self.options.accessPoints.DDP);
-    }
-
-    // Add HTTP access points
-    if (self.options.useHTTP
-            && typeof HTTP !== 'undefined'
-            && typeof HTTP.methods === 'function') {
-      // Get the http accesspoint
-      self.options.accessPoints.HTTP = self.options.accessPoints.HTTP ||
-              FS.AccessPoint.HTTP(self, {
-                httpHeaders: self.options.httpHeaders
-              });
-      // Mount the http methods
-      HTTP.methods(self.options.accessPoints.HTTP);
-    }
-
-  } // EO is Server
+  // Make sure at least one store has been supplied.
+  // Usually the stores aren't used on the client, but we need them defined
+  // so that we can access their names and use the first one as the default.
+  if (_.isEmpty(self.options.stores)) {
+    throw new Error("You must specify at least one store. Please consult the documentation.");
+  }
 
   var collectionName = name + '.files';
 
