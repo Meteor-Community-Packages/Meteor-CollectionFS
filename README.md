@@ -27,7 +27,7 @@ It should look something like this.
   "packages": {
     "collectionFS": {
       "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
-      "branch": "devel-merge"
+      "branch": "devel"
     },
     "cfs-gridfs": {
       "git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
