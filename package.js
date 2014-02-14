@@ -3,12 +3,12 @@ Package.describe({
 });
 
 Package.on_use(function(api) {
-  api.use([ 'cfs-base-package', 'http-methods']);
+  api.use(['cfs-base-package', 'http-methods']);
 
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata']);
 
   // Make a weak dependency to support Join for joining data
-  api.use(['join'], { weak: true }); // Move to cfs-collection
+  api.use(['join'], { weak: true });
 
   api.add_files([
     'common.js',
@@ -19,7 +19,7 @@ Package.on_use(function(api) {
   api.add_files([
     'common.js',
     'api.common.js',
-    'api.server.js',
+    'api.server.js'
   ], 'server');
 });
 

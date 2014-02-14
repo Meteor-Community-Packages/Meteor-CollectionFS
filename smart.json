@@ -13,6 +13,10 @@
     "http-methods": {
       "git": "https://github.com/CollectionFS/Meteor-http-methods.git",
       "branch": "master" 
-    } 
+    },
+    "join": {
+      "git": "https://github.com/CollectionFS/Meteor-join.git",
+      "branch": "master"
+    }
   }
 }
