@@ -173,4 +173,10 @@ FS.TempStore = {
   }
 };
 
+/** @method FS.TempStore.getDataForFileSync
+  * @param {FS.File} fileObj
+  * 
+  * Synchronous version of FS.TempStore.getDataForFile. Returns the file
+  * with data attached, or throws an error.
+  */
 FS.TempStore.getDataForFileSync = Meteor._wrapAsync(FS.TempStore.getDataForFile);
