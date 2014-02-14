@@ -18,7 +18,7 @@ Package.on_use(function(api) {
     // Add the option to have ddp and http access point
     'cfs-access-point',
     // We might also want to have the server create copies of our files?
-    'cfs-worker',
+    'cfs-worker'
   ]);
 
 });
