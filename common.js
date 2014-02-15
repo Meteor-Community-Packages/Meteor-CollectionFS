@@ -9,10 +9,10 @@
  * @constructor
  * @param {string} name A name for the collection
  * @param {Object} options
- * @param {Object} options.stores An array of stores in which files should be saved. At least one is required.
+ * @param {FS.StorageAdapter[]} options.stores An array of stores in which files should be saved. At least one is required.
  * @param {Object} [options.filter] Filter definitions
  * @param {Boolean} [options.autoMountHTTP=true] Set to `false` if you need to mount your own HTTP URLs, such as to specific custom headers.
- * @param {Number} [options.chunkSize=0.5MB] Override the chunk size in bytes for uploads and downloads
+ * @param {Number} [options.chunkSize=131072] Override the chunk size in bytes for uploads and downloads
  * @returns {undefined}
  */
 FS.Collection = function(name, options) {
@@ -21,7 +21,7 @@ FS.Collection = function(name, options) {
   self.options = {
     filter: null, //optional
     stores: [], //required
-    chunkSize: 0.5 * 1024 * 1024 // 0.5MB; can be changed
+    chunkSize: 128 * 1024 // 128K default; higher begins to produce UI blocking
   };
 
   // On the client, you may also define options.defaultStoreName to avoid
