@@ -8,6 +8,7 @@ Npm.depends({
 
 Package.on_use(function(api) {
   api.use(['cfs-base-package', 'cfs-storage-adapter']);
+  api.use(['underscore']);
   api.add_files('s3.server.js', 'server');
   api.add_files('s3.client.js', 'client');
 });
