@@ -11,11 +11,11 @@ Package.on_use(function(api) {
     'ejson']);
 
   api.add_files([
-    'storageAdapter.client.js',
+    'storageAdapter.client.js'
   ], 'client');
 
   api.add_files([
-    'storageAdapter.server.js',
+    'storageAdapter.server.js'
   ], 'server');
 });
 
@@ -25,6 +25,6 @@ Package.on_test(function (api) {
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
            'random', 'deps']);
 
-  api.add_files('tests/client-tests.js', 'server');
-  api.add_files('tests/server-tests.js', 'client');
+  api.add_files('tests/server-tests.js', 'server');
+  api.add_files('tests/client-tests.js', 'client');
 });

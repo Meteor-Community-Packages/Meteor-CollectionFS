@@ -11,7 +11,7 @@ FS.StorageAdapter = function(name, options, api) {
 
   // If name is the only argument, a string and the SA allready found
   // we will just return that SA
-  if (arguments.length === 1 && name === ''+name &&
+  if (arguments.length === 1 && name === '' + name &&
           typeof _storageAdapters[name] !== 'undefined')
     return _storageAdapters[name];
 
@@ -85,8 +85,10 @@ FS.StorageAdapter = function(name, options, api) {
     // insert the file ref into the SA file record
     self.files.insert({createdAt: new Date(), size: fsFile.size}, function(err, id) {
       // prep a function to remove the SA file record we just created if storage fails
-      function removeFileRecord() {
-        self.files.remove({_id: id});
+      function removeFileRecord(err, res, cb) {
+        self.files.remove({_id: id}, function() {
+          cb(err, res);
+        });
       }
 
       // construct the filename
@@ -114,16 +116,12 @@ FS.StorageAdapter = function(name, options, api) {
       // Put the file to storage
       api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, function putCallback(err, fileKey) {
         if (err) {
-          FS.debug && console.log('SA put failed: ' + err.message);
-          removeFileRecord(); // XXX: this claimes not to be running in a fiber? when used with the S3?
-          callback(err, null);
-        } else if (fileKey) {
-          if (self.files.findOne({key: fileKey})) {
-            //file key already used
-            removeFileRecord();
-            callback(new Error("File key " + fileKey + " already saved"));
-            return;
-          }
+          removeFileRecord(err, null, callback);
+        } else if (!fileKey) {
+          removeFileRecord(new Error("No file key"), null, callback);
+        } else if (self.files.findOne({key: fileKey})) {
+          removeFileRecord(new Error("File key " + fileKey + " already saved"), false, callback);
+        } else {
 
           function updateFileAndFinish(updatedAt) {
             self.files.update({_id: id}, {$set: {key: fileKey, updatedAt: updatedAt}}, function(err) {

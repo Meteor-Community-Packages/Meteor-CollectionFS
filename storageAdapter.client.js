@@ -49,4 +49,4 @@ FS.StorageAdapter = function(name, options, api) {
   // we default to ddp upload but really let the SA like S3Cloud overwrite to
   // implement direct client to s3 upload
 
-}
+};
