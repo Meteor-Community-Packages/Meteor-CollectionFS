@@ -114,7 +114,8 @@ FS.StorageAdapter = function(name, options, api) {
       // Put the file to storage
       api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, function putCallback(err, fileKey) {
         if (err) {
-          removeFileRecord();
+          FS.debug && console.log('SA put failed: ' + err.message);
+          removeFileRecord(); // XXX: this claimes not to be running in a fiber? when used with the S3?
           callback(err, null);
         } else if (fileKey) {
           if (self.files.findOne({key: fileKey})) {
@@ -168,13 +169,14 @@ FS.StorageAdapter = function(name, options, api) {
    * @param {Function} [callback] If not provided, will block and return file info.
    */
   self.insert = function(fsFile, options, callback) {
-    FS.debug && console.log("---SA INSERT");
     foCheck(fsFile, "insert");
 
     if (!callback && typeof options === "function") {
       callback = options;
       options = {};
     }
+
+    FS.debug && console.log("---SA INSERT callback: " + (typeof callback === 'function'));
 
     if (callback) {
       return self._insertAsync(fsFile, callback);
