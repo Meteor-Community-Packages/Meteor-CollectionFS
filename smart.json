@@ -1,10 +1,10 @@
 {
   "name": "cfs-collection",
   "description": "CollectionFS, FS.Collection object",
-  "homepage": "https://github.com/Meteor-CollectionFS/Meteor-cfs-collection",
+  "homepage": "https://github.com/CollectionFS/Meteor-cfs-collection",
   "author": "CollectionFS core @aldeed & @raix",
-  "version": "0.0.3",
-  "git": "https://github.com/Meteor-CollectionFS/Meteor-cfs-collection.git",
+  "version": "0.0.4",
+  "git": "https://github.com/CollectionFS/Meteor-cfs-collection.git",
   "packages": {
     "cfs-base-package": {
       "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
