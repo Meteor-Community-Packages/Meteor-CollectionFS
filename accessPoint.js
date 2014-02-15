@@ -70,6 +70,8 @@ var APDownload = function(fileObj, storeName, start, end) {
     return; // No file data found
   }
 
+  FS.debug && console.log('Download ' + fileObj.name);
+
   // proper validation requires that we have the full file record loaded
   fileObj.getFileRecord();
 
@@ -212,6 +214,7 @@ var APhandler = function(collection, download, options) {
  */
 FS.AccessPoint.DDP = function(cfs, options) {
   var result = {};
+  FS.debug && console.log('DDP mounted at: ' + cfs.methodName);
   // We namespace with using the current Meteor convention - this could
   // change
   result[cfs.methodName + '/put'] = APUpload;
@@ -234,6 +237,7 @@ FS.AccessPoint.DDP = function(cfs, options) {
  */
 FS.AccessPoint.HTTP = function(cfs, options) {
   var result = {};
+  FS.debug && console.log('HTTP mounted at: ' + cfs.httpUrl);
   // We namespace with using the current Meteor convention - this could
   // change
   // XXX: at some point we should remove the download flag in favour of just
