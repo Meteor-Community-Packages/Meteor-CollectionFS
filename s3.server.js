@@ -44,18 +44,19 @@ var validS3PutParamKeys = [
 
 
 /**
- * @namespace FS
+ * @public
  * @constructor
- * @param {String} name
+ * @param {String} name - The store name
  * @param {Object} options
- * @param {Object} options.region - Bucket region
- * @param {Object} options.key - AWS IAM key
- * @param {Object} options.secret - AWS IAM secret
- * @param {Object} options.bucket - Bucket name
- * @param {Object} [options.style="path"]
- * @param {Object} [options['x-amz-acl']='public-read'] - ACL for objects when putting
+ * @param {String} options.region - Bucket region
+ * @param {String} options.bucket - Bucket name
+ * @param {String} [options.accessKeyId] - AWS IAM key; required if not set in environment variables
+ * @param {String} [options.secretAccessKey] - AWS IAM secret; required if not set in environment variables
+ * @param {String} [options.ACL='private'] - ACL for objects when putting
  * @param {String} [options.folder='/'] - Which folder (key prefix) in the bucket to use
- * @returns {undefined}
+ * @param {Function} [options.beforeSave] - Function to run before saving a file from the server. The context of the function will be the `FS.File` instance we're saving. The function may alter its properties.
+ * @param {Number} [options.maxTries=5] - Max times to attempt saving a file
+ * @returns {FS.StorageAdapter} An instance of FS.StorageAdapter.
  *
  * Creates an S3 store instance on the server. Inherits from FS.StorageAdapter
  * type.
@@ -94,15 +95,11 @@ FS.Store.S3 = function(name, options) {
 
   // Whitelist serviceParams, else aws-sdk throws an error
   serviceParams = _.pick(serviceParams, validS3ServiceParamKeys);
-
+  // Remove serviceParams from SA options
+  options = _.omit(options, validS3ServiceParamKeys);
+  
+  // Create S3 service
   var S3 = new AWS.S3(serviceParams);
-
-  // Clean options TODO make this a whitelist instead
-  _.each(['region', 'accessKeyId', 'secretAccessKey', 'bucket', 'ACL'], function (prop) {
-    if (prop in options) {
-      delete options[prop];
-    }
-  });
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.s3',
