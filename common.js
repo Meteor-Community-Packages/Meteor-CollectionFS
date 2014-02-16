@@ -11,7 +11,6 @@
  * @param {Object} options
  * @param {FS.StorageAdapter[]} options.stores An array of stores in which files should be saved. At least one is required.
  * @param {Object} [options.filter] Filter definitions
- * @param {Boolean} [options.autoMountHTTP=true] Set to `false` if you need to mount your own HTTP URLs, such as to specific custom headers.
  * @param {Number} [options.chunkSize=131072] Override the chunk size in bytes for uploads and downloads
  * @returns {undefined}
  */
@@ -31,13 +30,6 @@ FS.Collection = function(name, options) {
   _.extend(self.options, options || {});
 
   self.name = name;
-  
-  // We automatically mount some HTTP URLs for this collection. If the user
-  // wants different URLs or wants to supply headers, she can set autoMountHTTP
-  // option to false and then set httpUrl directly.
-  if (self.options.autoMountHTTP !== false) {
-    self.httpUrl = FS.AccessPoint.createHTTP(self);
-  }
 
   // Make sure at least one store has been supplied.
   // Usually the stores aren't used on the client, but we need them defined
