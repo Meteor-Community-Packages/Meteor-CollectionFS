@@ -62,6 +62,9 @@ $ mrt add cfs-s3
 }
 ```
 
+You may have to wait for an unknown number of minutes for the new security to
+take effect.
+
 ## Usage
 
 Perform the steps in the "S3 Setup" section, putting the necessary information into your
@@ -70,10 +73,10 @@ S3Store options, like so:
 ```js
 var imageStore = new FS.Store.S3("images", {
   region: "my-s3-region", //required, or use endpoint option
-  key: "account or IAM key", //required
-  secret: "account or IAM secret", //required
+  accessKeyId: "account or IAM key", //required if environment variables are not set
+  secretAccessKey: "account or IAM secret", //required if environment variables are not set
   bucket: "mybucket", //required
-  'x-amz-acl': myValue //optional, default is 'public-read'
+  ACL: myValue //optional, default is 'private'
   beforeSave: myBeforeSaveFunction, //optional
   maxTries: 1 //optional, default 5
 });
@@ -87,4 +90,6 @@ Images = new FS.Collection("images", {
 
 * An S3 store does not support the `sync` option.
 * Be sure to define your store in a server file that is not shipped to the
-client since it contains credentials. Wrapping in `Meteor.isServer` is not secure.
+client since it contains credentials. Wrapping in `Meteor.isServer` is not
+secure. For best security, you can omit the key and secret options and instead
+[set your credentials in environment variables](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Credentials_from_Environment_Variables).

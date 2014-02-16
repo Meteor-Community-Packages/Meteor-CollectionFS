@@ -1,21 +1,46 @@
-var Knox = Npm.require('knox');
-
-/**
- * @private
- * @method cleanOptions
- * @param {Object} opts - An options object to be cleaned
- * @returns {undefined}
- * 
- * Cleans some properties out of the object. Modifies the referenced object
- * properties directly.
- */
-function cleanOptions(opts) {
-  _.each(['region', 'key', 'secret', 'bucket', 'style', 'x-amz-acl'], function (prop) {
-    if (prop in opts) {
-      delete opts[prop];
-    }
-  });
-}
+var AWS = Npm.require('aws-sdk');
+var validS3ServiceParamKeys = [
+  'endpoint',
+  'accessKeyId',
+  'secretAccessKey',
+  'sessionToken',
+  'credentials',
+  'credentialProvider',
+  'region',
+  'maxRetries',
+  'maxRedirects',
+  'sslEnabled',
+  'paramValidation',
+  'computeChecksums',
+  's3ForcePathStyle',
+  'httpOptions',
+  'apiVersion',
+  'apiVersions',
+  'logger',
+  'signatureVersion'
+];
+var validS3PutParamKeys = [
+  'ACL',
+  'Body',
+  'Bucket',
+  'CacheControl',
+  'ContentDisposition',
+  'ContentEncoding',
+  'ContentLanguage',
+  'ContentLength',
+  'ContentMD5',
+  'ContentType',
+  'Expires',
+  'GrantFullControl',
+  'GrantRead',
+  'GrantReadACP',
+  'GrantWriteACP',
+  'Key',
+  'Metadata',
+  'ServerSideEncryption',
+  'StorageClass',
+  'WebsiteRedirectLocation'
+];
 
 /**
  * @namespace FS
@@ -39,80 +64,92 @@ FS.Store.S3 = function(name, options) {
   if (!(self instanceof FS.Store.S3))
     throw new Error('FS.Store.S3 missing keyword "new"');
   
+  options = options || {};
+  
   // Determine which folder (key prefix) in the bucket to use
   var folder = options.folder;
   if (typeof folder === "string" && folder.length) {
-    if (folder.slice(0, 1) !== "/") {
-      folder = "/" + folder;
+    if (folder.slice(0, 1) === "/") {
+      folder = folder.slice(1);
     }
     if (folder.slice(-1) !== "/") {
       folder += "/";
     }
   } else {
-    folder = "/";
+    folder = "";
   }
-
-  var S3 = Knox.createClient(_.extend({
-    region: null, //required
-    key: null, //required
-    secret: null, //required
-    bucket: null, //required
-    style: "path",
-    'x-amz-acl': 'public-read'
-  }, options));
   
-  cleanOptions(options);
+  var bucket = options.bucket;
+  if (!bucket)
+    throw new Error('FS.Store.S3 you must specify the "bucket" option');
+  
+  var defaultAcl = options.ACL || 'private';
+  
+  var serviceParams = _.extend({
+    region: null, //required
+    accessKeyId: null, //required
+    secretAccessKey: null //required
+  }, options);
+  
+  // Whitelist serviceParams, else aws-sdk throws an error
+  serviceParams = _.pick(serviceParams, validS3ServiceParamKeys);
+  
+  var S3 = new AWS.S3(serviceParams);
+  
+  // Clean options TODO make this a whitelist instead
+  _.each(['region', 'accessKeyId', 'secretAccessKey', 'bucket', 'ACL'], function (prop) {
+    if (prop in options) {
+      delete options[prop];
+    }
+  });
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.s3',
     get: function(fileKey, callback) {
-      var hasReturned = false; // prevent calling the callback more than once
-      var bufs = []; 
-      var req = S3.get(fileKey);
-      req.on('response', Meteor.bindEnvironment(function(res) {
-        res.on('data', function(chunk) {
-          bufs.push(chunk);
-        });
-        res.on('end', function() {
-          var buffer = Buffer.concat(bufs);
-          !hasReturned && callback(null, buffer);
-          hasReturned = true;
-        });
+      S3.getObject({
+        Bucket: bucket,
+        Key: fileKey
+      }, Meteor.bindEnvironment(function(error, data) {
+        callback(error, data && data.Body);
+      }, function (error) {
+        callback(error);
       }));
-      req.on('error', Meteor.bindEnvironment(function(e) {
-        !hasReturned && callback(e);
-        hasReturned = true;
-      }));
-      req.end();
     },
     put: function(id, fileKey, buffer, opts, callback) {
       opts = opts || {};
-      var hasReturned = false; // prevent calling the callback more than once
-      var headers = {
-        'Content-Length': buffer.length,
-        'Content-Type': opts.type,
-        'x-amz-acl': options['x-amz-acl']
-      };
+      
+      //backwards compat
+      opts.ContentType = opts.type;
+      
+      //adjust fileKey that will be saved and returned to be unique
       fileKey = folder + id + "/" + fileKey;
-      var req = S3.putBuffer(buffer, fileKey, headers, Meteor.bindEnvironment(function(err, res) {
-        if (res && res.statusCode === 200 && req && req.url) {
-          !hasReturned && callback(null, fileKey);
-        } else if (res && res.statusCode) {
-          !hasReturned && callback(new Error("S3 Storage Error: S3 returned status code " + res.statusCode));
-        } else if (err) {
-          !hasReturned && callback(err);
-        } else {
-          !hasReturned && callback(new Error("Unknown S3 Storage Error"));
-        }
-        hasReturned = true;
-      }));
-      req.on('error', Meteor.bindEnvironment(function(err) {
-        !hasReturned && callback(err);
-        hasReturned = true;
+      
+      var params = _.extend({
+        ContentLength: buffer.length,
+        Bucket: bucket,
+        Body: buffer,
+        ACL: defaultAcl,
+        Key: fileKey
+      }, opts);
+      
+      // Whitelist serviceParams, else aws-sdk throws an error
+      params = _.pick(params, validS3PutParamKeys);
+
+      S3.putObject(params, Meteor.bindEnvironment(function(error, data) {
+        callback(error, error ? void 0 : fileKey);
+      }, function (error) {
+        callback(error);
       }));
     },
     del: function(fileKey, callback) {
-      S3.deleteFile(fileKey, Meteor.bindEnvironment(callback));
+      S3.deleteObject({
+        Bucket: bucket,
+        Key: fileKey
+      }, Meteor.bindEnvironment(function(error, data) {
+        callback(error, error ? void 0 : fileKey);
+      }, function (error) {
+        callback(error);
+      }));
     },
     watch: function() {
       throw new Error("S3 storage adapter does not support the sync option");

@@ -3,7 +3,7 @@ Package.describe({
 });
 
 Npm.depends({
-  knox: "0.8.6"
+  'aws-sdk': "2.0.0-rc9"
 });
 
 Package.on_use(function(api) {
