@@ -241,15 +241,14 @@ FS.File.prototype.url = function(options) {
   if (self.isMounted()) {
     var storeName = options.store;
 
-    // On the client, it's best to always pass the `store` option or
-    // define a defaultStoreName for every FS.Collection. This helps
+    // On the client, we always want to have a storeName. This helps
     // avoid issues with reactive rendering of images, among other things.
     if (!storeName && Meteor.isClient) {
-      storeName = self.collection.options.defaultStoreName;
+      storeName = self.collection.options.stores[0];
     }
 
-    if (!self.collection.httpUrl) {
-      throw new Error('FS.File.url: FS.Collection "' + self.collection.name + '" has no HTTP access point; set httpUrl manually or remove the autoMountHTTP=false option');
+    if (!FS.AccessPoint.HTTP.baseUrl) {
+      throw new Error('FS.File.url: No HTTP access point found');
     }
 
     // TODO: Could we somehow figure out if the collection requires login?
@@ -262,13 +261,19 @@ FS.File.prototype.url = function(options) {
       authToken = options.auth;
     }
 
+    // Construct query string
+    var queryString = '?';
     if (authToken !== '') {
-      // Construct the token string to append to url
-      authToken = '?token=' + authToken;
+      queryString += 'token=' + authToken;
+      if (options.download) {
+        queryString += '&download=true';
+      }
+    } else if (options.download) {
+      queryString += 'download=true';
     }
+    queryString = queryString === '?' ? '' : queryString;
 
     // Construct the http method url
-    var urlPrefix = (options.download) ? '/download/' : '/';
     if (typeof storeName === "string" && storeName.length) {
       if (!self.hasCopy(storeName)) {
         // We want to return null if we know the URL will be a broken
@@ -281,7 +286,7 @@ FS.File.prototype.url = function(options) {
       storeName = '';
     }
 
-    return self.collection.httpUrl + urlPrefix + self._id + storeName + authToken;
+    return FS.AccessPoint.HTTP.baseUrl + '/' + self.collection.name + '/' + self._id + storeName + queryString;
   }
 
 };
