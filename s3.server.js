@@ -55,7 +55,7 @@ var validS3PutParamKeys = [
  * @param {Object} [options['x-amz-acl']='public-read'] - ACL for objects when putting
  * @param {String} [options.folder='/'] - Which folder (key prefix) in the bucket to use
  * @returns {undefined}
- * 
+ *
  * Creates an S3 store instance on the server. Inherits from FS.StorageAdapter
  * type.
  */
@@ -63,9 +63,9 @@ FS.Store.S3 = function(name, options) {
   var self = this;
   if (!(self instanceof FS.Store.S3))
     throw new Error('FS.Store.S3 missing keyword "new"');
-  
+
   options = options || {};
-  
+
   // Determine which folder (key prefix) in the bucket to use
   var folder = options.folder;
   if (typeof folder === "string" && folder.length) {
@@ -78,24 +78,24 @@ FS.Store.S3 = function(name, options) {
   } else {
     folder = "";
   }
-  
+
   var bucket = options.bucket;
   if (!bucket)
     throw new Error('FS.Store.S3 you must specify the "bucket" option');
-  
+
   var defaultAcl = options.ACL || 'private';
-  
+
   var serviceParams = _.extend({
     region: null, //required
     accessKeyId: null, //required
     secretAccessKey: null //required
   }, options);
-  
+
   // Whitelist serviceParams, else aws-sdk throws an error
   serviceParams = _.pick(serviceParams, validS3ServiceParamKeys);
-  
+
   var S3 = new AWS.S3(serviceParams);
-  
+
   // Clean options TODO make this a whitelist instead
   _.each(['region', 'accessKeyId', 'secretAccessKey', 'bucket', 'ACL'], function (prop) {
     if (prop in options) {
@@ -117,13 +117,13 @@ FS.Store.S3 = function(name, options) {
     },
     put: function(id, fileKey, buffer, opts, callback) {
       opts = opts || {};
-      
+
       //backwards compat
       opts.ContentType = opts.type;
-      
+
       //adjust fileKey that will be saved and returned to be unique
       fileKey = folder + id + "/" + fileKey;
-      
+
       var params = _.extend({
         ContentLength: buffer.length,
         Bucket: bucket,
@@ -131,7 +131,7 @@ FS.Store.S3 = function(name, options) {
         ACL: defaultAcl,
         Key: fileKey
       }, opts);
-      
+
       // Whitelist serviceParams, else aws-sdk throws an error
       params = _.pick(params, validS3PutParamKeys);
 
