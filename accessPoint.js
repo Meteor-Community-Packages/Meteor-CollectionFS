@@ -68,6 +68,8 @@ var APDownload = function(fileObj, storeName, start, end) {
     return; // No file data found
   }
 
+  FS.debug && console.log('Download ' + fileObj.name);
+
   // proper validation requires that we have the full file record loaded
   fileObj.getFileRecord();
 
