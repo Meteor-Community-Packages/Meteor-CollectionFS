@@ -1,22 +1,22 @@
 {
-  "name": "cfs-collection",
-  "description": "CollectionFS, FS.Collection object",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-collection",
-  "author": "CollectionFS core @aldeed & @raix",
-  "version": "0.0.4",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-collection.git",
-  "packages": {
-    "cfs-base-package": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-      "branch": "master"      
-    },
-    "http-methods": {
-      "git": "https://github.com/CollectionFS/Meteor-http-methods.git",
-      "branch": "master" 
-    },
-    "join": {
-      "git": "https://github.com/CollectionFS/Meteor-join.git",
-      "branch": "master"
-    }
-  }
+	"name": "cfs-collection",
+	"description": "CollectionFS, FS.Collection object",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-collection",
+	"author": "CollectionFS core @aldeed & @raix",
+	"version": "0.0.5",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-collection.git",
+	"packages": {
+		"cfs-base-package": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+			"branch": "master"
+		},
+		"http-methods": {
+			"git": "https://github.com/CollectionFS/Meteor-http-methods.git",
+			"branch": "master"
+		},
+		"join": {
+			"git": "https://github.com/CollectionFS/Meteor-join.git",
+			"branch": "master"
+		}
+	}
 }
