@@ -1,14 +1,14 @@
 {
-  "name": "cfs-s3",
-  "description": "Amazon Web Services S3 storage adapter for CollectionFS",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-s3",
-  "author": "Eric Dobbertin (http://dairystatedesigns.com)",
-  "version": "0.0.8",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-s3.git",
-  "packages": {
-    "cfs-storage-adapter": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
-      "branch": "master"
-    }
-  }
+	"name": "cfs-s3",
+	"description": "Amazon Web Services S3 storage adapter for CollectionFS",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-s3",
+	"author": "Eric Dobbertin (http://dairystatedesigns.com)",
+	"version": "0.0.9",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-s3.git",
+	"packages": {
+		"cfs-storage-adapter": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
+			"branch": "master"
+		}
+	}
 }
