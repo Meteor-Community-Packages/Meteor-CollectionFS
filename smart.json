@@ -1,14 +1,14 @@
 {
-  "name": "cfs-storage-adapter",
-  "description": "CollectionFS, Class for creating Storage adapters",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter",
-  "author": "CollectionFS core @aldeed & @raix",
-  "version": "0.0.2",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
-  "packages": {
-    "cfs-base-package": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-      "branch": "master"      
-    }
-  }  
+	"name": "cfs-storage-adapter",
+	"description": "CollectionFS, Class for creating Storage adapters",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter",
+	"author": "CollectionFS core @aldeed & @raix",
+	"version": "0.0.3",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
+	"packages": {
+		"cfs-base-package": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+			"branch": "master"
+		}
+	}
 }
