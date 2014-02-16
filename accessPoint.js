@@ -42,8 +42,6 @@ var APUpload = function(fileObj, data, start) {
 
 };
 
-//
-
 /**
  * Returns the data, or partial data, for the fileObj as stored in the
  * store with name storeName.
@@ -99,7 +97,7 @@ var APDownload = function(fileObj, storeName, start, end) {
 
 /**
  * Deletes fileObj. Always deletes the entire file record and all data from all
- * defined stores, even if a specific selector is passed. We don't allow
+ * defined stores, even if a specific store name is passed. We don't allow
  * deleting from individual stores.
  * @param {FS.File} fileObj
  * @returns {undefined}
@@ -137,16 +135,24 @@ var APDelete = function(fileObj) {
   return fileObj.remove();
 };
 
-var APhandler = function(collection, download, options) {
+var APhandler = function(options) {
   options.headers = options.headers || [];
 
   return function(data) {
     var self = this;
     var query = self.query || {};
+    var params = self.params || {};
 
-    var id = self.params.id;
+    // Get the requested ID
+    var id = params.id;
     if (!id) {
       throw new Meteor.Error(400, "Bad Request", "No file ID specified");
+    }
+    
+    // Get the collection
+    var collection = FS._collections[params.collectionName];
+    if (!collection) {
+      throw new Meteor.Error(404, "Not Found", "No collection has the name " + params.collectionName);
     }
 
     // Get the fsFile
@@ -159,7 +165,7 @@ var APhandler = function(collection, download, options) {
     if (self.method.toLowerCase() === 'get') {
       var copyInfo, filename;
 
-      var storeName = self.params.selector;
+      var storeName = params.store;
       if (typeof storeName !== "string") {
         // first store is considered the master store by default
         storeName = collection.options.stores[0].name;
@@ -167,7 +173,7 @@ var APhandler = function(collection, download, options) {
 
       copyInfo = file.copies[storeName];
       if (!copyInfo) {
-        throw new Meteor.Error(404, "Not Found", "Invalid selector: " + storeName);
+        throw new Meteor.Error(404, "Not Found", "Invalid store name: " + storeName);
       }
 
       filename = copyInfo.name;
@@ -176,18 +182,52 @@ var APhandler = function(collection, download, options) {
       }
 
       // Add 'Content-Disposition' header if requested a download/attachment URL
-      download && self.addHeader(
-              'Content-Disposition',
-              'attachment; filename="' + filename + '"'
-              );
+      if (typeof query.download !== "undefined") {
+        self.addHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+
+        // If a chunk/range was requested instead of the whole file, serve that
+        var unit, start, end, range = self.requestHeaders.range;
+        if (range) {
+          // Parse range header
+          range = range.split('=');
+
+          unit = range[0];
+          if (unit !== 'bytes')
+            throw new Meteor.Error(416, "Requested Range Not Satisfiable");
+
+          range = range[1];
+          // Spec allows multiple ranges, but we will serve only the first
+          range = range.split(',')[0];
+          // Get start and end byte positions
+          range = range.split('-');
+          start = range[0];
+          end = range[1] || '';
+          // Convert to numbers and adjust invalid values when possible
+          start = start.length ? Math.max(Number(start), 0) : 0;
+          end = end.length ? Math.min(Number(end), copyInfo.size - 1) : copyInfo.size - 1;
+          if (end < start)
+            throw new Meteor.Error(416, "Requested Range Not Satisfiable");
+
+          self.setStatusCode(206, 'Partial Content');
+          self.addHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + copyInfo.size);
+          end = end + 1; //HTTP end byte is inclusive and ours are not
+        } else {
+          self.setStatusCode(200);
+        }
+      } else {
+        self.addHeader('Content-Disposition', 'inline');
+        self.setStatusCode(200);
+      }
 
       // Add any other custom headers
       _.each(options.headers, function(header) {
         self.addHeader(header[0], header[1]);
       });
 
-      self.setStatusCode(200);
-      return APDownload.call(self, file, storeName, query.start, query.end);
+      // Inform clients that we accept ranges for resumable chunked downloads
+      self.addHeader('Accept-Ranges', 'bytes');
+
+      return APDownload.call(self, file, storeName, start, end);
     }
 
     // If HTTP PUT then put the data for the file
@@ -204,36 +244,37 @@ var APhandler = function(collection, download, options) {
 
 FS.AccessPoint.DDP = {};
 
-/** @method FS.AccessPoint.createDDPPut
+/** @method FS.AccessPoint.DDP.mountPut
  * @param {object} [options] Options
  * @param {array} [options.name='/cfs/files/put'] Define a custom method name
  *
  * Mounts an upload handler method with the given name
  */
-FS.AccessPoint.mountDDPPut = function(options) {
+FS.AccessPoint.DDP.mountPut = function(options) {
   options = options || {};
-  
+
   var name = options.name;
   if (typeof name !== "string") {
     name = '/cfs/files/put';
   }
-  
+
   var methods = {};
   methods[name] = APUpload;
   Meteor.methods(methods);
-  
+
   FS.AccessPoint.DDP.put = name;
 };
 
-/** @method FS.AccessPoint.createDDPGet
+/** @method FS.AccessPoint.DDP.mountGet
  * @param {object} [options] Options
  * @param {array} [options.name='/cfs/files/get'] Define a custom method name
+ * @todo possibly deprecate DDP downloads in favor of HTTP access point with "download" option
  *
  * Mounts a download handler method with the given name
  */
-FS.AccessPoint.mountDDPGet = function(options) {
+FS.AccessPoint.DDP.mountGet = function(options) {
   options = options || {};
-  
+
   var name = options.name;
   if (typeof name !== "string") {
     name = '/cfs/files/get';
@@ -242,53 +283,61 @@ FS.AccessPoint.mountDDPGet = function(options) {
   var methods = {};
   methods[name] = APDownload;
   Meteor.methods(methods);
-  
+
   FS.AccessPoint.DDP.get = name;
 };
 
-/** @method FS.AccessPoint.mountHTTP
- * @param {FS.Collection} cfs FS.Collection to mount HTTP access points for
+FS.AccessPoint.HTTP = {};
+
+var currentHTTPMethodName;
+function unmountHTTPMethod() {
+  if (currentHTTPMethodName) {
+    var methods = {};
+    methods[currentHTTPMethodName] = false;
+    HTTP.methods(methods);
+    currentHTTPMethodName = null;
+  }
+}
+
+/** @method FS.AccessPoint.HTTP.mount
  * @param {object} [options] Options
- * @param {array} [options.baseUrl='/cfs/files/collectionName'] Define a custom base URL. Must begin with a '/' but not end with one.
+ * @param {array} [options.baseUrl='/cfs/files'] Define a custom base URL. Must begin with a '/' but not end with one.
  * @param {array} [options.headers] Allows the user to set extra http headers
+ * @todo support collection-specific header overrides
  *
- * > Mounts four HTTP methods:
- * > With download headers set:
- * > * /cfs/files/collectionName/download/:id
- * > * /cfs/files/collectionName/download/:id/selector
- * > Regular HTTP methods
- * > * /cfs/files/collectionName/:id
- * > * /cfs/files/collectionName/:id/selector
+ * > Mounts HTTP method at baseUrl/:collectionName/:id/:store?[download=true]
  */
-FS.AccessPoint.createHTTP = function(cfs, options) {
+FS.AccessPoint.HTTP.mount = function(options) {
   options = options || {};
-  
+
   if (typeof HTTP === 'undefined' || typeof HTTP.methods !== 'function') {
     throw new Error('FS.AccessPoint.createHTTP: http-methods package not loaded');
   }
-  
+
   var baseUrl = options.baseUrl;
   if (typeof baseUrl !== "string") {
-    baseUrl = '/cfs/files/' + cfs.name;
+    baseUrl = '/cfs/files';
   }
   
+  var url = baseUrl + '/:collectionName/:id/:store';
+
   // Currently HTTP.methods is not implemented on the client
   if (Meteor.isServer) {
+    // Unmount previously mounted URL
+    unmountHTTPMethod();
     // We namespace with using the current Meteor convention - this could
     // change
     var methods = {};
-    methods[baseUrl + '/download/:id'] = APhandler(cfs, true, options);
-    methods[baseUrl + '/download/:id/:selector'] = APhandler(cfs, true, options);
-    methods[baseUrl + '/:id'] = APhandler(cfs, false, options);
-    methods[baseUrl + '/:id/:selector'] = APhandler(cfs, false, options);
-
+    methods[url] = APhandler(options);
     HTTP.methods(methods);
+    // Update current name for potential future unmounting
+    currentHTTPMethodName = url;
   }
-  
-  return baseUrl;
+
+  FS.AccessPoint.HTTP.baseUrl = baseUrl;
 };
 
 // Mount defaults for use by all collections. You may call these
 // again with custom method names if you don't like the default names.
-FS.AccessPoint.mountDDPPut();
-FS.AccessPoint.mountDDPGet();
+FS.AccessPoint.DDP.mountPut();
+FS.AccessPoint.DDP.mountGet();
