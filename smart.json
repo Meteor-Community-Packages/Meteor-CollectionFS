@@ -1,22 +1,22 @@
 {
-  "name": "cfs-file",
-  "description": "CollectionFS, FS.File object",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-file",
-  "author": "CollectionFS core @aldeed & @raix",
-  "version": "0.0.3",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
-  "packages": {
-    "cfs-base-package": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-      "branch": "master"      
-    },
-    "cfs-filesaver": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-filesaver.git",
-      "branch": "master"      
-    },
-    "cfs-storage-adapter": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
-      "branch": "master"      
-    } 
-  }  
+	"name": "cfs-file",
+	"description": "CollectionFS, FS.File object",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-file",
+	"author": "CollectionFS core @aldeed & @raix",
+	"version": "0.0.4",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
+	"packages": {
+		"cfs-base-package": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+			"branch": "master"
+		},
+		"cfs-filesaver": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-filesaver.git",
+			"branch": "master"
+		},
+		"cfs-storage-adapter": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
+			"branch": "master"
+		}
+	}
 }
