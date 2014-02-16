@@ -53,7 +53,7 @@ __Returns__  *{undefined}*
 
 -
 
-#### <a name="FS.AccessPoint.DDP.mountPut"></a>*fsAccesspointDdp*.mountPut([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.AccessPoint.DDP.mountPut"></a>FS.AccessPoint.DDP.mountPut([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __mountPut__ is defined in `FS.AccessPoint.DDP`*
 
@@ -72,7 +72,7 @@ Mounts an upload handler method with the given name
 
 -
 
-#### <a name="FS.AccessPoint.DDP.mountGet"></a>*fsAccesspointDdp*.mountGet([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.AccessPoint.DDP.mountGet"></a>FS.AccessPoint.DDP.mountGet([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __mountGet__ is defined in `FS.AccessPoint.DDP`*
 
@@ -96,7 +96,7 @@ Mounts a download handler method with the given name
 
 -
 
-#### <a name="FS.AccessPoint.HTTP.mount"></a>*fsAccesspointHttp*.mount([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.AccessPoint.HTTP.mount"></a>FS.AccessPoint.HTTP.mount([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __mount__ is defined in `FS.AccessPoint.HTTP`*
 
