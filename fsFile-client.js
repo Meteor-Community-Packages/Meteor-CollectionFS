@@ -1,4 +1,5 @@
 /** @method FS.File.fromUrl
+ * @public
  * @param {String} url
  * @param {String} filename
  * @param {Function} callback
@@ -21,6 +22,7 @@ FS.File.fromUrl = function(url, filename, callback) {
 };
 
 /** @method FS.File.prototype.saveLocal
+ * @public
  * @param {String} [filename]
  * @return {undefined}
  *
