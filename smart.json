@@ -1,14 +1,14 @@
 {
-  "name": "cfs-filesystem",
-  "description": "Filesystem storage adapter for CollectionFS",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-filesystem",
-  "author": "CollectionFS core @aldeed & @raix",
-  "version": "0.0.2",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-filesystem.git",
-  "packages": {
-    "cfs-storage-adapter": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
-      "branch": "master"
-    }
-  }
+	"name": "cfs-filesystem",
+	"description": "Filesystem storage adapter for CollectionFS",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-filesystem",
+	"author": "CollectionFS core @aldeed & @raix",
+	"version": "0.0.3",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-filesystem.git",
+	"packages": {
+		"cfs-storage-adapter": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
+			"branch": "master"
+		}
+	}
 }
