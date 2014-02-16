@@ -244,7 +244,7 @@ FS.File.prototype.url = function(options) {
     // On the client, we always want to have a storeName. This helps
     // avoid issues with reactive rendering of images, among other things.
     if (!storeName && Meteor.isClient) {
-      storeName = self.collection.options.stores[0];
+      storeName = self.collection.options.stores[0].name;
     }
 
     if (!FS.AccessPoint.HTTP.baseUrl) {
