@@ -1,18 +1,18 @@
 {
-  "name": "cfs-access-point",
-  "description": "CollectionFS, add ddp and http accesspoint capability",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-access-point",
-  "author": "CollectionFS core @aldeed & @raix",
-  "version": "0.0.4",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
-  "packages": {
-    "cfs-base-package": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-      "branch": "master"      
-    }, 
-    "cfs-tempstore": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
-      "branch": "master" 
-    } 
-  }
+	"name": "cfs-access-point",
+	"description": "CollectionFS, add ddp and http accesspoint capability",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-access-point",
+	"author": "CollectionFS core @aldeed & @raix",
+	"version": "0.0.5",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
+	"packages": {
+		"cfs-base-package": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+			"branch": "master"
+		},
+		"cfs-tempstore": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
+			"branch": "master"
+		}
+	}
 }
