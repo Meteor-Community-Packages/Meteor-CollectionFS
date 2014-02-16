@@ -144,7 +144,7 @@ var APhandler = function(options) {
     var self = this;
     var query = self.query || {};
     var params = self.params || {};
-
+    
     // Get the requested ID
     var id = params.id;
     if (!id) {
@@ -165,8 +165,8 @@ var APhandler = function(options) {
 
     // If HTTP GET then return file
     if (self.method.toLowerCase() === 'get') {
-      var copyInfo, filename;
-
+      var copyInfo;
+      
       var storeName = params.store;
       if (typeof storeName !== "string") {
         // first store is considered the master store by default
@@ -178,17 +178,19 @@ var APhandler = function(options) {
         throw new Meteor.Error(404, "Not Found", "Invalid store name: " + storeName);
       }
 
-      filename = copyInfo.name;
       if (typeof copyInfo.type === "string") {
         self.setContentType(copyInfo.type);
+      } else {
+        self.setContentType('application/octet-stream');
       }
-
+      
       // Add 'Content-Disposition' header if requested a download/attachment URL
+      var start, end;
       if (typeof query.download !== "undefined") {
-        self.addHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+        self.addHeader('Content-Disposition', 'attachment; filename="' + copyInfo.name + '"');
 
         // If a chunk/range was requested instead of the whole file, serve that
-        var unit, start, end, range = self.requestHeaders.range;
+        var unit, range = self.requestHeaders.range;
         if (range) {
           // Parse range header
           range = range.split('=');
