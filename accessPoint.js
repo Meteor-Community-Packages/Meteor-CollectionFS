@@ -341,5 +341,6 @@ FS.AccessPoint.HTTP.mount = function(options) {
 
 // Mount defaults for use by all collections. You may call these
 // again with custom method names if you don't like the default names.
+FS.AccessPoint.HTTP.mount();
 FS.AccessPoint.DDP.mountPut();
 FS.AccessPoint.DDP.mountGet();
