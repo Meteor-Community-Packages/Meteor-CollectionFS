@@ -12,7 +12,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
 
   var doInsert = function() {
     // Set reference to this collection
-    fileObj.collectionName = self.files._name;
+    fileObj.collectionName = self.name;
 
     // Check filters
     if (!fileObj.fileIsAllowed()) {
