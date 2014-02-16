@@ -38,19 +38,18 @@ FS.Collection = function(name, options) {
     throw new Error("You must specify at least one store. Please consult the documentation.");
   }
 
-  var collectionName = name + '.files';
-
   var _filesOptions = {
     transform: function(doc) {
       // This should keep the filerecord in the file object updated in reactive
       // context
       var result = new FS.File(doc, true);
-      result.collectionName = collectionName;
+      result.collectionName = name;
       return result;
     }
   };
 
   // Create the ".files" and use fsFile
+  var collectionName = name + '.files';
   if (Package.join) {
     // We support Join if used in the app
     self.files = new Join.Collection(collectionName, _filesOptions);
@@ -150,8 +149,8 @@ FS.Collection = function(name, options) {
    * EO FILTER INSERTS
    */
 
-  // Save the collection reference
-  FS._collections[collectionName] = this;
+  // Save the collection reference (we want it without the '.files' suffix)
+  FS._collections[name] = this;
 
   if (Meteor.isServer) {
     // Tell synchronized stores how to sync
