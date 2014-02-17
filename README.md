@@ -348,37 +348,27 @@ if (Meteor.isClient) {
 
 ## Customizing the HTTP URLs and Headers
 
-When you create an FS.Collection, a set of HTTP URLs are automatically mounted
-for you to support HTTP uploads and downloads. If you don't want to allow
-HTTP connections, you can set the `autoMountHTTP` option to `false`.
+CollectionFS automatically mounts an HTTP access point that supports secure
+GET, PUT, and DEL requests for all FS.Collection instances. If you need to
+customize the HTTP access point in some way, for example to change the base URL
+or provide custom headers, you can do so by re-mounting the access point with
+custom options specified:
+
+*common.js*
 
 ```js
-var Images = new FS.Collection("images", {
-  stores: [new FS.Store.FileSystem("images")],
-  autoMountHTTP: false
-});
-```
-
-Note that calling `fsFile.url()` will fail if you do this.
-
-Another reason to skip auto-mounting is if you need to customize the HTTP
-endpoints in some way. After creating your collection, you can then set the
-`httpUrl` property on the collection instance directly. For example, you can
-change the base URL or provide custom headers:
-
-```js
-var Images = new FS.Collection("images", {
-  stores: [new FS.Store.FileSystem("images")],
-  autoMountHTTP: false
-});
-
-Images.httpUrl = FS.AccessPoint.createHTTP(Images, {
+FS.AccessPoint.HTTP.mount({
   baseUrl: '/files',
   headers: [
-    ['Cache-Control', 'private, max-age=0, no-cache']
+    ['Cache-Control', 'public, max-age=31536000']
   ]
 });
 ```
+
+If you don't call `mount` in common code and you change the `baseUrl`, the
+`FS.File.url` method may not work. If you really want to call `mount` only on
+the server, you can ensure the `FS.File.url` method will work by doing
+`FS.AccessPoint.HTTP.baseUrl = '/your/custom/base/url';` on the client.
 
 ## Drag and Drop
 
