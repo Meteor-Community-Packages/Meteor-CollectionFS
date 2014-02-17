@@ -1,3 +1,4 @@
+var path = Npm.require('path');
 var chunkSize = 262144; // 256k is default GridFS chunk size
 
 FS.Store.GridFS = function(name, options) {
@@ -5,7 +6,12 @@ FS.Store.GridFS = function(name, options) {
   if (!(self instanceof FS.Store.GridFS))
     throw new Error('FS.Store.GridFS missing keyword "new"');
   
-  var chunksCollection = new Meteor.Collection(name + '.chunks', {
+  // Init collections
+  var filesCollection = new Meteor.Collection('fs.' + name + '.files', {
+    _preventAutopublish: true
+  });
+  
+  var chunksCollection = new Meteor.Collection('fs.' + name + '.chunks', {
     _preventAutopublish: true
   });
 
@@ -16,15 +22,16 @@ FS.Store.GridFS = function(name, options) {
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.gridfs',
-    get: function(id, callback) {
+    get: function(fileKey, callback) {
+      var file = filesCollection.findOne({filename: fileKey});
       // Find chunks in the CFS for this file
-      var query = chunksCollection.find({files_id: id}, {sort: {n: 1}});
+      var query = chunksCollection.find({files_id: file._id}, {sort: {n: 1}});
 
       var dataArray = [], data, fileSize = 0;
       query.forEach(function(chunk) {
         data = chunk.data;
         if (!data) {
-          callback(new Error('GridFS: no data in chunk ' + chunk.n + ' of file with _id ' + id));
+          callback(new Error('GridFS: no data in chunk ' + chunk.n + ' of file with key ' + fileKey));
           return;
         }
         dataArray.push(data);
@@ -45,17 +52,17 @@ FS.Store.GridFS = function(name, options) {
       }
       callback(null, result);
     },
-    getBytes: function(id, start, end, callback) {
+    getBytes: function(fileKey, start, end, callback) {
       // Find out what chunk size we saved with, which we stored
       // with chunk 0 when we saved it
-      var chunk = chunksCollection.findOne({files_id: id, n: 0});
-      var savedChunkSize = chunk.chunkSize || chunkSize;
+      var file = filesCollection.findOne({filename: fileKey});
+      var savedChunkSize = file.chunkSize || chunkSize;
       var first = Math.floor(start / savedChunkSize);
       var last = Math.floor(end / savedChunkSize);
       var current = first;
       var currentByte = first * savedChunkSize;
       var result = EJSON.newBinary(end - start);
-      var data, r = 0;
+      var chunk, data, r = 0, id = file._id;
       while (current <= last) {
         chunk = chunksCollection.findOne({files_id: id, n: current});
         if (!chunk || !chunk.data) {
@@ -77,14 +84,37 @@ FS.Store.GridFS = function(name, options) {
       }
       callback(null, result);
     },
-    put: function(id, fileKey, buffer, options, callback) {
+    put: function(fileKey, buffer, options, callback) {
       FS.debug && console.log("---GridFS PUT");
       options = options || {};
       
-      // Because we are keying off id, it should be fine to ignore
-      // the options.overwrite value. But either way, we need
-      // to ensure that any old data for this ID is removed.
-      chunksCollection.remove({files_id: id});
+      var existing = filesCollection.findOne({filename: fileKey});
+      if (existing) {
+        if (options.overwrite) {
+          filesCollection.remove({_id: existing._id});
+          chunksCollection.remove({files_id: existing._id});
+        } else {
+          // Alter the recommended fileKey until we have one that is unique
+          var extension = path.extname(fileKey);
+          var fn = fileKey.substr(0, fileKey.length - extension.length);
+          var suffix = 0;
+          do {
+            suffix++;
+            fileKey = fn + suffix + extension; //once we exit the loop, this is what will actually be used
+          } while (filesCollection.findOne({filename: fileKey}));
+        }
+      }
+
+      var id = filesCollection.insert({
+        size: buffer.length, //use size instead of length because of Meteor issues
+        chunkSize: chunkSize,
+        uploadDate: new Date,
+        md5: null, //not currently implemented
+        filename: fileKey, //we key off this for future PUT/GET/DEL
+        contentType: options.type,
+        aliases: [],
+        metadata: {}
+      });
 
       var chunk, size, cPos, n = 0, newChunk = true;
       for (var i = 0, ln = buffer.length; i < ln; i++) {
@@ -99,17 +129,12 @@ FS.Store.GridFS = function(name, options) {
 
         if (cPos === size) {
           FS.debug && console.log("---GridFS PUT writing chunk " + n);
-          var chunkDoc = {
+          // Save data chunk into database
+          var chunkId = chunksCollection.insert({
             files_id: id, // _id of the corresponding files collection entry
             n: n,
             data: chunk
-          };
-          if (n === 0) {
-            // Store the desired, not actual, chunk size with chunk 0, for later reference
-            chunkDoc.chunkSize = chunkSize;
-          }
-          // Save data chunk into database
-          var chunkId = chunksCollection.insert(chunkDoc);
+          });
           if (!chunkId) {
             callback(new Error("GridFS failed to save chunk " + n + " for file " + id));
             return;
@@ -119,10 +144,17 @@ FS.Store.GridFS = function(name, options) {
         }
       }
 
-      callback(null, id);
+      callback(null, fileKey);
     },
-    del: function(id, callback) {
-      chunksCollection.remove({files_id: id}, callback);
+    del: function(fileKey, callback) {
+      var file = filesCollection.findOne({filename: fileKey});
+      chunksCollection.remove({files_id: file._id}, function (err) {
+        if (err) {
+          callback(err);
+        } else {
+          filesCollection.remove({_id: file._id}, callback);
+        }
+      });
     },
     watch: function() {
       throw new Error("GridFS storage adapter does not support the sync option");
