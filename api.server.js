@@ -12,38 +12,41 @@
 FS.Collection.prototype.saveCopy = function(fsFile, storeName, options) {
   var self = this;
   options = options || {};
-  var copyInfo = fsFile.copies && fsFile.copies[storeName];
-  var store = FS.StorageAdapter(storeName);
 
+  var store = FS.StorageAdapter(storeName);
   if (!store) {
     throw new Error('saveCopy: No store named "' + storeName + '" exists');
   }
-
-  // If copy has not already been saved or we want to overwrite it
-  if (options.overwrite || (copyInfo === void 0 && !fsFile.failedPermanently(storeName))) {
-    FS.debug && console.log('creating copy ' + storeName);
-
-    // If the supplied fsFile does not have a buffer loaded already,
-    // try to load it from the temporary file.
-    if (!fsFile.hasData()) {
-      fsFile = FS.TempStore.getDataForFileSync(fsFile);
-    }
-
-    var result = store.insert(fsFile);
-
-    if (result === null) {
-      // Temporary failure; let the fsFile log it and potentially decide
-      // to give up.
-      fsFile.logCopyFailure(storeName, store.options.maxTries);
-    } else {
-      // Update the main file object
-      // result might be false, which indicates that this copy
-      // should never be created in the future.
-      var modifier = {};
-      modifier["copies." + storeName] = result;
-      // Update the main file object with the modifier
-      fsFile.update({$set: modifier});
-    }
+  
+  FS.debug && console.log('saving to store ' + storeName);
+  
+  // If the supplied fsFile does not have a buffer loaded already,
+  // try to load it from the temporary file.
+  if (!fsFile.hasData()) {
+    fsFile = FS.TempStore.getDataForFileSync(fsFile);
+  }
+  
+  // Save to store
+  var result;
+  if (options.overwrite) {
+    result = store.update(fsFile);
+  } else {
+    result = store.insert(fsFile);
+  }
+  
+  // Process result
+  if (result === null) {
+    // Temporary failure; let the fsFile log it and potentially decide
+    // to give up.
+    fsFile.logCopyFailure(storeName, store.options.maxTries);
+  } else {
+    // Update the main file object
+    // result might be false, which indicates that this copy
+    // should never be created in the future.
+    var modifier = {};
+    modifier["copies." + storeName] = result;
+    // Update the main file object with the modifier
+    fsFile.update({$set: modifier});
   }
 
 };
