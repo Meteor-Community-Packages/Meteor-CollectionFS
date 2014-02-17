@@ -16,7 +16,7 @@ FS.Store.FileSystem = function(name, options) {
   if (!pathname && __meteor_bootstrap__ && __meteor_bootstrap__.serverDir) {
     pathname = path.join(__meteor_bootstrap__.serverDir, '../../../cfs/files/' + name);
   }
-  
+
   if (!pathname)
     throw new Error('FS.Store.FileSystem unable to determine path');
 
@@ -29,6 +29,7 @@ FS.Store.FileSystem = function(name, options) {
       throw new Error('FS.Store.FileSystem unable to resolve "~" in path');
     }
   }
+
 
   // Set absolute path
   var absolutePath = path.resolve(pathname);
