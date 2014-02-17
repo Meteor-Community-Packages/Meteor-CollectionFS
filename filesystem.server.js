@@ -30,7 +30,6 @@ FS.Store.FileSystem = function(name, options) {
     }
   }
 
-
   // Set absolute path
   var absolutePath = path.resolve(pathname);
 
