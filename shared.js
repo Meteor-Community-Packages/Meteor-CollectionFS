@@ -51,6 +51,9 @@ _Utility.cloneFileUnit = function(unit) {
     if (unit.utime) {
       newUnit.utime = unit.utime;
     }
+    if (unit.key) {
+      newUnit.key = unit.key;
+    }
     return newUnit;
   }
   return null;
