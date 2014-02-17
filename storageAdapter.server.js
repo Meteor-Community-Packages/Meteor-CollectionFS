@@ -82,8 +82,13 @@ FS.StorageAdapter = function(name, options, api) {
       size: fsFile.size
     };
 
+    // Prep fileKey if we're not doing an update of an existing file
+    fileKey = fileKey || fsFile._id + '/' + fsFile.name;
+
     // Put the file to storage
-    api.put.call(self, null, fileKey, fsFile.getBuffer(), {overwrite: overwrite, type: fsFile.type}, function putCallback(err, finalFileKey) {
+    api.put.call(self, fileKey, fsFile.getBuffer(),
+            {overwrite: overwrite, type: fsFile.type},
+    function putCallback(err, finalFileKey) {
       if (err) {
         callback(err, null);
       } else if (!finalFileKey) {
@@ -114,7 +119,7 @@ FS.StorageAdapter = function(name, options, api) {
 
   //internal
   self._insertAsync = function(fsFile, callback) {
-    return doPut(fsFile, fsFile.name, false, callback);
+    return doPut(fsFile, null, false, callback);
   };
 
   //internal
@@ -154,12 +159,12 @@ FS.StorageAdapter = function(name, options, api) {
 
   //internal
   self._updateAsync = function(fsFile, callback) {
-    var copyInfo = fsFile.getCopyInfo();
+    var copyInfo = fsFile.getCopyInfo(self.name);
     if (!copyInfo || !copyInfo.key) {
       callback(new Error("No file key found for the " + self.name + " store. Can't update."), false);
       return;
     }
-    
+
     return doPut(fsFile, copyInfo.key, true, callback);
   };
 
@@ -199,7 +204,7 @@ FS.StorageAdapter = function(name, options, api) {
 
   //internal
   self._removeAsync = function(fsFile, options, callback) {
-    var copyInfo = fsFile.getCopyInfo();
+    var copyInfo = fsFile.getCopyInfo(self.name);
     if (!copyInfo || !copyInfo.key) {
       if (options.ignoreMissing) {
         callback(null, true);
@@ -245,7 +250,7 @@ FS.StorageAdapter = function(name, options, api) {
 
   //internal
   self._getBufferAsync = function(fsFile, callback) {
-    var copyInfo = fsFile.getCopyInfo();
+    var copyInfo = fsFile.getCopyInfo(self.name);
     if (!copyInfo || !copyInfo.key) {
       callback(new Error("No file key found for the " + self.name + " store. Can't get."), false);
       return;
@@ -277,7 +282,7 @@ FS.StorageAdapter = function(name, options, api) {
   if (typeof api.getBytes === 'function') {
     //internal
     self._getBytesAsync = function(fsFile, start, end, callback) {
-      var copyInfo = fsFile.getCopyInfo();
+      var copyInfo = fsFile.getCopyInfo(self.name);
       if (!copyInfo || !copyInfo.key) {
         callback(new Error("No file key found for the " + self.name + " store. Can't getBytes."), false);
         return;
