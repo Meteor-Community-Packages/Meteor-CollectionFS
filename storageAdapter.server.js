@@ -45,10 +45,7 @@ FS.StorageAdapter = function(name, options, api) {
 
   // extend self with options and other info
   _.extend(this, options || {}, {
-    name: name,
-    files: new Meteor.Collection(api.typeName + '.' + name, {
-      _preventAutopublish: true
-    })
+    name: name
   });
 
   var foCheck = function(fsFile, type) {
@@ -60,92 +57,64 @@ FS.StorageAdapter = function(name, options, api) {
     }
   };
 
-  var getFileId = function(fsFile) {
-    // Make sure our file record is updated
-    fsFile.getFileRecord();
-
-    if (!fsFile.copies) {
-      return null;
-    }
-    var copyInfo = fsFile.copies[self.name];
-    if (!copyInfo) {
-      return null;
-    }
-    return copyInfo._id;
-  };
-
   function cloneFO(fsFile) {
     var fsFileClone = fsFile.clone();
     fsFileClone.setDataFromBinary(fsFile.getBinary());
     return fsFileClone;
   }
 
+  function doPut(fsFile, fileKey, overwrite, callback) {
+    // Call the beforeSave function provided by the user
+    if (self.beforeSave) {
+      // Get a new copy and a fresh buffer each time in case beforeSave changes anything
+      fsFile = cloneFO(fsFile);
+
+      if (self.beforeSave.apply(fsFile) === false) {
+        callback(null, false);
+        return;
+      }
+    }
+
+    // Prep file info to be returned (info potentially changed by beforeSave)
+    var savedFileInfo = {
+      name: fsFile.name,
+      type: fsFile.type,
+      size: fsFile.size
+    };
+
+    // Put the file to storage
+    api.put.call(self, null, fileKey, fsFile.getBuffer(), {overwrite: overwrite, type: fsFile.type}, function putCallback(err, finalFileKey) {
+      if (err) {
+        callback(err, null);
+      } else if (!finalFileKey) {
+        callback(new Error("No file key"), null);
+      } else {
+
+        function finish(updatedAt) {
+          savedFileInfo.key = finalFileKey;
+          savedFileInfo.utime = updatedAt;
+          callback(err, err ? null : savedFileInfo);
+        }
+
+        // note the file key and updatedAt in the SA file record
+        if (typeof api.stats === "function") {
+          api.stats.call(self, finalFileKey, function(err, stats) {
+            if (err) {
+              callback(err, null);
+            } else {
+              finish(stats.mtime);
+            }
+          });
+        } else {
+          finish(new Date);
+        }
+      }
+    });
+  }
+
   //internal
   self._insertAsync = function(fsFile, callback) {
-    // insert the file ref into the SA file record
-    self.files.insert({createdAt: new Date(), size: fsFile.size}, function(err, id) {
-      // prep a function to remove the SA file record we just created if storage fails
-      function removeFileRecord(err, res, cb) {
-        self.files.remove({_id: id}, function() {
-          cb(err, res);
-        });
-      }
-
-      // construct the filename
-      var preferredFilename = fsFile.name;
-
-      // Call the beforeSave function provided by the user
-      if (self.beforeSave) {
-        // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-        fsFile = cloneFO(fsFile);
-
-        if (self.beforeSave.apply(fsFile) === false) {
-          callback(null, false);
-          return;
-        }
-      }
-
-      // Prep file info to be returned (info potentially changed by beforeSave)
-      var savedFileInfo = {
-        _id: id,
-        name: fsFile.name,
-        type: fsFile.type,
-        size: fsFile.size
-      };
-
-      // Put the file to storage
-      api.put.call(self, id, preferredFilename, fsFile.getBuffer(), {overwrite: false, type: fsFile.type}, function putCallback(err, fileKey) {
-        if (err) {
-          removeFileRecord(err, null, callback);
-        } else if (!fileKey) {
-          removeFileRecord(new Error("No file key"), null, callback);
-        } else if (self.files.findOne({key: fileKey})) {
-          removeFileRecord(new Error("File key " + fileKey + " already saved"), false, callback);
-        } else {
-
-          function updateFileAndFinish(updatedAt) {
-            self.files.update({_id: id}, {$set: {key: fileKey, updatedAt: updatedAt}}, function(err) {
-              savedFileInfo.utime = updatedAt;
-              callback(err, err ? null : savedFileInfo);
-            });
-          }
-
-          // note the file key and updatedAt in the SA file record
-          if (typeof api.stats === "function") {
-            api.stats.call(self, fileKey, function(err, stats) {
-              if (err) {
-                callback(err, null);
-              } else {
-                updateFileAndFinish(stats.mtime);
-              }
-            });
-          } else {
-            updateFileAndFinish(new Date);
-          }
-        }
-      });
-    });
-
+    return doPut(fsFile, fsFile.name, false, callback);
   };
 
   //internal
@@ -185,62 +154,13 @@ FS.StorageAdapter = function(name, options, api) {
 
   //internal
   self._updateAsync = function(fsFile, callback) {
-
-    var id = getFileId(fsFile);
-    var fileInfo = self.files.findOne({_id: id});
-
-    if (!fileInfo) {
-      callback(new Error('Storage Adapter Update: The "' + self.name + '" store does not contain a file with ID ' + id), false);
+    var copyInfo = fsFile.getCopyInfo();
+    if (!copyInfo || !copyInfo.key) {
+      callback(new Error("No file key found for the " + self.name + " store. Can't update."), false);
       return;
     }
-
-    // Call the beforeSave function provided by the user
-    if (self.beforeSave) {
-      // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-      fsFile = cloneFO(fsFile);
-
-      if (self.beforeSave.apply(fsFile) === false) {
-        callback(null, false);
-        return;
-      }
-    }
-
-    // Prep file info to be returned (info potentially changed by beforeSave)
-    var savedFileInfo = {
-      _id: id,
-      name: fsFile.name,
-      type: fsFile.type,
-      size: fsFile.size
-    };
-
-    // Put the file to storage
-    api.put.call(self, id, fileInfo.key, fsFile.getBuffer(), {overwrite: true, type: fsFile.type}, function putCallback(err, fileKey) {
-      if (err) {
-        callback(err, null);
-      } else if (fileKey) {
-
-        function updateFileAndFinish(updatedAt) {
-          self.files.update({_id: id}, {$set: {updatedAt: updatedAt}}, function(err) {
-            savedFileInfo.utime = updatedAt;
-            callback(err, err ? null : savedFileInfo);
-          });
-        }
-
-        // note the file key and updatedAt in the SA file record
-        if (typeof api.stats === "function") {
-          api.stats.call(self, fileKey, function(err, stats) {
-            if (err) {
-              callback(err, null);
-            } else {
-              updateFileAndFinish(stats.mtime);
-            }
-          });
-        } else {
-          updateFileAndFinish(new Date);
-        }
-      }
-    });
-
+    
+    return doPut(fsFile, copyInfo.key, true, callback);
   };
 
   //internal
@@ -279,30 +199,18 @@ FS.StorageAdapter = function(name, options, api) {
 
   //internal
   self._removeAsync = function(fsFile, options, callback) {
-
-    var id = getFileId(fsFile);
-    var fileInfo = self.files.findOne({_id: id});
-
-    if (!fileInfo) {
+    var copyInfo = fsFile.getCopyInfo();
+    if (!copyInfo || !copyInfo.key) {
       if (options.ignoreMissing) {
         callback(null, true);
       } else {
-        callback(new Error('Storage Adapter Remove: The "' + self.name + '" store does not contain a file with ID ' + id), false);
+        callback(new Error("No file key found for the " + self.name + " store. Can't remove."), false);
       }
       return;
     }
 
     // remove the file from the store
-    api.del.call(self, fileInfo.key, function(err, result) {
-      if (err) {
-        callback(err, false);
-      } else {
-        // remove the SA file record
-        self.files.remove({_id: fileInfo._id}, function(err, result) {
-          callback(err, !err);
-        });
-      }
-    });
+    api.del.call(self, copyInfo.key, callback);
   };
 
   //internal
@@ -337,16 +245,14 @@ FS.StorageAdapter = function(name, options, api) {
 
   //internal
   self._getBufferAsync = function(fsFile, callback) {
-    var id = getFileId(fsFile);
-    var fileInfo = self.files.findOne({_id: id});
-
-    if (!fileInfo) {
-      callback(new Error('Storage Adapter GetBuffer: The "' + self.name + '" store does not contain a file with ID ' + id), null);
+    var copyInfo = fsFile.getCopyInfo();
+    if (!copyInfo || !copyInfo.key) {
+      callback(new Error("No file key found for the " + self.name + " store. Can't get."), false);
       return;
     }
 
     // get the buffer
-    api.get.call(self, fileInfo.key, callback);
+    api.get.call(self, copyInfo.key, callback);
   };
 
   //internal
@@ -371,18 +277,18 @@ FS.StorageAdapter = function(name, options, api) {
   if (typeof api.getBytes === 'function') {
     //internal
     self._getBytesAsync = function(fsFile, start, end, callback) {
-      var id = getFileId(fsFile);
-      var fileInfo = self.files.findOne({_id: id});
-
-      if (!fileInfo) {
-        callback(new Error('Storage Adapter GetBytes: The "' + self.name + '" store does not contain a file with ID ' + id), null);
+      var copyInfo = fsFile.getCopyInfo();
+      if (!copyInfo || !copyInfo.key) {
+        callback(new Error("No file key found for the " + self.name + " store. Can't getBytes."), false);
         return;
       }
 
-      end = Math.min(end, fileInfo.size);
+      if (copyInfo.size) {
+        end = Math.min(end, copyInfo.size);
+      }
 
       // get the buffer
-      api.getBytes.call(self, fileInfo.key, start, end, callback);
+      api.getBytes.call(self, copyInfo.key, start, end, callback);
     };
 
     //internal
@@ -421,33 +327,33 @@ FS.StorageAdapter = function(name, options, api) {
     return; // remove this when fixed
 
     api.watch && api.watch.call(self, function(type, fileKey, info) {
-      var fileInfo = self.files.findOne({key: fileKey});
-      if (fileInfo) {
-        if (type === "remove") {
-          callbacks.remove && callbacks.remove(fileKey);
-        } else { //changed
-          // Compare the updated date of the watched file against the one
-          // recorded in our files collection. If they match, then we changed
-          // this file, so we don't need to do anything. If they don't match,
-          // then this is an outside change that we need to sync.
-          // TODO does not work because watcher usually sees file before
-          // fileInfo.updateAt is set?
-          if (fileInfo.updatedAt && fileInfo.updatedAt.getTime() === info.utime.getTime()) {
-            FS.debug && console.log("Update is not external; will not sync");
-            return;
-          }
-          self.files.update({_id: fileInfo._id}, {$set: {updatedAt: info.utime}});
-          callbacks.update && callbacks.update(fileInfo._id, info);
-        }
-      } else {
-        api.get.call(self, fileKey, function(err, buffer) {
-          if (buffer) {
-            // Insert information about this file into the storage adapter collection
-            var filesId = self.files.insert({key: fileKey, createdAt: info.utime});
-            filesId && callbacks.update && callbacks.update(filesId, info, buffer);
-          }
-        });
-      }
+//      var fileInfo = self.files.findOne({key: fileKey});
+//      if (fileInfo) {
+//        if (type === "remove") {
+//          callbacks.remove && callbacks.remove(fileKey);
+//        } else { //changed
+//          // Compare the updated date of the watched file against the one
+//          // recorded in our files collection. If they match, then we changed
+//          // this file, so we don't need to do anything. If they don't match,
+//          // then this is an outside change that we need to sync.
+//          // TODO does not work because watcher usually sees file before
+//          // fileInfo.updateAt is set?
+//          if (fileInfo.updatedAt && fileInfo.updatedAt.getTime() === info.utime.getTime()) {
+//            FS.debug && console.log("Update is not external; will not sync");
+//            return;
+//          }
+//          self.files.update({_id: fileInfo._id}, {$set: {updatedAt: info.utime}});
+//          callbacks.update && callbacks.update(fileInfo._id, info);
+//        }
+//      } else {
+//        api.get.call(self, fileKey, function(err, buffer) {
+//          if (buffer) {
+//            // Insert information about this file into the storage adapter collection
+//            var filesId = self.files.insert({key: fileKey, createdAt: info.utime});
+//            filesId && callbacks.update && callbacks.update(filesId, info, buffer);
+//          }
+//        });
+//      }
     });
   };
 
