@@ -497,13 +497,6 @@ FS.File.prototype.chunkIsUploaded = function(start) {
   return !!_.findWhere(self.chunks, {start: start});
 };
 
-/** @method FS.File.prototype.hasMaster A copy was saved in the master store.
- * @returns {boolean} True if a copy of this file was saved in the master store.
- */
-FS.File.prototype.hasMaster = function() {
-  return this.hasCopy("_master");
-};
-
 /** @method FS.File.prototype.hasCopy
  * @param {string} storeName Name of the store to check for a copy of this file
  * @param {boolean} [optimistic=false] In case that the file record is not found, read below
@@ -527,6 +520,17 @@ FS.File.prototype.hasCopy = function(storeName, optimistic) {
     return (self.copies && !_.isEmpty(self.copies[storeName]));
   }
   return false;
+};
+
+/** @method FS.File.prototype.getCopyInfo
+ * @param {string} storeName Name of the store for which to get copy info.
+ * @returns {Object} The file details, e.g., name, size, key, etc., specific to the copy saved in this store.
+ */
+FS.File.prototype.getCopyInfo = function(storeName) {
+  var self = this;
+  // Make sure we use the updated file record
+  self.getFileRecord();
+  return (self.copies && self.copies[storeName]) || null;
 };
 
 /** @method FS.File.prototype.hasMaster Does the attached collection allow this file?
