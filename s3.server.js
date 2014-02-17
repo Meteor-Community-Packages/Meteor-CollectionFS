@@ -113,14 +113,14 @@ FS.Store.S3 = function(name, options) {
         callback(error);
       }));
     },
-    put: function(id, fileKey, buffer, opts, callback) {
+    put: function(fileKey, buffer, opts, callback) {
       opts = opts || {};
 
       //backwards compat
       opts.ContentType = opts.type;
 
       //adjust fileKey that will be saved and returned to be unique
-      fileKey = folder + id + "/" + fileKey;
+      fileKey = folder + fileKey;
 
       var params = _.extend({
         ContentLength: buffer.length,
@@ -132,6 +132,8 @@ FS.Store.S3 = function(name, options) {
 
       // Whitelist serviceParams, else aws-sdk throws an error
       params = _.pick(params, validS3PutParamKeys);
+      
+      // TODO handle overwrite or fileKey adjustments based on opts.overwrite
 
       S3.putObject(params, Meteor.bindEnvironment(function(error, data) {
         callback(error, error ? void 0 : fileKey);
