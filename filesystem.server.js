@@ -78,7 +78,7 @@ FS.Store.FileSystem = function(name, options) {
         callback(new Error('FileSystemStore getBytes: Invalid start or stop values'));
       }
     },
-    put: function(id, fileKey, buffer, options, callback) {
+    put: function(fileKey, buffer, options, callback) {
       options = options || {};
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
