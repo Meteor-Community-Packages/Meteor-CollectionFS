@@ -9,7 +9,7 @@ FS.Store.FileSystem = function(name, options) {
     throw new Error('FS.Store.FileSystem missing keyword "new"');
 
   // We allow options to be string/path empty or options.path
-  options = (options !== ''+options)? options || {} : { path: options };
+  options = (options !== ''+options) ? options || {} : { path: options };
 
   // Provide a default FS directory one level up from the build/bundle directory
   var pathname = options.path;
@@ -80,6 +80,8 @@ FS.Store.FileSystem = function(name, options) {
     },
     put: function(fileKey, buffer, options, callback) {
       options = options || {};
+      // Adjust fileKey "/" to "-"
+      fileKey = fileKey.replace(/\//g, '-');
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
