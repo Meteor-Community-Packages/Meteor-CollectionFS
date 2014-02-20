@@ -1,24 +1,16 @@
 cfs-s3
 =========================
 
-NOTE: This branch is under active development right now (2014-2-10). It has
+NOTE: This package is under active development right now (2014-2-20). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
-A Meteor package that adds Amazon S3 storage for [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS).
+A Meteor package that adds Amazon S3 storage for
+[CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS).
 
 ## Installation
 
-NOTE: Until this is added to atmosphere, use this in smart.json:
-
-```js
-"cfs-s3": {
-  "git": "https://github.com/CollectionFS/Meteor-cfs-s3.git",
-  "branch": "master"
-}
-```
-
-Install using Meteorite. When in a Meteorite-managed app directory, enter:
+Install using Meteorite. When in a Meteor app directory, enter:
 
 ```
 $ mrt add cfs-s3
@@ -86,6 +78,9 @@ Images = new FS.Collection("images", {
 });
 ```
 
+Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
+package documentation for more information.
+
 ## Notes
 
 * An S3 store does not support the `sync` option.
@@ -93,3 +88,9 @@ Images = new FS.Collection("images", {
 client since it contains credentials. Wrapping in `Meteor.isServer` is not
 secure. For best security, you can omit the key and secret options and instead
 [set your credentials in environment variables](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Credentials_from_Environment_Variables).
+
+## API
+
+[For Users](https://github.com/CollectionFS/Meteor-cfs-s3/blob/master/api.md)
+
+[For Contributors](https://github.com/CollectionFS/Meteor-cfs-s3/blob/master/internal.api.md)
