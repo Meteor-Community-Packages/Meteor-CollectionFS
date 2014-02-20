@@ -1,7 +1,7 @@
 cfs-filesystem
 =========================
 
-NOTE: This branch is under active development right now (2014-2-10). It has
+NOTE: This package is under active development right now (2014-2-20). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -12,16 +12,7 @@ on the same server on which your Meteor app is running.
 
 ## Installation
 
-NOTE: Until this is added to atmosphere, use this in smart.json:
-
-```js
-"cfs-filesystem": {
-  "git": "https://github.com/CollectionFS/Meteor-cfs-filesystem.git",
-  "branch": "master"
-}
-```
-
-Install using Meteorite. When in a Meteorite-managed app directory, enter:
+Install using Meteorite. When in a Meteor app directory, enter:
 
 ```
 $ mrt add cfs-filesystem
@@ -40,6 +31,9 @@ Images = new FS.Collection("images", {
   stores: [imageStore]
 });
 ```
+
+Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
+package documentation for more information.
 
 ## Notes
 
