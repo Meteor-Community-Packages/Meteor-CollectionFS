@@ -1,5 +1,7 @@
-/** @method FS.File
+/** 
+ * @method FS.File
  * @namespace FS.File
+ * @public
  * @constructor
  * @param {object|File|Blob} ref File reference
  * @todo Should we refactor the file record into `self.record`?
@@ -33,7 +35,9 @@ FS.File = function(ref, createdByTransform) {
   self._attachFile(ref);
 };
 
-/** @method FS.File.prototype.uploadProgress
+/** 
+ * @method FS.File.prototype.uploadProgress
+ * @public
  * @returns {number} The server confirmed upload progress
  */
 FS.File.prototype.uploadProgress = function() {
@@ -49,7 +53,9 @@ FS.File.prototype.uploadProgress = function() {
   }
 };
 
-/** @method FS.File.prototype.controlledByDeps
+/** 
+ * @method FS.File.prototype.controlledByDeps
+ * @public
  * @returns {FS.Collection} Returns true if this FS.File is reactive
  *
  * > Note: Returns true if this FS.File object was created by a FS.Collection
@@ -62,7 +68,9 @@ FS.File.prototype.controlledByDeps = function() {
   return self.createdByTransform && Deps.active;
 };
 
-/** @method FS.File.prototype.getCollection
+/** 
+ * @method FS.File.prototype.getCollection
+ * @public
  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
  */
 FS.File.prototype.getCollection = function() {
@@ -88,7 +96,9 @@ FS.File.prototype.getCollection = function() {
   return self.collection; //possibly undefined, but that's desired behavior
 };
 
-/** @method FS.File.prototype.isMounted
+/** 
+ * @method FS.File.prototype.isMounted
+ * @public
  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
  *
  * > Note: This will throw an error if collection not found and file is mounted
@@ -96,13 +106,9 @@ FS.File.prototype.getCollection = function() {
  */
 FS.File.prototype.isMounted = FS.File.prototype.getCollection;
 
-/** @method FS.File.prototype.fetch Returns the fileRecord
- * @returns {object} The filerecord
- * @deprecated Refactored into [getFileRecord](#FS.File.prototype.getFileRecord)
- */
-
-
-/** @method FS.File.prototype.getFileRecord Returns the fileRecord
+/** 
+ * @method FS.File.prototype.getFileRecord Returns the fileRecord
+ * @public
  * @returns {object} The filerecord
  */
 FS.File.prototype.getFileRecord = function() {
@@ -127,12 +133,15 @@ FS.File.prototype.getFileRecord = function() {
   }
 };
 
-/** @method FS.File.prototype.update
+/** 
+ * @method FS.File.prototype.update
+ * @public
  * @param {modifier} modifier
  * @param {object} [options]
  * @param {function} [callback]
+ * 
+ * Updates the fileRecord.
  */
-// Update the fileRecord
 FS.File.prototype.update = function(modifier, options, callback) {
   var self = this;
   FS.debug && console.log('UPDATE: ' + JSON.stringify(modifier));
@@ -160,6 +169,7 @@ FS.File.prototype.update = function(modifier, options, callback) {
  * Remove the current file from its FS.Collection
  *
  * @method FS.File.prototype.remove
+ * @public
  * @param {Function} [callback]
  * @returns {number} Count
  */
@@ -186,7 +196,8 @@ FS.File.prototype.remove = function(callback) {
   }
 };
 
-/** @method FS.File.prototype.moveTo
+/** 
+ * @method FS.File.prototype.moveTo
  * @param {FS.Collection} targetCollection
  * @private // Marked private until implemented
  * @todo Needs to be implemented
@@ -196,7 +207,9 @@ FS.File.prototype.remove = function(callback) {
  * > Note: Not yet implemented
  */
 
-/** @method FS.File.prototype.get
+/** 
+ * @method FS.File.prototype.get
+ * @public
  * @param {object} [options]
  * @param {string} [options.storeName] Name of the store to get from. If not defined
  * on the client, the first store saved into `fsFile.copies` is used. If not
@@ -219,12 +232,17 @@ FS.File.prototype.get = function(options) {
   return self._get(options);
 };
 
-/** @method FS.File.prototype.url Construct the file url
+/** 
+ * @method FS.File.prototype.url Construct the file url
+ * @public
  * @param {object} [options]
  * @param {string} [options.store] Name of the store to get from. If not defined,
  * the first store defined in `options.stores` for the collection is used.
  * @param {boolean} [options.auth=null] Wether or not the authenticate
  * @param {boolean} [options.download=false] Should headers be set to force a download
+ * @param {boolean} [options.brokenIsFine=false] Return the URL even if
+ * we know it's currently a broken link because the file hasn't been saved in
+ * the requested store yet.
  *
  * Return the http url for getting the file - on server set auth if wanting to
  * use authentication on client set auth to true or token
@@ -235,16 +253,29 @@ FS.File.prototype.url = function(options) {
   options = _.extend({
     store: null,
     auth: null,
-    download: false
+    download: false,
+    brokenIsFine: false
   }, options.hash || options); // check for "hash" prop if called as helper
 
   if (self.isMounted()) {
     var storeName = options.store;
 
-    // On the client, we always want to have a storeName. This helps
+    // We always want to have a storeName. This helps
     // avoid issues with reactive rendering of images, among other things.
-    if (!storeName && Meteor.isClient) {
+    if (!storeName) {
       storeName = self.collection.options.stores[0].name;
+    }
+    
+    if (typeof storeName !== "string" || !storeName.length) {
+      throw new Error('FS.File.url: Store name is required');
+    }
+    
+    var copyInfo = self.getCopyInfo(storeName);
+    if (!options.brokenIsFine && !copyInfo) {
+      // We want to return null if we know the URL will be a broken
+      // link because then we can avoid rendering broken links, broken
+      // images, etc.
+      return null;
     }
 
     if (!FS.AccessPoint.HTTP.baseUrl) {
@@ -273,25 +304,15 @@ FS.File.prototype.url = function(options) {
     }
     queryString = queryString === '?' ? '' : queryString;
 
-    // Construct the http method url
-    if (typeof storeName === "string" && storeName.length) {
-      if (!self.hasCopy(storeName)) {
-        // We want to return null if we know the URL will be a broken
-        // link because then we can avoid rendering broken links, broken
-        // images, etc.
-        return null;
-      }
-      storeName = '/' + storeName;
-    } else {
-      storeName = '';
-    }
-
-    return FS.AccessPoint.HTTP.baseUrl + '/' + self.collection.name + '/' + self._id + storeName + queryString;
+    // Construct and return the http method url
+    return FS.AccessPoint.HTTP.baseUrl + '/' + self.collection.name + '/' + storeName + '/' + copyInfo.key + queryString;
   }
 
 };
 
-/** @method FS.File.prototype.downloadUrl Get the download url
+/** 
+ * @method FS.File.prototype.downloadUrl Get the download url
+ * @public
  * @param {object} [options]
  * @param {string} [options.store] Name of the store to get from. If not defined,
  * the first store defined in `options.stores` for the collection is used.
@@ -305,7 +326,9 @@ FS.File.prototype.downloadUrl = function(options) {
   return FS.File.prototype.url.call(this, options);
 };
 
-/** @method FS.File.prototype.put Stores the file data
+/** 
+ * @method FS.File.prototype.put Stores the file data
+ * @public
  * @param {function} [callback] Callback for returning errors and updated FS.File
  *
  ```
@@ -340,7 +363,9 @@ FS.File.prototype.put = function(callback) {
   }
 };
 
-/** @method FS.File.prototype.resume
+/** 
+ * @method FS.File.prototype.resume
+ * @public
  * @param {File|Blob|Buffer} ref
  * @todo WIP, Not yet implemented for server
  *
@@ -354,7 +379,9 @@ FS.File.prototype.resume = function(ref) {
   }
 };
 
-/** @method FS.File.prototype.getExtension Returns the lowercase file extension
+/**
+ * @method FS.File.prototype.getExtension Returns the lowercase file extension
+ * @public
  * @returns {string} The extension eg.: `jpg` or if not found then an empty string ''
  */
 FS.File.prototype.getExtension = function() {
@@ -369,7 +396,9 @@ FS.File.prototype.getExtension = function() {
   return (found > 0 ? name.substr(found).toLowerCase() : '');
 };
 
-/** @method FS.File.prototype.toDataUrl
+/** 
+ * @method FS.File.prototype.toDataUrl
+ * @public
  * @param {function} callback Callback(err, dataUrl) (callback is optional on server)
  * @todo Split client and server code
  */
@@ -431,9 +460,10 @@ function checkContentType(fsFile, storeName, startOfType) {
   }
   return false;
 }
-;
 
-/** @method FS.File.prototype.isImage Is it an image file?
+/** 
+ * @method FS.File.prototype.isImage Is it an image file?
+ * @public
  * @param {object} [options]
  * @param {string} [options.store] The store we're interested in
  *
@@ -446,7 +476,9 @@ FS.File.prototype.isImage = function(options) {
   return checkContentType(this, (options || {}).store, 'image/');
 };
 
-/** @method FS.File.prototype.isVideo Is it a video file?
+/** 
+ * @method FS.File.prototype.isVideo Is it a video file?
+ * @public
  * @param {object} [options]
  * @param {string} [options.store] The store we're interested in
  *
@@ -459,7 +491,9 @@ FS.File.prototype.isVideo = function(options) {
   return checkContentType(this, (options || {}).store, 'video/');
 };
 
-/** @method FS.File.prototype.isAudio Is it an audio file?
+/** 
+ * @method FS.File.prototype.isAudio Is it an audio file?
+ * @public
  * @param {object} [options]
  * @param {string} [options.store] The store we're interested in
  *
@@ -472,7 +506,9 @@ FS.File.prototype.isAudio = function(options) {
   return checkContentType(this, (options || {}).store, 'audio/');
 };
 
-/** @method FS.File.prototype.isUploaded Is this file completely uploaded?
+/** 
+ * @method FS.File.prototype.isUploaded Is this file completely uploaded?
+ * @public
  * @returns {boolean} True if the number of uploaded bytes is equal to the file size.
  */
 FS.File.prototype.isUploaded = function() {
@@ -484,7 +520,9 @@ FS.File.prototype.isUploaded = function() {
   return self.bytesUploaded === self.size;
 };
 
-/** @method FS.File.prototype.chunkIsUploaded Is the chunk completely uploaded?
+/** 
+ * @method FS.File.prototype.chunkIsUploaded Is the chunk completely uploaded?
+ * @public
  * @param {number} start
  * @returns {boolean} True if the chunk starting at start has already been uploaded successfully.
  */
@@ -497,7 +535,9 @@ FS.File.prototype.chunkIsUploaded = function(start) {
   return !!_.findWhere(self.chunks, {start: start});
 };
 
-/** @method FS.File.prototype.hasCopy
+/** 
+ * @method FS.File.prototype.hasCopy
+ * @public
  * @param {string} storeName Name of the store to check for a copy of this file
  * @param {boolean} [optimistic=false] In case that the file record is not found, read below
  * @returns {boolean} If the copy exists or not
@@ -522,7 +562,9 @@ FS.File.prototype.hasCopy = function(storeName, optimistic) {
   return false;
 };
 
-/** @method FS.File.prototype.getCopyInfo
+/** 
+ * @method FS.File.prototype.getCopyInfo
+ * @public
  * @param {string} storeName Name of the store for which to get copy info.
  * @returns {Object} The file details, e.g., name, size, key, etc., specific to the copy saved in this store.
  */
@@ -533,7 +575,9 @@ FS.File.prototype.getCopyInfo = function(storeName) {
   return (self.copies && self.copies[storeName]) || null;
 };
 
-/** @method FS.File.prototype.hasMaster Does the attached collection allow this file?
+/** 
+ * @method FS.File.prototype.hasMaster Does the attached collection allow this file?
+ * @public
  * @returns {boolean} True if the attached collection allows this file.
  *
  * Checks based on any filters defined on the attached collection. If the
@@ -592,7 +636,17 @@ FS.File.prototype.fileIsAllowed = function() {
 
 };
 
-var contentTypeInList = function(list, contentType) {
+/**
+ * @method contentTypeInList Is the content type string in the list?
+ * @private
+ * @param {String[]} list - Array of content types
+ * @param {String} contentType - The content type
+ * @returns {Boolean}
+ * 
+ * Returns true if the content type is in the list, or if it matches
+ * one of the special types in the list, e.g., "image/*".
+ */
+var contentTypeInList = function contentTypeInList(list, contentType) {
   var listType, found = false;
   for (var i = 0, ln = list.length; i < ln; i++) {
     listType = list[i];

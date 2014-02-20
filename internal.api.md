@@ -3,7 +3,7 @@
 
 -
 
-#### <a name="FS.File"></a>new *fs*.File(ref)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+#### <a name="FS.File"></a>new FS.File(ref)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __File__ is defined in `FS`*
 
@@ -19,7 +19,8 @@ __TODO__
 * Should we refactor the file record into `self.record`?
 ```
 
-> ```FS.File = function(ref, createdByTransform) { ...``` [fsFile-common.js:7](fsFile-common.js#L7)
+
+> ```FS.File = function(ref, createdByTransform) { ...``` [fsFile-common.js:9](fsFile-common.js#L9)
 
 -
 
@@ -35,7 +36,7 @@ File or Blob instance to attach
 
 -
 
-> ```self._attachFile = function(ref) { ...``` [fsFile-common.js:22](fsFile-common.js#L22)
+> ```self._attachFile = function(ref) { ...``` [fsFile-common.js:24](fsFile-common.js#L24)
 
 -
 
@@ -46,7 +47,8 @@ File or Blob instance to attach
 __Returns__  *{number}*
 The server confirmed upload progress
 
-> ```FS.File.prototype.uploadProgress = function() { ...``` [fsFile-common.js:39](fsFile-common.js#L39)
+
+> ```FS.File.prototype.uploadProgress = function() { ...``` [fsFile-common.js:43](fsFile-common.js#L43)
 
 -
 
@@ -57,12 +59,13 @@ The server confirmed upload progress
 __Returns__  *{FS.Collection}*
 Returns true if this FS.File is reactive
 
+
 > Note: Returns true if this FS.File object was created by a FS.Collection
 > and we are in a reactive computations. What does this mean? Well it should
 > mean that our fileRecord is fully updated by Meteor and we are mounted on
 > a collection
 
-> ```FS.File.prototype.controlledByDeps = function() { ...``` [fsFile-common.js:60](fsFile-common.js#L60)
+> ```FS.File.prototype.controlledByDeps = function() { ...``` [fsFile-common.js:66](fsFile-common.js#L66)
 
 -
 
@@ -73,7 +76,8 @@ Returns true if this FS.File is reactive
 __Returns__  *{FS.Collection}*
 Returns attached collection or undefined if not mounted
 
-> ```FS.File.prototype.getCollection = function() { ...``` [fsFile-common.js:68](fsFile-common.js#L68)
+
+> ```FS.File.prototype.getCollection = function() { ...``` [fsFile-common.js:76](fsFile-common.js#L76)
 
 -
 
@@ -84,25 +88,11 @@ Returns attached collection or undefined if not mounted
 __Returns__  *{FS.Collection}*
 Returns attached collection or undefined if not mounted
 
+
 > Note: This will throw an error if collection not found and file is mounted
 > *(got an invalid collectionName)*
 
-> ```FS.File.prototype.isMounted = FS.File.prototype.getCollection;``` [fsFile-common.js:97](fsFile-common.js#L97)
-
--
-
-#### <a name="FS.File.prototype.fetch"></a>*fsFile*.fetch()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
--
-> __Warning!__
-> This method "FS.File.prototype.fetch" has deprecated from the api
-> Refactored into [getFileRecord](#FS.File.prototype.getFileRecord)
-
-*This method __fetch__ is defined in `prototype` of `FS.File`*
-
-__Returns__  *{object}*
-The filerecord
-
-> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile-common.js:108](fsFile-common.js#L108)
+> ```FS.File.prototype.isMounted = FS.File.prototype.getCollection;``` [fsFile-common.js:107](fsFile-common.js#L107)
 
 -
 
@@ -113,7 +103,8 @@ The filerecord
 __Returns__  *{object}*
 The filerecord
 
-> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile-common.js:108](fsFile-common.js#L108)
+
+> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile-common.js:114](fsFile-common.js#L114)
 
 -
 
@@ -129,7 +120,10 @@ __Arguments__
 
 -
 
-> ```FS.File.prototype.update = function(modifier, options, callback) { ...``` [fsFile-common.js:136](fsFile-common.js#L136)
+
+Updates the fileRecord.
+
+> ```FS.File.prototype.update = function(modifier, options, callback) { ...``` [fsFile-common.js:145](fsFile-common.js#L145)
 
 -
 
@@ -151,7 +145,7 @@ Count
 
 
 
-> ```FS.File.prototype.remove = function(callback) { ...``` [fsFile-common.js:166](fsFile-common.js#L166)
+> ```FS.File.prototype.remove = function(callback) { ...``` [fsFile-common.js:176](fsFile-common.js#L176)
 
 -
 
@@ -171,11 +165,12 @@ __TODO__
 * Needs to be implemented
 ```
 
+
 Move the file from current collection to another collection
 
 > Note: Not yet implemented
 
-> ```FS.File.prototype.get = function(options) { ...``` [fsFile-common.js:213](fsFile-common.js#L213)
+> ```FS.File.prototype.get = function(options) { ...``` [fsFile-common.js:226](fsFile-common.js#L226)
 
 -
 
@@ -195,6 +190,7 @@ Name of the store to get from. If not defined
 
 __Returns__  *{number}*
 Count
+
 on the client, the first store saved into `fsFile.copies` is used. If not
 defined on the server, the first store defined in `options.stores` for the
 collection is used. So if there is only one store, you can generally omit
@@ -203,7 +199,7 @@ this, but if there are multiple, it's best to specify.
 Client: Instructs the DownloadTransferQueue to begin downloading the file copy
 Server: Returns the Buffer data for the copy
 
-> ```FS.File.prototype.get = function(options) { ...``` [fsFile-common.js:213](fsFile-common.js#L213)
+> ```FS.File.prototype.get = function(options) { ...``` [fsFile-common.js:226](fsFile-common.js#L226)
 
 -
 
@@ -220,14 +216,19 @@ Name of the store to get from. If not defined,
 Wether or not the authenticate
     - __download__ *{boolean}*    (Default = false)
 Should headers be set to force a download
+    - __brokenIsFine__ *{boolean}*    (Default = false)
+Return the URL even if
 
 -
+
 the first store defined in `options.stores` for the collection is used.
+we know it's currently a broken link because the file hasn't been saved in
+the requested store yet.
 
 Return the http url for getting the file - on server set auth if wanting to
 use authentication on client set auth to true or token
 
-> ```FS.File.prototype.url = function(options) { ...``` [fsFile-common.js:232](fsFile-common.js#L232)
+> ```FS.File.prototype.url = function(options) { ...``` [fsFile-common.js:250](fsFile-common.js#L250)
 
 -
 
@@ -248,9 +249,10 @@ Name of the store to get from. If not defined,
 Wether or not the authenticate
 
 -
+
 the first store defined in `options.stores` for the collection is used.
 
-> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile-common.js:301](fsFile-common.js#L301)
+> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile-common.js:322](fsFile-common.js#L322)
 
 -
 
@@ -265,6 +267,7 @@ Callback for returning errors and updated FS.File
 
 -
 
+
 ```
 fo.put(function(err, fo) {
 if (err) {
@@ -275,7 +278,7 @@ console.log('Passed on the file: ' + fo);
 });
 ```
 
-> ```FS.File.prototype.put = function(callback) { ...``` [fsFile-common.js:321](fsFile-common.js#L321)
+> ```FS.File.prototype.put = function(callback) { ...``` [fsFile-common.js:344](fsFile-common.js#L344)
 
 -
 
@@ -294,9 +297,10 @@ __TODO__
 * WIP, Not yet implemented for server
 ```
 
+
 > This function is not yet implemented for server
 
-> ```FS.File.prototype.resume = function(ref) { ...``` [fsFile-common.js:349](fsFile-common.js#L349)
+> ```FS.File.prototype.resume = function(ref) { ...``` [fsFile-common.js:374](fsFile-common.js#L374)
 
 -
 
@@ -307,7 +311,8 @@ __TODO__
 __Returns__  *{string}*
 The extension eg.: `jpg` or if not found then an empty string ''
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:360](fsFile-common.js#L360)
+
+> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:387](fsFile-common.js#L387)
 
 -
 
@@ -327,7 +332,8 @@ __TODO__
 * Split client and server code
 ```
 
-> ```FS.File.prototype.toDataUrl = function(callback) { ...``` [fsFile-common.js:376](fsFile-common.js#L376)
+
+> ```FS.File.prototype.toDataUrl = function(callback) { ...``` [fsFile-common.js:405](fsFile-common.js#L405)
 
 -
 
@@ -343,12 +349,13 @@ The store we're interested in
 
 -
 
+
 Returns true if the copy of this file in the specified store has an image
 content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isImage = function(options) { ...``` [fsFile-common.js:445](fsFile-common.js#L445)
+> ```FS.File.prototype.isImage = function(options) { ...``` [fsFile-common.js:475](fsFile-common.js#L475)
 
 -
 
@@ -364,12 +371,13 @@ The store we're interested in
 
 -
 
+
 Returns true if the copy of this file in the specified store has a video
 content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isVideo = function(options) { ...``` [fsFile-common.js:458](fsFile-common.js#L458)
+> ```FS.File.prototype.isVideo = function(options) { ...``` [fsFile-common.js:490](fsFile-common.js#L490)
 
 -
 
@@ -385,12 +393,13 @@ The store we're interested in
 
 -
 
+
 Returns true if the copy of this file in the specified store has an audio
 content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isAudio = function(options) { ...``` [fsFile-common.js:471](fsFile-common.js#L471)
+> ```FS.File.prototype.isAudio = function(options) { ...``` [fsFile-common.js:505](fsFile-common.js#L505)
 
 -
 
@@ -401,7 +410,8 @@ the content type of the original file.
 __Returns__  *{boolean}*
 True if the number of uploaded bytes is equal to the file size.
 
-> ```FS.File.prototype.isUploaded = function() { ...``` [fsFile-common.js:478](fsFile-common.js#L478)
+
+> ```FS.File.prototype.isUploaded = function() { ...``` [fsFile-common.js:514](fsFile-common.js#L514)
 
 -
 
@@ -418,18 +428,8 @@ __Arguments__
 __Returns__  *{boolean}*
 True if the chunk starting at start has already been uploaded successfully.
 
-> ```FS.File.prototype.chunkIsUploaded = function(start) { ...``` [fsFile-common.js:491](fsFile-common.js#L491)
 
--
-
-#### <a name="FS.File.prototype.hasMaster"></a>*fsFile*.hasMaster()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
--
-*This method __hasMaster__ is defined in `prototype` of `FS.File`*
-
-__Returns__  *{boolean}*
-True if a copy of this file was saved in the master store.
-
-> ```FS.File.prototype.hasMaster = function() { ...``` [fsFile-common.js:503](fsFile-common.js#L503)
+> ```FS.File.prototype.chunkIsUploaded = function(start) { ...``` [fsFile-common.js:529](fsFile-common.js#L529)
 
 -
 
@@ -449,13 +449,33 @@ In case that the file record is not found, read below
 __Returns__  *{boolean}*
 If the copy exists or not
 
+
 > Note: If the file is not published to the client or simply not found:
 this method cannot know for sure if it exists or not. The `optimistic`
 param is the boolean value to return. Are we `optimistic` that the copy
 could exist. This is the case in `FS.File.url` we are optimistic that the
 copy supplied by the user exists.
 
-> ```FS.File.prototype.hasCopy = function(storeName, optimistic) { ...``` [fsFile-common.js:518](fsFile-common.js#L518)
+> ```FS.File.prototype.hasCopy = function(storeName, optimistic) { ...``` [fsFile-common.js:551](fsFile-common.js#L551)
+
+-
+
+#### <a name="FS.File.prototype.getCopyInfo"></a>*fsFile*.getCopyInfo(storeName)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method __getCopyInfo__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __storeName__ *{string}*  
+Name of the store for which to get copy info.
+
+-
+
+__Returns__  *{Object}*
+The file details, e.g., name, size, key, etc., specific to the copy saved in this store.
+
+
+> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:571](fsFile-common.js#L571)
 
 -
 
@@ -466,6 +486,7 @@ copy supplied by the user exists.
 __Returns__  *{boolean}*
 True if the attached collection allows this file.
 
+
 Checks based on any filters defined on the attached collection. If the
 file is not valid according to the filters, this method returns false
 and also calls the filter `onInvalid` method defined for the attached
@@ -473,7 +494,30 @@ collection, passing it an English error string that explains why it
 failed.
 
 
-> ```FS.File.prototype.fileIsAllowed = function() { ...``` [fsFile-common.js:542](fsFile-common.js#L542)
+> ```FS.File.prototype.fileIsAllowed = function() { ...``` [fsFile-common.js:590](fsFile-common.js#L590)
+
+-
+
+#### <a name="contentTypeInList"></a>contentTypeInList(list, contentType)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
+-
+*This method is private*
+
+__Arguments__
+
+* __list__ *{[String[]](#String[])}*  
+ Array of content types
+* __contentType__ *{String}*  
+ The content type
+
+-
+
+__Returns__  *{Boolean}*
+
+
+Returns true if the content type is in the list, or if it matches
+one of the special types in the list, e.g., "image/*".
+
+> ```var contentTypeInList = function contentTypeInList(list, contentType) { ...``` [fsFile-common.js:649](fsFile-common.js#L649)
 
 -
 
@@ -526,11 +570,11 @@ the server, blocks and returns the data if there is no callback.
 __Arguments__
 
 * __start__ *{Number}*  
-- First byte position to read.
+ First byte position to read.
 * __end__ *{Number}*  
-- Last byte position to read.
+ Last byte position to read.
 * __callback__ *{Function}*  
-- Required on the client; optional on the server.
+ Required on the client; optional on the server.
 
 -
 
@@ -591,7 +635,7 @@ __Arguments__
 
 * __url__ *{string}*  
 * __callback__ *{function}*  
-- callback(err)
+ callback(err)
 
 -
 
@@ -612,9 +656,9 @@ Converts Buffer to EJSON.binary data and sets it
 __Arguments__
 
 * __buffer__ *{Buffer}*  
-- A Node buffer
+ A Node buffer
 * __type__ *{string}*  
-- The content type of the data that's in the buffer
+ The content type of the data that's in the buffer
 
 -
 
@@ -636,11 +680,11 @@ Loads buffer from filesystem, converts Buffer to EJSON.binary data, and sets it
 __Arguments__
 
 * __filePath__ *{string}*  
-- The path to the file on the server filesystem.
+ The path to the file on the server filesystem.
 * __type__ *{string}*    (Optional = "guessed from extension")
-- The content type of the file
+ The content type of the file
 * __callback__ *{Function}*    (Optional)
-- A callback that is potentially passed any error.
+ A callback that is potentially passed any error.
 
 -
 
@@ -659,7 +703,7 @@ __Returns__  *{undefined}*
 
 -
 
-#### <a name="FS.File.fromUrl"></a>*fsFile*.fromUrl(url, filename, callback)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+#### <a name="FS.File.fromUrl"></a>FS.File.fromUrl(url, filename, callback)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
 *This method __fromUrl__ is defined in `FS.File`*
 
@@ -761,16 +805,16 @@ Has this store failed permanently?
 
 -
 
-#### <a name="FS.File~newFsFileCallback"></a>*fs*.File~newFsFileCallback&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="FS.File~newFsFileCallback"></a>FS.File~newFsFileCallback&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This callback __File~newFsFileCallback__ is defined in `FS`*
 
 __Arguments__
 
 * __error__ *{[Error](#Error)}*  
-- An error, or null if successful
+ An error, or null if successful
 * __fsFile__ *{[FS.File](#FS.File)}*  
-- A new FS.File instance, or `undefined` if there was an error
+ A new FS.File instance, or `undefined` if there was an error
 
 -
 
@@ -779,7 +823,7 @@ __Arguments__
 
 -
 
-#### <a name="FS.File.fromFile"></a>*fsFile*.fromFile(filePath, [filename], [type], callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="FS.File.fromFile"></a>FS.File.fromFile(filePath, [filename], [type], callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 ```
 Loads data from a local path into a new FS.File and passes it to callback.
 You must specify every argument, but the filename argument may be `null` to
@@ -791,11 +835,11 @@ extract it from the filePath.
 __Arguments__
 
 * __filePath__ *{string}*  
-- The full path to the file on the local filesystem
+ The full path to the file on the local filesystem
 * __filename__ *{string}*    (Optional = "extracted from filePath")
-- The name to use for the new FS.File instance
+ The name to use for the new FS.File instance
 * __type__ *{string}*    (Optional = "guessed from extension")
-- The content type of the file
+ The content type of the file
 * __callback__ *{[FS.File~newFsFileCallback](#FS.File~newFsFileCallback)}*  
 
 -
@@ -808,7 +852,7 @@ __Returns__  *{undefined}*
 
 -
 
-#### <a name="FS.File.fromUrl"></a>*fsFile*.fromUrl(url, filename, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
+#### <a name="FS.File.fromUrl"></a>FS.File.fromUrl(url, filename, callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 ```
 Loads data from a remote URL into a new FS.File and passes it to callback
 ```
@@ -818,9 +862,9 @@ Loads data from a remote URL into a new FS.File and passes it to callback
 __Arguments__
 
 * __url__ *{string}*  
-- A full url that points to a remote file
+ A full url that points to a remote file
 * __filename__ *{string}*  
-- The name to use for the new FS.File instance
+ The name to use for the new FS.File instance
 * __callback__ *{[FS.File~newFsFileCallback](#FS.File~newFsFileCallback)}*  
 
 -
