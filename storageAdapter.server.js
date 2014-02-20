@@ -83,7 +83,7 @@ FS.StorageAdapter = function(name, options, api) {
     };
 
     // Prep fileKey if we're not doing an update of an existing file
-    fileKey = fileKey || fsFile._id + '/' + fsFile.name;
+    fileKey = fileKey || fsFile.name;
 
     // Put the file to storage
     api.put.call(self, fileKey, fsFile.getBuffer(),
