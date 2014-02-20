@@ -1,3 +1,27 @@
+if (Meteor.isServer) {
+  var path = Npm.require("path");
+}
+
+var validateAction = function validateAction(action, fileObj, collection, userId) {
+  if (typeof Package !== 'object' || !Package.insecure) {
+    if (!fileObj.isMounted()) {
+      throw new Meteor.Error(400, "Bad Request");
+    }
+    // Any deny returns true means denied.
+    if (_.any(collection._validators[action].deny, function(validator) {
+      return validator(userId, fileObj);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+    // Any allow returns true means proceed. Throw error if they all fail.
+    if (_.all(collection._validators[action].allow, function(validator) {
+      return !validator(userId, fileObj);
+    })) {
+      throw new Meteor.Error(403, "Access denied");
+    }
+  }
+};
+
 var APUpload = function(fileObj, data, start) {
   var self = this;
   check(fileObj, FS.File);
@@ -16,22 +40,7 @@ var APUpload = function(fileObj, data, start) {
   // validators and temp store require that we have the full file record loaded
   fileObj.getFileRecord();
 
-  if (typeof Package !== 'object' || !Package.insecure) {
-    // Call user validators; use the "insert" validators
-    // since uploading is part of insert.
-    // Any deny returns true means denied.
-    if (_.any(fileObj.collection.files._validators.insert.deny, function(validator) {
-      return validator(self.userId, fileObj);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-    // Any allow returns true means proceed. Throw error if they all fail.
-    if (_.all(fileObj.collection.files._validators.insert.allow, function(validator) {
-      return !validator(self.userId, fileObj);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-  }
+  validateAction('update', fileObj, fileObj.collection.files, self.userId);
 
   // Save chunk in temporary store
   FS.TempStore.saveChunk(fileObj, data, start, function(err) {
@@ -73,22 +82,7 @@ var APDownload = function(fileObj, storeName, start, end) {
   // proper validation requires that we have the full file record loaded
   fileObj.getFileRecord();
 
-  if (typeof Package !== 'object' || !Package.insecure) {
-    // Call user validators; use the custom "download" validators
-    // since uploading is part of insert.
-    // Any deny returns true means denied.
-    if (_.any(fileObj.collection._validators.download.deny, function(validator) {
-      return validator(self.userId, fileObj);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-    // Any allow returns true means proceed. Throw error if they all fail.
-    if (_.all(fileObj.collection._validators.download.allow, function(validator) {
-      return !validator(self.userId, fileObj);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-  }
+  validateAction('download', fileObj, fileObj.collection, self.userId);
 
   return fileObj.get({
     storeName: storeName,
@@ -117,22 +111,7 @@ var APDelete = function(fileObj) {
   // proper validation requires that we have the full file record loaded
   fileObj.getFileRecord();
 
-  if (typeof Package !== 'object' || !Package.insecure) {
-    // Call user validators; use the "remove" validators
-    // since uploading is part of insert.
-    // Any deny returns true means denied.
-    if (_.any(fileObj.collection.files._validators.remove.deny, function(validator) {
-      return validator(self.userId, fileObj);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-    // Any allow returns true means proceed. Throw error if they all fail.
-    if (_.all(fileObj.collection.files._validators.remove.allow, function(validator) {
-      return !validator(self.userId, fileObj);
-    })) {
-      throw new Meteor.Error(403, "Access denied");
-    }
-  }
+  validateAction('remove', fileObj, fileObj.collection.files, self.userId);
 
   return fileObj.remove();
 };
@@ -144,29 +123,31 @@ var APhandler = function(options) {
     var self = this;
     var query = self.query || {};
     var params = self.params || {};
-    
-    // Get the requested ID
-    var id = params.id;
-    if (!id) {
-      throw new Meteor.Error(400, "Bad Request", "No file ID specified");
-    }
-    
+    var method = self.method.toLowerCase();
+    var isPut = (method === 'put');
+
     // Get the collection
     var collection = FS._collections[params.collectionName];
     if (!collection) {
       throw new Meteor.Error(404, "Not Found", "No collection has the name " + params.collectionName);
     }
 
-    // Get the fsFile
+    // Get the requested ID
+    var id = params.id;
+    if (!id) {
+      throw new Meteor.Error(400, "Bad Request", "No file ID specified");
+    }
+      
+    // We have an id, so get the fsFile
     var file = collection.findOne({_id: '' + id});
     if (!file) {
       throw new Meteor.Error(404, "Not Found", "There is no file with ID " + id);
     }
 
     // If HTTP GET then return file
-    if (self.method.toLowerCase() === 'get') {
+    if (method === 'get') {
       var copyInfo;
-      
+
       var storeName = params.store;
       if (typeof storeName !== "string") {
         // first store is considered the master store by default
@@ -183,7 +164,7 @@ var APhandler = function(options) {
       } else {
         self.setContentType('application/octet-stream');
       }
-      
+
       // Add 'Content-Disposition' header if requested a download/attachment URL
       var start, end;
       if (typeof query.download !== "undefined") {
@@ -235,12 +216,12 @@ var APhandler = function(options) {
     }
 
     // If HTTP PUT then put the data for the file
-    else if (self.method.toLowerCase() === 'put') {
-      return APUpload.call(self, file, data);
+    else if (isPut) {
+      return APUpload.call(self, file, FS.Utility.bufferToBinary(data));
     }
 
     // If HTTP DEL then delete the file
-    else if (self.method.toLowerCase() === 'del') {
+    else if (method === 'del') {
       return APDelete.call(self, file);
     }
   };
@@ -293,13 +274,15 @@ FS.AccessPoint.DDP.mountGet = function(options) {
 
 FS.AccessPoint.HTTP = {};
 
-var currentHTTPMethodName;
+var currentHTTPMethodNames = [];
 function unmountHTTPMethod() {
-  if (currentHTTPMethodName) {
+  if (currentHTTPMethodNames.length) {
     var methods = {};
-    methods[currentHTTPMethodName] = false;
+    _.each(currentHTTPMethodNames, function (name) {
+      methods[name] = false;
+    });
     HTTP.methods(methods);
-    currentHTTPMethodName = null;
+    currentHTTPMethodNames = [];
   }
 }
 
@@ -322,7 +305,7 @@ FS.AccessPoint.HTTP.mount = function(options) {
   if (typeof baseUrl !== "string") {
     baseUrl = '/cfs/files';
   }
-  
+
   var url = baseUrl + '/:collectionName/:id/:store';
 
   // Currently HTTP.methods is not implemented on the client
@@ -332,10 +315,39 @@ FS.AccessPoint.HTTP.mount = function(options) {
     // We namespace with using the current Meteor convention - this could
     // change
     var methods = {};
+    methods[baseUrl + '/:collectionName/:filename'] = {
+      put: function(data) {
+        var self = this;
+        var params = this.params;
+        var filename = params.filename;
+
+        if (path && !path.extname(filename).length) {
+          throw new Meteor.Error(400, "Bad Request", "Filename must have an extension");
+        }
+        
+        // Get the collection
+        var collection = FS._collections[params.collectionName];
+        if (!collection) {
+          throw new Meteor.Error(404, "Not Found", "No collection has the name " + params.collectionName);
+        }
+
+        // Create file object. TODO put in real filename.
+        var file = new FS.File({
+          name: filename
+        });
+        file.setDataFromBuffer(data, self.requestHeaders['content-type']);
+        file.collectionName = params.collectionName;
+        validateAction('insert', file, collection.files, self.userId);
+        file = collection.insert(file);
+        self.setStatusCode(200);
+        return {_id: file._id};
+      }
+    };
     methods[url] = APhandler(options);
     HTTP.methods(methods);
     // Update current name for potential future unmounting
-    currentHTTPMethodName = url;
+    currentHTTPMethodNames.push(url);
+    currentHTTPMethodNames.push(baseUrl + '/:collectionName/:filename');
   }
 
   FS.AccessPoint.HTTP.baseUrl = baseUrl;
