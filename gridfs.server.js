@@ -1,6 +1,18 @@
 var path = Npm.require('path');
 var chunkSize = 262144; // 256k is default GridFS chunk size
 
+/**
+ * @public
+ * @constructor
+ * @param {String} name - The store name
+ * @param {Object} options
+ * @param {Function} [options.beforeSave] - Function to run before saving a file from the server. The context of the function will be the `FS.File` instance we're saving. The function may alter its properties.
+ * @param {Number} [options.maxTries=5] - Max times to attempt saving a file
+ * @returns {FS.StorageAdapter} An instance of FS.StorageAdapter.
+ *
+ * Creates a GridFS store instance on the server. Inherits from FS.StorageAdapter
+ * type.
+ */
 FS.Store.GridFS = function(name, options) {
   var self = this;
   if (!(self instanceof FS.Store.GridFS))
