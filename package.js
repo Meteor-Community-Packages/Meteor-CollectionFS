@@ -15,6 +15,6 @@ Package.on_use(function(api) {
 
 Package.on_test(function(api) {
   api.use(['cfs-s3', 'test-helpers', 'tinytest'], 'server');
-  api.add_files('/tests/server-tests.js', 'server');
-  api.add_files('/tests/client-tests.js', 'client');
+  api.add_files('tests/server-tests.js', 'server');
+  api.add_files('tests/client-tests.js', 'client');
 });
