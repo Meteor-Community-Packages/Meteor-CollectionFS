@@ -3,7 +3,7 @@
 	"description": "CollectionFS, Class for creating Storage adapters",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter",
 	"author": "CollectionFS core @aldeed & @raix",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
 	"packages": {
 		"cfs-base-package": {
