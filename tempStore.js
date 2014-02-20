@@ -36,14 +36,17 @@ FS.TempStore = {
     }
 
     // Get the name of the already-created tempFile for this chunk
-    var chunks = fileObj.chunks || [], chunk, tempFile;
+    var chunks = fileObj.chunks || [], chunk, tempFile, existingChunkSize = 0;
     for (var i = 0, ln = chunks.length; i < ln; i++) {
       chunk = chunks[i];
       if (chunk.start === start) {
         tempFile = chunk.tempFile;
+        existingChunkSize = chunk.size;
         break;
       }
     }
+    
+    var bytesChange = total - existingChunkSize;
 
     // If there is not already a temp file...
     if (!tempFile) {
@@ -51,7 +54,7 @@ FS.TempStore = {
       tempFile = tmp.path({suffix: '.bin'});
       FS.debug && console.log('Chunk saved ' + tempFile);
       // and make note of its filename in the chunks array
-      fileObj.update({$push: {chunks: {start: start, tempFile: tempFile}}});
+      fileObj.update({$push: {chunks: {start: start, size: total, tempFile: tempFile}}});
     }
 
     // Write the chunk data into the temporary file
@@ -59,7 +62,7 @@ FS.TempStore = {
       if (err) {
         callback(err);
       } else {
-        fileObj.update({$inc: {bytesUploaded: total}}, function(err) {
+        fileObj.update({$inc: {bytesUploaded: bytesChange}}, function(err) {
           callback(err); //don't pass along the second arg
         });
       }
