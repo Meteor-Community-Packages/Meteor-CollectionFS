@@ -271,11 +271,20 @@ FS.File.prototype.url = function(options) {
     }
     
     var copyInfo = self.getCopyInfo(storeName);
-    if (!options.brokenIsFine && !copyInfo) {
-      // We want to return null if we know the URL will be a broken
-      // link because then we can avoid rendering broken links, broken
-      // images, etc.
-      return null;
+    if (!copyInfo) {
+      if (options.brokenIsFine) {
+        // TODO this might not be the best way to do this since the filename
+        // most likely won't end up being the file key for this store after
+        // it's saved. We may have to remove the brokenIsFine option or
+        // go back to including the file ID in the URL and maybe include the
+        // file name at the end just as an unused piece for aesthetics.
+        copyInfo = {key: self.name};
+      } else {
+        // We want to return null if we know the URL will be a broken
+        // link because then we can avoid rendering broken links, broken
+        // images, etc.
+        return null;
+      }
     }
 
     if (!FS.AccessPoint.HTTP.baseUrl) {
