@@ -30,13 +30,13 @@ var validateAction = function validateAction(validators, fileObj, userId) {
   }
 
   // Any deny returns true means denied.
-  if (_.any(validators.deny, function(validator) {
+  if (_.any(denyValidators, function(validator) {
     return validator(userId, fileObj);
   })) {
     throw new Meteor.Error(403, "Access denied");
   }
   // Any allow returns true means proceed. Throw error if they all fail.
-  if (_.all(validators.allow, function(validator) {
+  if (_.all(allowValidators, function(validator) {
     return !validator(userId, fileObj);
   })) {
     throw new Meteor.Error(403, "Access denied");
@@ -314,9 +314,12 @@ FS.AccessPoint.DDP.mountPut = function(options) {
     name = '/cfs/files/put';
   }
 
-  var methods = {};
-  methods[name] = APUpload;
-  Meteor.methods(methods);
+  // We don't need or want client simulations
+  if (Meteor.isServer) {
+    var methods = {};
+    methods[name] = APUpload;
+    Meteor.methods(methods);
+  }
 
   FS.AccessPoint.DDP.put = name;
 };
@@ -338,9 +341,12 @@ FS.AccessPoint.DDP.mountGet = function(options) {
     name = '/cfs/files/get';
   }
 
-  var methods = {};
-  methods[name] = APDownload;
-  Meteor.methods(methods);
+  // We don't need or want client simulations
+  if (Meteor.isServer) {
+    var methods = {};
+    methods[name] = APDownload;
+    Meteor.methods(methods);
+  }
 
   FS.AccessPoint.DDP.get = name;
 };
@@ -381,7 +387,7 @@ FS.AccessPoint.HTTP.mount = function(options) {
     baseUrl = '/cfs/files';
   }
 
-  // Currently HTTP.methods is not implemented on the client
+  // We don't need or want client simulations
   if (Meteor.isServer) {
     // Unmount previously mounted URL
     unmountHTTPMethod();
