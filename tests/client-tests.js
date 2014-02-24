@@ -2,13 +2,13 @@ function equals(a, b) {
   return !!(EJSON.stringify(a) === EJSON.stringify(b));
 }
 
-Tinytest.add('FS.Collection - client - test environment', function(test) {
+Tinytest.add('cfs-collection - client - test environment', function(test) {
   test.isTrue(typeof FS.Collection !== 'undefined', 'test environment not initialized FS.Collection');
 });
 
 /*
  * TODO FS.Collection Client Tests
- * 
+ *
  */
 
 
