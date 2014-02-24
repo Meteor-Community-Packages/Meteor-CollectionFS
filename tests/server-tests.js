@@ -2,14 +2,14 @@ function equals(a, b) {
   return !!(EJSON.stringify(a) === EJSON.stringify(b));
 }
 
-Tinytest.add('FS.Collection - server - test environment', function(test) {
+Tinytest.add('cfs-filesystem - server - test environment', function(test) {
   test.isTrue(typeof FS.Collection !== 'undefined', 'test environment not initialized FS.Collection');
   test.isTrue(typeof CFSErrorType !== 'undefined', 'test environment not initialized CFSErrorType');
 });
 
 /*
  * FS.File Server Tests
- * 
+ *
  * construct FS.File with no arguments
  * load data with FS.File.setDataFromBuffer
  * load data with FS.File.setDataFromBinary
@@ -18,13 +18,13 @@ Tinytest.add('FS.Collection - server - test environment', function(test) {
  * construct FS.File, set FS.File.collectionName to a CFS name, and then test FS.File.update/remove/get/put/del/url
  * (call these with and without callback to test sync vs. async)
  * set FS.File.name to a filename and test that FS.File.getExtension() returns the extension
- * 
- * 
+ *
+ *
  * FS.Collection Server Tests
- * 
+ *
  * Make sure options.filter is respected
- * 
- * 
+ *
+ *
  */
 
 
