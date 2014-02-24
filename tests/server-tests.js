@@ -2,7 +2,7 @@ function equals(a, b) {
   return !!(EJSON.stringify(a) === EJSON.stringify(b));
 }
 
-Tinytest.add('FS.Collection - server - test environment', function(test) {
+Tinytest.add('cfs-tempstore - server - test environment', function(test) {
   test.isTrue(typeof FS.Collection !== 'undefined', 'test environment not initialized FS.Collection');
 });
 
@@ -14,7 +14,7 @@ Tinytest.add('FS.Collection - server - test environment', function(test) {
  * FS.TempStore.getDataForFileSync
  * FS.TempStore.deleteChunks
  * FS.TempStore.ensureForFile
- * 
+ *
  */
 
 
