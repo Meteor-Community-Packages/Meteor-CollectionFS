@@ -363,13 +363,14 @@ FS.File.prototype.put = function(callback) {
   // If on client
   if (Meteor.isClient) {
     FS.uploadQueue.uploadFile(self);
-    callback(null, self);
   } else if (Meteor.isServer) {
     // Save the binary to a single chunk temp file, so that it is available
     // when FileWorker calls saveCopies.
     // This will also trigger file handling from collection observes.
     FS.TempStore.ensureForFile(self);
   }
+  
+  callback(null, self);
 };
 
 /** 
