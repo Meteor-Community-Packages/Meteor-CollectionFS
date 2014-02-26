@@ -5,42 +5,43 @@
  * [Meteor docs](http://docs.meteor.com/#insert)
  */
 FS.Collection.prototype.insert = function(fileRef, callback) {
-  var self = this;
+var self = this;
   var fileObj;
 
   callback = callback || FS.Utility.defaultCallback;
 
-  var doInsert = function() {
-    // Set reference to this collection
-    fileObj.collectionName = self.name;
-
-    // Check filters
-    if (!fileObj.fileIsAllowed()) {
-      callback(new Error('FS.Collection insert: file does not pass collection filters'));
-    }
-
-    // Insert the file into db
-    // We call cloneFileRecord as an easy way of extracting the properties
-    // that need saving.
-    fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj), function(err, id) {
-      if (err) {
-        callback(err, fileObj);
-      } else {
-        fileObj.put(callback);
-      }
-    });
-  };
-
   if (fileRef instanceof FS.File) {
     fileObj = fileRef;
-    doInsert();
   } else if (Meteor.isClient && typeof File !== "undefined" && fileRef instanceof File) {
     // For convenience, allow File to be passed directly on the client
     fileObj = new FS.File(fileRef);
-    doInsert();
   } else {
     callback(new Error('FS.Collection insert expects FS.File'));
+    return;
   }
+
+  // Set reference to this collection
+  fileObj.collectionName = self.name;
+
+  // Check filters
+  if (!fileObj.fileIsAllowed()) {
+    delete fileObj.collectionName;
+    callback(new Error('FS.Collection insert: file does not pass collection filters'));
+    return;
+  }
+
+  // Insert the file into db
+  // We call cloneFileRecord as an easy way of extracting the properties
+  // that need saving.
+  fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj), function(err, id) {
+    if (err) {
+      delete fileObj.collectionName;
+      callback(err, fileObj);
+    } else {
+      fileObj._id = id;
+      fileObj.put(callback);
+    }
+  });
 
   // We return the FS.File
   return fileObj;
