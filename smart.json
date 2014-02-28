@@ -13,6 +13,14 @@
 		"join": {
 			"git": "https://github.com/CollectionFS/Meteor-join.git",
 			"branch": "master"
+		},
+		"cfs-upload-ddp": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-upload-ddp.git",
+			"branch": "master"
+		},
+		"cfs-upload-http": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-upload-http.git",
+			"branch": "master"
 		}
 	}
 }

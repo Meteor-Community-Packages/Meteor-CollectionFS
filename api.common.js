@@ -5,7 +5,7 @@
  * [Meteor docs](http://docs.meteor.com/#insert)
  */
 FS.Collection.prototype.insert = function(fileRef, callback) {
-var self = this;
+  var self = this;
   var fileObj;
 
   callback = callback || FS.Utility.defaultCallback;
@@ -36,11 +36,23 @@ var self = this;
   fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj), function(err, id) {
     if (err) {
       delete fileObj.collectionName;
-      callback(err, fileObj);
     } else {
       fileObj._id = id;
-      fileObj.put(callback);
+
+      // If on client, begin uploading the data
+      if (Meteor.isClient) {
+        console.log("upload", self, fileObj);
+        self.options.uploader && self.options.uploader(fileObj);
+      }
+      
+      // If on the server, save the binary to a single chunk temp file,
+      // so that it is available when FileWorker calls saveCopies.
+      // This will also trigger file handling from collection observes.
+      else if (Meteor.isServer) {
+        FS.TempStore.ensureForFile(fileObj);
+      }
     }
+    callback(err, err ? void 0 : fileObj);
   });
 
   // We return the FS.File
