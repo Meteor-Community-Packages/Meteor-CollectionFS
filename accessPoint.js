@@ -3,47 +3,6 @@ if (Meteor.isServer) {
 }
 
 /**
- * @method validateAction
- * @private
- * @param {Object} validators - The validators object to use, with `deny` and `allow` properties.
- * @param {FS.File} fileObj - Mounted or mountable file object to be passed to validators.
- * @param {String} userId - The ID of the user who is attempting the action.
- * @returns {undefined}
- * 
- * Throws a "400-Bad Request" Meteor error if the action is not allowed.
- */
-var validateAction = function validateAction(validators, fileObj, userId) {
-  var denyValidators = validators.deny;
-  var allowValidators = validators.allow;
-
-  // If insecure package is used and there are no validators defined,
-  // allow the action.
-  if (typeof Package === 'object'
-          && Package.insecure
-          && denyValidators.length + allowValidators.length === 0) {
-    return;
-  }
-
-  // Validators should receive a fileObj that is mounted
-  if (!fileObj.isMounted()) {
-    throw new Meteor.Error(400, "Bad Request");
-  }
-
-  // Any deny returns true means denied.
-  if (_.any(denyValidators, function(validator) {
-    return validator(userId, fileObj);
-  })) {
-    throw new Meteor.Error(403, "Access denied");
-  }
-  // Any allow returns true means proceed. Throw error if they all fail.
-  if (_.all(allowValidators, function(validator) {
-    return !validator(userId, fileObj);
-  })) {
-    throw new Meteor.Error(403, "Access denied");
-  }
-};
-
-/**
  * @method APUpload
  * @private
  * @param {FS.File} fileObj - The file object for which we're uploading data.
@@ -71,7 +30,7 @@ var APUpload = function APUpload(fileObj, data, start) {
   // validators and temp store require that we have the full file record loaded
   fileObj.getFileRecord();
 
-  validateAction(fileObj.collection.files._validators['update'], fileObj, self.userId);
+  FS.Utility.validateAction(fileObj.collection.files._validators['update'], fileObj, self.userId);
 
   // Save chunk in temporary store
   FS.TempStore.saveChunk(fileObj, data, start, function(err) {
@@ -115,7 +74,7 @@ var APDownload = function APDownload(fileObj, storeName, start, end) {
   // proper validation requires that we have the full file record loaded
   fileObj.getFileRecord();
 
-  validateAction(fileObj.collection._validators['download'], fileObj, self.userId);
+  FS.Utility.validateAction(fileObj.collection._validators['download'], fileObj, self.userId);
 
   return fileObj.get({
     storeName: storeName,
@@ -147,7 +106,7 @@ var APDelete = function APDelete(fileObj) {
   // proper validation requires that we have the full file record loaded
   fileObj.getFileRecord();
 
-  validateAction(fileObj.collection.files._validators['remove'], fileObj, self.userId);
+  FS.Utility.validateAction(fileObj.collection.files._validators['remove'], fileObj, self.userId);
 
   return fileObj.remove();
 };
@@ -290,39 +249,13 @@ var httpPutHandler = function httpPutHandler(data) {
   });
   file.setDataFromBuffer(data, self.requestHeaders['content-type']);
   file.collectionName = params.collectionName;
-  validateAction(collection.files._validators['insert'], file, self.userId);
+  FS.Utility.validateAction(collection.files._validators['insert'], file, self.userId);
   file = collection.insert(file);
   self.setStatusCode(200);
   return {_id: file._id};
 };
 
 FS.AccessPoint.DDP = {};
-
-/** 
- * @method FS.AccessPoint.DDP.mountPut
- * @public
- * @param {object} [options] Options
- * @param {array} [options.name='/cfs/files/put'] Define a custom method name
- *
- * Mounts an upload handler method with the given name.
- */
-FS.AccessPoint.DDP.mountPut = function(options) {
-  options = options || {};
-
-  var name = options.name;
-  if (typeof name !== "string") {
-    name = '/cfs/files/put';
-  }
-
-  // We don't need or want client simulations
-  if (Meteor.isServer) {
-    var methods = {};
-    methods[name] = APUpload;
-    Meteor.methods(methods);
-  }
-
-  FS.AccessPoint.DDP.put = name;
-};
 
 /** 
  * @method FS.AccessPoint.DDP.mountGet
@@ -412,5 +345,4 @@ FS.AccessPoint.HTTP.mount = function(options) {
 // Mount defaults for use by all collections. You may call these
 // again with custom method names if you don't like the default names.
 FS.AccessPoint.HTTP.mount();
-FS.AccessPoint.DDP.mountPut();
 FS.AccessPoint.DDP.mountGet();

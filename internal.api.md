@@ -3,30 +3,6 @@
 
 -
 
-#### <a name="validateAction"></a>validateAction(validators, fileObj, userId)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
--
-*This method is private*
-
-__Arguments__
-
-* __validators__ *{Object}*  
- The validators object to use, with `deny` and `allow` properties.
-* __fileObj__ *{[FS.File](#FS.File)}*  
- Mounted or mountable file object to be passed to validators.
-* __userId__ *{String}*  
- The ID of the user who is attempting the action.
-
--
-
-__Returns__  *{undefined}*
-
-
-Throws a "400-Bad Request" Meteor error if the action is not allowed.
-
-> ```var validateAction = function validateAction(validators, fileObj, userId) { ...``` [accessPoint.js:15](accessPoint.js#L15)
-
--
-
 #### <a name="APUpload"></a>APUpload(fileObj, data, [start])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method is private*
@@ -47,7 +23,7 @@ __Returns__  *{undefined}*
 
 The DDP upload access point.
 
-> ```var APUpload = function APUpload(fileObj, data, start) { ...``` [accessPoint.js:56](accessPoint.js#L56)
+> ```var APUpload = function APUpload(fileObj, data, start) { ...``` [accessPoint.js:15](accessPoint.js#L15)
 
 -
 
@@ -77,7 +53,7 @@ store with name `storeName`.
 Simply returns the result of fileObj.get() after checking "download"
 allow/deny functions.
 
-> ```var APDownload = function APDownload(fileObj, storeName, start, end) { ...``` [accessPoint.js:100](accessPoint.js#L100)
+> ```var APDownload = function APDownload(fileObj, storeName, start, end) { ...``` [accessPoint.js:59](accessPoint.js#L59)
 
 -
 
@@ -99,7 +75,7 @@ Deletes fileObj. Always deletes the entire file record and all data from all
 defined stores, even if a specific store name is passed. We don't allow
 deleting from individual stores.
 
-> ```var APDelete = function APDelete(fileObj) { ...``` [accessPoint.js:137](accessPoint.js#L137)
+> ```var APDelete = function APDelete(fileObj) { ...``` [accessPoint.js:96](accessPoint.js#L96)
 
 -
 
@@ -121,27 +97,7 @@ response
 
 HTTP request handler
 
-> ```var APhandler = function APhandler(options) { ...``` [accessPoint.js:164](accessPoint.js#L164)
-
--
-
-#### <a name="FS.AccessPoint.DDP.mountPut"></a>FS.AccessPoint.DDP.mountPut([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
--
-*This method __mountPut__ is defined in `FS.AccessPoint.DDP`*
-
-__Arguments__
-
-* __options__ *{object}*    (Optional)
-Options
-    - __name__ *{array}*    (Default = '/cfs/files/put')
-Define a custom method name
-
--
-
-
-Mounts an upload handler method with the given name.
-
-> ```FS.AccessPoint.DDP.mountPut = function(options) { ...``` [accessPoint.js:309](accessPoint.js#L309)
+> ```var APhandler = function APhandler(options) { ...``` [accessPoint.js:123](accessPoint.js#L123)
 
 -
 
@@ -166,7 +122,7 @@ __TODO__
 
 Mounts a download handler method with the given name
 
-> ```FS.AccessPoint.DDP.mountGet = function(options) { ...``` [accessPoint.js:333](accessPoint.js#L333)
+> ```FS.AccessPoint.DDP.mountGet = function(options) { ...``` [accessPoint.js:269](accessPoint.js#L269)
 
 -
 
@@ -193,7 +149,7 @@ __TODO__
 
 Mounts HTTP method at baseUrl/:collectionName/:id/:store?[download=true]
 
-> ```FS.AccessPoint.HTTP.mount = function(options) { ...``` [accessPoint.js:372](accessPoint.js#L372)
+> ```FS.AccessPoint.HTTP.mount = function(options) { ...``` [accessPoint.js:311](accessPoint.js#L311)
 
 -
 

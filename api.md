@@ -1,24 +1,4 @@
 
-#### <a name="FS.AccessPoint.DDP.mountPut"></a>FS.AccessPoint.DDP.mountPut([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
--
-*This method __mountPut__ is defined in `FS.AccessPoint.DDP`*
-
-__Arguments__
-
-* __options__ *{object}*    (Optional)
-Options
-    - __name__ *{array}*    (Default = '/cfs/files/put')
-Define a custom method name
-
--
-
-
-Mounts an upload handler method with the given name.
-
-> ```FS.AccessPoint.DDP.mountPut = function(options) { ...``` [accessPoint.js:309](accessPoint.js#L309)
-
--
-
 #### <a name="FS.AccessPoint.DDP.mountGet"></a>FS.AccessPoint.DDP.mountGet([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ####
 -
 *This method __mountGet__ is defined in `FS.AccessPoint.DDP`*
@@ -35,7 +15,7 @@ Define a custom method name
 
 Mounts a download handler method with the given name
 
-> ```FS.AccessPoint.DDP.mountGet = function(options) { ...``` [accessPoint.js:333](accessPoint.js#L333)
+> ```FS.AccessPoint.DDP.mountGet = function(options) { ...``` [accessPoint.js:269](accessPoint.js#L269)
 
 -
 
@@ -57,7 +37,7 @@ Allows the user to set extra http headers
 
 Mounts HTTP method at baseUrl/:collectionName/:id/:store?[download=true]
 
-> ```FS.AccessPoint.HTTP.mount = function(options) { ...``` [accessPoint.js:372](accessPoint.js#L372)
+> ```FS.AccessPoint.HTTP.mount = function(options) { ...``` [accessPoint.js:311](accessPoint.js#L311)
 
 -
 
