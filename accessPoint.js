@@ -1,45 +1,305 @@
-if (Meteor.isServer) {
-  var path = Npm.require("path");
-}
+baseUrlForGetAndDel = '/cfs/files';
+var getHeaders = [];
+
+FS.HTTP = FS.HTTP || {};
 
 /**
- * @method APUpload
- * @private
- * @param {FS.File} fileObj - The file object for which we're uploading data.
- * @param {binary} data - Binary data
- * @param {Number} [start=0] - Start position in file at which to write this data chunk.
+ * @method FS.HTTP.setBaseUrl
+ * @public
+ * @param {String} baseUrl - Change the base URL for the HTTP GET and DEL endpoints.
  * @returns {undefined}
- * 
- * The DDP upload access point.
  */
-var APUpload = function APUpload(fileObj, data, start) {
-  var self = this;
-  check(fileObj, FS.File);
-  if (!EJSON.isBinary(data))
-    throw new Error("APUpload expects binary data");
+FS.HTTP.setBaseUrl = function setBaseUrl(baseUrl) {
 
-  if (typeof start !== "number")
-    start = 0;
-
-  self.unblock();
-
-  if (!fileObj.isMounted()) {
-    return; // No file data found
+  // Adjust the baseUrl if necessary
+  if (baseUrl.slice(0, 1) !== '/') {
+    baseUrl = '/' + baseUrl;
+  }
+  if (baseUrl.slice(-1) === '/') {
+    baseUrl = baseUrl.slice(0, -1);
   }
 
-  // validators and temp store require that we have the full file record loaded
-  fileObj.getFileRecord();
+  // Update the base URL
+  baseUrlForGetAndDel = baseUrl;
 
-  FS.Utility.validateAction(fileObj.collection.files._validators['update'], fileObj, self.userId);
+  // Remount URLs with the new baseUrl, unmounting the old, on the server only
+  Meteor.isServer && mountUrls();
+};
 
-  // Save chunk in temporary store
-  FS.TempStore.saveChunk(fileObj, data, start, function(err) {
-    if (err) {
-      throw new Error("Unable to load binary chunk at position " + start + ": " + err.message);
+FS.HTTP.setHeadersForGet = function setHeadersForGet(headers) {
+  getHeaders = headers;
+};
+
+/**
+ * @method httpGetDelHandler
+ * @private
+ * @returns {any} response
+ * 
+ * HTTP GET and DEL request handler
+ */
+function httpGetDelHandler(data) {
+  var self = this;
+  var opts = _.extend({}, self.query || {}, self.params || {});
+
+  var collectionName = opts.collectionName;
+  var id = opts.id;
+  var store = opts.store;
+  var download = opts.download;
+  var metadata = opts.metadata;
+
+  // Get the collection
+  var collection = FS._collections[collectionName];
+  if (!collection) {
+    throw new Meteor.Error(404, "Not Found", "No collection has the name " + collectionName);
+  }
+
+  // If id, response will be file data or metadata
+  if (id) {
+    // If no store was specified, use the first defined store
+    if (typeof store !== "string") {
+      store = collection.options.stores[0].name;
     }
-  });
+
+    // Get the requested file
+    var file = collection.findOne({_id: id});
+    if (!file) {
+      throw new Meteor.Error(404, "Not Found", 'There is no file with the id "' + id + '"');
+    }
+    
+    file.getCollection(); // We can then call fileObj.collection
+    
+    // If DEL request, validate with 'remove' allow/deny, delete the file, and return
+    if (self.method.toLowerCase() === "del") {
+      FS.Utility.validateAction(file.collection.files._validators['remove'], file, self.userId);
+      self.setStatusCode(200);
+      return file.remove();
+    }
+    
+    // If we got this far, we're doing a GET
+    
+    // Once we have the file, we can test allow/deny validators
+    FS.Utility.validateAction(file.collection._validators['download'], file, self.userId);
+
+    var copyInfo = file.copies[store];
+    
+    // If metadata=true, return just the file's metadata as JSON
+    if (metadata) {
+      self.setStatusCode(200);
+      return copyInfo;
+    }
+
+    if (typeof copyInfo.type === "string") {
+      self.setContentType(copyInfo.type);
+    } else {
+      self.setContentType('application/octet-stream');
+    }
+
+    // Add 'Content-Disposition' header if requested a download/attachment URL
+    var start, end;
+    if (typeof download !== "undefined") {
+      self.addHeader('Content-Disposition', 'attachment; filename="' + copyInfo.name + '"');
+
+      // If a chunk/range was requested instead of the whole file, serve that
+      var unit, range = self.requestHeaders.range;
+      if (range) {
+        // Parse range header
+        range = range.split('=');
+
+        unit = range[0];
+        if (unit !== 'bytes')
+          throw new Meteor.Error(416, "Requested Range Not Satisfiable");
+
+        range = range[1];
+        // Spec allows multiple ranges, but we will serve only the first
+        range = range.split(',')[0];
+        // Get start and end byte positions
+        range = range.split('-');
+        start = range[0];
+        end = range[1] || '';
+        // Convert to numbers and adjust invalid values when possible
+        start = start.length ? Math.max(Number(start), 0) : 0;
+        end = end.length ? Math.min(Number(end), copyInfo.size - 1) : copyInfo.size - 1;
+        if (end < start)
+          throw new Meteor.Error(416, "Requested Range Not Satisfiable");
+
+        self.setStatusCode(206, 'Partial Content');
+        self.addHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + copyInfo.size);
+        end = end + 1; //HTTP end byte is inclusive and ours are not
+      } else {
+        self.setStatusCode(200);
+      }
+    } else {
+      self.addHeader('Content-Disposition', 'inline');
+      self.setStatusCode(200);
+    }
+
+    // Add any other custom headers
+    // TODO support customizing headers per collection
+    _.each(getHeaders, function(header) {
+      self.addHeader(header[0], header[1]);
+    });
+
+    // Inform clients that we accept ranges for resumable chunked downloads
+    self.addHeader('Accept-Ranges', 'bytes');
+    
+    return file.get({
+      storeName: store,
+      start: start,
+      end: end
+    });
+  }
+
+  // Otherwise response will be a listing
+  else {
+    //TODO return JSON listing that respects the correct published set
+  }
+}
+
+var currentHTTPMethodNames = [];
+function unmountHTTPMethods() {
+  if (currentHTTPMethodNames.length) {
+    var methods = {};
+    _.each(currentHTTPMethodNames, function(name) {
+      methods[name] = false;
+    });
+    HTTP.methods(methods);
+    currentHTTPMethodNames = [];
+  }
+}
+
+mountUrls = function mountUrls() {
+  // Unmount previously mounted URLs
+  unmountHTTPMethods();
+
+  // Construct URLs
+  var url1 = baseUrlForGetAndDel + '/:collectionName/:id/:filename';
+  var url2 = baseUrlForGetAndDel + '/:collectionName/:id';
+  var url3 = baseUrlForGetAndDel + '/:collectionName';
+
+  // Mount URLs
+  // TODO support HEAD request, possibly do it in http-methods package
+  var methods = {};
+  methods[url1] = {
+    get: httpGetDelHandler,
+    del: httpGetDelHandler
+  };
+  methods[url2] = {
+    get: httpGetDelHandler,
+    del: httpGetDelHandler
+  };
+  methods[url3] = {
+    get: httpGetDelHandler //no support for DEL on this one
+  };
+  HTTP.methods(methods);
+
+  // Cache names for potential future unmounting
+  currentHTTPMethodNames.push(url1);
+  currentHTTPMethodNames.push(url2);
+  currentHTTPMethodNames.push(url3);
+};
+
+// Initial mount
+Meteor.isServer && mountUrls();
+
+/*
+ * FS.File extensions
+ */
+
+/** 
+ * @method FS.File.prototype.url Construct the file url
+ * @public
+ * @param {object} [options]
+ * @param {string} [options.store] Name of the store to get from. If not defined,
+ * the first store defined in `options.stores` for the collection is used.
+ * @param {boolean} [options.auth=null] Wether or not the authenticate
+ * @param {boolean} [options.download=false] Should headers be set to force a download
+ * @param {boolean} [options.brokenIsFine=false] Return the URL even if
+ * we know it's currently a broken link because the file hasn't been saved in
+ * the requested store yet.
+ *
+ * Return the http url for getting the file - on server set auth if wanting to
+ * use authentication on client set auth to true or token
+ */
+FS.File.prototype.url = function(options) {
+  var self = this;
+  options = options || {};
+  options = _.extend({
+    store: null,
+    auth: null,
+    download: false,
+    metadata: false,
+    brokenIsFine: false
+  }, options.hash || options); // check for "hash" prop if called as helper
+
+  if (self.isMounted()) {
+    var filename = '';
+    var storeName = options.store;
+
+    if (storeName) {
+      var copyInfo = self.getCopyInfo(storeName);
+      if (!copyInfo) {
+        if (options.brokenIsFine) {
+          copyInfo = {};
+        } else {
+          // We want to return null if we know the URL will be a broken
+          // link because then we can avoid rendering broken links, broken
+          // images, etc.
+          return null;
+        }
+      }
+
+      filename = copyInfo.name;
+      if (filename && filename.length) {
+        filename = '/' + filename;
+      } else {
+        filename = '';
+      }
+    }
+
+    // TODO: Could we somehow figure out if the collection requires login?
+    var authToken = '';
+    if (typeof Accounts !== "undefined") {
+      if (options.auth !== false) {
+        authToken = Accounts._storedLoginToken() || '';
+      }
+    } else if (typeof options.auth === "string") {
+      authToken = options.auth;
+    }
+
+    // Construct query string
+    var params = [];
+    if (authToken !== '') {
+      params.push('token=' + authToken);
+    }
+    if (options.download) {
+      params.push('download=true');
+    }
+    if (storeName) {
+      params.push('store=' + storeName); //TODO url escape
+    }
+    if (options.metadata) {
+      params.push('metadata=true');
+    }
+    
+    var queryString;
+    if (params.length) {
+      queryString = '?' + params.join('&');
+    } else {
+      queryString = '';
+    }
+    
+    // Construct and return the http method url
+    return baseUrlForGetAndDel + '/' + self.collection.name + '/' + self._id + filename + queryString;
+  }
 
 };
+
+/*
+ * DDP Stuff (TODO move this to cfs-download-ddp package)
+ */
+
+
+FS.AccessPoint.DDP = {};
 
 /**
  * @method APDownload
@@ -64,15 +324,8 @@ var APDownload = function APDownload(fileObj, storeName, start, end) {
   check(end, Match.Optional(Number));
 
   self.unblock();
-
-  if (!fileObj.isMounted()) {
-    return; // No file data found
-  }
-
-  FS.debug && console.log('Download ' + fileObj.name);
-
-  // proper validation requires that we have the full file record loaded
-  fileObj.getFileRecord();
+  
+  fileObj.getCollection(); // We can then call fileObj.collection
 
   FS.Utility.validateAction(fileObj.collection._validators['download'], fileObj, self.userId);
 
@@ -82,180 +335,6 @@ var APDownload = function APDownload(fileObj, storeName, start, end) {
     end: end
   });
 };
-
-/**
- * @method APDelete
- * @private
- * @param {FS.File} fileObj - File to be deleted.
- * @returns {undefined}
- * 
- * Deletes fileObj. Always deletes the entire file record and all data from all
- * defined stores, even if a specific store name is passed. We don't allow
- * deleting from individual stores.
- */
-var APDelete = function APDelete(fileObj) {
-  var self = this;
-  check(fileObj, FS.File);
-
-  self.unblock();
-
-  if (!fileObj.isMounted()) {
-    return; // No file data found
-  }
-
-  // proper validation requires that we have the full file record loaded
-  fileObj.getFileRecord();
-
-  FS.Utility.validateAction(fileObj.collection.files._validators['remove'], fileObj, self.userId);
-
-  return fileObj.remove();
-};
-
-/**
- * @method APhandler
- * @private
- * @param {Object} [options]
- * @param {Object} [options.headers] - Additional HTTP headers to include with the response.
- * @returns {any} response
- * 
- * HTTP request handler
- */
-var APhandler = function APhandler(options) {
-  options.headers = options.headers || [];
-
-  return function(data) {
-    var self = this;
-    var query = self.query || {};
-    var params = self.params || {};
-    var method = self.method.toLowerCase();
-
-    // Get the collection
-    var collection = FS._collections[params.collectionName];
-    if (!collection) {
-      throw new Meteor.Error(404, "Not Found", "No collection has the name " + params.collectionName);
-    }
-
-    // Get the store
-    var storeName = params.store;
-    if (typeof storeName !== "string") {
-      // first store is considered the master store by default
-      storeName = collection.options.stores[0].name;
-    }
-
-    // Get the requested fileKey
-    var fileKey = params.key;
-    if (!fileKey) {
-      throw new Meteor.Error(400, "Bad Request", "No file key specified");
-    }
-
-    // We have a file key, so get the fsFile
-    var query = {};
-    query['copies.' + storeName + '.key'] = '' + fileKey;
-    var file = collection.findOne(query);
-    if (!file) {
-      throw new Meteor.Error(404, "Not Found", 'There is no file with the key "' + fileKey + '"');
-    }
-
-    // If HTTP GET then return file
-    if (method === 'get') {
-      var copyInfo = file.copies[storeName];
-
-      if (typeof copyInfo.type === "string") {
-        self.setContentType(copyInfo.type);
-      } else {
-        self.setContentType('application/octet-stream');
-      }
-
-      // Add 'Content-Disposition' header if requested a download/attachment URL
-      var start, end;
-      if (typeof query.download !== "undefined") {
-        self.addHeader('Content-Disposition', 'attachment; filename="' + copyInfo.name + '"');
-
-        // If a chunk/range was requested instead of the whole file, serve that
-        var unit, range = self.requestHeaders.range;
-        if (range) {
-          // Parse range header
-          range = range.split('=');
-
-          unit = range[0];
-          if (unit !== 'bytes')
-            throw new Meteor.Error(416, "Requested Range Not Satisfiable");
-
-          range = range[1];
-          // Spec allows multiple ranges, but we will serve only the first
-          range = range.split(',')[0];
-          // Get start and end byte positions
-          range = range.split('-');
-          start = range[0];
-          end = range[1] || '';
-          // Convert to numbers and adjust invalid values when possible
-          start = start.length ? Math.max(Number(start), 0) : 0;
-          end = end.length ? Math.min(Number(end), copyInfo.size - 1) : copyInfo.size - 1;
-          if (end < start)
-            throw new Meteor.Error(416, "Requested Range Not Satisfiable");
-
-          self.setStatusCode(206, 'Partial Content');
-          self.addHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + copyInfo.size);
-          end = end + 1; //HTTP end byte is inclusive and ours are not
-        } else {
-          self.setStatusCode(200);
-        }
-      } else {
-        self.addHeader('Content-Disposition', 'inline');
-        self.setStatusCode(200);
-      }
-
-      // Add any other custom headers
-      _.each(options.headers, function(header) {
-        self.addHeader(header[0], header[1]);
-      });
-
-      // Inform clients that we accept ranges for resumable chunked downloads
-      self.addHeader('Accept-Ranges', 'bytes');
-
-      return APDownload.call(self, file, storeName, start, end);
-    }
-
-    // If HTTP PUT then put the data for the file
-    else if (method === 'put') {
-      return APUpload.call(self, file, FS.Utility.bufferToBinary(data));
-    }
-
-    // If HTTP DEL then delete the file
-    else if (method === 'del') {
-      return APDelete.call(self, file);
-    }
-  };
-};
-
-var httpPutHandler = function httpPutHandler(data) {
-  var self = this;
-  var params = this.params;
-  var filename = params.filename;
-
-  if (path && !path.extname(filename).length) {
-    throw new Meteor.Error(400, "Bad Request", "Filename must have an extension");
-  }
-
-  // Get the collection
-  var collection = FS._collections[params.collectionName];
-  if (!collection) {
-    throw new Meteor.Error(404, "Not Found", "No collection has the name " + params.collectionName);
-  }
-
-  // Create file object. TODO put in real filename.
-  var file = new FS.File({
-    name: filename
-  });
-  file.setDataFromBuffer(data, self.requestHeaders['content-type']);
-  file.collectionName = params.collectionName;
-  FS.Utility.validateAction(collection.files._validators['insert'], file, self.userId);
-  file = collection.insert(file);
-  self.setStatusCode(200);
-  return {_id: file._id};
-};
-
-FS.AccessPoint.DDP = {};
 
 /** 
  * @method FS.AccessPoint.DDP.mountGet
@@ -284,65 +363,6 @@ FS.AccessPoint.DDP.mountGet = function(options) {
   FS.AccessPoint.DDP.get = name;
 };
 
-FS.AccessPoint.HTTP = {};
-
-var currentHTTPMethodNames = [];
-function unmountHTTPMethod() {
-  if (currentHTTPMethodNames.length) {
-    var methods = {};
-    _.each(currentHTTPMethodNames, function(name) {
-      methods[name] = false;
-    });
-    HTTP.methods(methods);
-    currentHTTPMethodNames = [];
-  }
-}
-
-/** 
- * @method FS.AccessPoint.HTTP.mount
- * @public
- * @param {object} [options] Options
- * @param {array} [options.baseUrl='/cfs/files'] Define a custom base URL. Must begin with a '/' but not end with one.
- * @param {array} [options.headers] Allows the user to set extra http headers
- * @todo support collection-specific header overrides
- *
- * Mounts HTTP method at baseUrl/:collectionName/:id/:store?[download=true]
- */
-FS.AccessPoint.HTTP.mount = function(options) {
-  options = options || {};
-
-  if (typeof HTTP === 'undefined' || typeof HTTP.methods !== 'function') {
-    throw new Error('FS.AccessPoint.createHTTP: http-methods package not loaded');
-  }
-
-  var baseUrl = options.baseUrl;
-  if (typeof baseUrl !== "string") {
-    baseUrl = '/cfs/files';
-  }
-
-  // We don't need or want client simulations
-  if (Meteor.isServer) {
-    // Unmount previously mounted URL
-    unmountHTTPMethod();
-    // We namespace with using the current Meteor convention - this could
-    // change
-    var url = baseUrl + '/:collectionName/:store/:key';
-    var putUrl = baseUrl + '/:collectionName/:filename';
-    var methods = {};
-    methods[putUrl] = {
-      put: httpPutHandler
-    };
-    methods[url] = APhandler(options);
-    HTTP.methods(methods);
-    // Update current name for potential future unmounting
-    currentHTTPMethodNames.push(url);
-    currentHTTPMethodNames.push(putUrl);
-  }
-
-  FS.AccessPoint.HTTP.baseUrl = baseUrl;
-};
-
 // Mount defaults for use by all collections. You may call these
 // again with custom method names if you don't like the default names.
-FS.AccessPoint.HTTP.mount();
 FS.AccessPoint.DDP.mountGet();
