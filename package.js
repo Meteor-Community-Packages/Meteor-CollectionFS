@@ -5,7 +5,7 @@ Package.describe({
 Package.on_use(function(api) {
   api.use(['cfs-base-package', 'cfs-tempstore']);
 
-  api.use(['ejson', 'underscore', 'check', 'http-methods']);
+  api.use(['ejson', 'underscore', 'check', 'http-methods', 'http-publish']);
 
   api.add_files([
     'accessPoint.js'

@@ -14,6 +14,10 @@
 			"git": "https://github.com/CollectionFS/Meteor-http-methods.git",
 			"branch": "master"
 		},
+                "http-methods": {
+			"git": "https://github.com/CollectionFS/Meteor-http-publish.git",
+			"branch": "master"
+		},
 		"cfs-tempstore": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
 			"branch": "master"
