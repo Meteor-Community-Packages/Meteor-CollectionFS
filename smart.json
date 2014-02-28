@@ -3,6 +3,6 @@
 	"description": "CollectionFS, base package",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-base-package",
 	"author": "CollectionFS core @aldeed & @raix",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git"
 }
