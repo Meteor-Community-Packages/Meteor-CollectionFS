@@ -3,7 +3,7 @@
 	"description": "CollectionFS, FS.File object",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-file",
 	"author": "CollectionFS core @aldeed & @raix",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
 	"packages": {
 		"cfs-base-package": {

@@ -252,7 +252,7 @@ Wether or not the authenticate
 
 the first store defined in `options.stores` for the collection is used.
 
-> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile-common.js:322](fsFile-common.js#L322)
+> ```FS.File.prototype.downloadUrl = function(options) { ...``` [fsFile-common.js:331](fsFile-common.js#L331)
 
 -
 
@@ -278,7 +278,7 @@ console.log('Passed on the file: ' + fo);
 });
 ```
 
-> ```FS.File.prototype.put = function(callback) { ...``` [fsFile-common.js:344](fsFile-common.js#L344)
+> ```FS.File.prototype.put = function(callback) { ...``` [fsFile-common.js:353](fsFile-common.js#L353)
 
 -
 
@@ -300,7 +300,7 @@ __TODO__
 
 > This function is not yet implemented for server
 
-> ```FS.File.prototype.resume = function(ref) { ...``` [fsFile-common.js:374](fsFile-common.js#L374)
+> ```FS.File.prototype.resume = function(ref) { ...``` [fsFile-common.js:391](fsFile-common.js#L391)
 
 -
 
@@ -312,7 +312,7 @@ __Returns__  *{string}*
 The extension eg.: `jpg` or if not found then an empty string ''
 
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:387](fsFile-common.js#L387)
+> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:404](fsFile-common.js#L404)
 
 -
 
@@ -333,7 +333,7 @@ __TODO__
 ```
 
 
-> ```FS.File.prototype.toDataUrl = function(callback) { ...``` [fsFile-common.js:405](fsFile-common.js#L405)
+> ```FS.File.prototype.toDataUrl = function(callback) { ...``` [fsFile-common.js:422](fsFile-common.js#L422)
 
 -
 
@@ -355,7 +355,7 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isImage = function(options) { ...``` [fsFile-common.js:475](fsFile-common.js#L475)
+> ```FS.File.prototype.isImage = function(options) { ...``` [fsFile-common.js:492](fsFile-common.js#L492)
 
 -
 
@@ -377,7 +377,7 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isVideo = function(options) { ...``` [fsFile-common.js:490](fsFile-common.js#L490)
+> ```FS.File.prototype.isVideo = function(options) { ...``` [fsFile-common.js:507](fsFile-common.js#L507)
 
 -
 
@@ -399,7 +399,7 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isAudio = function(options) { ...``` [fsFile-common.js:505](fsFile-common.js#L505)
+> ```FS.File.prototype.isAudio = function(options) { ...``` [fsFile-common.js:522](fsFile-common.js#L522)
 
 -
 
@@ -411,7 +411,7 @@ __Returns__  *{boolean}*
 True if the number of uploaded bytes is equal to the file size.
 
 
-> ```FS.File.prototype.isUploaded = function() { ...``` [fsFile-common.js:514](fsFile-common.js#L514)
+> ```FS.File.prototype.isUploaded = function() { ...``` [fsFile-common.js:531](fsFile-common.js#L531)
 
 -
 
@@ -429,7 +429,7 @@ __Returns__  *{boolean}*
 True if the chunk starting at start has already been uploaded successfully.
 
 
-> ```FS.File.prototype.chunkIsUploaded = function(start) { ...``` [fsFile-common.js:529](fsFile-common.js#L529)
+> ```FS.File.prototype.chunkIsUploaded = function(start) { ...``` [fsFile-common.js:546](fsFile-common.js#L546)
 
 -
 
@@ -456,7 +456,7 @@ param is the boolean value to return. Are we `optimistic` that the copy
 could exist. This is the case in `FS.File.url` we are optimistic that the
 copy supplied by the user exists.
 
-> ```FS.File.prototype.hasCopy = function(storeName, optimistic) { ...``` [fsFile-common.js:551](fsFile-common.js#L551)
+> ```FS.File.prototype.hasCopy = function(storeName, optimistic) { ...``` [fsFile-common.js:568](fsFile-common.js#L568)
 
 -
 
@@ -475,7 +475,7 @@ __Returns__  *{Object}*
 The file details, e.g., name, size, key, etc., specific to the copy saved in this store.
 
 
-> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:571](fsFile-common.js#L571)
+> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:588](fsFile-common.js#L588)
 
 -
 
@@ -494,7 +494,7 @@ collection, passing it an English error string that explains why it
 failed.
 
 
-> ```FS.File.prototype.fileIsAllowed = function() { ...``` [fsFile-common.js:590](fsFile-common.js#L590)
+> ```FS.File.prototype.fileIsAllowed = function() { ...``` [fsFile-common.js:607](fsFile-common.js#L607)
 
 -
 
@@ -517,7 +517,7 @@ __Returns__  *{Boolean}*
 Returns true if the content type is in the list, or if it matches
 one of the special types in the list, e.g., "image/*".
 
-> ```var contentTypeInList = function contentTypeInList(list, contentType) { ...``` [fsFile-common.js:649](fsFile-common.js#L649)
+> ```var contentTypeInList = function contentTypeInList(list, contentType) { ...``` [fsFile-common.js:666](fsFile-common.js#L666)
 
 -
 

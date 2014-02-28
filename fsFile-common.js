@@ -362,7 +362,14 @@ FS.File.prototype.put = function(callback) {
 
   // If on client
   if (Meteor.isClient) {
-    FS.uploadQueue.uploadFile(self);
+    // TODO abstract this out some more and allow user to define a custom
+    // upload method.
+    if (FS.HTTP && FS.HTTP.uploadQueue) {
+      FS.HTTP.uploadQueue.uploadFile(self);
+    } else if (FS.DDP && FS.DDP.uploadQueue) {
+      FS.DDP.uploadQueue.uploadFile(self);
+    }
+    
   } else if (Meteor.isServer) {
     // Save the binary to a single chunk temp file, so that it is available
     // when FileWorker calls saveCopies.
