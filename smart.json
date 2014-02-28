@@ -17,6 +17,10 @@
 		"cfs-storage-adapter": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
 			"branch": "master"
-		}
+		},
+                "collectionFS": {
+                        "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
+			"branch": "devel"
+                }
 	}
 }
