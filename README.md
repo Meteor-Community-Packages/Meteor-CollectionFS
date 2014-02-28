@@ -349,26 +349,28 @@ if (Meteor.isClient) {
 ## Customizing the HTTP URLs and Headers
 
 CollectionFS automatically mounts an HTTP access point that supports secure
-GET, PUT, and DEL requests for all FS.Collection instances. If you need to
-customize the HTTP access point in some way, for example to change the base URL
-or provide custom headers, you can do so by re-mounting the access point with
-custom options specified:
+GET and DEL requests for all FS.Collection instances.
+
+To change the base URL for both GET and DEL requests:
 
 *common.js*
 
 ```js
-FS.AccessPoint.HTTP.mount({
-  baseUrl: '/files',
-  headers: [
-    ['Cache-Control', 'public, max-age=31536000']
-  ]
-});
+FS.HTTP.setBaseUrl('/files');
 ```
 
-If you don't call `mount` in common code and you change the `baseUrl`, the
-`FS.File.url` method may not work. If you really want to call `mount` only on
-the server, you can ensure the `FS.File.url` method will work by doing
-`FS.AccessPoint.HTTP.baseUrl = '/your/custom/base/url';` on the client.
+It's important to call this both on the server and on the client. Also be sure
+that the resulting URL will not conflict with other resources.
+
+To add custom headers for files returned by the GET endpoint:
+
+*server.js or common.js*
+
+```js
+FS.HTTP.setHeadersForGet([
+  ['Cache-Control', 'public, max-age=31536000']
+]);
+```
 
 ## Drag and Drop
 
