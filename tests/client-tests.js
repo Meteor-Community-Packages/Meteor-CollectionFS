@@ -4,24 +4,31 @@ function equals(a, b) {
 
 Tinytest.add('cfs-access-point - client - test environment', function(test) {
   test.isTrue(typeof FS.Collection !== 'undefined', 'test environment not initialized FS.Collection');
-  test.isTrue(typeof CFSErrorType !== 'undefined', 'test environment not initialized CFSErrorType');
+  test.isTrue(typeof FS.HTTP !== 'undefined', 'test environment not initialized FS.HTTP');
 });
 
-/*
- * FS.File Client Tests
- *
- * construct FS.File with no arguments
- * construct FS.File passing in File
- * construct FS.File passing in Blob
- * load blob into FS.File and then call FS.File.toDataUrl
- * call FS.File.setDataFromBinary, then FS.File.getBlob(); make sure correct data is returned
- * load blob into FS.File and then call FS.File.getBinary() with and without start/end; make sure correct data is returned
- * construct FS.File, set FS.File.collectionName to a CFS name, and then test FS.File.update/remove/get/put/del/url
- * set FS.File.name to a filename and test that FS.File.getExtension() returns the extension
- * load blob into FS.File and make sure FS.File.saveLocal initiates a download (possibly can't do automatically)
- *
- */
+Tinytest.addAsync('cfs-access-point - client - addTestImage', function (test, onComplete) {
+  test.isTrue(true);
+  Meteor.call('addTestImage', function(err, result) {
+    test.isTrue(result);
+    onComplete();
+  });
+  test.isTrue(true);
+});
 
+Tinytest.addAsync('cfs-access-point - client - GET list of files in collection', function (test, onComplete) {
+
+  HTTP.get(Meteor.absoluteUrl('cfs/record/images'), function(err, result) {
+    // Test the length of array result
+    var len = result.data && result.data.length;
+    test.isTrue(!!len, 'Result was empty');
+    // Get the object
+    var obj = result.data && result.data[0] || {};
+    test.equal(obj.$type, 'FS.File', 'Didn\'t get the expected result');
+    onComplete();
+  });
+
+});
 
 //Test API:
 //test.isFalse(v, msg)
