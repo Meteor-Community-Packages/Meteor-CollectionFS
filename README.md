@@ -8,7 +8,7 @@ You don't need to manually add this package to your app. It is added when you
 add the `collectionFS` package. You could potentially use your own access point
 package instead.
 
-== Define a URL for Collection Listing ==
+## Define a URL for Collection Listing
 
 To define a URL that accepts GET requests and returns a list of published
 files in a FS.Collection:
@@ -27,6 +27,6 @@ FS.HTTP.publish(Images, function () {
 The URL will be '/cfs/record/images', where the `cfs` piece is configurable
 using the `FS.HTTP.setBaseUrl` method.
 
-== API Documentation ==
+## API Documentation
 
 [Here](api.md)
