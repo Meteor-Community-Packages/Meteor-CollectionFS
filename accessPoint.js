@@ -6,7 +6,7 @@ FS.HTTP = FS.HTTP || {};
 /**
  * @method FS.HTTP.setBaseUrl
  * @public
- * @param {String} baseUrl - Change the base URL for the HTTP GET and DEL endpoints.
+ * @param {String} baseUrl - Change the base URL for the HTTP GET and DELETE endpoints.
  * @returns {undefined}
  */
 FS.HTTP.setBaseUrl = function setBaseUrl(baseUrl) {
@@ -55,6 +55,7 @@ function httpGetDelHandler(data) {
 
   // If id, response will be file data or metadata
   if (id) {
+    
     // If no store was specified, use the first defined store
     if (typeof store !== "string") {
       store = collection.options.stores[0].name;
@@ -68,11 +69,19 @@ function httpGetDelHandler(data) {
     
     file.getCollection(); // We can then call fileObj.collection
     
-    // If DEL request, validate with 'remove' allow/deny, delete the file, and return
-    if (self.method.toLowerCase() === "del") {
+    // If DELETE request, validate with 'remove' allow/deny, delete the file, and return
+    if (self.method.toLowerCase() === "delete") {
       FS.Utility.validateAction(file.collection.files._validators['remove'], file, self.userId);
+      
+      /*
+       * From the DELETE spec:
+       * A successful response SHOULD be 200 (OK) if the response includes an
+       * entity describing the status, 202 (Accepted) if the action has not
+       * yet been enacted, or 204 (No Content) if the action has been enacted
+       * but the response does not include an entity.
+       */
       self.setStatusCode(200);
-      return file.remove();
+      return {deleted: !!file.remove()};
     }
     
     // If we got this far, we're doing a GET
@@ -181,14 +190,14 @@ mountUrls = function mountUrls() {
   var methods = {};
   methods[url1] = {
     get: httpGetDelHandler,
-    del: httpGetDelHandler
+    delete: httpGetDelHandler
   };
   methods[url2] = {
     get: httpGetDelHandler,
-    del: httpGetDelHandler
+    delete: httpGetDelHandler
   };
   methods[url3] = {
-    get: httpGetDelHandler //no support for DEL on this one
+    get: httpGetDelHandler //no support for DELETE on this one
   };
   HTTP.methods(methods);
 
