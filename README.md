@@ -1,4 +1,4 @@
-cfs-access-point
+cfs-access-point [![Build Status](https://travis-ci.org/CollectionFS/Meteor-cfs-access-point.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-cfs-access-point)
 =========================
 
 This is a Meteor package used by
