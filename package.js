@@ -3,6 +3,10 @@ Package.describe({
   summary: "GridFS storage adapter for CollectionFS"
 });
 
+Npm.depends({
+  mongodb: "1.3.23"
+});
+
 Package.on_use(function(api) {
   api.use(['cfs-base-package', 'cfs-storage-adapter']);
   api.add_files('gridfs.server.js', 'server');
