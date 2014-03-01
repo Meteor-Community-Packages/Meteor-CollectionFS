@@ -3,7 +3,7 @@
 	"description": "CollectionFS, FS.File object",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-file",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.0.7",
+	"version": "0.0.10",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
 	"packages": {
 		"cfs-base-package": {
@@ -17,6 +17,10 @@
 		"cfs-storage-adapter": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
 			"branch": "master"
+		},
+		"collectionFS": {
+			"git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
+			"branch": "devel"
 		}
 	}
 }
