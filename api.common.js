@@ -10,37 +10,50 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
 
   callback = callback || FS.Utility.defaultCallback;
 
-  var doInsert = function() {
-    // Set reference to this collection
-    fileObj.collectionName = self.name;
-
-    // Check filters
-    if (!fileObj.fileIsAllowed()) {
-      callback(new Error('FS.Collection insert: file does not pass collection filters'));
-    }
-
-    // Insert the file into db
-    // We call cloneFileRecord as an easy way of extracting the properties
-    // that need saving.
-    fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj), function(err, id) {
-      if (err) {
-        callback(err, fileObj);
-      } else {
-        fileObj.put(callback);
-      }
-    });
-  };
-
   if (fileRef instanceof FS.File) {
     fileObj = fileRef;
-    doInsert();
   } else if (Meteor.isClient && typeof File !== "undefined" && fileRef instanceof File) {
     // For convenience, allow File to be passed directly on the client
     fileObj = new FS.File(fileRef);
-    doInsert();
   } else {
     callback(new Error('FS.Collection insert expects FS.File'));
+    return;
   }
+
+  // Set reference to this collection
+  fileObj.collectionName = self.name;
+
+  // Check filters
+  if (!fileObj.fileIsAllowed()) {
+    delete fileObj.collectionName;
+    callback(new Error('FS.Collection insert: file does not pass collection filters'));
+    return;
+  }
+
+  // Insert the file into db
+  // We call cloneFileRecord as an easy way of extracting the properties
+  // that need saving.
+  fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj), function(err, id) {
+    if (err) {
+      delete fileObj.collectionName;
+    } else {
+      fileObj._id = id;
+
+      // If on client, begin uploading the data
+      if (Meteor.isClient) {
+        console.log("upload", self, fileObj);
+        self.options.uploader && self.options.uploader(fileObj);
+      }
+      
+      // If on the server, save the binary to a single chunk temp file,
+      // so that it is available when FileWorker calls saveCopies.
+      // This will also trigger file handling from collection observes.
+      else if (Meteor.isServer) {
+        FS.TempStore.ensureForFile(fileObj);
+      }
+    }
+    callback(err, err ? void 0 : fileObj);
+  });
 
   // We return the FS.File
   return fileObj;

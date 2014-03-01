@@ -22,9 +22,16 @@ FS.Collection = function(name, options) {
     stores: [], //required
     chunkSize: 128 * 1024 // 128K default; higher begins to produce UI blocking
   };
-
-  // On the client, you may also define options.defaultStoreName to avoid
-  // having to pass a store name for many functions.
+  
+  // Define a default uploader based on which upload packages are present,
+  // preferring HTTP. You may override with your own function or
+  // set to null to skip automatic uploading of data after file insert/update.
+  console.log(FS.HTTP, FS.DDP);
+  if (FS.HTTP && FS.HTTP.uploadQueue) {
+    self.options.uploader = FS.HTTP.uploadQueue.uploadFile;
+  } else if (FS.DDP && FS.DDP.uploadQueue) {
+    self.options.uploader = FS.DDP.uploadQueue.uploadFile;
+  }
 
   // Extend and overwrite options
   _.extend(self.options, options || {});

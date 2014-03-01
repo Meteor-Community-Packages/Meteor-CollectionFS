@@ -10,6 +10,9 @@ Package.on_use(function(api) {
   // Make a weak dependency to support Join for joining data
   api.use(['join'], { weak: true });
 
+  // Weak dependencies for uploaders
+  api.use(['cfs-upload-http', 'cfs-upload-ddp'], { weak: true });
+
   api.add_files([
     'common.js',
     'api.common.js',
