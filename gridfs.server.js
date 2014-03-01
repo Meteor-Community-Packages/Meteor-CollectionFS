@@ -21,8 +21,8 @@ FS.Store.GridFS = function(name, options) {
   if (!(self instanceof FS.Store.GridFS))
     throw new Error('FS.Store.GridFS missing keyword "new"');
 
-  if (!options.db) {
-    options.db = process.env.MONGO_URL;
+  if (!options.mongoUrl) {
+    options.mongoUrl = process.env.MONGO_URL;
   }
 
   Meteor.startup(function() {
@@ -102,7 +102,7 @@ FS.Store.GridFS = function(name, options) {
 
     init: function() {
       var self = this;
-      self.db = Meteor._wrapAsync(mongodb.MongoClient.connect)(options.db);
+      self.db = Meteor._wrapAsync(mongodb.MongoClient.connect)(options.mongoUrl);
     }
   });
 };
