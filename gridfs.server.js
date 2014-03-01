@@ -32,8 +32,7 @@ FS.Store.GridFS = function(name, options) {
   // });
 
   if (!options.db) {
-    // XXX: Need to set a default, err for now
-    throw new Error('FS.Store.GridFS options.db must be a valid MongoDB connection URL' + err);
+    options.db = process.env.MONGO_URL;
   }
 
   Meteor.startup(function() {
@@ -254,7 +253,7 @@ FS.Store.GridFS = function(name, options) {
       // XXX Is this ever used???
       var self = this;
       self.db = Meteor._wrapAsync(mongodb.MongoClient.connect)(options.db);
-      console.log("New GridFS");
+      console.log("New GridFS",process.env.MONGO_URL);
     }
   });
 };
