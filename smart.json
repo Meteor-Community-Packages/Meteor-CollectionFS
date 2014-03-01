@@ -3,7 +3,7 @@
 	"description": "CollectionFS, add ddp and http accesspoint capability",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-access-point",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.0.9",
+	"version": "0.0.12",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
 	"packages": {
 		"cfs-base-package": {
@@ -14,8 +14,20 @@
 			"git": "https://github.com/CollectionFS/Meteor-http-methods.git",
 			"branch": "master"
 		},
-		"cfs-tempstore": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
+		"http-publish": {
+			"git": "https://github.com/CollectionFS/Meteor-http-publish.git",
+			"branch": "master"
+		},
+		"cfs-file": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
+			"branch": "master"
+		},
+		"collectionFS": {
+			"git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
+			"branch": "devel"
+		},
+		"cfs-gridfs": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
 			"branch": "master"
 		}
 	}
