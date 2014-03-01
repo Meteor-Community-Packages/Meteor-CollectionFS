@@ -25,12 +25,12 @@ FS.FileWorker.observe = function(fsCollection) {
       added: function(fsFile) {
         // added will catch fresh files
         FS.debug && console.log("FileWorker ADDED - calling saveCopy", storeName, "for", fsFile._id);
-        fsCollection.saveCopy(fsFile, storeName);
+        saveCopy(fsFile, storeName);
       },
       changed: function(fsFile) {
         // changed will catch failures and retry them
         FS.debug && console.log("FileWorker CHANGED - calling saveCopy", storeName, "for", fsFile._id);
-        fsCollection.saveCopy(fsFile, storeName);
+        saveCopy(fsFile, storeName);
       }
     });
   });
@@ -71,7 +71,7 @@ FS.FileWorker.observe = function(fsCollection) {
  *
  *  @param {string} storeName - The name of the store to observe
  */
-var getReadyQuery = function getReadyQuery(storeName) {
+function getReadyQuery(storeName) {
   var selector = {
     $where: "this.bytesUploaded === this.size",
     chunks: {$exists: true}
@@ -81,7 +81,7 @@ var getReadyQuery = function getReadyQuery(storeName) {
   selector['failures.copies.' + storeName + '.doneTrying'] = {$ne: true};
 
   return selector;
-};
+}
 
 /**
  *  Returns a selector that will be used to identify files where all
@@ -115,7 +115,7 @@ var getReadyQuery = function getReadyQuery(storeName) {
  *
  *  @param {Object} stores - The stores object from the FS.Collection options
  */
-var getDoneQuery = function getDoneQuery(stores) {
+function getDoneQuery(stores) {
   var selector = {
     $and: [
       {chunks: {$exists: true}}
@@ -139,4 +139,56 @@ var getDoneQuery = function getDoneQuery(stores) {
   }
 
   return selector;
-};
+}
+
+/**
+ * Saves to the specified store. If the
+ * `overwrite` option is `true`, will save to the store even if we already
+ * have, potentially overwriting any previously saved data. Synchronous.
+ *
+ * @param {FS.File} fsFile
+ * @param {string} storeName
+ * @param {Object} options
+ * @param {Boolean} [options.overwrite=false] - Force save to the specified store?
+ * @returns {undefined}
+ */
+function saveCopy(fsFile, storeName, options) {
+  options = options || {};
+
+  var store = FS.StorageAdapter(storeName);
+  if (!store) {
+    throw new Error('saveCopy: No store named "' + storeName + '" exists');
+  }
+  
+  FS.debug && console.log('saving to store ' + storeName);
+  
+  // If the supplied fsFile does not have a buffer loaded already,
+  // try to load it from the temporary file.
+  if (!fsFile.hasData()) {
+    fsFile = FS.TempStore.getDataForFileSync(fsFile);
+  }
+  
+  // Save to store
+  var result;
+  if (options.overwrite) {
+    result = store.update(fsFile);
+  } else {
+    result = store.insert(fsFile);
+  }
+  
+  // Process result
+  if (result === null) {
+    // Temporary failure; let the fsFile log it and potentially decide
+    // to give up.
+    fsFile.logCopyFailure(storeName, store.options.maxTries);
+  } else {
+    // Update the main file object
+    // result might be false, which indicates that this copy
+    // should never be created in the future.
+    var modifier = {};
+    modifier["copies." + storeName] = result;
+    // Update the main file object with the modifier
+    fsFile.update({$set: modifier});
+  }
+
+}
