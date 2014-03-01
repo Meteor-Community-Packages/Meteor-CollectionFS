@@ -68,28 +68,31 @@ FS.StorageAdapter = function(name, options, api) {
 
     // Prep fileKey if we're not doing an update of an existing file
     fileKey = fileKey || fsFile.name;
+    
+    // Make callback safe for Meteor code
+    var safeCallback = Meteor.bindEnvironment(callback, function(err) {
+      throw err;
+    });
 
-    // Put the file to storage
-    api.put.call(self, fileKey, fsFile.getBuffer(),
-            {overwrite: overwrite, type: fsFile.type},
+    // Create callback for store `put` method
     function putCallback(err, finalFileKey) {
       if (err) {
-        callback(err, null);
+        safeCallback(err, null);
       } else if (!finalFileKey) {
-        callback(new Error("No file key"), null);
+        safeCallback(new Error("No file key"), null);
       } else {
 
         function finish(updatedAt) {
           savedFileInfo.key = finalFileKey;
           savedFileInfo.utime = updatedAt;
-          callback(err, err ? null : savedFileInfo);
+          safeCallback(err, err ? null : savedFileInfo);
         }
 
         // note the file key and updatedAt in the SA file record
         if (typeof api.stats === "function") {
           api.stats.call(self, finalFileKey, function(err, stats) {
             if (err) {
-              callback(err, null);
+              safeCallback(err, null);
             } else {
               finish(stats.mtime);
             }
@@ -98,7 +101,11 @@ FS.StorageAdapter = function(name, options, api) {
           finish(new Date);
         }
       }
-    });
+    }
+    
+    // Put the file to storage
+    api.put.call(self, fileKey, fsFile.getBuffer(),
+            {overwrite: overwrite, type: fsFile.type}, putCallback);
   }
 
   //internal
@@ -187,7 +194,7 @@ FS.StorageAdapter = function(name, options, api) {
   };
 
   //internal
-  self._removeAsync = function(fsFile, options, callback) {
+  self._removeAsync = function(fsFile, options, callback) {   
     var copyInfo = fsFile.getCopyInfo(self.name);
     if (!copyInfo || !copyInfo.key) {
       if (options.ignoreMissing) {
@@ -197,9 +204,14 @@ FS.StorageAdapter = function(name, options, api) {
       }
       return;
     }
+    
+    // Make callback safe for Meteor code
+    var safeCallback = Meteor.bindEnvironment(callback, function(err) {
+      throw err;
+    });
 
-    // remove the file from the store
-    api.del.call(self, copyInfo.key, callback);
+    // Remove the file from the store
+    api.del.call(self, copyInfo.key, safeCallback);
   };
 
   //internal
@@ -239,9 +251,14 @@ FS.StorageAdapter = function(name, options, api) {
       callback(new Error("No file key found for the " + self.name + " store. Can't get."), false);
       return;
     }
+    
+    // Make callback safe for Meteor code
+    var safeCallback = Meteor.bindEnvironment(callback, function(err) {
+      throw err;
+    });
 
     // get the buffer
-    api.get.call(self, copyInfo.key, callback);
+    api.get.call(self, copyInfo.key, safeCallback);
   };
 
   //internal
@@ -275,9 +292,14 @@ FS.StorageAdapter = function(name, options, api) {
       if (copyInfo.size) {
         end = Math.min(end, copyInfo.size);
       }
+      
+      // Make callback safe for Meteor code
+      var safeCallback = Meteor.bindEnvironment(callback, function(err) {
+        throw err;
+      });
 
       // get the buffer
-      api.getBytes.call(self, copyInfo.key, start, end, callback);
+      api.getBytes.call(self, copyInfo.key, start, end, safeCallback);
     };
 
     //internal
