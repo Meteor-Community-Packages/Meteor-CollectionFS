@@ -57,17 +57,14 @@ FS.StorageAdapter = function(name, options, api) {
     }
   };
 
-  function doPut(fsFile, fileKey, overwrite, callback) {
+  function doPut(fsFile, overwrite, callback) {
 
-    // Prep file info to be returned (info potentially changed by beforeSave)
+    // Prep file info to be returned
     var savedFileInfo = {
       name: fsFile.name,
       type: fsFile.type,
       size: fsFile.size
     };
-
-    // Prep fileKey if we're not doing an update of an existing file
-    fileKey = fileKey || fsFile.name;
     
     // Make callback safe for Meteor code
     var safeCallback = Meteor.bindEnvironment(callback, function(err) {
@@ -104,32 +101,29 @@ FS.StorageAdapter = function(name, options, api) {
     }
     
     // Put the file to storage
-    api.put.call(self, fileKey, fsFile.getBuffer(),
-            {overwrite: overwrite, type: fsFile.type}, putCallback);
+    api.put.call(self, fsFile, {overwrite: overwrite}, putCallback);
   }
 
   //internal
   self._insertAsync = function(fsFile, callback) {
-    return doPut(fsFile, null, false, callback);
+    return doPut(fsFile, false, callback);
   };
 
   //internal
   self._insertSync = Meteor._wrapAsync(self._insertAsync);
-
+  
   /**
-   * Attempts to insert a file into the store, first running the beforeSave
-   * function for the store if there is one. If there is a temporary failure,
-   * returns (or passes to the second argument of the callback) `null`. If there
-   * is a permanant failure or the beforeSave function returns `false`, returns
-   * `false`. If the file is successfully stored, returns an object with file
-   * info that the FS.Collection can save.
-   *
-   * Also updates the `files` collection for this store to save info about this
-   * file.
-   *
+   * @method FS.StorageAdapter.prototype.insert
+   * @public
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options (currently unused)
    * @param {Function} [callback] If not provided, will block and return file info.
+   * 
+   * Attempts to insert a file into the store. If there is a temporary failure,
+   * returns (or passes to the second argument of the callback) `null`. If there
+   * is a permanant failure, returns or passes `false`. If the file is
+   * successfully stored, returns an object with file info that the
+   * FS.Collection can save.
    */
   self.insert = function(fsFile, options, callback) {
     foCheck(fsFile, "insert");
@@ -150,32 +144,24 @@ FS.StorageAdapter = function(name, options, api) {
 
   //internal
   self._updateAsync = function(fsFile, callback) {
-    var copyInfo = fsFile.getCopyInfo(self.name);
-    if (!copyInfo || !copyInfo.key) {
-      callback(new Error("No file key found for the " + self.name + " store. Can't update."), false);
-      return;
-    }
-
-    return doPut(fsFile, copyInfo.key, true, callback);
+    return doPut(fsFile, true, callback);
   };
 
   //internal
   self._updateSync = Meteor._wrapAsync(self._updateAsync);
 
   /**
-   * Attempts to update a file in the store, first running the beforeSave
-   * function for the store if there is one. If there is a temporary failure,
-   * returns (or passes to the second argument of the callback) `null`. If there
-   * is a permanant failure or the beforeSave function returns `false`, returns
-   * `false`. If the file is successfully stored, returns an object with file
-   * info that the FS.Collection can save.
-   *
-   * Also updates the `files` collection for this store to save info about this
-   * file.
-   *
+   * @method FS.StorageAdapter.prototype.update
+   * @public
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options (currently unused)
    * @param {Function} [callback] If not provided, will block and return file info.
+   * 
+   * Attempts to update a file in the store. If there is a temporary failure,
+   * returns (or passes to the second argument of the callback) `null`. If there
+   * is a permanant failure, returns or passes `false`. If the file is
+   * successfully stored, returns an object with file info that the
+   * FS.Collection can save.
    */
   self.update = function(fsFile, options, callback) {
     FS.debug && console.log("---SA UPDATE");
@@ -194,38 +180,28 @@ FS.StorageAdapter = function(name, options, api) {
   };
 
   //internal
-  self._removeAsync = function(fsFile, options, callback) {   
-    var copyInfo = fsFile.getCopyInfo(self.name);
-    if (!copyInfo || !copyInfo.key) {
-      if (options.ignoreMissing) {
-        callback(null, true);
-      } else {
-        callback(new Error("No file key found for the " + self.name + " store. Can't remove."), false);
-      }
-      return;
-    }
-    
+  self._removeAsync = function(fsFile, callback) {   
     // Make callback safe for Meteor code
     var safeCallback = Meteor.bindEnvironment(callback, function(err) {
       throw err;
     });
 
     // Remove the file from the store
-    api.del.call(self, copyInfo.key, safeCallback);
+    api.del.call(self, fsFile, safeCallback);
   };
 
   //internal
   self._removeSync = Meteor._wrapAsync(self._removeAsync);
 
   /**
-   * Attempts to remove a file from the store. Returns true if removed, or false.
-   *
-   * Also removes file info from the `files` collection for this store.
-   *
+   * @method FS.StorageAdapter.prototype.remove
+   * @public
    * @param {FS.File} fsFile The FS.File instance to be stored.
-   * @param {Object} [options] Options
-   * @param {Boolean} [options.ignoreMissing] Set true to treat missing files as a successful deletion. Otherwise throws an error.
+   * @param {Object} [options] unused
    * @param {Function} [callback] If not provided, will block and return true or false
+   * 
+   * Attempts to remove a file from the store. Returns true if removed or not
+   * found, or false if the file couldn't be removed.
    */
   self.remove = function(fsFile, options, callback) {
     FS.debug && console.log("---SA REMOVE");
@@ -238,32 +214,35 @@ FS.StorageAdapter = function(name, options, api) {
     options = options || {};
 
     if (callback) {
-      return self._removeAsync(fsFile, options, callback);
+      return self._removeAsync(fsFile, callback);
     } else {
-      return self._removeSync(fsFile, options);
+      return self._removeSync(fsFile);
     }
   };
 
   //internal
   self._getBufferAsync = function(fsFile, callback) {
-    var copyInfo = fsFile.getCopyInfo(self.name);
-    if (!copyInfo || !copyInfo.key) {
-      callback(new Error("No file key found for the " + self.name + " store. Can't get."), false);
-      return;
-    }
-    
     // Make callback safe for Meteor code
     var safeCallback = Meteor.bindEnvironment(callback, function(err) {
       throw err;
     });
 
     // get the buffer
-    api.get.call(self, copyInfo.key, safeCallback);
+    api.get.call(self, fsFile, safeCallback);
   };
 
   //internal
   self._getBufferSync = Meteor._wrapAsync(self._getBufferAsync);
 
+  /**
+   * @method FS.StorageAdapter.prototype.getBuffer
+   * @public
+   * @param {FS.File} fsFile The FS.File instance to be retrieved.
+   * @param {Object} [options] unused
+   * @param {Function} [callback] If not provided, will block and return the Buffer
+   * 
+   * Returns the buffer for a file that has been saved in this store
+   */
   self.getBuffer = function(fsFile, options, callback) {
     FS.debug && console.log("---SA GET BUFFER");
     foCheck(fsFile, "getBuffer");
@@ -284,8 +263,8 @@ FS.StorageAdapter = function(name, options, api) {
     //internal
     self._getBytesAsync = function(fsFile, start, end, callback) {
       var copyInfo = fsFile.getCopyInfo(self.name);
-      if (!copyInfo || !copyInfo.key) {
-        callback(new Error("No file key found for the " + self.name + " store. Can't getBytes."), false);
+      if (!copyInfo) {
+        callback(new Error("No file info found for the " + self.name + " store. Can't getBytes."), false);
         return;
       }
 
@@ -299,12 +278,23 @@ FS.StorageAdapter = function(name, options, api) {
       });
 
       // get the buffer
-      api.getBytes.call(self, copyInfo.key, start, end, safeCallback);
+      api.getBytes.call(self, fsFile, start, end, safeCallback);
     };
 
     //internal
     self._getBytesSync = Meteor._wrapAsync(self._getBytesAsync);
 
+   /**
+    * @method FS.StorageAdapter.prototype.getBytes
+    * @public
+    * @param {FS.File} fsFile The FS.File instance to be retrieved.
+    * @param {Number} start - The position of the first byte to return
+    * @param {Number} end - The position of the last byte to return, plus one
+    * @param {Object} [options] unused
+    * @param {Function} [callback] If not provided, will block and return the Buffer
+    * 
+    * Returns the buffer for one chunk of a file that has been saved in this store
+    */
     self.getBytes = function(fsFile, start, end, options, callback) {
       FS.debug && console.log("---SA GET BYTES");
       foCheck(fsFile, "getBytes");
