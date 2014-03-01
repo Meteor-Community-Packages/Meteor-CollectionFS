@@ -26,7 +26,6 @@ FS.Collection = function(name, options) {
   // Define a default uploader based on which upload packages are present,
   // preferring HTTP. You may override with your own function or
   // set to null to skip automatic uploading of data after file insert/update.
-  console.log(FS.HTTP, FS.DDP);
   if (FS.HTTP && FS.HTTP.uploadQueue) {
     self.options.uploader = FS.HTTP.uploadQueue.uploadFile;
   } else if (FS.DDP && FS.DDP.uploadQueue) {
