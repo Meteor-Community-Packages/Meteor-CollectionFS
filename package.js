@@ -4,7 +4,7 @@ Package.describe({
 });
 
 Package.on_use(function(api) {
-  api.use(['cfs-base-package', 'cfs-tempstore']);
+  api.use(['cfs-base-package', 'cfs-tempstore', 'cfs-storage-adapter']);
 
   api.use(['underscore', 'livedata', 'mongo-livedata', 'power-queue']);
 
