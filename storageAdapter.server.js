@@ -57,23 +57,7 @@ FS.StorageAdapter = function(name, options, api) {
     }
   };
 
-  function cloneFO(fsFile) {
-    var fsFileClone = fsFile.clone();
-    fsFileClone.setDataFromBinary(fsFile.getBinary());
-    return fsFileClone;
-  }
-
   function doPut(fsFile, fileKey, overwrite, callback) {
-    // Call the beforeSave function provided by the user
-    if (self.beforeSave) {
-      // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-      fsFile = cloneFO(fsFile);
-
-      if (self.beforeSave.apply(fsFile) === false) {
-        callback(null, false);
-        return;
-      }
-    }
 
     // Prep file info to be returned (info potentially changed by beforeSave)
     var savedFileInfo = {
@@ -316,84 +300,8 @@ FS.StorageAdapter = function(name, options, api) {
     };
   }
 
-  self.defineSyncCallbacks = function(callbacks) {
-    // This is intended to be called one time in the FS.Collection constructor
-
-    if (!self.sync)
-      return; //no error thrown so that FS.Collection constructor can call blindly
-
-    callbacks = _.extend({
-      insert: null,
-      update: null,
-      remove: null
-    }, callbacks);
-
-    // TODO this is currently not usable; need to filter out changes that we make
-    return; // remove this when fixed
-
-    api.watch && api.watch.call(self, function(type, fileKey, info) {
-//      var fileInfo = self.files.findOne({key: fileKey});
-//      if (fileInfo) {
-//        if (type === "remove") {
-//          callbacks.remove && callbacks.remove(fileKey);
-//        } else { //changed
-//          // Compare the updated date of the watched file against the one
-//          // recorded in our files collection. If they match, then we changed
-//          // this file, so we don't need to do anything. If they don't match,
-//          // then this is an outside change that we need to sync.
-//          // TODO does not work because watcher usually sees file before
-//          // fileInfo.updateAt is set?
-//          if (fileInfo.updatedAt && fileInfo.updatedAt.getTime() === info.utime.getTime()) {
-//            FS.debug && console.log("Update is not external; will not sync");
-//            return;
-//          }
-//          self.files.update({_id: fileInfo._id}, {$set: {updatedAt: info.utime}});
-//          callbacks.update && callbacks.update(fileInfo._id, info);
-//        }
-//      } else {
-//        api.get.call(self, fileKey, function(err, buffer) {
-//          if (buffer) {
-//            // Insert information about this file into the storage adapter collection
-//            var filesId = self.files.insert({key: fileKey, createdAt: info.utime});
-//            filesId && callbacks.update && callbacks.update(filesId, info, buffer);
-//          }
-//        });
-//      }
-    });
-  };
-
   if (typeof api.init === 'function') {
     api.init.call(self);
   }
-
-  // // Functions to overwrite
-  // // These functions will perform the actual storage actions
-
-  // This should be overwritten by new storage adapters - this is for namespacing
-  // storage adapters
-
-  // self.typeName = 'storage.filesystem'
-
-  // // Save / Overwrite the data
-  // api.put = function(id, preferredFilename, buffer, callback) {};
-
-  // // Return the buffer
-  // api.get = function(fileKey, callback) {};
-
-  // // Return part of the buffer (SA need not support)
-  // api.getBytes = function(fileKey, start, end, callback) {};
-
-  // // Delete the file data
-  // api.del = function(fileKey, callback) {};
-
-  // // File stats returns size, ctime, mtime
-  // api.stats = function(fileKey, callback) {}
-
-  // // For external syncing, should accept a callback function
-  // // and invoke that function when files in the store change,
-  // // passing a string "remove" or "change" as the first argument,
-  // // the file key as the second argument, and an object with updated
-  // // file info as the third argument.
-  // api.watch = function(callback) {};
 
 };

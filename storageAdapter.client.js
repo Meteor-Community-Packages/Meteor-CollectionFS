@@ -36,14 +36,11 @@ FS.StorageAdapter = function(name, options, api) {
   } else {
     _storageAdapters[name] = self;
   }
-
+  
   // extend self with options and other info
-  // _.extend(this, options || {}, {
-  //   name: name,
-  //   files: new Meteor.Collection(api.typeName + '.' + name, {
-  //     _preventAutopublish: true
-  //   })
-  // });
+  _.extend(this, options || {}, {
+    name: name
+  });
 
   // XXX: TODO, add upload feature here...
   // we default to ddp upload but really let the SA like S3Cloud overwrite to
