@@ -170,7 +170,7 @@ function saveCopy(fsFile, storeName, options) {
 
   var store = FS.StorageAdapter(storeName);
   if (!store) {
-    throw new Error('saveCopy: No store named "' + storeName + '" exists');
+    throw new Error('No store named "' + storeName + '" exists');
   }
   
   FS.debug && console.log('saving to store ' + storeName);
@@ -181,20 +181,44 @@ function saveCopy(fsFile, storeName, options) {
     fsFile = FS.TempStore.getDataForFileSync(fsFile);
   }
   
-  // Save to store
   var result;
-  if (options.overwrite) {
-    result = store.update(fsFile);
-  } else {
-    result = store.insert(fsFile);
+  
+  FS.debug && console.log('running beforeSave for store ' + storeName);
+  
+  // Call the beforeSave function provided by the user
+  if (store.beforeSave) {
+    // Get a new copy and a fresh buffer each time in case beforeSave changes anything
+    fsFile = copyOfFileObjectWithData(fsFile);
+
+    if (store.beforeSave.apply(fsFile) === false) {
+      result = false;
+    }
+  }
+  
+  FS.debug && console.log('saving to store ' + storeName);
+  
+  // Save to store
+  if (result !== false) {
+    if (options.overwrite) {
+      result = store.update(fsFile);
+    } else {
+      result = store.insert(fsFile);
+    }
   }
   
   // Process result
   if (result === null) {
+    FS.debug && console.log('saving to store ' + storeName + ' failed temporarily');
     // Temporary failure; let the fsFile log it and potentially decide
     // to give up.
+    // TODO get rid of logCopyFailure and handle failures with powerqueue
     fsFile.logCopyFailure(storeName, store.options.maxTries);
   } else {
+    if (result === false) {
+      FS.debug && console.log('saving to store ' + storeName + ' failed permanently or was cancelled by beforeSave');
+    } else {
+      FS.debug && console.log('saving to store ' + storeName + ' succeeded');
+    }
     // Update the main file object
     // result might be false, which indicates that this copy
     // should never be created in the future.
@@ -204,4 +228,10 @@ function saveCopy(fsFile, storeName, options) {
     fsFile.update({$set: modifier});
   }
 
+}
+
+function copyOfFileObjectWithData(fsFile) {
+  var fsFileClone = fsFile.clone();
+  fsFileClone.setDataFromBinary(fsFile.getBinary());
+  return fsFileClone;
 }
