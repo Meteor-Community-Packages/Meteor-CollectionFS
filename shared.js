@@ -172,3 +172,48 @@ FS.Utility.connectionLogin = function(connection) {
 
   }
 };
+
+/**
+ * @method validateAction
+ * @private
+ * @param {Object} validators - The validators object to use, with `deny` and `allow` properties.
+ * @param {FS.File} fileObj - Mounted or mountable file object to be passed to validators.
+ * @param {String} userId - The ID of the user who is attempting the action.
+ * @returns {undefined}
+ * 
+ * Throws a "400-Bad Request" Meteor error if the file is not mounted or
+ * a "400-Access denied" Meteor error if the action is not allowed.
+ */
+FS.Utility.validateAction = function validateAction(validators, fileObj, userId) {
+  var denyValidators = validators.deny;
+  var allowValidators = validators.allow;
+
+  // If insecure package is used and there are no validators defined,
+  // allow the action.
+  if (typeof Package === 'object'
+          && Package.insecure
+          && denyValidators.length + allowValidators.length === 0) {
+    return;
+  }
+
+  // Validators should receive a fileObj that is mounted
+  if (!fileObj.isMounted()) {
+    throw new Meteor.Error(400, "Bad Request");
+  }
+  
+  // Validators should receive a fileObj that is fully populated
+  fileObj.getFileRecord();
+
+  // Any deny returns true means denied.
+  if (_.any(denyValidators, function(validator) {
+    return validator(userId, fileObj);
+  })) {
+    throw new Meteor.Error(403, "Access denied");
+  }
+  // Any allow returns true means proceed. Throw error if they all fail.
+  if (_.all(allowValidators, function(validator) {
+    return !validator(userId, fileObj);
+  })) {
+    throw new Meteor.Error(403, "Access denied");
+  }
+};
