@@ -78,26 +78,32 @@ Tinytest.add('cfs-base-package - _Utility.cloneFileAttempt', function(test) {
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.cloneFileRecord', function(test) {
+  test.isTrue(true);
   // TODO
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.defaultCallback', function(test) {
+  test.isTrue(true);
   // TODO
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.handleError', function(test) {
+  test.isTrue(true);
   // TODO
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.binaryToBuffer', function(test) {
+  test.isTrue(true);
   // TODO
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.bufferToBinary', function(test) {
+  test.isTrue(true);
   // TODO
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.connectionLogin', function(test) {
+  test.isTrue(true);
   // TODO
 });
 

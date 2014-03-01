@@ -2,7 +2,7 @@
 	"name": "cfs-base-package",
 	"description": "CollectionFS, base package",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-base-package",
-	"author": "CollectionFS core @aldeed & @raix",
+	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
 	"version": "0.0.3",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git"
 }
