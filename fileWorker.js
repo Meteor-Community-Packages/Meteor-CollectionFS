@@ -2,14 +2,20 @@
 //// Use observe to monitor changes and have it create tasks for the power queue
 //// to perform.
 
+/**
+ * @public
+ * @type Object
+ */
 FS.FileWorker = {};
 
 /**
- * Sets up observes on the fsCollection to store file copies and delete
- * temp files at the appropriate times.
- *
+ * @method FS.FileWorker.observe
+ * @public
  * @param {FS.Collection} fsCollection
  * @returns {undefined}
+ * 
+ * Sets up observes on the fsCollection to store file copies and delete
+ * temp files at the appropriate times.
  */
 FS.FileWorker.observe = function(fsCollection) {
 
@@ -58,6 +64,10 @@ FS.FileWorker.observe = function(fsCollection) {
 };
 
 /**
+ *  @method getReadyQuery
+ *  @private
+ *  @param {string} storeName - The name of the store to observe
+ *  
  *  Returns a selector that will be used to identify files that
  *  have been uploaded but have not yet been stored to the
  *  specified store.
@@ -68,8 +78,6 @@ FS.FileWorker.observe = function(fsCollection) {
  *    'copies.storeName`: null,
  *    'failures.copies.storeName.doneTrying': {$ne: true}
  *  }
- *
- *  @param {string} storeName - The name of the store to observe
  */
 function getReadyQuery(storeName) {
   var selector = {
@@ -84,6 +92,10 @@ function getReadyQuery(storeName) {
 }
 
 /**
+ *  @method getDoneQuery
+ *  @private
+ *  @param {Object} stores - The stores object from the FS.Collection options
+ * 
  *  Returns a selector that will be used to identify files where all
  *  stores have successfully save or have failed the
  *  max number of times but still have chunks. The resulting selector
@@ -112,8 +124,7 @@ function getReadyQuery(storeName) {
  *      REPEATED FOR EACH STORE
  *    ]
  *  }
- *
- *  @param {Object} stores - The stores object from the FS.Collection options
+ *  
  */
 function getDoneQuery(stores) {
   var selector = {
@@ -142,15 +153,17 @@ function getDoneQuery(stores) {
 }
 
 /**
- * Saves to the specified store. If the
- * `overwrite` option is `true`, will save to the store even if we already
- * have, potentially overwriting any previously saved data. Synchronous.
- *
+ * @method saveCopy
+ * @private
  * @param {FS.File} fsFile
  * @param {string} storeName
  * @param {Object} options
  * @param {Boolean} [options.overwrite=false] - Force save to the specified store?
  * @returns {undefined}
+ * 
+ * Saves to the specified store. If the
+ * `overwrite` option is `true`, will save to the store even if we already
+ * have, potentially overwriting any previously saved data. Synchronous.
  */
 function saveCopy(fsFile, storeName, options) {
   options = options || {};
