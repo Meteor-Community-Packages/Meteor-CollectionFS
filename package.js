@@ -1,4 +1,5 @@
 Package.describe({
+  name: 'cfs-collection',
   summary: 'CollectionFS, FS.Collection object'
 });
 
@@ -21,8 +22,7 @@ Package.on_use(function(api) {
 
   api.add_files([
     'common.js',
-    'api.common.js',
-    'api.server.js'
+    'api.common.js'
   ], 'server');
 });
 

@@ -1,4 +1,5 @@
 /** @method FS.Collection.prototype.insert Insert `file` or `FS.File` into collection
+ * @public
  * @param {FS.File|File} fileRef File data reference
  * @param {function} [callback] Callback `function(error, fileObj)`
  * @returns {FS.File} The `file object`
@@ -60,6 +61,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
 };
 
 /** @method FS.Collection.prototype.update Update the file record
+ * @public
  * @param {FS.File|object} selector
  * @param {object} modifier
  * @param {object} [options]
@@ -82,6 +84,7 @@ FS.Collection.prototype.update = function(selector, modifier, options, callback)
 };
 
 /** @method FS.Collection.prototype.remove Remove the file from the collection
+ * @public
  * @param {FS.File|object} selector
  * @param {Function} [callback]
  * [Meteor docs](http://docs.meteor.com/#remove)
@@ -105,6 +108,7 @@ FS.Collection.prototype.remove = function(selector, callback) {
 };
 
 /** @method FS.Collection.prototype.findOne
+ * @public
  * @param {[selector](http://docs.meteor.com/#selectors)} selector
  * [Meteor docs](http://docs.meteor.com/#findone)
  * Example:
@@ -121,6 +125,7 @@ FS.Collection.prototype.findOne = function(selector) {
 };
 
 /** @method FS.Collection.prototype.find
+ * @public
  * @param {[selector](http://docs.meteor.com/#selectors)} selector
  * [Meteor docs](http://docs.meteor.com/#find)
  * Example:
@@ -130,13 +135,13 @@ FS.Collection.prototype.findOne = function(selector) {
  var files = images.find({ _id: 'NpnskCt6ippN6CgD8' }).fetch();
  ```
  */
-// Call find on files collection
 FS.Collection.prototype.find = function(selector) {
   var self = this;
   return self.files.find.apply(self.files, arguments);
 };
 
 /** @method FS.Collection.prototype.allow
+ * @public
  * @param {object} options
  * @param {function} options.download Function that checks if the file contents may be downloaded
  * @param {function} options.insert
@@ -172,6 +177,7 @@ FS.Collection.prototype.allow = function(options) {
 };
 
 /** @method FS.Collection.prototype.deny
+ * @public
  * @param {object} options
  * @param {function} options.download Function that checks if the file contents may be downloaded
  * @param {function} options.insert
