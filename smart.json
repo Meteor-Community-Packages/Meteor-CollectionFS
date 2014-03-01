@@ -2,7 +2,7 @@
 	"name": "cfs-s3",
 	"description": "Amazon Web Services S3 storage adapter for CollectionFS",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-s3",
-	"author": "Eric Dobbertin (http://dairystatedesigns.com)",
+	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
 	"version": "0.0.10",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-s3.git",
 	"packages": {
