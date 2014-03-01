@@ -2,7 +2,7 @@
 	"name": "cfs-file",
 	"description": "CollectionFS, FS.File object",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-file",
-	"author": "CollectionFS core @aldeed & @raix",
+	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
 	"version": "0.0.7",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
 	"packages": {
