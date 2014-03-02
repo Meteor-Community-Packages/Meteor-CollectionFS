@@ -79,8 +79,8 @@ FS.Store.GridFS = function(name, options) {
       var gridOptions = {
         root: name,
         chunk_size: options.chunk_size || chunkSize,
-        metadata: options.metadata || null,
-        content_type: options.content_type || 'application/octet-stream'
+        metadata: fileObj.metadata || null,
+        content_type: fileObj.type || 'application/octet-stream'
       };
 
       var gs = new mongodb.GridStore(self.db, fileKey, 'w', gridOptions);
