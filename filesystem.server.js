@@ -39,14 +39,22 @@ FS.Store.FileSystem = function(name, options) {
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.filesystem',
-    get: function(fileKey, callback) {
+    get: function(fileObj, callback) {
+      var fileInfo = fileObj.getCopyInfo(name);
+      if (!fileInfo) { return callback(null, null); }
+      var fileKey = fileInfo.key;
+      
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
       // Call node readFile
       fs.readFile(filepath, callback);
     },
-    getBytes: function(fileKey, start, end, callback) {
+    getBytes: function(fileObj, start, end, callback) {
+      var fileInfo = fileObj.getCopyInfo(name);
+      if (!fileInfo) { return callback(null, null); }
+      var fileKey = fileInfo.key;
+      
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
@@ -73,10 +81,12 @@ FS.Store.FileSystem = function(name, options) {
         callback(new Error('FileSystemStore getBytes: Invalid start or stop values'));
       }
     },
-    put: function(fileKey, buffer, options, callback) {
+    put: function(fileObj, options, callback) {
       options = options || {};
-      // Adjust fileKey "/" to "-"
-      fileKey = fileKey.replace(/\//g, '-');
+      
+      var fileKey = fileObj.collectionName + '-' + fileObj._id + '-' + fileObj.name;
+      var buffer = fileObj.getBuffer();
+      
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
@@ -101,14 +111,18 @@ FS.Store.FileSystem = function(name, options) {
         }
       });
     },
-    del: function(fileKey, callback) {
+    del: function(fileObj, callback) {
+      var fileInfo = fileObj.getCopyInfo(name);
+      if (!fileInfo) { return callback(null, true); }
+      var fileKey = fileInfo.key;
+      
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
       // Call node unlink file
       fs.unlink(filepath, callback);
     },
-    stats: function(fileKey, callback) {
+    stats: function(fileKey, callback) {      
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
