@@ -1,5 +1,19 @@
 var getHeaders = [];
 
+HTTP.publishFormats({
+  fileRecordFormat: function (input) {
+    // Set the method scope content type to json
+    this.setContentType('application/json');
+    if (_.isArray(input)) {
+      return EJSON.stringify(_.map(input, function (obj) {
+        return FS.Utility.cloneFileRecord(obj);
+      }));
+    } else {
+      return EJSON.stringify(FS.Utility.cloneFileRecord(input));
+    }
+  }
+});
+
 FS.HTTP.setHeadersForGet = function setHeadersForGet(headers) {
   getHeaders = headers;
 };
@@ -17,7 +31,29 @@ FS.HTTP.setHeadersForGet = function setHeadersForGet(headers) {
  */
 FS.HTTP.publish = function fsHttpPublish(collection, func) {
   // Mount collection listing URL using http-publish package
-  HTTP.publish(baseUrlForGetAndDel + '/record/' + collection.name, func);
+  HTTP.publish({
+    name: baseUrlForGetAndDel + '/record/' + collection.name,
+    defaultFormat: 'fileRecordFormat',
+    collection: collection,
+    collectionGet: true,
+    collectionPost: false,
+    documentGet: true,
+    documentPut: false,
+    documentDelete: false
+  }, func);
+};
+
+/**
+ * @method FS.HTTP.unpublish
+ * @public
+ * @param {FS.Collection} collection
+ * @returns {undefined}
+ * 
+ * Unpublishes a restpoint created by a call to `FS.HTTP.publish`
+ */
+FS.HTTP.unpublish = function fsHttpUnpublish(collection) {
+  // Mount collection listing URL using http-publish package
+  HTTP.unpublish(baseUrlForGetAndDel + '/record/' + collection.name);
 };
 
 /**

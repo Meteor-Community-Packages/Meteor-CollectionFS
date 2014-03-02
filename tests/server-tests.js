@@ -40,7 +40,7 @@ Meteor.methods({
     
     var fsFile = fromUrl("http://cdn.morguefile.com/imageData/public/files/b/bboomerindenial/preview/fldr_2009_04_01/file3301238617907.jpg", "man.jpg");
     fsFile && Images.insert(fsFile);
-    return !!fsFile;
+    return fsFile._id;
   }
 });
 

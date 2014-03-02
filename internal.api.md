@@ -86,7 +86,25 @@ Publishes all documents returned by the cursor at a GET URL
 with the format baseUrl/record/collectionName. The publish
 function `this` is similar to normal `Meteor.publish`.
 
-> ```FS.HTTP.publish = function fsHttpPublish(collection, func) { ...``` [access-point-server.js:18](access-point-server.js#L18)
+> ```FS.HTTP.publish = function fsHttpPublish(collection, func) { ...``` [access-point-server.js:32](access-point-server.js#L32)
+
+
+-
+
+### <a name="FS.HTTP.unpublish"></a>*fsHttp*.unpublish(collection)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+
+*This method __unpublish__ is defined in `FS.HTTP`*
+
+__Arguments__
+
+* __collection__ *{[FS.Collection](#FS.Collection)}*  
+
+__Returns__  *{undefined}*
+
+
+Unpublishes a restpoint created by a call to `FS.HTTP.publish`
+
+> ```FS.HTTP.unpublish = function fsHttpUnpublish(collection) { ...``` [access-point-server.js:54](access-point-server.js#L54)
 
 
 -
@@ -101,7 +119,7 @@ response
 
 HTTP GET and DEL request handler
 
-> ```function httpGetDelHandler(data) { ...``` [access-point-server.js:30](access-point-server.js#L30)
+> ```function httpGetDelHandler(data) { ...``` [access-point-server.js:66](access-point-server.js#L66)
 
 
 -
@@ -117,7 +135,7 @@ but the response does not include an entity.
 ```
 *This property __setStatusCode__ is defined in `self`*
 
-> ```self.setStatusCode(200);``` [access-point-server.js:70](access-point-server.js#L70)
+> ```self.setStatusCode(200);``` [access-point-server.js:106](access-point-server.js#L106)
 
 
 ***
