@@ -42,7 +42,6 @@ var validS3PutParamKeys = [
   'WebsiteRedirectLocation'
 ];
 
-
 /**
  * @public
  * @constructor
@@ -103,31 +102,31 @@ FS.Store.S3 = function(name, options) {
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.s3',
-    get: function(fileKey, callback) {
+    get: function(fileObj, callback) {
+      var fileInfo = fileObj.getCopyInfo(name);
+      if (!fileInfo) { return callback(null, null); }
+      var fileKey = folder + fileInfo.key;
+      
       S3.getObject({
         Bucket: bucket,
         Key: fileKey
-      }, Meteor.bindEnvironment(function(error, data) {
+      }, function(error, data) {
         callback(error, data && data.Body);
-      }, function (error) {
-        callback(error);
-      }));
+      });
     },
-    put: function(fileKey, buffer, opts, callback) {
+    put: function(fileObj, opts, callback) {
       opts = opts || {};
-
-      //backwards compat
-      opts.ContentType = opts.type;
-
-      //adjust fileKey that will be saved and returned to be unique
-      fileKey = folder + fileKey;
+      
+      var fileKey = fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name;
+      var buffer = fileObj.getBuffer();
 
       var params = _.extend({
         ContentLength: buffer.length,
+        ContentType: fileObj.type,
         Bucket: bucket,
         Body: buffer,
         ACL: defaultAcl,
-        Key: fileKey
+        Key: folder + fileKey
       }, opts);
 
       // Whitelist serviceParams, else aws-sdk throws an error
@@ -135,21 +134,21 @@ FS.Store.S3 = function(name, options) {
       
       // TODO handle overwrite or fileKey adjustments based on opts.overwrite
 
-      S3.putObject(params, Meteor.bindEnvironment(function(error, data) {
+      S3.putObject(params, function(error) {
         callback(error, error ? void 0 : fileKey);
-      }, function (error) {
-        callback(error);
-      }));
+      });
     },
-    del: function(fileKey, callback) {
+    del: function(fileObj, callback) {
+      var fileInfo = fileObj.getCopyInfo(name);
+      if (!fileInfo) { return callback(null, null); }
+      var fileKey = folder + fileInfo.key;
+      
       S3.deleteObject({
         Bucket: bucket,
         Key: fileKey
-      }, Meteor.bindEnvironment(function(error, data) {
-        callback(error, error ? void 0 : fileKey);
-      }, function (error) {
-        callback(error);
-      }));
+      }, function(error) {
+        callback(error, !error);
+      });
     },
     watch: function() {
       throw new Error("S3 storage adapter does not support the sync option");
