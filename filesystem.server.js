@@ -43,13 +43,8 @@ FS.Store.FileSystem = function(name, options) {
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
-      //make callback safe for Meteor
-      var safeCallback = Meteor.bindEnvironment(callback, function(err) {
-        throw err;
-      });
-
       // Call node readFile
-      fs.readFile(filepath, safeCallback);
+      fs.readFile(filepath, callback);
     },
     getBytes: function(fileKey, start, end, callback) {
       // this is the Storage adapter scope
@@ -98,38 +93,26 @@ FS.Store.FileSystem = function(name, options) {
       }
 
       // Call node writeFile
-      fs.writeFile(filepath, buffer, Meteor.bindEnvironment(function(err) {
+      fs.writeFile(filepath, buffer, function(err) {
         if (err) {
           callback(err);
         } else {
           callback(null, fileKey);
         }
-      }, function(err) {
-        throw err;
-      }));
+      });
     },
     del: function(fileKey, callback) {
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
-      //make callback safe for Meteor
-      var safeCallback = Meteor.bindEnvironment(callback, function(err) {
-        throw err;
-      });
-
       // Call node unlink file
-      fs.unlink(filepath, safeCallback);
+      fs.unlink(filepath, callback);
     },
     stats: function(fileKey, callback) {
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
-      //make callback safe for Meteor
-      var safeCallback = Meteor.bindEnvironment(callback, function(err) {
-        throw err;
-      });
-
-      fs.stat(filepath, safeCallback);
+      fs.stat(filepath, callback);
     },
     watch: function(callback) {
       function fileKey(filePath) {
