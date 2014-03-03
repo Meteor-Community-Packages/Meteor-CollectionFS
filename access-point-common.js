@@ -1,24 +1,30 @@
-baseUrlForGetAndDel = '/cfs';
+baseUrl = '/cfs';
 FS.HTTP = FS.HTTP || {};
+
+// Note the upload URL so that client uploader packages know what it is
+FS.HTTP.uploadUrl = baseUrl + '/files';
 
 /**
  * @method FS.HTTP.setBaseUrl
  * @public
- * @param {String} baseUrl - Change the base URL for the HTTP GET and DELETE endpoints.
+ * @param {String} newBaseUrl - Change the base URL for the HTTP GET and DELETE endpoints.
  * @returns {undefined}
  */
-FS.HTTP.setBaseUrl = function setBaseUrl(baseUrl) {
+FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
 
   // Adjust the baseUrl if necessary
-  if (baseUrl.slice(0, 1) !== '/') {
-    baseUrl = '/' + baseUrl;
+  if (newBaseUrl.slice(0, 1) !== '/') {
+    newBaseUrl = '/' + newBaseUrl;
   }
-  if (baseUrl.slice(-1) === '/') {
-    baseUrl = baseUrl.slice(0, -1);
+  if (newBaseUrl.slice(-1) === '/') {
+    newBaseUrl = newBaseUrl.slice(0, -1);
   }
 
   // Update the base URL
-  baseUrlForGetAndDel = baseUrl;
+  baseUrl = newBaseUrl;
+  
+  // Change the upload URL so that client uploader packages know what it is
+  FS.HTTP.uploadUrl = baseUrl + '/files';
 
   // Remount URLs with the new baseUrl, unmounting the old, on the server only
   Meteor.isServer && mountUrls();
@@ -116,7 +122,7 @@ FS.File.prototype.url = function(options) {
     }
 
     // Construct and return the http method url
-    return baseUrlForGetAndDel + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
+    return baseUrl + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
   }
 
 };

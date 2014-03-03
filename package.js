@@ -9,6 +9,7 @@ Package.on_use(function(api) {
 
   api.add_files([
     'access-point-common.js',
+    'access-point-handlers.js',
     'access-point-server.js',
     'accessPoint.js' // move this stuff to another package
   ], 'server');
