@@ -14,6 +14,7 @@ var chunkSize = 262144; // 256k is default GridFS chunk size
  * Creates a GridFS store instance on the server. Inherits from FS.StorageAdapter
  * type.
  */
+
 FS.Store.GridFS = function(name, options) {
   var self = this;
   options = options || {};
@@ -50,13 +51,6 @@ FS.Store.GridFS = function(name, options) {
           });
         });
       });
-      // var existing = Meteor._wrapAsync(mongodb.GridStore.exist)(self.db, fileKey, name, {});
-      // if (!existing) { return callback(null, null); }
-      // var gs = new mongodb.GridStore(self.db, fileKey, 'r', { root: name });
-      // gs = Meteor._wrapAsync(gs.open.bind(gs))();
-      // var result = Meteor._wrapAsync(gs.read.bind(gs))();
-      // Meteor._wrapAsync(gs.close.bind(gs))();
-      // callback(null, new Uint8Array(result));
     },
 
     getBytes: function(fileObj, start, end, callback) {
@@ -82,14 +76,6 @@ FS.Store.GridFS = function(name, options) {
           });
         });
       });
-      // var existing = Meteor._wrapAsync(mongodb.GridStore.exist)(self.db, fileKey, name, {});
-      // if (!existing) { return callback(null, null); }
-      // var gs = new mongodb.GridStore(self.db, fileKey, 'r', { root: name });
-      // gs = Meteor._wrapAsync(gs.open.bind(gs))();
-      // Meteor._wrapAsync(gs.seek.bind(gs))(start);
-      // var result = Meteor._wrapAsync(gs.read.bind(gs))(end - start);
-      // Meteor._wrapAsync(gs.close.bind(gs))();
-      // callback(null, new Uint8Array(result));
     },
 
     put: function(fileObj, options, callback) {
@@ -136,22 +122,6 @@ FS.Store.GridFS = function(name, options) {
         };
         mongodb.GridStore.exist(self.db, fileKey, name, {}, findUnusedFileKey);
       }
-
-      // var existing = Meteor._wrapAsync(mongodb.GridStore.exist)(self.db, fileKey, name, {});
-      // if (existing && !options.overwrite) {
-      //   // Alter the recommended fileKey until we have one that is unique
-      //   var fn = fileKey;
-      //   var suffix = 0;
-      //   do {
-      //     suffix++;
-      //     fileKey = fn + '_' + suffix; //once we exit the loop, this is what will actually be used
-      //   } while (Meteor._wrapAsync(mongodb.GridStore.exist)(self.db, fileKey, name, {}));
-      // }
-      // var gs = new mongodb.GridStore(self.db, fileKey, 'w', gridOptions);
-      // gs = Meteor._wrapAsync(gs.open.bind(gs))();
-      // var result = Meteor._wrapAsync(gs.write.bind(gs))(buffer);
-      // Meteor._wrapAsync(gs.close.bind(gs))();
-      // callback(null, fileKey);
     },
 
     del: function(fileObj, callback) {
@@ -163,8 +133,6 @@ FS.Store.GridFS = function(name, options) {
         if (err) { return callback(err); }
         callback(null, true);
       });
-      // Meteor._wrapAsync(mongodb.GridStore.unlink)(self.db, fileKey, { root: name });
-      // callback(null, true);
     },
 
     watch: function() {
@@ -173,15 +141,11 @@ FS.Store.GridFS = function(name, options) {
 
     init: function(callback) {
       var self = this;
-      if (callback) {
-        mongodb.MongoClient.connect(options.mongoUrl, function (err, db) {
-          if (err) { return callback(err); }
-          self.db = db;
-          callback(null);
-        });
-      } else {  // XXX: remove once callback is implemented
-        self.db = Meteor._wrapAsync(mongodb.MongoClient.connect)(options.mongoUrl);
-      }
+      mongodb.MongoClient.connect(options.mongoUrl, function (err, db) {
+        if (err) { return callback(err); }
+        self.db = db;
+        callback(null);
+      });
     }
   });
 };
