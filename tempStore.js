@@ -23,13 +23,13 @@ FS.TempStore = {
 
   /** @method FS.TempStore.saveChunk
     * @param {FS.File} fsFile
-    * @param {binary} binary
+    * @param {Buffer} buffer
     * @param {number} start
     * @param {function} callback callback(err)
     * @todo In some ways it would make sense to save chunks into temp folder pr. file, naming the chunks `1.bin`, `2.bin` ... `n.bin`
     */
-  saveChunk: function(fileObj, binary, start, callback) {
-    var total = binary.length;
+  saveChunk: function(fileObj, buffer, start, callback) {
+    var total = buffer.length;
 
     if (typeof callback !== "function") {
       throw new Error("FS.File.saveChunk requires a callback");
@@ -58,7 +58,7 @@ FS.TempStore = {
     }
 
     // Write the chunk data into the temporary file
-    fs.writeFile(tempFile, FS.Utility.binaryToBuffer(binary), Meteor.bindEnvironment(function(err) {
+    fs.writeFile(tempFile, buffer, Meteor.bindEnvironment(function(err) {
       if (err) {
         callback(err);
       } else {
@@ -166,11 +166,11 @@ FS.TempStore = {
     */
   ensureForFile: function (fileObj, callback) {
     callback = callback || FS.Utility.defaultCallback;
-    fileObj.getBinary(null, null, function (err, binary) {
+    fileObj.getBuffer(null, null, function (err, buffer) {
       if (err) {
         callback(err);
       } else {
-        FS.TempStore.saveChunk(fileObj, binary, 0, callback);
+        FS.TempStore.saveChunk(fileObj, buffer, 0, callback);
       }
     });
   }
