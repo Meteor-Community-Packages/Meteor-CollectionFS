@@ -1,10 +1,10 @@
 {
   "name": "collectionFS",
   "description": "Meteor file management system with uploads, downloads, file manipulation and copying, and multiple storage adaptors",
-  "homepage": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS",
-  "author": "CollectionFS core @aldeed & @raix",
+  "homepage": "https://github.com/CollectionFS/Meteor-CollectionFS",
+  "author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
   "version": "0.4.0",
-  "git": "https://github.com/Meteor-CollectionFS/Meteor-CollectionFS.git",
+  "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
   "packages": {
     "cfs-base-package": {
       "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
