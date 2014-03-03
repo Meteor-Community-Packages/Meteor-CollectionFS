@@ -216,9 +216,10 @@ FS.File.prototype.remove = function(callback) {
  * defined on the server, the first store defined in `options.stores` for the
  * collection is used. So if there is only one store, you can generally omit
  * this, but if there are multiple, it's best to specify.
- * @param {number} [options.start]
- * @param {number} [options.end]
- * @returns {number} Count
+ * @param {number} [options.start] Start position
+ * @param {number} [options.end] End position
+ * @param {number} [options.format="binary"] On the server, do you want "buffer" or "binary"?
+ * @returns {Uint8Array|Buffer} The data
  *
  * Client: Instructs the DownloadTransferQueue to begin downloading the file copy
  * Server: Returns the Buffer data for the copy

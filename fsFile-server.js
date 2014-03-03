@@ -128,16 +128,20 @@ FS.File.prototype._get = function(options) {
       store = self.collection.options.stores[0];
     }
 
+    var buffer;
     if (partial) {
       if (!(typeof store.getBytes === "function")) {
         throw new Error('FS.File.get: storage adapter for "' + options.storeName + '" does not support partial retrieval');
       }
-      var buffer = store.getBytes(self, options.start, options.end);
-      return FS.Utility.bufferToBinary(buffer);
+      buffer = store.getBytes(self, options.start, options.end);
     } else {
-      var buffer = store.getBuffer(self);
-      return FS.Utility.bufferToBinary(buffer);
+      buffer = store.getBuffer(self);
     }
 
+    if (options.format === "buffer") {
+      return buffer;
+    } else {
+      return FS.Utility.bufferToBinary(buffer);
+    }
   }
 };
