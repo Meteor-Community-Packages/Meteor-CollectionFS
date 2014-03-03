@@ -81,8 +81,7 @@ FS.FileWorker.observe = function(fsCollection) {
  */
 function getReadyQuery(storeName) {
   var selector = {
-    $where: "this.bytesUploaded === this.size",
-    chunks: {$exists: true}
+    $where: "this.bytesUploaded === this.size"
   };
 
   selector['copies.' + storeName] = null;
