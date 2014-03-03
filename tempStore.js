@@ -15,6 +15,8 @@
 fs = Npm.require('fs');
 tmp = Npm.require('temp');
 
+var storeCollection = new Meteor.Collection("fs.storage.temp");
+
 /** @namespace FS.TempStore
   * @property FS.TempStore
   * @type {object}
@@ -29,34 +31,31 @@ FS.TempStore = {
     * @todo In some ways it would make sense to save chunks into temp folder pr. file, naming the chunks `1.bin`, `2.bin` ... `n.bin`
     */
   saveChunk: function(fileObj, buffer, start, callback) {
-    var total = buffer.length;
+    var total = buffer.length, tempFile, bytesChange;
 
     if (typeof callback !== "function") {
       throw new Error("FS.File.saveChunk requires a callback");
     }
-
-    // Get the name of the already-created tempFile for this chunk
-    var chunks = fileObj.chunks || [], chunk, tempFile, existingChunkSize = 0;
-    for (var i = 0, ln = chunks.length; i < ln; i++) {
-      chunk = chunks[i];
-      if (chunk.start === start) {
-        tempFile = chunk.tempFile;
-        existingChunkSize = chunk.size;
-        break;
-      }
-    }
     
-    var bytesChange = total - existingChunkSize;
-
-    // If there is not already a temp file...
-    if (!tempFile) {
+    var existing = storeCollection.findOne({fileId: fileObj._id, collectionName: fileObj.collectionName, start: start});
+    if (existing) {
+      tempFile = existing.tempFile;
+      bytesChange = 0;
+    } else {
       // create it in the OS temp directory with a random unique name ending with ".bin"
       tempFile = tmp.path({suffix: '.bin'});
       FS.debug && console.log('Chunk saved ' + tempFile);
-      // and make note of its filename in the chunks array
-      fileObj.update({$push: {chunks: {start: start, size: total, tempFile: tempFile}}});
+      // and make note of this file
+      storeCollection.insert({
+        fileId: fileObj._id,
+        collectionName: fileObj.collectionName,
+        start: start,
+        size: total,
+        tempFile: tempFile
+      });
+      bytesChange = total;
     }
-
+    
     // Write the chunk data into the temporary file
     fs.writeFile(tempFile, buffer, Meteor.bindEnvironment(function(err) {
       if (err) {
@@ -77,14 +76,18 @@ FS.TempStore = {
     * @todo This cannot handle large files eg. 2gb or more?
     */
   getDataForFile: function(fileObj, callback) {
-    FS.debug && console.log('Get the data from file');
-    if (_.isEmpty(fileObj.chunks)) {
+    
+    var existing = storeCollection.find({fileId: fileObj._id, collectionName: fileObj.collectionName});
+    if (!existing.count()) {
       callback(new Error('getDataForFile: No temporary chunks!'));
+      return;
     }
-
+    
+    existing.rewind();
+    
     var tempBinary = EJSON.newBinary(fileObj.size);
     var total = 0, stop = false;
-    _.each(fileObj.chunks, function(chunk) {
+    existing.forEach(function (chunk) {
       if (!stop) {
         var start = chunk.start;
         // Call node readFile
@@ -121,14 +124,10 @@ FS.TempStore = {
   deleteChunks: function(fileObj, callback) {
     var stop = false, count, deletedCount = 0;
     callback = callback || FS.Utility.defaultCallback;
+    
+    var existing = storeCollection.find({fileId: fileObj._id, collectionName: fileObj.collectionName});
 
-    if (!fileObj.chunks) {
-      callback();
-      return;
-    }
-
-    var count = fileObj.chunks.length;
-    if (!count) {
+    if (!existing.count()) {
       callback();
       return;
     }
@@ -136,26 +135,30 @@ FS.TempStore = {
     function success() {
       deletedCount++;
       if (deletedCount === count) {
-        fileObj.update({$unset: {chunks: 1}});
+        storeCollection.remove({fileId: fileObj._id, collectionName: fileObj.collectionName});
         callback();
       }
     }
-
-    _.each(fileObj.chunks, function(chunk) {
-      if (!fs.existsSync(chunk.tempFile)) {
-        success();
-      } else if (!stop) {
-        fs.unlink(chunk.tempFile, Meteor.bindEnvironment(function(err) {
-          if (err) {
+    
+    existing.rewind();
+    
+    existing.forEach(function (chunk) {
+      if (!stop) {
+        if (!fs.existsSync(chunk.tempFile)) {
+          success();
+        } else {
+          fs.unlink(chunk.tempFile, Meteor.bindEnvironment(function(err) {
+            if (err) {
+              callback(err);
+              stop = true;
+            } else {
+              success();
+            }
+          }, function(err) {
             callback(err);
             stop = true;
-          } else {
-            success();
-          }
-        }, function(err) {
-          callback(err);
-          stop = true;
-        }));
+          }));
+        }
       }
     });
   },
