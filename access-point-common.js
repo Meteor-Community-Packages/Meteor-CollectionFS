@@ -107,6 +107,9 @@ FS.File.prototype.url = function(options) {
       params.store = storeName;
     }
     var queryString = encodeParams(params);
+    if (queryString.length) {
+      queryString = '?' + queryString;
+    }
 
     // Determine which URL to use
     var area;
