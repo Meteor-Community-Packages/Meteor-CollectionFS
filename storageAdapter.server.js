@@ -48,6 +48,11 @@ FS.StorageAdapter = function(name, options, api) {
     name: name
   });
 
+  var makeSafeCallback = function (callback) {
+      // Make callback safe for Meteor code
+      return Meteor.bindEnvironment(callback, function(err) { throw err; });
+  };
+
   var foCheck = function(fsFile, type) {
     if (!(fsFile instanceof FS.File)) {
       throw new Error('Storage adapter "' + name + '" ' + type + ' requires fsFile');
@@ -65,31 +70,26 @@ FS.StorageAdapter = function(name, options, api) {
       type: fsFile.type,
       size: fsFile.size
     };
-    
-    // Make callback safe for Meteor code
-    var safeCallback = Meteor.bindEnvironment(callback, function(err) {
-      throw err;
-    });
 
     // Create callback for store `put` method
     function putCallback(err, finalFileKey) {
       if (err) {
-        safeCallback(err, null);
+        callback(err, null);
       } else if (!finalFileKey) {
-        safeCallback(new Error("No file key"), null);
+        callback(new Error("No file key"), null);
       } else {
 
         function finish(updatedAt) {
           savedFileInfo.key = finalFileKey;
           savedFileInfo.utime = updatedAt;
-          safeCallback(err, err ? null : savedFileInfo);
+          callback(err, err ? null : savedFileInfo);
         }
 
         // note the file key and updatedAt in the SA file record
         if (typeof api.stats === "function") {
           api.stats.call(self, finalFileKey, function(err, stats) {
             if (err) {
-              safeCallback(err, null);
+              callback(err, null);
             } else {
               finish(stats.mtime);
             }
@@ -99,7 +99,7 @@ FS.StorageAdapter = function(name, options, api) {
         }
       }
     }
-    
+
     // Put the file to storage
     api.put.call(self, fsFile, {overwrite: overwrite}, putCallback);
   }
@@ -109,16 +109,13 @@ FS.StorageAdapter = function(name, options, api) {
     return doPut(fsFile, false, callback);
   };
 
-  //internal
-  self._insertSync = Meteor._wrapAsync(self._insertAsync);
-  
   /**
    * @method FS.StorageAdapter.prototype.insert
    * @public
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options (currently unused)
    * @param {Function} [callback] If not provided, will block and return file info.
-   * 
+   *
    * Attempts to insert a file into the store. If there is a temporary failure,
    * returns (or passes to the second argument of the callback) `null`. If there
    * is a permanant failure, returns or passes `false`. If the file is
@@ -136,9 +133,9 @@ FS.StorageAdapter = function(name, options, api) {
     FS.debug && console.log("---SA INSERT callback: " + (typeof callback === 'function'));
 
     if (callback) {
-      return self._insertAsync(fsFile, callback);
+      return self._insertAsync(fsFile, makeSafeCallback(callback));
     } else {
-      return self._insertSync(fsFile);
+      return Meteor._wrapAsync(self._insertAsync)(fsFile);
     }
   };
 
@@ -147,16 +144,13 @@ FS.StorageAdapter = function(name, options, api) {
     return doPut(fsFile, true, callback);
   };
 
-  //internal
-  self._updateSync = Meteor._wrapAsync(self._updateAsync);
-
   /**
    * @method FS.StorageAdapter.prototype.update
    * @public
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options (currently unused)
    * @param {Function} [callback] If not provided, will block and return file info.
-   * 
+   *
    * Attempts to update a file in the store. If there is a temporary failure,
    * returns (or passes to the second argument of the callback) `null`. If there
    * is a permanant failure, returns or passes `false`. If the file is
@@ -173,25 +167,17 @@ FS.StorageAdapter = function(name, options, api) {
     }
 
     if (callback) {
-      return self._updateAsync(fsFile, callback);
+      return self._updateAsync(fsFile, makeSafeCallback(callback));
     } else {
-      return self._updateSync(fsFile);
+      return Meteor._wrapAsync(self._updateAsync)(fsFile);
     }
   };
 
   //internal
-  self._removeAsync = function(fsFile, callback) {   
-    // Make callback safe for Meteor code
-    var safeCallback = Meteor.bindEnvironment(callback, function(err) {
-      throw err;
-    });
-
+  self._removeAsync = function(fsFile, callback) {
     // Remove the file from the store
-    api.del.call(self, fsFile, safeCallback);
+    api.del.call(self, fsFile, callback);
   };
-
-  //internal
-  self._removeSync = Meteor._wrapAsync(self._removeAsync);
 
   /**
    * @method FS.StorageAdapter.prototype.remove
@@ -199,7 +185,7 @@ FS.StorageAdapter = function(name, options, api) {
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] unused
    * @param {Function} [callback] If not provided, will block and return true or false
-   * 
+   *
    * Attempts to remove a file from the store. Returns true if removed or not
    * found, or false if the file couldn't be removed.
    */
@@ -214,25 +200,17 @@ FS.StorageAdapter = function(name, options, api) {
     options = options || {};
 
     if (callback) {
-      return self._removeAsync(fsFile, callback);
+      return self._removeAsync(fsFile, makeSafeCallback(callback));
     } else {
-      return self._removeSync(fsFile);
+      return Meteor._wrapAsync(self._removeAsync)(fsFile);
     }
   };
 
   //internal
   self._getBufferAsync = function(fsFile, callback) {
-    // Make callback safe for Meteor code
-    var safeCallback = Meteor.bindEnvironment(callback, function(err) {
-      throw err;
-    });
-
     // get the buffer
-    api.get.call(self, fsFile, safeCallback);
+    api.get.call(self, fsFile, callback);
   };
-
-  //internal
-  self._getBufferSync = Meteor._wrapAsync(self._getBufferAsync);
 
   /**
    * @method FS.StorageAdapter.prototype.getBuffer
@@ -240,7 +218,7 @@ FS.StorageAdapter = function(name, options, api) {
    * @param {FS.File} fsFile The FS.File instance to be retrieved.
    * @param {Object} [options] unused
    * @param {Function} [callback] If not provided, will block and return the Buffer
-   * 
+   *
    * Returns the buffer for a file that has been saved in this store
    */
   self.getBuffer = function(fsFile, options, callback) {
@@ -253,9 +231,9 @@ FS.StorageAdapter = function(name, options, api) {
     }
 
     if (callback) {
-      return self._getBufferAsync(fsFile, callback);
+      return self._getBufferAsync(fsFile, makeSafeCallback(callback));
     } else {
-      return self._getBufferSync(fsFile);
+      return Meteor._wrapAsync(self._getBufferAsync)(fsFile);
     }
   };
 
@@ -271,18 +249,10 @@ FS.StorageAdapter = function(name, options, api) {
       if (copyInfo.size) {
         end = Math.min(end, copyInfo.size);
       }
-      
-      // Make callback safe for Meteor code
-      var safeCallback = Meteor.bindEnvironment(callback, function(err) {
-        throw err;
-      });
 
       // get the buffer
-      api.getBytes.call(self, fsFile, start, end, safeCallback);
+      api.getBytes.call(self, fsFile, start, end, callback);
     };
-
-    //internal
-    self._getBytesSync = Meteor._wrapAsync(self._getBytesAsync);
 
    /**
     * @method FS.StorageAdapter.prototype.getBytes
@@ -292,7 +262,7 @@ FS.StorageAdapter = function(name, options, api) {
     * @param {Number} end - The position of the last byte to return, plus one
     * @param {Object} [options] unused
     * @param {Function} [callback] If not provided, will block and return the Buffer
-    * 
+    *
     * Returns the buffer for one chunk of a file that has been saved in this store
     */
     self.getBytes = function(fsFile, start, end, options, callback) {
@@ -305,15 +275,15 @@ FS.StorageAdapter = function(name, options, api) {
       }
 
       if (callback) {
-        return self._getBytesAsync(fsFile, start, end, callback);
+        return self._getBytesAsync(fsFile, start, end, makeSafeCallback(callback));
       } else {
-        return self._getBytesSync(fsFile, start, end);
+        return Meteor._wrapAsync(self._getBytesAsync)(fsFile, start, end);
       }
     };
   }
 
   if (typeof api.init === 'function') {
-    api.init.call(self);
+    Meteor._wrapAsync(api.init.bind(self))();
   }
 
 };
