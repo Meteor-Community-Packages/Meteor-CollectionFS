@@ -162,8 +162,6 @@ FS.Store.FileSystem = function(name, options) {
       }, function(err) {
         throw err;
       }));
-    },
-    init: function() {
     }
   });
 };
