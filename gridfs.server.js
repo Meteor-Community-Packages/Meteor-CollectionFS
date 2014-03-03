@@ -40,7 +40,7 @@ FS.Store.GridFS = function(name, options) {
       gs = Meteor._wrapAsync(gs.open.bind(gs))();
       var result = Meteor._wrapAsync(gs.read.bind(gs))();
       Meteor._wrapAsync(gs.close.bind(gs))();
-      callback(null, new Uint8Array(result));
+      callback(null, result);
     },
 
     getBytes: function(fileObj, start, end, callback) {
@@ -55,7 +55,7 @@ FS.Store.GridFS = function(name, options) {
       Meteor._wrapAsync(gs.seek.bind(gs))(start);
       var result = Meteor._wrapAsync(gs.read.bind(gs))(end - start);
       Meteor._wrapAsync(gs.close.bind(gs))();
-      callback(null, new Uint8Array(result));
+      callback(null, result);
     },
 
     put: function(fileObj, options, callback) {
