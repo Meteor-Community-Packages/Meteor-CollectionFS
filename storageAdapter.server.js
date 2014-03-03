@@ -283,7 +283,7 @@ FS.StorageAdapter = function(name, options, api) {
   }
 
   if (typeof api.init === 'function') {
-    Meteor._wrapAsync(api.init.call(self));
+    Meteor._wrapAsync(api.init.bind(self))();
   }
 
 };
