@@ -100,21 +100,21 @@ FS.Store.GridFS = function(name, options) {
       var buffer = fileObj.getBuffer();
 
       // Write buffer to store once we have a suitable fileKey
-      var writeBuffer = function (goodFileKey) {
+      var writeBuffer = function (newFileKey) {
         var gridOptions = {
           root: name,
           chunk_size: options.chunk_size || chunkSize,
           metadata: fileObj.metadata || null,
           content_type: fileObj.type || 'application/octet-stream'
         };
-        var gstore = new mongodb.GridStore(self.db, goodFileKey, 'w', gridOptions);
+        var gstore = new mongodb.GridStore(self.db, newFileKey, 'w', gridOptions);
         gstore.open(function (err, gs) {
           if (err) { return callback(err); }
           gs.write(buffer, function (err, result) {
             if (err) { return callback(err); }
             gs.close(function (err) {
               if (err) { return callback(err); }
-              callback(null, goodFileKey);
+              callback(null, newFileKey);
             });
           });
         });
@@ -124,19 +124,17 @@ FS.Store.GridFS = function(name, options) {
         writeBuffer(fileKey);
       } else {
         var fn = fileKey;
-        var suffix = 0;
-        // XXX: Icky recursive async call to find non-existing fileKey
-        var findGoodFileKey = function (err, existing) {
+        var findUnusedFileKey = function (err, existing) {
           if (err) { return callback(err); }
           if (existing) {
-            suffix++;
-            fileKey = fn + '_' + suffix;
-            mongodb.GridStore.exist(self.db, fileKey, name, {}, findGoodFileKey);
+            // Avoid deep recursion by appending a 6-digit base 36 pseudorandom number
+            fileKey = fn + '_' + Math.floor(Math.random() * 2176782335).toString(36);
+            mongodb.GridStore.exist(self.db, fileKey, name, {}, findUnusedFileKey);
           } else {
             writeBuffer(fileKey);
           }
         };
-        mongodb.GridStore.exist(self.db, fileKey, name, {}, findGoodFileKey);
+        mongodb.GridStore.exist(self.db, fileKey, name, {}, findUnusedFileKey);
       }
 
       // var existing = Meteor._wrapAsync(mongodb.GridStore.exist)(self.db, fileKey, name, {});
