@@ -71,7 +71,6 @@ function httpGetDelHandler(data) {
   var id = opts.id;
   var store = opts.store;
   var download = opts.download;
-  var metadata = opts.metadata;
 
   // Get the collection
   var collection = FS._collections[collectionName];
@@ -113,11 +112,9 @@ function httpGetDelHandler(data) {
   FS.Utility.validateAction(file.collection._validators['download'], file, self.userId);
 
   var copyInfo = file.copies[store];
-
-  // If metadata=true, return just the file's metadata as JSON
-  if (metadata) {
-    self.setStatusCode(200);
-    return copyInfo;
+  
+  if (!copyInfo) {
+    throw new Meteor.Error(404, "Not Found", 'This file was not stored in the ' + store + ' store or there is no store with that name');
   }
 
   if (typeof copyInfo.type === "string") {
@@ -177,7 +174,8 @@ function httpGetDelHandler(data) {
   return file.get({
     storeName: store,
     start: start,
-    end: end
+    end: end,
+    format: 'buffer'
   });
 }
 
