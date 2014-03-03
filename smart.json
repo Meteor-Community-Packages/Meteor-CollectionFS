@@ -2,7 +2,7 @@
   "name": "cfs-tempstore",
   "description": "CollectionFS, temporary storage",
   "homepage": "https://github.com/CollectionFS/Meteor-cfs-tempstore",
-  "author": "CollectionFS core @aldeed & @raix",
+  "author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
   "version": "0.0.2",
   "git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
   "packages": {
