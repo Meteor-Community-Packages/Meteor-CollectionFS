@@ -33,6 +33,10 @@
     "cfs-worker": {
       "git": "https://github.com/CollectionFS/Meteor-cfs-worker.git",
       "branch": "master"
+    },
+    "cfs-upload-http": {
+      "git": "https://github.com/CollectionFS/Meteor-cfs-upload-http.git",
+      "branch": "master"
     }
   }
 }
