@@ -34,6 +34,7 @@ FS.Store.GridFS = function(name, options) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, null); }
       var fileKey = fileInfo.key;
+
       mongodb.GridStore.exist(self.db, fileKey, name, {}, function (err, existing) {
         if (err) { return callback(err); }
         if (!existing) { return callback(null, null); }
@@ -44,7 +45,7 @@ FS.Store.GridFS = function(name, options) {
             if (err) { return callback(err); }
             gs.close(function (err) {
               if (err) { return callback(err); }
-              callback(null, new Uint8Array(result));
+              callback(null, result);
             });
           });
         });
@@ -75,7 +76,7 @@ FS.Store.GridFS = function(name, options) {
               if (err) { return callback(err); }
               gs.close(function (err) {
                 if (err) { return callback(err); }
-                callback(null, new Uint8Array(result));
+                callback(null, result);
               });
             });
           });
