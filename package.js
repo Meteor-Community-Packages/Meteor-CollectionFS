@@ -5,7 +5,7 @@ Package.describe({
 
 Package.on_use(function(api) {
 
-  api.use(['cfs-base-package', 'cfs-tempstore', 'cfs-file']);
+  api.use(['cfs-base-package', 'cfs-tempstore', 'cfs-file', 'cfs-access-point']);
 
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata',
     'ejson', 'power-queue', 'reactive-list']);
@@ -17,8 +17,7 @@ Package.on_use(function(api) {
   ], 'client');
 
   api.add_files([
-    'upload-http-common.js',
-    'upload-http-server.js'
+    'upload-http-common.js'
   ], 'server');
 });
 

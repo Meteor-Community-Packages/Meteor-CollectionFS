@@ -15,17 +15,18 @@ var _taskHandler = function(task, next) {
       next(new Meteor.Error(err.error, err.message));
     } else {
       
-      FS.debug && console.log('PUT to URL', task.url);
+      FS.debug && console.log('PUT to URL', task.url, task.urlParams);
+      
       httpCall("PUT", task.url, {
-        params: task.urlParams,
+        params: _.extend({start: task.start}, task.urlParams),
         content: data,
         headers: {
-          'Content Type': task.fileObj.type
+          'Content-Type': task.fileObj.type
         }
       }, function(error, result) {
         task = null;
-        if (err) {
-          next(new Meteor.Error(err.error, err.message));
+        if (error) {
+          next(new Meteor.Error(error.error, error.message));
         } else {
           next();
         }
@@ -158,7 +159,7 @@ UploadTransferQueue = function(options) {
       self.files[collectionName][id] = true;
 
       // Construct URL
-      var url = baseUrlForUploads + '/' + collectionName;
+      var url = FS.HTTP.uploadUrl + '/' + collectionName;
       if (id) {
         url += '/' + id;
       }
@@ -171,7 +172,6 @@ UploadTransferQueue = function(options) {
 
       // Construct query string
       var urlParams = {
-        start: start,
         filename: fileObj.name
       };
       if (authToken !== '') {
