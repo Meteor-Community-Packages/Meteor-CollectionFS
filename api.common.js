@@ -42,7 +42,6 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
 
       // If on client, begin uploading the data
       if (Meteor.isClient) {
-        console.log("upload", self, fileObj);
         self.options.uploader && self.options.uploader(fileObj);
       }
       
