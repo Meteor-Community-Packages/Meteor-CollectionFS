@@ -96,17 +96,19 @@ FS.File.prototype.url = function(options) {
     }
 
     // Construct query string
-    var params = [];
+    var params = {};
     if (authToken !== '') {
-      params.push('token=' + authToken);
+      params.token = authToken;
     }
     if (options.download) {
-      params.push('download=true');
+      params.download = true;
     }
     if (storeName) {
-      params.push('store=' + storeName); //TODO url escape
+      params.store = storeName;
     }
-    
+    var queryString = encodeParams(params);
+
+    // Determine which URL to use
     var area;
     if (options.metadata) {
       area = '/record';
@@ -114,15 +116,26 @@ FS.File.prototype.url = function(options) {
       area = '/files';
     }
 
-    var queryString;
-    if (params.length) {
-      queryString = '?' + params.join('&');
-    } else {
-      queryString = '';
-    }
-
     // Construct and return the http method url
     return baseUrl + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
   }
 
+};
+
+/*
+ * Borrowed these from http package
+ */
+
+encodeParams = function(params) {
+  var buf = [];
+  _.each(params, function(value, key) {
+    if (buf.length)
+      buf.push('&');
+    buf.push(encodeString(key), '=', encodeString(value));
+  });
+  return buf.join('').replace(/%20/g, '+');
+};
+
+encodeString = function(str) {
+  return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 };

@@ -88,6 +88,8 @@ Tinytest.addAsync('cfs-access-point - client - DELETE filerecord and data', func
 
 });
 
+//TODO test FS.File.prototype.url method with various options
+
 //Test API:
 //test.isFalse(v, msg)
 //test.isTrue(v, msg)
