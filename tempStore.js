@@ -169,13 +169,7 @@ FS.TempStore = {
     */
   ensureForFile: function (fileObj, callback) {
     callback = callback || FS.Utility.defaultCallback;
-    fileObj.getBuffer(null, null, function (err, buffer) {
-      if (err) {
-        callback(err);
-      } else {
-        FS.TempStore.saveChunk(fileObj, buffer, 0, callback);
-      }
-    });
+    FS.TempStore.saveChunk(fileObj, fileObj.getBuffer(), 0, callback);
   }
 };
 
