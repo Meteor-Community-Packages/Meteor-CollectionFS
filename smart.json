@@ -1,22 +1,22 @@
 {
-  "name": "cfs-worker",
-  "description": "CollectionFS, file worker - handles file copies/versions",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-worker",
-  "author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-  "version": "0.0.3",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-worker.git",
-  "packages": {
-    "cfs-base-package": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-      "branch": "master"      
-    }, 
-    "cfs-tempstore": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
-      "branch": "master" 
-    }, 
-    "collectionFS": {
-      "git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
-      "branch": "master" 
-    }
-  }  
+	"name": "cfs-worker",
+	"description": "CollectionFS, file worker - handles file copies/versions",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-worker",
+	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
+	"version": "0.0.4",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-worker.git",
+	"packages": {
+		"cfs-base-package": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+			"branch": "master"
+		},
+		"cfs-tempstore": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
+			"branch": "master"
+		},
+		"collectionFS": {
+			"git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
+			"branch": "master"
+		}
+	}
 }
