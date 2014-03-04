@@ -63,20 +63,22 @@ FS.File.prototype.url = function(options) {
   if (self.isMounted()) {
     var filename = '';
     var storeName = options.store;
-
-    if (storeName) {
-      var copyInfo = self.getCopyInfo(storeName);
-      if (!copyInfo) {
-        if (options.brokenIsFine) {
-          copyInfo = {};
-        } else {
-          // We want to return null if we know the URL will be a broken
-          // link because then we can avoid rendering broken links, broken
-          // images, etc.
-          return null;
-        }
+    
+    if (!storeName) {
+      storeName = self.collection.options.stores[0].name;
+    }
+    
+    var copyInfo = self.getCopyInfo(storeName);
+    if (!copyInfo) {
+      if (options.brokenIsFine) {
+        copyInfo = {};
+      } else {
+        // We want to return null if we know the URL will be a broken
+        // link because then we can avoid rendering broken links, broken
+        // images, etc.
+        return null;
       }
-
+      
       filename = copyInfo.name;
       if (filename && filename.length) {
         filename = '/' + filename;
@@ -118,7 +120,7 @@ FS.File.prototype.url = function(options) {
     } else {
       area = '/files';
     }
-
+    
     // Construct and return the http method url
     return baseUrl + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
   }
