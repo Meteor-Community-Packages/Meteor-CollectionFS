@@ -5,10 +5,9 @@ NOTE: This package is under active development right now (2014-2-20). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
-A Meteor package that adds GridFS-like storage for
+A Meteor package that adds [GridFS](http://docs.mongodb.org/manual/core/gridfs/) file storage for
 [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS). When you
-use this storage adapter, file data is stored in chunks in a `Meteor.Collection`
-in your MongoDB database.
+use this storage adapter, file data is stored in chunks in your MongoDB database.
 
 ## Installation
 
