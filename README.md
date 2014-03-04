@@ -22,6 +22,7 @@ $ mrt add cfs-gridfs
 
 ```js
 var imageStore = new FS.Store.GridFS("images", {
+  mongoUrl: 'mongodb://127.0.0.1:27017/test/', // optional, defaults to Meteor's local MongoDB
   beforeSave: myBeforeSaveFunction, //optional
   maxTries: 1 //optional, default 5
 });
