@@ -1,7 +1,7 @@
 CollectionFS
 =========================
 
-NOTE: This branch is under active development right now (2014-1-5). It has
+NOTE: This branch is under active development right now (2014-3-5). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -115,7 +115,7 @@ var Images = new FS.Collection("images", {
 ```
 
 In this example, we've defined a FS.Collection named "images", which will
-be a new collection in your MongoDB database with the name "images.files". We've
+be a new collection in your MongoDB database with the name "_cfs.images.filerecord". We've
 also told it to store the files in `~/uploads` on the local filesystem.
 
 Your FS.Collection variable does not necessarily have to be global on the
@@ -172,8 +172,7 @@ packages. Refer to the package documentation for usage instructions.
 * [cfs-s3](https://github.com/CollectionFS/Meteor-cfs-s3): Allows you to save to an Amazon S3 bucket.
 
 Storage adapters also handle retrieving the file data and removing the file data
-when you delete the file. Some of them support synchronization, where updates
-to the store are automatically synchronized with the linked FS.Collection.
+when you delete the file.
 
 ## File Manipulation
 
@@ -254,6 +253,10 @@ but not both. If you do not pass the `filter` option, all files are allowed,
 as long as they pass the tests in your FS.Collection.allow() and
 FS.Collection.deny() functions.
 
+The extension checks are used only when there is a filename. It's possible to
+upload a file with no name. Thus, you should generally use extension checks
+only *in addition to* content type checks, and not instead of content type checks.
+
 The file extensions must be specified without a leading period.
 
 *Tip: You can do more advanced filtering in your `beforeSave` function.
@@ -333,6 +336,8 @@ create download or delete buttons, show file transfer progress, and more.
 
 ## Custom Connections
 
+TODO move this to the transfer package readmes
+
 To use a custom DDP connection for uploads or downloads, override the default
 transfer queue with your own, passing in your custom connection:
 
@@ -374,8 +379,7 @@ FS.HTTP.setHeadersForGet([
 
 ## Drag and Drop
 
-You can easily insert dropped files into an FS.Collection with the
-[acceptDropsOn method](api.md#FS.Collection.acceptDropsOn).
+TODO document using "dropped" event here
 
 ## Optimizing
 
@@ -387,3 +391,122 @@ with a thumbnail store and a large-size store, you may want to list the thumbnai
 store first to ensure that thumbnails appear on screen as soon as possible after
 inserting a new file. Or if you are storing audio files, you may want to prioritize
 a "sample" store over a "full-length" store.
+
+## Example Code
+
+The following code examples will get you started with common tasks.
+
+### Insert One File From File Input
+
+In client code:
+
+```js
+Template.myForm.events({
+  'change .myFileInput': function(event, template) {
+    var files = event.target.files;
+    Images.insert(files[0], function (err, fileObj) {
+      //if !err, fileObj is now in the Images collection and its data is being uploaded
+    });
+  }
+});
+```
+
+### Insert Multiple Files From Multiple File Input
+
+In client code:
+
+```js
+Template.myForm.events({
+  'change .myFileInput': function(event, template) {
+    var files = event.target.files;
+    for (var i = 0, ln = files.length; i < ln; i++) {
+      Images.insert(files[i], function (err, fileObj) {
+        //if !err, fileObj is now in the Images collection and its data is being uploaded
+      });
+    }
+  }
+});
+```
+
+### Insert One File From Drop Zone
+
+TODO add
+
+### Insert Multiple Files From Drop Zone
+
+TODO add
+
+### Insert One File From a Remote URL
+
+In either client or server code:
+
+```js
+Pictures.insert(url, function (error, fileObj) {
+  //fileObj is the inserted FS.File instance
+  //data has been automatically retrieved from the remote URL and stored
+});
+```
+
+On the server, you can omit the callback and the method will block until the
+data download and insert are both complete. Then it will return the new FS.File
+instance. On the client, you can omit the callback and any errors will be thrown.
+
+Note that a drawback of passing the URL directly to `insert` is that the file
+will be inserted without a name. If you want to give it a name, you can do it
+this way:
+
+```js
+FS.File.fromUrl(url, 'name.jpg', function (error, fileObj) {
+  //data has been automatically retrieved from the remote URL and attached to fileObj
+  Pictures.insert(fileObj, function (error, fileObj) {
+    //fileObj._id is now set
+  });
+});
+```
+
+Or in server code:
+
+```js
+var fileObj = FS.File.fromUrl(url, 'name.jpg');
+Pictures.insert(fileObj);
+//fileObj._id is now set
+```
+
+### Add Metadata to a File Before Inserting
+
+TODO add
+
+### Update Existing File's Metadata
+
+Knowing the file's `_id`, you can call `update` on the `FS.Collection` instance:
+
+```js
+myFSCollection.update({_id: fileId}, {$set: {'metadata.foo': 'bar'}});
+```
+
+If you have the `FS.File` instance, you can call `update` on it:
+
+```js
+myFsFile.update({$set: {'metadata.foo': 'bar'}});
+```
+
+### Store a Reference to an Inserted File in Another Collection
+
+This works in either client or server code:
+
+```js
+Pictures.insert(myFile, function (error, fileObj) {
+  if (!error) {
+    Items.update({_id: relatedItemId}, {$set: {pictureId: fileObj._id}});
+  } else {
+    throw error;
+  }
+});
+```
+
+This works in server code only:
+
+```js
+var fileObj = Pictures.insert(myFile);
+Items.update({_id: relatedItemId}, {$set: {pictureId: fileObj._id}});
+```
