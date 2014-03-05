@@ -136,6 +136,7 @@ FS.File.prototype.url = function(options) {
  * Borrowed these from http package
  */
 
+// TODO: should this be prefixed eg. by extending the FS.Utility
 encodeParams = function(params) {
   var buf = [];
   _.each(params, function(value, key) {
