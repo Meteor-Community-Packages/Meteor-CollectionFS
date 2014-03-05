@@ -465,16 +465,16 @@ FS.File.prototype.fileIsAllowed = function() {
   var self = this;
 
   if (self.isMounted()) {
-
+    // Get filters
     var filter = self.collection.options.filter;
     if (!filter) {
       return true;
     }
+    var saveAllFileExtensions = (filter.allow.extensions.length === 0);
+    var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
+    
+    // Get info about the file
     var filename = self.name;
-    if (!filename) {
-      filter.onInvalid && filter.onInvalid("The file has no name");
-      return false;
-    }
     var contentType = self.type;
     if (!contentType) {
       filter.onInvalid && filter.onInvalid(filename + " has an unknown content type");
@@ -485,21 +485,27 @@ FS.File.prototype.fileIsAllowed = function() {
       filter.onInvalid && filter.onInvalid(filename + " has an unknown file size");
       return false;
     }
-    var saveAllFileExtensions = (filter.allow.extensions.length === 0);
-    var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
-    var ext = self.getExtension();
-    if (!((saveAllFileExtensions ||
-            _.indexOf(filter.allow.extensions, ext) !== -1) &&
-            _.indexOf(filter.deny.extensions, ext) === -1)) {
-      filter.onInvalid && filter.onInvalid(filename + ' has the extension "' + ext + '", which is not allowed');
-      return false;
+    
+    // Do extension checks only if we have a filename
+    if (filename) {
+      var ext = self.getExtension();
+      if (!((saveAllFileExtensions ||
+              _.indexOf(filter.allow.extensions, ext) !== -1) &&
+              _.indexOf(filter.deny.extensions, ext) === -1)) {
+        filter.onInvalid && filter.onInvalid(filename + ' has the extension "' + ext + '", which is not allowed');
+        return false;
+      }
     }
+    
+    // Do content type checks
     if (!((saveAllContentTypes ||
             contentTypeInList(filter.allow.contentTypes, contentType)) &&
             !contentTypeInList(filter.deny.contentTypes, contentType))) {
       filter.onInvalid && filter.onInvalid(filename + ' is of the type "' + contentType + '", which is not allowed');
       return false;
     }
+    
+    // Do max size check
     if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
       filter.onInvalid && filter.onInvalid(filename + " is too big");
       return false;
