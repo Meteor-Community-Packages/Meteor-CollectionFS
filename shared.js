@@ -180,7 +180,7 @@ FS.Utility.connectionLogin = function(connection) {
  * @param {FS.File} fileObj - Mounted or mountable file object to be passed to validators.
  * @param {String} userId - The ID of the user who is attempting the action.
  * @returns {undefined}
- * 
+ *
  * Throws a "400-Bad Request" Meteor error if the file is not mounted or
  * a "400-Access denied" Meteor error if the action is not allowed.
  */
@@ -200,7 +200,7 @@ FS.Utility.validateAction = function validateAction(validators, fileObj, userId)
   if (!fileObj.isMounted()) {
     throw new Meteor.Error(400, "Bad Request");
   }
-  
+
   // Validators should receive a fileObj that is fully populated
   fileObj.getFileRecord();
 
@@ -217,3 +217,22 @@ FS.Utility.validateAction = function validateAction(validators, fileObj, userId)
     throw new Meteor.Error(403, "Access denied");
   }
 };
+
+// Utility for iteration over files in event
+// XXX: refactor into client-side only file
+if (Meteor.isClient) {
+
+  FS.Utility.eachFile = function(e, f) {
+    var evt = (e.originalEvent || e);
+
+    var files = evt.target.files;
+
+    if (!files || files.length == 0)
+      files = evt.dataTransfer.files;
+
+    for (var i = 0; i < files.length; i++) {
+      f(files[i], i);
+    }
+  };
+
+}
