@@ -1,26 +1,3 @@
-/** @method FS.File.fromUrl
- * @public
- * @param {String} url
- * @param {String} filename
- * @param {Function} callback
- * @return {undefined}
- *
- * Loads data from `url` into a new FS.File with `name = filename`,
- * and then passes the new FS.File instance to `callback(err, fsFile)`.
- *
- */
-FS.File.fromUrl = function(url, filename, callback) {
-  callback = callback || FS.Utility.defaultCallback;
-  var fsFile = new FS.File({name: filename});
-  fsFile.setDataFromUrl(url, function(err) {
-    if (err) {
-      callback(err);
-    } else {
-      callback(null, fsFile);
-    }
-  });
-};
-
 /** @method FS.File.prototype.saveLocal
  * @public
  * @param {String} [filename]

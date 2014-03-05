@@ -40,16 +40,17 @@ FS.File.prototype.setDataFromArrayBuffer = function(arrayBuffer, type) {
 };
 
 /**
+ * @method setDataFromUrl
+ * @private
+ * @param {FS.File} fileObj The file object
+ * @param {String} url The URL
+ * @param {Function} callback - callback(err, fileObj)
+ * @returns {undefined}
+ * 
  * Converts ArrayBuffer or Buffer retrieved from URL to EJSON.binary data
  * and sets it. Asynchronous.
- * @param {string} url
- * @param {function} callback - callback(err)
- * @returns {undefined}
  */
-FS.File.prototype.setDataFromUrl = function(url, callback) {
-  var self = this;
-  callback = callback || FS.Utility.defaultCallback;
-
+setDataFromUrl = function(fileObj, url, callback) {
   // XXX If Meteor PR #1620 is ever released, we can do a single HTTP.get
   // here for both client and server.
   if (Meteor.isClient) {
@@ -57,11 +58,11 @@ FS.File.prototype.setDataFromUrl = function(url, callback) {
     xhr.open('GET', url, true);
     xhr.responseType = "arraybuffer";
     xhr.onload = function() {
-      self.setDataFromArrayBuffer(xhr.response, this.getResponseHeader('content-type'));
-      callback();
+      fileObj.setDataFromArrayBuffer(xhr.response, this.getResponseHeader('content-type'));
+      callback(null, fileObj);
     };
     xhr.onerror = function(err) {
-      callback(err);
+      callback(err, fileObj);
     };
     xhr.send();
   } else {
@@ -72,22 +73,56 @@ FS.File.prototype.setDataFromUrl = function(url, callback) {
       jar: false
     }, Meteor.bindEnvironment(function(err, res, body) {
       if (err) {
-        callback(err);
+        callback(err, fileObj);
       } else {
-        self.setDataFromBuffer(body, res.headers['content-type']);
-        callback();
+        fileObj.setDataFromBuffer(body, res.headers['content-type']);
+        callback(null, fileObj);
       }
     }, function(err) {
-      callback(err);
+      callback(err, fileObj);
     }));
   }
 };
+
+/*
+ * Client methods for setting binary data
+ */
+
+if (Meteor.isClient) {
+  /**
+   * Converts ArrayBuffer or Buffer retrieved from URL to EJSON.binary data
+   * and sets it. Asynchronous.
+   * @param {string} url
+   * @param {function} callback - callback(err)
+   * @returns {undefined}
+   */
+  FS.File.prototype.setDataFromUrl = function(url, callback) {
+    var self = this;
+    return setDataFromUrl(self, url, callback || FS.Utility.defaultCallback);
+  };
+}
 
 /*
  * Server methods for setting binary data
  */
 
 if (Meteor.isServer) {
+  /**
+   * Converts ArrayBuffer or Buffer retrieved from URL to EJSON.binary data
+   * and sets it. Sychronous if no callback is passed.
+   * @param {string} url
+   * @param {function} [callback] - callback(err)
+   * @returns {undefined}
+   */
+  FS.File.prototype.setDataFromUrl = function(url, callback) {
+    var self = this;
+    if (callback) {
+      return setDataFromUrl(self, url, callback);
+    } else {
+      return Meteor._wrapAsync(setDataFromUrl)(self, url);
+    }
+  };
+
   /**
    * Converts Buffer to EJSON.binary data and sets it
    *

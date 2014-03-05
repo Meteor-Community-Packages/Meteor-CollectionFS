@@ -302,6 +302,26 @@ FS.File.prototype.toDataUrl = function(callback) {
   }
 };
 
+/**
+ * @method FS.File.fromUrl
+ * @public
+ * @param {string} url - A full url that points to a remote file
+ * @param {string} [filename] - The name to use for the new FS.File instance
+ * @param {FS.File~newFsFileCallback} callback - Optional on the server.
+ * @return {undefined}
+ * 
+ * Loads data from a remote URL into a new FS.File and passes it to callback.
+ * If a callback is not provided on the server, will block and return the
+ * new FS.File instance with remote data downloaded into it.
+ */
+FS.File.fromUrl = function(url, filename, callback) {
+  if (!Match.test(url, String))
+    throw new Error("FS.File.fromUrl requires a string url as the first argument");
+  
+  var fsFile = new FS.File({name: filename});
+  return fsFile.setDataFromUrl(url, callback);
+};
+
 function checkContentType(fsFile, storeName, startOfType) {
   var type;
   if (storeName && fsFile.hasCopy(storeName)) {

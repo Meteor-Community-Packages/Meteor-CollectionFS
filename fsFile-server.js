@@ -91,27 +91,6 @@ FS.File.fromFile = function(filePath, filename, type, callback) {
   });
 };
 
-/**
- * Loads data from a remote URL into a new FS.File and passes it to callback
- * @param {string} url - A full url that points to a remote file
- * @param {string} filename - The name to use for the new FS.File instance
- * @param {FS.File~newFsFileCallback} callback
- * @return {undefined}
- */
-FS.File.fromUrl = function(url, filename, callback) {
-  callback = callback || FS.Utility.defaultCallback;
-  check(url, String);
-  check(filename, String);
-  var fsFile = new FS.File({name: filename});
-  fsFile.setDataFromUrl(url, function(err) {
-    if (err) {
-      callback(err);
-    } else {
-      callback(null, fsFile);
-    }
-  });
-};
-
 /** @method FS.File.prototype._get
   * @private
   */
