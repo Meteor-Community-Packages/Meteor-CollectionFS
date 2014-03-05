@@ -1,4 +1,5 @@
 Package.describe({
+  name: 'cfs-file',
   summary: 'CollectionFS, FS.File object'
 });
 
