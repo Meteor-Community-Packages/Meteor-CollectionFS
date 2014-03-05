@@ -451,6 +451,13 @@ On the server, you can omit the callback and the method will block until the
 data download and insert are both complete. Then it will return the new FS.File
 instance. On the client, you can omit the callback and any errors will be thrown.
 
+When you call `insert` with a URL string as the first argument on the client,
+the remote data download and the actual insert both take place on the server.
+This is helpful for lightweight clients and also avoids CORS issues. When this
+happens, the callback will still be called after the remote download and insert
+is finished, but the return value of `insert` will always be `undefined` (because
+the insert did not happen on the client).
+
 Note that a drawback of passing the URL directly to `insert` is that the file
 will be inserted without a name. If you want to give it a name, you can do it
 this way:
@@ -471,6 +478,9 @@ var fileObj = FS.File.fromUrl(url, 'name.jpg');
 Pictures.insert(fileObj);
 //fileObj._id is now set
 ```
+
+Note that `FS.File.fromUrl` will not work on the client if the remote resource's
+CORS header does not allow the download.
 
 ### Add Metadata to a File Before Inserting
 
