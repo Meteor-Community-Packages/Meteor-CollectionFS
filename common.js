@@ -5,7 +5,7 @@
 // #############################################################################
 
 /**
- * 
+ *
  * @constructor
  * @param {string} name A name for the collection
  * @param {Object} options
@@ -22,7 +22,7 @@ FS.Collection = function(name, options) {
     stores: [], //required
     chunkSize: 128 * 1024 // 128K default; higher begins to produce UI blocking
   };
-  
+
   // Define a default uploader based on which upload packages are present,
   // preferring HTTP. You may override with your own function or
   // set to null to skip automatic uploading of data after file insert/update.
@@ -54,8 +54,8 @@ FS.Collection = function(name, options) {
     }
   };
 
-  // Create the ".files" and use fsFile
-  var collectionName = name + '.files';
+  // Create the ".cfs.files" and use fsFile
+  var collectionName = name + '.cfs.files';
   if (Package.join) {
     // We support Join if used in the app
     self.files = new Join.Collection(collectionName, _filesOptions);
@@ -155,7 +155,7 @@ FS.Collection = function(name, options) {
    * EO FILTER INSERTS
    */
 
-  // Save the collection reference (we want it without the '.files' suffix)
+  // Save the collection reference (we want it without the '.cfs.files' suffix)
   FS._collections[name] = this;
 
   // Set up observers
