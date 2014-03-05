@@ -91,9 +91,14 @@ FS.File.prototype.url = function(options) {
     var authToken = '';
     if (typeof Accounts !== "undefined") {
       if (options.auth !== false) {
+        // Add reactive deps on the user
+        Meteor.userId();
+        // Set the authToken
         authToken = Accounts._storedLoginToken() || '';
       }
     } else if (typeof options.auth === "string") {
+      // If the user supplies auth token the user will be responsible for
+      // updating
       authToken = options.auth;
     }
 
