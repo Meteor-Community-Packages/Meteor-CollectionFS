@@ -54,8 +54,8 @@ FS.Collection = function(name, options) {
     }
   };
 
-  // Create the ".cfs.files" and use fsFile
-  var collectionName = name + '.cfs.files';
+  // Create the '_cfs.' ++ ".filerecord" and use fsFile
+  var collectionName = '_cfs.' + name + '.filerecord';
   if (Package.join) {
     // We support Join if used in the app
     self.files = new Join.Collection(collectionName, _filesOptions);
@@ -155,7 +155,7 @@ FS.Collection = function(name, options) {
    * EO FILTER INSERTS
    */
 
-  // Save the collection reference (we want it without the '.cfs.files' suffix)
+  // Save the collection reference (we want it without the '_cfs.' prefix and '.filerecord' suffix)
   FS._collections[name] = this;
 
   // Set up observers
