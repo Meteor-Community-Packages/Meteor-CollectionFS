@@ -56,12 +56,7 @@ FS.Collection = function(name, options) {
 
   // Create the '_cfs.' ++ ".filerecord" and use fsFile
   var collectionName = '_cfs.' + name + '.filerecord';
-  if (Package.join) {
-    // We support Join if used in the app
-    self.files = new Join.Collection(collectionName, _filesOptions);
-  } else {
-    self.files = new Meteor.Collection(collectionName, _filesOptions);
-  }
+  self.files = new Meteor.Collection(collectionName, _filesOptions);
 
   // For storing custom allow/deny functions
   self._validators = {

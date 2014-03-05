@@ -10,10 +10,6 @@
 			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
 			"branch": "master"
 		},
-		"join": {
-			"git": "https://github.com/CollectionFS/Meteor-join.git",
-			"branch": "master"
-		},
 		"cfs-upload-ddp": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-upload-ddp.git",
 			"branch": "master"

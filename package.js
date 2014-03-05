@@ -8,9 +8,6 @@ Package.on_use(function(api) {
 
   api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata']);
 
-  // Make a weak dependency to support Join for joining data
-  api.use(['join'], { weak: true });
-
   // Weak dependencies for uploaders
   api.use(['cfs-upload-http', 'cfs-upload-ddp'], { weak: true });
 
