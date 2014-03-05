@@ -22,7 +22,7 @@ FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
 
   // Update the base URL
   baseUrl = newBaseUrl;
-  
+
   // Change the upload URL so that client uploader packages know what it is
   FS.HTTP.uploadUrl = baseUrl + '/files';
 
@@ -34,7 +34,7 @@ FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
  * FS.File extensions
  */
 
-/** 
+/**
  * @method FS.File.prototype.url Construct the file url
  * @public
  * @param {object} [options]
@@ -63,11 +63,11 @@ FS.File.prototype.url = function(options) {
   if (self.isMounted()) {
     var filename = '';
     var storeName = options.store;
-    
+
     if (!storeName) {
       storeName = self.collection.options.stores[0].name;
     }
-    
+
     var copyInfo = self.getCopyInfo(storeName);
     if (!copyInfo) {
       if (options.brokenIsFine) {
@@ -78,7 +78,7 @@ FS.File.prototype.url = function(options) {
         // images, etc.
         return null;
       }
-      
+
       filename = copyInfo.name;
       if (filename && filename.length) {
         filename = '/' + filename;
@@ -125,7 +125,7 @@ FS.File.prototype.url = function(options) {
     } else {
       area = '/files';
     }
-    
+
     // Construct and return the http method url
     return baseUrl + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
   }
@@ -135,7 +135,6 @@ FS.File.prototype.url = function(options) {
 /*
  * Borrowed these from http package
  */
-
 // TODO: should this be prefixed eg. by extending the FS.Utility
 encodeParams = function(params) {
   var buf = [];
