@@ -12,6 +12,7 @@
  * @param {FS.StorageAdapter[]} options.stores An array of stores in which files should be saved. At least one is required.
  * @param {Object} [options.filter] Filter definitions
  * @param {Number} [options.chunkSize=131072] Override the chunk size in bytes for uploads and downloads
+ * @param {Function} [options.uploader] A function to pass FS.File instances after inserting, which will begin uploading them. By default, `FS.HTTP.uploadQueue.uploadFile` is used if the `cfs-upload-http` package is present, or `FS.DDP.uploadQueue.uploadFile` is used if the `cfs-upload-ddp` package is present. You can override with your own, or set to `null` to prevent automatic uploading.
  * @returns {undefined}
  */
 FS.Collection = function(name, options) {

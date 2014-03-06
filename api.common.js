@@ -1,62 +1,100 @@
-/** @method FS.Collection.prototype.insert Insert `file` or `FS.File` into collection
+/** @method FS.Collection.prototype.insert Insert `File` or `FS.File` or remote URL into collection
  * @public
- * @param {FS.File|File} fileRef File data reference
+ * @param {FS.File|File|String} fileRef File, FS.File, or string representing a remote URL
  * @param {function} [callback] Callback `function(error, fileObj)`
  * @returns {FS.File} The `file object`
  * [Meteor docs](http://docs.meteor.com/#insert)
  */
 FS.Collection.prototype.insert = function(fileRef, callback) {
   var self = this;
-  var fileObj;
 
-  callback = callback || FS.Utility.defaultCallback;
+  if (Meteor.isClient && !callback) {
+    callback = FS.Utility.defaultCallback;
+  }
 
+  function passOrThrow(error) {
+    if (callback) {
+      callback(error);
+    } else {
+      throw error;
+    }
+  }
+
+  function beginStorage(fileObj) {
+    // If on client, begin uploading the data
+    if (Meteor.isClient) {
+      self.options.uploader && self.options.uploader(fileObj);
+    }
+
+    // If on the server, save the binary to a single chunk temp file,
+    // so that it is available when FileWorker calls saveCopies.
+    // This will also trigger file handling from collection observes.
+    else if (Meteor.isServer) {
+      FS.TempStore.ensureForFile(fileObj);
+    }
+  }
+
+  function checkAndInsert(fileObj) {
+    // Set reference to this collection
+    fileObj.collectionName = self.name;
+
+    // Check filters
+    if (!fileObj.fileIsAllowed()) {
+      delete fileObj.collectionName;
+      return passOrThrow(new Error('FS.Collection insert: file does not pass collection filters'));
+    }
+
+    // Insert the file into db
+    // We call cloneFileRecord as an easy way of extracting the properties
+    // that need saving.
+    if (callback) {
+      fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj), function(err, id) {
+        if (err) {
+          if (fileObj._id) {
+            delete fileObj._id;
+          }
+          delete fileObj.collectionName;
+        } else {
+          fileObj._id = id; // just to be safe, since this could be before or after the insert method returns
+          beginStorage(fileObj);
+        }
+        callback(err, err ? void 0 : fileObj);
+      });
+    } else {
+      fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj));
+      beginStorage(fileObj);
+    }
+    return fileObj;
+  }
+
+  // Parse, adjust fileRef
   if (fileRef instanceof FS.File) {
-    fileObj = fileRef;
+    return checkAndInsert(fileRef);
   } else if (Meteor.isClient && typeof File !== "undefined" && fileRef instanceof File) {
     // For convenience, allow File to be passed directly on the client
-    fileObj = new FS.File(fileRef);
-  } else {
-    callback(new Error('FS.Collection insert expects FS.File'));
-    return;
-  }
-
-  // Set reference to this collection
-  fileObj.collectionName = self.name;
-
-  // Check filters
-  if (!fileObj.fileIsAllowed()) {
-    delete fileObj.collectionName;
-    callback(new Error('FS.Collection insert: file does not pass collection filters'));
-    return;
-  }
-
-  // Insert the file into db
-  // We call cloneFileRecord as an easy way of extracting the properties
-  // that need saving.
-  fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj), function(err, id) {
-    if (err) {
-      delete fileObj.collectionName;
+    return checkAndInsert(new FS.File(fileRef));
+  } else if (typeof fileRef === "string") {
+    // For convenience, allow URL to be passed and we will download it and
+    // insert
+    if (Meteor.isServer) {
+      if (callback) {
+        FS.File.fromUrl(fileRef, function(error, fileObj) {
+          if (error) {
+            callback(error);
+          } else {
+            checkAndInsert(fileObj);
+          }
+        });
+      } else {
+        return checkAndInsert(FS.File.fromUrl(fileRef));
+      }
     } else {
-      fileObj._id = id;
-
-      // If on client, begin uploading the data
-      if (Meteor.isClient) {
-        self.options.uploader && self.options.uploader(fileObj);
-      }
-      
-      // If on the server, save the binary to a single chunk temp file,
-      // so that it is available when FileWorker calls saveCopies.
-      // This will also trigger file handling from collection observes.
-      else if (Meteor.isServer) {
-        FS.TempStore.ensureForFile(fileObj);
-      }
+      // On client, call a method to do the download and insert on the server
+      Meteor.call('_cfs_downloadAndAddFile', fileRef, self.name, callback);
     }
-    callback(err, err ? void 0 : fileObj);
-  });
-
-  // We return the FS.File
-  return fileObj;
+  } else {
+    return passOrThrow(new Error('FS.Collection insert expects File, FS.File, or URL string to insert'));
+  }
 };
 
 /** @method FS.Collection.prototype.update Update the file record
