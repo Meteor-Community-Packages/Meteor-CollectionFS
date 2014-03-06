@@ -18,12 +18,15 @@ var chunkSize = 262144; // 256k is default GridFS chunk size
 FS.Store.GridFS = function(name, options) {
   var self = this;
   options = options || {};
+  var gridfsName = name
 
   if (!(self instanceof FS.Store.GridFS))
     throw new Error('FS.Store.GridFS missing keyword "new"');
 
   if (!options.mongoUrl) {
     options.mongoUrl = process.env.MONGO_URL;
+    // When using a Meteor MongoDB instance, preface name with "cfs_gridfs."
+    gridfsName = "cfs_gridfs." + name;
   }
 
   return new FS.StorageAdapter(name, options, {
@@ -36,10 +39,10 @@ FS.Store.GridFS = function(name, options) {
       if (!fileInfo) { return callback(null, null); }
       var fileKey = fileInfo.key;
 
-      mongodb.GridStore.exist(self.db, fileKey, name, {}, function (err, existing) {
+      mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, function (err, existing) {
         if (err) { return callback(err); }
         if (!existing) { return callback(null, null); }
-        var gstore = new mongodb.GridStore(self.db, fileKey, 'r', { root: name });
+        var gstore = new mongodb.GridStore(self.db, fileKey, 'r', { root: gridfsName });
         gstore.open(function (err, gs) {
           if (err) { return callback(err); }
           gs.read(function (err, result) {
@@ -58,10 +61,10 @@ FS.Store.GridFS = function(name, options) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, null); }
       var fileKey = fileInfo.key;
-      mongodb.GridStore.exist(self.db, fileKey, name, {}, function (err, existing) {
+      mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, function (err, existing) {
         if (err) { return callback(err); }
         if (!existing) { return callback(null, null); }
-        var gstore = new mongodb.GridStore(self.db, fileKey, 'r', { root: name });
+        var gstore = new mongodb.GridStore(self.db, fileKey, 'r', { root: gridfsName });
         gstore.open(function (err, gs) {
           if (err) { return callback(err); }
           gs.seek(start, function (err) {
@@ -88,7 +91,7 @@ FS.Store.GridFS = function(name, options) {
       // Write buffer to store once we have a suitable fileKey
       var writeBuffer = function (newFileKey) {
         var gridOptions = {
-          root: name,
+          root: gridfsName,
           chunk_size: options.chunk_size || chunkSize,
           metadata: fileObj.metadata || null,
           content_type: fileObj.type || 'application/octet-stream'
@@ -115,12 +118,12 @@ FS.Store.GridFS = function(name, options) {
           if (existing) {
             // Avoid deep recursion by appending a 6-digit base 36 pseudorandom number
             fileKey = fn + '_' + Math.floor(Math.random() * 2176782335).toString(36);
-            mongodb.GridStore.exist(self.db, fileKey, name, {}, findUnusedFileKey);
+            mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, findUnusedFileKey);
           } else {
             writeBuffer(fileKey);
           }
         };
-        mongodb.GridStore.exist(self.db, fileKey, name, {}, findUnusedFileKey);
+        mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, findUnusedFileKey);
       }
     },
 
@@ -129,7 +132,7 @@ FS.Store.GridFS = function(name, options) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, true); }
       var fileKey = fileInfo.key;
-      mongodb.GridStore.unlink(self.db, fileKey, { root: name }, function (err) {
+      mongodb.GridStore.unlink(self.db, fileKey, { root: gridfsName }, function (err) {
         if (err) { return callback(err); }
         callback(null, true);
       });
