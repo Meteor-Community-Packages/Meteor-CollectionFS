@@ -54,8 +54,8 @@ FS.Collection = function(name, options) {
     }
   };
 
-  // Create the '_cfs.' ++ ".filerecord" and use fsFile
-  var collectionName = '_cfs.' + name + '.filerecord';
+  // Create the 'cfs.' ++ ".filerecord" and use fsFile
+  var collectionName = 'cfs.' + name + '.filerecord';
   self.files = new Meteor.Collection(collectionName, _filesOptions);
 
   // For storing custom allow/deny functions
@@ -150,7 +150,7 @@ FS.Collection = function(name, options) {
    * EO FILTER INSERTS
    */
 
-  // Save the collection reference (we want it without the '_cfs.' prefix and '.filerecord' suffix)
+  // Save the collection reference (we want it without the 'cfs.' prefix and '.filerecord' suffix)
   FS._collections[name] = this;
 
   // Set up observers
