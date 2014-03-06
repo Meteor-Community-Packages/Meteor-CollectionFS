@@ -3,14 +3,14 @@
 	"description": "CollectionFS, HTTP File Upload",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-upload-http",
 	"author": "CollectionFS core @aldeed & @raix",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-upload-http.git",
 	"packages": {
 		"cfs-base-package": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
 			"branch": "master"
 		},
-                "cfs-access-point": {
+		"cfs-access-point": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
 			"branch": "master"
 		},
