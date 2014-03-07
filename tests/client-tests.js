@@ -4,7 +4,6 @@ function equals(a, b) {
 
 Tinytest.add('cfs-file - client - test environment', function(test) {
   test.isTrue(typeof FS.Collection !== 'undefined', 'test environment not initialized FS.Collection');
-  test.isTrue(typeof CFSErrorType !== 'undefined', 'test environment not initialized CFSErrorType');
 });
 
 /*

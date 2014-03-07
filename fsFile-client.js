@@ -8,7 +8,7 @@
  * is not provided.
  *
  */
-FS.File.prototype.saveLocal = function(filename) {
+FS.File.prototype.saveLocal = function fsSaveLocal(filename) {
   var self = this;
 
   if (typeof window === "undefined")
@@ -19,11 +19,15 @@ FS.File.prototype.saveLocal = function(filename) {
 
 /** @method FS.File.prototype._get
   * @private
+  * 
+  * On the client we download the file via transfer queue if we have one.
   */
-FS.File.prototype._get = function(options) {
+FS.File.prototype._get = function fsFileGet(options) {
   var self = this;
-  // On the client we download the file via transfer queue
-  if (Meteor.isClient) {
-    FS.downloadQueue.downloadFile(self, options.storeName);
+  
+  if (!FS.downloadQueue) {
+    throw new Error("FS.File get: no download transfer queue found");
   }
+  
+  FS.downloadQueue.downloadFile(self, options.storeName);
 };
