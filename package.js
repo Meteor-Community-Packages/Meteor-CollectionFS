@@ -1,4 +1,5 @@
 Package.describe({
+  name: 'cfs-base-package',
   summary: 'CollectionFS, Base package'
 });
 
@@ -8,14 +9,17 @@ Package.on_use(function(api) {
   if (api.export) {
     api.export('FS');
     api.export('_Utility', { testOnly: true });
-    // TODO: Deprecate
-    api.export('parseArguments');
   }
 
   api.add_files([
-    'shared.js',
-    'argParser.js' // TODO: Deprecate
-  ], ['client', 'server']);
+    'base-common.js',
+    'base-server.js'
+  ], 'server');
+  
+  api.add_files([
+    'base-common.js',
+    'base-client.js'
+  ], 'client');
 });
 
 Package.on_test(function (api) {
@@ -24,5 +28,5 @@ Package.on_test(function (api) {
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
            'random', 'deps']);
 
-  api.add_files('tests/common-tests.js', 'server');
+  api.add_files('tests/common-tests.js', ['client', 'server']);
 });

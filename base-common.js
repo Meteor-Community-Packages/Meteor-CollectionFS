@@ -1,13 +1,10 @@
 // Exported namespace
 FS = {};
 
-// namespace for adapters
+// namespace for adapters; XXX should this be added by cfs-storage-adapter pkg instead?
 FS.Store = {};
 
-// namespace for access points
-FS.AccessPoint = {};
-
-// namespace for utillities
+// namespace for utilities
 FS.Utility = {};
 
 // An internal collection reference
@@ -22,18 +19,20 @@ _Utility = {};
 //
 // #############################################################################
 
-// XXX: should this be exported?? Where is it used?
-var idParse = function(id) {
-  return '' + id;
-};
-
 /** @method _Utility.defaultZero
+ * @private
   * @param {Any} val Returns number or 0 if value is a falsy
   */
 _Utility.defaultZero = function(val) {
   return +(val || 0);
 };
 
+/**
+ * @method _Utility.cloneFileUnit
+ * @private
+ * @param {Object} unit
+ * @returns {Object}
+ */
 _Utility.cloneFileUnit = function(unit) {
   if (_.isObject(unit) && !_.isArray(unit)) {
     var newUnit = {
@@ -59,6 +58,12 @@ _Utility.cloneFileUnit = function(unit) {
   return null;
 };
 
+/**
+ * @method _Utility.cloneFileAttempt
+ * @private
+ * @param {Object} attempt
+ * @returns {Object}
+ */
 _Utility.cloneFileAttempt = function(attempt) {
   if (_.isObject(attempt) && !_.isArray(attempt)) {
     return {
@@ -71,6 +76,12 @@ _Utility.cloneFileAttempt = function(attempt) {
   return {};
 };
 
+/**
+ * @method FS.Utility.cloneFileRecord
+ * @public
+ * @param {FS.File|FS.Collection filerecord} rec
+ * @returns {Object} Cloned filerecord
+ */
 FS.Utility.cloneFileRecord = function(rec) {
   var result = _Utility.cloneFileUnit(rec) || {};
   // Base reference
@@ -101,75 +112,40 @@ FS.Utility.cloneFileRecord = function(rec) {
     }
   }
 
-  if (_.isArray(rec.chunks)) {
-    result.chunks = [];
-    _.each(rec.chunks, function(chunk, i) {
-      result.chunks[i] = {
-        start: chunk.start
-      };
-      if (Meteor.isServer) {
-        result.chunks[i].tempFile = chunk.tempFile;
-      }
-    });
-  }
-
   return result;
 };
 
+/**
+ * @method FS.Utility.defaultCallback
+ * @public
+ * @param {Error} [err]
+ * @returns {undefined}
+ * 
+ * Can be used as a default callback for client methods that need a callback.
+ * Simply throws the provided error if there is one.
+ */
 FS.Utility.defaultCallback = function(err) {
   if (err)
     throw err;
 };
 
+/**
+ * @method FS.Utility.handleError
+ * @public
+ * @param {Function} callback - A callback function, if you have one. Can be undefined or null.
+ * @param {String} err - Error text
+ * @returns {undefined}
+ * 
+ * Creates an Error instance with the given text. If callback is a function,
+ * passes the error to that function. Otherwise throws it. Useful for dealing
+ * with errors in methods that optionally accept a callback.
+ */
 FS.Utility.handleError = function(callback, err) {
   err = new Error(err);
   if (callback) {
     callback(err);
   } else {
     throw err;
-  }
-};
-
-FS.Utility.binaryToBuffer = function(data) {
-  var len = data.length;
-  var buffer = new Buffer(len);
-  for (var i = 0; i < len; i++) {
-    buffer[i] = data[i];
-  }
-  return buffer;
-};
-
-FS.Utility.bufferToBinary = function(data) {
-  var len = data.length;
-  var binary = EJSON.newBinary(len);
-  for (var i = 0; i < len; i++) {
-    binary[i] = data[i];
-  }
-  return binary;
-};
-
-FS.Utility.connectionLogin = function(connection) {
-  // We check if the accounts package is installed, since we depend on
-  // `Meteor.userId()`
-  if (typeof Accounts !== 'undefined') {
-    // Monitor logout from main connection
-    Meteor.startup(function() {
-      Deps.autorun(function() {
-        var userId = Meteor.userId();
-        if (userId) {
-          connection.onReconnect = function() {
-            var token = Accounts._storedLoginToken();
-            connection.apply('login', [{resume: token}], function(err, result) {
-              !err && result && connection.setUserId(result.id);
-            });
-          };
-        } else {
-          connection.onReconnect = null;
-          connection.setUserId(null);
-        }
-      });
-    });
-
   }
 };
 
@@ -217,22 +193,3 @@ FS.Utility.validateAction = function validateAction(validators, fileObj, userId)
     throw new Meteor.Error(403, "Access denied");
   }
 };
-
-// Utility for iteration over files in event
-// XXX: refactor into client-side only file
-if (Meteor.isClient) {
-
-  FS.Utility.eachFile = function(e, f) {
-    var evt = (e.originalEvent || e);
-
-    var files = evt.target.files;
-
-    if (!files || files.length == 0)
-      files = evt.dataTransfer.files;
-
-    for (var i = 0; i < files.length; i++) {
-      f(files[i], i);
-    }
-  };
-
-}
