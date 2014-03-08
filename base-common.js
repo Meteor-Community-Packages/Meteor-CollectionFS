@@ -4,7 +4,10 @@ FS = {};
 // namespace for adapters; XXX should this be added by cfs-storage-adapter pkg instead?
 FS.Store = {};
 
-// namespace for utilities
+// namespace for access points
+FS.AccessPoint = {};
+
+// namespace for utillities
 FS.Utility = {};
 
 // An internal collection reference
