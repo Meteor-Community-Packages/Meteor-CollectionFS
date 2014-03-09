@@ -24,7 +24,7 @@ Tinytest.addAsync('cfs-access-point - client - addTestImage', function(test, onC
     //Don't continue until the data has been stored
     Deps.autorun(function (c) {
       var img = Images.findOne(id);
-      if (img.hasCopy('gridList')) {
+      if (img && img.hasCopy('gridList')) {
         onComplete();
         c.stop();
       }
