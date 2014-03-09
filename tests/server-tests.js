@@ -2,6 +2,8 @@ function equals(a, b) {
   return !!(EJSON.stringify(a) === EJSON.stringify(b));
 }
 
+FS.debug = true;
+
 Tinytest.add('cfs-access-point - server - test environment', function(test) {
   test.isTrue(typeof FS.Collection !== 'undefined', 'test environment not initialized FS.Collection');
   test.isTrue(typeof FS.HTTP !== 'undefined', 'test environment not initialized FS.HTTP');
@@ -28,6 +30,10 @@ Images.allow({
   }
 });
 
+Meteor.publish("img", function () {
+  return Images.find();
+});
+
 FS.HTTP.publish(Images, function () {
   return Images.find();
 });
@@ -35,11 +41,8 @@ FS.HTTP.publish(Images, function () {
 Meteor.methods({
   addTestImage: function() {
     Images.remove({});
-    
-    var fromUrl = Meteor._wrapAsync(FS.File.fromUrl);
-    
-    var fsFile = fromUrl("http://cdn.morguefile.com/imageData/public/files/b/bboomerindenial/preview/fldr_2009_04_01/file3301238617907.jpg", "man.jpg");
-    fsFile && Images.insert(fsFile);
+    var url = "http://cdn.morguefile.com/imageData/public/files/b/bboomerindenial/preview/fldr_2009_04_01/file3301238617907.jpg";
+    var fsFile = Images.insert(url);
     return fsFile._id;
   }
 });

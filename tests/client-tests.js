@@ -7,19 +7,32 @@ Tinytest.add('cfs-access-point - client - test environment', function(test) {
   test.isTrue(typeof FS.HTTP !== 'undefined', 'test environment not initialized FS.HTTP');
 });
 
-var id;
-
-Tinytest.addAsync('cfs-access-point - client - addTestImage', function (test, onComplete) {
-  test.isTrue(true);
-  Meteor.call('addTestImage', function(err, result) {
-    id = result;
-    test.equal(typeof id, "string");
-    onComplete();
-  });
-  test.isTrue(true);
+Images = new FS.Collection('images', {
+  stores: [
+    new FS.Store.GridFS('gridList')
+  ]
 });
 
-Tinytest.addAsync('cfs-access-point - client - GET list of files in collection', function (test, onComplete) {
+Meteor.subscribe("img");
+
+var id;
+
+Tinytest.addAsync('cfs-access-point - client - addTestImage', function(test, onComplete) {
+  Meteor.call('addTestImage', function(err, result) {
+    id = result;
+    test.equal(typeof id, "string", "Test image was not inserted properly");
+    //Don't continue until the data has been stored
+    Deps.autorun(function (c) {
+      var img = Images.findOne(id);
+      if (img.hasCopy('gridList')) {
+        onComplete();
+        c.stop();
+      }
+    });
+  });
+});
+
+Tinytest.addAsync('cfs-access-point - client - GET list of files in collection', function(test, onComplete) {
 
   HTTP.get(Meteor.absoluteUrl('cfs/record/images'), function(err, result) {
     // Test the length of array result
@@ -33,7 +46,7 @@ Tinytest.addAsync('cfs-access-point - client - GET list of files in collection',
 
 });
 
-Tinytest.addAsync('cfs-access-point - client - GET filerecord', function (test, onComplete) {
+Tinytest.addAsync('cfs-access-point - client - GET filerecord', function(test, onComplete) {
 
   HTTP.get(Meteor.absoluteUrl('cfs/record/images/' + id), function(err, result) {
     // Get the object
@@ -45,39 +58,40 @@ Tinytest.addAsync('cfs-access-point - client - GET filerecord', function (test, 
 
 });
 
-Tinytest.addAsync('cfs-access-point - client - GET file itself', function (test, onComplete) {
+Tinytest.addAsync('cfs-access-point - client - GET file itself', function(test, onComplete) {
 
   HTTP.get(Meteor.absoluteUrl('cfs/files/images/' + id), function(err, result) {
     test.isTrue(!!result.content, "Expected content in response");
+    console.log(result);
     test.equal(result.statusCode, 200, "Expected 200 OK response");
     onComplete();
   });
 
 });
 
-Tinytest.addAsync('cfs-access-point - client - PUT new file data (update)', function (test, onComplete) {
+Tinytest.addAsync('cfs-access-point - client - PUT new file data (update)', function(test, onComplete) {
 // TODO
 //  HTTP.put(Meteor.absoluteUrl('cfs/files/images/' + id), function(err, result) {
 //    test.equal(result.statusCode, 200, "Expected 200 OK response");
-    onComplete();
+  onComplete();
 //  });
 
 });
 
-Tinytest.addAsync('cfs-access-point - client - PUT insert a new file', function (test, onComplete) {
+Tinytest.addAsync('cfs-access-point - client - PUT insert a new file', function(test, onComplete) {
 // TODO
 //  HTTP.put(Meteor.absoluteUrl('cfs/files/images'), function(err, result) {
 //    test.equal(result.statusCode, 200, "Expected 200 OK response");
-    onComplete();
+  onComplete();
 //  });
 
 });
 
-Tinytest.addAsync('cfs-access-point - client - DELETE filerecord and data', function (test, onComplete) {
+Tinytest.addAsync('cfs-access-point - client - DELETE filerecord and data', function(test, onComplete) {
 
   HTTP.del(Meteor.absoluteUrl('cfs/files/images/' + id), function(err, result) {
     test.equal(result.statusCode, 200, "Expected 200 OK response");
-    
+
     // Make sure it's gone
     HTTP.get(Meteor.absoluteUrl('cfs/record/images/' + id), function(err, result) {
       test.isTrue(!!err, 'Expected 404 error');

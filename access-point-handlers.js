@@ -1,23 +1,15 @@
 getHeaders = [];
 
 /**
- * @method httpGetDelHandler
+ * @method httpDelHandler
  * @private
  * @returns {any} response
  *
- * HTTP GET and DEL request handler
+ * HTTP DEL request handler
  */
-httpDelHandler = function httpGetDelHandler(data, ref) {
+httpDelHandler = function httpDelHandler(data, ref) {
   var self = this;
   var opts = _.extend({}, self.query || {}, self.params || {});
-
-  var store = opts.store;
-  var download = opts.download;
-
-  // If no store was specified, use the first defined store
-  if (typeof store !== "string") {
-    store = collection.options.stores[0].name;
-  }
 
   // If DELETE request, validate with 'remove' allow/deny, delete the file, and return
   FS.Utility.validateAction(ref.collection.files._validators['remove'], ref.file, self.userId);
@@ -37,16 +29,19 @@ httpDelHandler = function httpGetDelHandler(data, ref) {
 };
 
 /**
- * @method httpGetDelHandler
+ * @method httpGetHandler
  * @private
  * @returns {any} response
  *
- * HTTP GET and DEL request handler
+ * HTTP GET request handler
  */
-httpGetHandler = function httpGetDelHandler(data, ref) {
+httpGetHandler = function httpGetHandler(data, ref) {
   var self = this;
   var opts = _.extend({}, self.query || {}, self.params || {});
 
+  // Once we have the file, we can test allow/deny validators
+  FS.Utility.validateAction(ref.collection._validators['download'], ref.file, self.userId);
+  
   var store = opts.store;
   var download = opts.download;
 
@@ -54,9 +49,6 @@ httpGetHandler = function httpGetDelHandler(data, ref) {
   if (typeof store !== "string") {
     store = ref.collection.options.stores[0].name;
   }
-
-  // Once we have the file, we can test allow/deny validators
-  FS.Utility.validateAction(ref.collection._validators['download'], ref.file, self.userId);
 
   var copyInfo = ref.file.copies[store];
 
