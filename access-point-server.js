@@ -24,7 +24,7 @@ FS.HTTP.setHeadersForGet = function setHeadersForGet(headers) {
  * @param {FS.Collection} collection
  * @param {Function} func - Publish function that returns a cursor.
  * @returns {undefined}
- * 
+ *
  * Publishes all documents returned by the cursor at a GET URL
  * with the format baseUrl/record/collectionName. The publish
  * function `this` is similar to normal `Meteor.publish`.
@@ -42,7 +42,7 @@ FS.HTTP.publish = function fsHttpPublish(collection, func) {
     documentPut: false,
     documentDelete: false
   }, func);
-  
+
   FS.debug && console.log("Registered HTTP method GET URLs:\n\n" + name + '\n' + name + '/:id\n');
 };
 
@@ -51,7 +51,7 @@ FS.HTTP.publish = function fsHttpPublish(collection, func) {
  * @public
  * @param {FS.Collection} collection
  * @returns {undefined}
- * 
+ *
  * Unpublishes a restpoint created by a call to `FS.HTTP.publish`
  */
 FS.HTTP.unpublish = function fsHttpUnpublish(collection) {
@@ -59,60 +59,132 @@ FS.HTTP.unpublish = function fsHttpUnpublish(collection) {
   HTTP.unpublish(baseUrl + '/record/' + collection.name);
 };
 
-var currentHTTPMethodNames = [];
-function unmountHTTPMethods() {
-  if (currentHTTPMethodNames.length) {
-    var methods = {};
-    _.each(currentHTTPMethodNames, function(name) {
-      methods[name] = false;
-    });
-    HTTP.methods(methods);
-    currentHTTPMethodNames = [];
-  }
-}
 
-mountUrls = function mountUrls() {
-  // Unmount previously mounted URLs
-  unmountHTTPMethods();
+/*
+  @param
+  @param {function} selector_f is a function that simply returns the collection and file
+  @return {object} the collection and file if not found then undefined if search not possible then return null
+*/
+FS.HTTP.mount = function(mountPoints, selector_f) {
+  // We take mount points as an array and we get a selector function
 
-  // Construct URLs
-  var url1 = baseUrl + '/files/:collectionName/:id/:filename';
-  var url2 = baseUrl + '/files/:collectionName/:id';
-  var url3 = baseUrl + '/files/:collectionName';
-  var url4 = baseUrl + '/record/:collectionName/:id/:filename'; //for DELETE only
-  var url5 = baseUrl + '/record/:collectionName/:id'; //for DELETE only
+  var accessPoint = {
+    'post': function(data) {
+      // Use the selector for finding the collection and file reference
+      var ref = selector_f.apply(this, [data]);
 
-  // Mount URLs
-  // TODO support HEAD request, possibly do it in http-methods package
-  var methods = {};
-  methods[url1] = {
-    get: httpGetDelHandler,
-    delete: httpGetDelHandler,
-    put: httpPutUpdateHandler
-  };
-  methods[url2] = {
-    get: httpGetDelHandler,
-    delete: httpGetDelHandler,
-    put: httpPutUpdateHandler
-  };
-  methods[url3] = {
-    put: httpPutInsertHandler
-  };
-  methods[url4] = {
-    delete: httpGetDelHandler
-  };
-  methods[url5] = {
-    delete: httpGetDelHandler
-  };
-  HTTP.methods(methods);
+      // We dont support post - this would be normal insert eg. of filerecord?
+      throw new Meteor.Error(501, "Not implemented", "Post is not supported");
+    },
+    'put': function(data) {
+      // Use the selector for finding the collection and file reference
+      var ref = selector_f.apply(this, [data]);
 
-  // Cache names for potential future unmounting
-  currentHTTPMethodNames = currentHTTPMethodNames.concat([url1, url2, url3, url4, url5]);
+      // Make sure we have a collection reference
+      if (!ref.collection)
+        throw new Meteor.Error(404, "Not Found", "No collection found");
+
+      // Make sure we have a file reference
+      if (ref.file === null) {
+        // No id supplied so we will return the published list of files ala
+        // http.publish in json format?
+        return httpPutInsertHandler.apply(this, [data, ref]);
+      } else {
+        if (ref.file) {
+          return httpPutUpdateHandler.apply(this, [data, ref]);
+        } else {
+          throw new Meteor.Error(404, "Not Found", 'No file found');
+        }
+      }
+    },
+    'get': function(data) {
+      // Use the selector for finding the collection and file reference
+      var ref = selector_f.apply(this, [data]);
+
+      // Make sure we have a collection reference
+      if (!ref.collection)
+        throw new Meteor.Error(404, "Not Found", "No collection found");
+
+      // Make sure we have a file reference
+      if (ref.file === null) {
+        // No id supplied so we will return the published list of files ala
+        // http.publish in json format?
+        return httpGetListHandler.apply(this, [data, ref]);
+      } else {
+        if (ref.file) {
+          return httpGetHandler.apply(this, [data, ref]);
+        } else {
+          throw new Meteor.Error(404, "Not Found", 'No file found');
+        }
+      }
+    },
+    'delete': function(data) {
+      // Use the selector for finding the collection and file reference
+      var ref = selector_f.apply(this, [data]);
+
+      // Make sure we have a collection reference
+      if (!ref.collection)
+        throw new Meteor.Error(404, "Not Found", "No collection found");
+
+      // Make sure we have a file reference
+      if (ref.file) {
+        return httpDelHandler.apply(this, [data, ref]);
+      } else {
+        throw new Meteor.Error(404, "Not Found", 'No file found');
+      }
+    }
+  };
+
+  var accessPoints = {};
+
+  // Add debug message
+  FS.debug && console.log('Registered HTTP method URLs:');
+
+  _.each(mountPoints, function(mountPoint) {
+    // Couple mountpoint and accesspoint
+    accessPoints[mountPoint] = accessPoint;
+    // Add debug message
+    FS.debug && console.log(mountPoint);
+  });
+
+  // XXX: HTTP:methods should unmount existing mounts in case of overwriting?d
+  HTTP.methods(accessPoints);
+
 };
 
-// Initial mount
-mountUrls();
 
 Meteor.startup(function () {
-  FS.debug && console.log("Registered HTTP method URLs:\n\n" + currentHTTPMethodNames.join('\n') + '\n');
+  FS.HTTP.mount([
+    baseUrl + '/files/:collectionName/:id/:filename',
+    baseUrl + '/files/:collectionName/:id',
+    baseUrl + '/files/:collectionName'
+  ], function(data) {
+    var self = this;
+    // Selector function
+    //
+    // This function will have to return the collection and the
+    // file. If file not found undefined is returned - if null is returned the
+    // search was not possible
+    var opts = _.extend({}, self.query || {}, self.params || {});
+
+    // Get the collection name from the url
+    var collectionName = opts.collectionName;
+
+    // Get the id from the url
+    var id = opts.id;
+
+    // Get the collection
+    var collection = FS._collections[collectionName];
+
+    // Get the file if possible else return null
+    var file = (id && collection)? collection.findOne({ _id: id }): null;
+
+    // Return the collection and the file
+    return {
+      collection: collection,
+      file: file
+    };
+  });
+
+  // FS.debug && console.log("Registered HTTP method URLs:\n\n" + currentHTTPMethodNames.join('\n') + '\n');
 });
