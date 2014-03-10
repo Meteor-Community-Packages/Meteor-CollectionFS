@@ -13,7 +13,7 @@ FS.FileWorker = {};
  * @public
  * @param {FS.Collection} fsCollection
  * @returns {undefined}
- * 
+ *
  * Sets up observes on the fsCollection to store file copies and delete
  * temp files at the appropriate times.
  */
@@ -67,7 +67,7 @@ FS.FileWorker.observe = function(fsCollection) {
  *  @method getReadyQuery
  *  @private
  *  @param {string} storeName - The name of the store to observe
- *  
+ *
  *  Returns a selector that will be used to identify files that
  *  have been uploaded but have not yet been stored to the
  *  specified store.
@@ -94,7 +94,7 @@ function getReadyQuery(storeName) {
  *  @method getDoneQuery
  *  @private
  *  @param {Object} stores - The stores object from the FS.Collection options
- * 
+ *
  *  Returns a selector that will be used to identify files where all
  *  stores have successfully save or have failed the
  *  max number of times but still have chunks. The resulting selector
@@ -123,7 +123,7 @@ function getReadyQuery(storeName) {
  *      REPEATED FOR EACH STORE
  *    ]
  *  }
- *  
+ *
  */
 function getDoneQuery(stores) {
   var selector = {
@@ -159,73 +159,118 @@ function getDoneQuery(stores) {
  * @param {Object} options
  * @param {Boolean} [options.overwrite=false] - Force save to the specified store?
  * @returns {undefined}
- * 
+ *
  * Saves to the specified store. If the
  * `overwrite` option is `true`, will save to the store even if we already
  * have, potentially overwriting any previously saved data. Synchronous.
  */
+  var makeSafeCallback = function (callback) {
+      // Make callback safe for Meteor code
+      return Meteor.bindEnvironment(callback, function(err) { throw err; });
+  };
+
 function saveCopy(fsFile, storeName, options) {
   options = options || {};
 
-  var store = FS.StorageAdapter(storeName);
-  if (!store) {
+  var storage = FS.StorageAdapter(storeName);
+  if (!storage) {
     throw new Error('No store named "' + storeName + '" exists');
   }
-  
-  FS.debug && console.log('saving to store ' + storeName);
-  
+
+
   // If the supplied fsFile does not have a buffer loaded already,
   // try to load it from the temporary file.
   if (!fsFile.hasData()) {
-    fsFile = FS.TempStore.getDataForFileSync(fsFile);
-  }
-  
-  var result;
-  
-  FS.debug && console.log('running beforeSave for store ' + storeName);
-  
-  // Call the beforeSave function provided by the user
-  if (store.beforeSave) {
-    // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-    fsFile = copyOfFileObjectWithData(fsFile);
+    FS.debug && console.log('saving to store ' + storeName);
 
-    if (store.beforeSave.apply(fsFile) === false) {
-      result = false;
+    var targetStream = storage.adapter.createWriteStream(fsFile);
+    var sourceStream = FS.TempStore.createReadStream(fsFile);
+
+    if (FS.debug) {
+      targetStream.on('close', function() {
+        console.log('-----------CLOSE STREAM');
+      });
+
+      targetStream.on('end', function() {
+        console.log('-----------ENDED STREAM');
+      });
+
+      targetStream.on('final', function() {
+        console.log('-----------Final STREAM');
+      });
+
+      targetStream.on('error', function() {
+        console.log('-----------ERROR STREAM');
+      });
     }
+
+    targetStream.safeOn('close', function(f) {
+      // Update the time - this could also be fetched from api.stats in the
+      // storage adapter eg. by adding on event
+      fsFile.copies[storeName].utime = Date();
+
+      var modifier = {};
+      modifier["copies." + storeName] = fsFile.copies[storeName];
+      // Update the main file object with the modifier
+      fsFile.update({$set: modifier});
+
+    });
+
+    targetStream.safeOn('error', function() {
+      // TODO:
+    });
+    // Pipe the temp data into the storage adapter
+    sourceStream.pipe(targetStream);
+    //fsFile = FS.TempStore.getDataForFileSync(fsFile);
   }
-  
-  FS.debug && console.log('saving to store ' + storeName);
-  
-  // Save to store
-  if (result !== false) {
-    if (options.overwrite) {
-      result = store.update(fsFile);
-    } else {
-      result = store.insert(fsFile);
-    }
-  }
-  
-  // Process result
-  if (result === null) {
-    FS.debug && console.log('saving to store ' + storeName + ' failed temporarily');
-    // Temporary failure; let the fsFile log it and potentially decide
-    // to give up.
-    // TODO get rid of logCopyFailure and handle failures with powerqueue
-    fsFile.logCopyFailure(storeName, store.options.maxTries);
-  } else {
-    if (result === false) {
-      FS.debug && console.log('saving to store ' + storeName + ' failed permanently or was cancelled by beforeSave');
-    } else {
-      FS.debug && console.log('saving to store ' + storeName + ' succeeded');
-    }
-    // Update the main file object
-    // result might be false, which indicates that this copy
-    // should never be created in the future.
-    var modifier = {};
-    modifier["copies." + storeName] = result;
-    // Update the main file object with the modifier
-    fsFile.update({$set: modifier});
-  }
+
+  // var result;
+
+  // FS.debug && console.log('running beforeSave for store ' + storeName);
+
+  // // Call the beforeSave function provided by the user
+  // // XXX: If we use Transform streams instead then no more use for beforeSave
+  // if (store.beforeSave) {
+  //   // Get a new copy and a fresh buffer each time in case beforeSave changes anything
+  //   fsFile = copyOfFileObjectWithData(fsFile);
+
+  //   if (store.beforeSave.apply(fsFile) === false) {
+  //     result = false;
+  //   }
+  // }
+
+  // FS.debug && console.log('saving to store ' + storeName);
+
+  // // Save to store
+  // if (result !== false) {
+  //   if (options.overwrite) {
+  //     result = store.update(fsFile);
+  //   } else {
+  //     result = store.insert(fsFile);
+  //   }
+  // }
+
+  // // Process result
+  // if (result === null) {
+  //   FS.debug && console.log('saving to store ' + storeName + ' failed temporarily');
+  //   // Temporary failure; let the fsFile log it and potentially decide
+  //   // to give up.
+  //   // TODO get rid of logCopyFailure and handle failures with powerqueue
+  //   fsFile.logCopyFailure(storeName, store.options.maxTries);
+  // } else {
+  //   if (result === false) {
+  //     FS.debug && console.log('saving to store ' + storeName + ' failed permanently or was cancelled by beforeSave');
+  //   } else {
+  //     FS.debug && console.log('saving to store ' + storeName + ' succeeded');
+  //   }
+  //   // Update the main file object
+  //   // result might be false, which indicates that this copy
+  //   // should never be created in the future.
+  //   var modifier = {};
+  //   modifier["copies." + storeName] = result;
+  //   // Update the main file object with the modifier
+  //   fsFile.update({$set: modifier});
+  // }
 
 }
 
