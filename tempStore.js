@@ -1,22 +1,24 @@
 /*
  * Temporary Storage
- * 
+ *
  * Temporary storage is used for chunked uploads until all chunks are received
  * and all copies have been made or given up. In some cases, the original file
  * is stored only in temporary storage (for example, if all copies do some
  * manipulation in beforeSave). This is why we use the temporary file as the
  * basis for each saved copy, and then remove it after all copies are saved.
- * 
+ *
  * Every chunk is saved as an individual temporary file. This is safer than
  * attempting to write multiple incoming chunks to different positions in a
  * single temporary file, which can lead to write conflicts.
- * 
+ *
  * Using temp files also allows us to easily resume uploads, even if the server
  * restarts, and to keep the working memory clear.
  */
 
 fs = Npm.require('fs');
 tmp = Npm.require('temp');
+var Readable = Npm.require('stream').Readable;
+var util = Npm.require('util');
 
 var storeCollection = new Meteor.Collection("cfs.tempstore");
 
@@ -77,7 +79,7 @@ FS.TempStore = {
    * @todo This cannot handle large files eg. 2gb or more?
    */
   getDataForFile: function getDataForFile(fileObj, callback) {
-
+throw new Error('Deprecated in favor of Stream');
     var existing = storeCollection.find({fileId: fileObj._id, collectionName: fileObj.collectionName});
     if (!existing.count()) {
       callback(new Error('getDataForFile: No temporary chunks!'));
@@ -172,9 +174,44 @@ FS.TempStore = {
   }
 };
 
+
+// Stream implementation
+
+
+_TempstoreReadStream = function(fileObj, options) {
+  var self = this;
+  Readable.call(this, options);
+  self.chunks = [];
+  self.currentChunk = 0;
+
+  var cursor = storeCollection.find({fileId: fileObj._id, collectionName: fileObj.collectionName});
+  cursor.forEach(function(chunk) {
+    self.chunks.push(chunk.tempFile);
+  });
+};
+
+util.inherits(_TempstoreReadStream, Readable);
+
+_TempstoreReadStream.prototype._read = function() {
+  var self = this;
+
+  var chunkPath = self.chunks[self.currentChunk++];
+
+  if (typeof chunkPath === 'undefined') {
+    this.push(null);
+  } else {
+    this.push(fs.readFileSync(chunkPath));
+  }
+
+};
+
+
+FS.TempStore.createReadStream = function(fileObj) {
+  return new _TempstoreReadStream(fileObj);
+};
 /** @method FS.TempStore.getDataForFileSync
  * @param {FS.File} fileObj
- * 
+ *
  * Synchronous version of FS.TempStore.getDataForFile. Returns the file
  * with data attached, or throws an error.
  */
