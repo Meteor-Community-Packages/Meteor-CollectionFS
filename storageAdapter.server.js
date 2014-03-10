@@ -3,7 +3,6 @@
 // STORAGE ADAPTER
 //
 // #############################################################################
-
 _storageAdapters = {};
 
 FS.StorageAdapter = function(name, options, api) {
@@ -20,21 +19,11 @@ FS.StorageAdapter = function(name, options, api) {
     throw new Error('FS.StorageAdapter please define an api');
   }
 
-  if (typeof api.get !== 'function') {
-    throw new Error('FS.StorageAdapter please define an api.get function');
-  }
-
-  if (typeof api.put !== 'function') {
-    throw new Error('FS.StorageAdapter please define an api.put function');
-  }
-
-  if (typeof api.del !== 'function') {
-    throw new Error('FS.StorageAdapter please define an api.del function');
-  }
-
-  if (api.typeName !== '' + api.typeName) {
-    throw new Error('FS.StorageAdapter please define an api.typeName string');
-  }
+  _.each('get,put,del,typeName,createReadStream,createWriteStream'.split(','), function(name) {
+    if (typeof api[name] === 'undefined') {
+      throw new Error('FS.StorageAdapter please define an api.' + name + '');
+    }
+  });
 
   // store reference for easy lookup by name
   if (typeof _storageAdapters[name] !== 'undefined') {
@@ -104,6 +93,57 @@ FS.StorageAdapter = function(name, options, api) {
     api.put.call(self, fsFile, {overwrite: overwrite}, putCallback);
   }
 
+  // Create a nicer abstracted adapter interface
+  self.adapter = {
+    name: this.name
+  };
+
+  // Return readable stream
+  self.adapter.createReadStream = function(fileObj, options) {
+    console.log('createReadStream ' + self.name);
+
+    var readStream = api.createReadStream.call(self, fileObj, options);
+
+    if (!readStream || typeof readStream.on !== 'function')
+      throw new Error('Storage Adapter "' + self.name + '" did not return read stream');
+
+    // Create Meteor safe events
+    readStream.safeOn = function(name, callback) {
+      return readStream.on(name, makeSafeCallback(callback));
+    };
+
+    return readStream;
+  };
+
+  // Return readable stream
+  self.adapter.createWriteStream = function(fileObj, options) {
+
+    console.log('createWriteStream ' + self.name);
+
+    if (typeof fileObj.copies == 'undefined') {
+      fileObj.copies = {};
+    }
+    if (typeof fileObj.copies[self.name] === 'undefined') {
+      fileObj.copies[self.name] = {
+        name: fileObj.name,
+        type: fileObj.type,
+        size: fileObj.size
+      };
+    }
+
+    var writeStream = api.createWriteStream.call(self, fileObj, options);
+
+    if (!writeStream || typeof writeStream.on !== 'function')
+      throw new Error('Storage Adapter "' + self.name + '" did not return write stream');
+
+    // Create Meteor safe events
+    writeStream.safeOn = function(name, callback) {
+      return writeStream.on(name, makeSafeCallback(callback));
+    };
+
+    return writeStream;
+  };
+
   //internal
   self._insertAsync = function(fsFile, callback) {
     return doPut(fsFile, false, callback);
@@ -115,6 +155,7 @@ FS.StorageAdapter = function(name, options, api) {
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options (currently unused)
    * @param {Function} [callback] If not provided, will block and return file info.
+   * @deprecated Use streams api instead
    *
    * Attempts to insert a file into the store. If there is a temporary failure,
    * returns (or passes to the second argument of the callback) `null`. If there
@@ -150,6 +191,7 @@ FS.StorageAdapter = function(name, options, api) {
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Object} [options] Options (currently unused)
    * @param {Function} [callback] If not provided, will block and return file info.
+   * @deprecated Use streams api instead
    *
    * Attempts to update a file in the store. If there is a temporary failure,
    * returns (or passes to the second argument of the callback) `null`. If there
@@ -218,6 +260,7 @@ FS.StorageAdapter = function(name, options, api) {
    * @param {FS.File} fsFile The FS.File instance to be retrieved.
    * @param {Object} [options] unused
    * @param {Function} [callback] If not provided, will block and return the Buffer
+   * @deprecated Use streams api instead
    *
    * Returns the buffer for a file that has been saved in this store
    */
@@ -262,6 +305,7 @@ FS.StorageAdapter = function(name, options, api) {
     * @param {Number} end - The position of the last byte to return, plus one
     * @param {Object} [options] unused
     * @param {Function} [callback] If not provided, will block and return the Buffer
+    * @deprecated Use streams api instead
     *
     * Returns the buffer for one chunk of a file that has been saved in this store
     */
