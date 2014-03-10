@@ -37,23 +37,29 @@ httpDelHandler = function httpDelHandler(data, ref) {
  */
 httpGetHandler = function httpGetHandler(data, ref) {
   var self = this;
-  var opts = _.extend({}, self.query || {}, self.params || {});
-
   // Once we have the file, we can test allow/deny validators
   FS.Utility.validateAction(ref.collection._validators['download'], ref.file, self.userId);
-  
-  var store = opts.store;
-  var download = opts.download;
 
-  // If no store was specified, use the first defined store
-  if (typeof store !== "string") {
-    store = ref.collection.options.stores[0].name;
+  var storeName = ref.storeName;
+
+  // If no storeName was specified, use the first defined storeName
+  if (typeof storeName !== "string") {
+    // No store handed, we default to primary store
+    storeName = ref.collection.primaryStore.name;
   }
 
-  var copyInfo = ref.file.copies[store];
+  // Get the storage reference
+  var storage = ref.collection.storesLookup[storeName];
+
+  if (!storage) {
+    throw new Meteor.Error(404, "Not Found", 'There is no store "' + storeName + '"');
+  }
+
+  // Get the file
+  var copyInfo = ref.file.copies[storeName];
 
   if (!copyInfo) {
-    throw new Meteor.Error(404, "Not Found", 'This file was not stored in the ' + store + ' store or there is no store with that name');
+    throw new Meteor.Error(404, "Not Found", 'This file was not stored in the ' + storeName + ' store');
   }
 
   if (typeof copyInfo.type === "string") {
@@ -64,7 +70,7 @@ httpGetHandler = function httpGetHandler(data, ref) {
 
   // Add 'Content-Disposition' header if requested a download/attachment URL
   var start, end;
-  if (typeof download !== "undefined") {
+  if (typeof ref.download !== "undefined") {
     self.addHeader('Content-Disposition', 'attachment; filename="' + copyInfo.name + '"');
 
     // If a chunk/range was requested instead of the whole file, serve that
@@ -110,12 +116,8 @@ httpGetHandler = function httpGetHandler(data, ref) {
   // Inform clients that we accept ranges for resumable chunked downloads
   self.addHeader('Accept-Ranges', 'bytes');
 
-  return ref.file.get({
-    storeName: store,
-    start: start,
-    end: end,
-    format: 'buffer'
-  });
+  return storage.adapter.createReadStream(ref.file);
+
 };
 
 httpPutInsertHandler = function httpPutInsertHandler(data, ref) {

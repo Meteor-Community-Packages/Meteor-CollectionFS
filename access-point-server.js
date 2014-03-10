@@ -93,7 +93,9 @@ var defaultSelectorFunction = function(data) {
   // Return the collection and the file
   return {
     collection: collection,
-    file: file
+    file: file,
+    storeName: opts.store,
+    download: opts.download
   };
 };
 
