@@ -18,6 +18,10 @@
 FS.Collection = function(name, options) {
   var self = this;
 
+  self.storesLookup = {};
+
+  self.primaryStore = {};
+
   self.options = {
     filter: null, //optional
     stores: [], //required
@@ -36,6 +40,7 @@ FS.Collection = function(name, options) {
   // Extend and overwrite options
   _.extend(self.options, options || {});
 
+  // Set the FS.Collection name
   self.name = name;
 
   // Make sure at least one store has been supplied.
@@ -44,6 +49,21 @@ FS.Collection = function(name, options) {
   if (_.isEmpty(self.options.stores)) {
     throw new Error("You must specify at least one store. Please consult the documentation.");
   }
+
+  _.each(self.options.stores, function(store, i) {
+    // Set the primary store
+    if (i === 0) {
+      self.primaryStore = store;
+    }
+
+    // Check for duplicate naming
+    if (typeof self.storesLookup[store.name] !== 'undefined') {
+      throw new Error('FS.Collection store names must be uniq, duplicate found: ' + store.name);
+    }
+
+    // Set the lookup
+    self.storesLookup[store.name] = store;
+  });
 
   var _filesOptions = {
     transform: function(doc) {
