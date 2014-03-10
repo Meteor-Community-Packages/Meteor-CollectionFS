@@ -39,11 +39,52 @@ FS.Store.FileSystem = function(name, options) {
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.filesystem',
+    createReadStream: function(fileObj, options) {
+      var fileInfo = fileObj.getCopyInfo(name);
+      if (!fileInfo) {
+        return new Error('File not found on this store "' + name + '"');
+      }
+      // Get the key
+      var fileKey = fileInfo.key;
+
+      // this is the Storage adapter scope
+      var filepath = path.join(absolutePath, fileKey);
+
+      // return the read stream - Options allow { start, end }
+      return fs.createReadStream(filepath, options);
+    },
+    createWriteStream: function(fileObj, options) {
+      options = options || {};
+
+      var fileKey = fileObj.collectionName + '-' + fileObj._id + '-' + fileObj.name;
+
+      // this is the Storage adapter scope
+      var filepath = path.join(absolutePath, fileKey);
+
+      // XXX: not sure we should have this extra overwrite option?
+      if (!options.overwrite) {
+        // Change filename if necessary so that we can write to a new file
+        var extension = path.extname(fileKey);
+        var fn = fileKey.substr(0, fileKey.length - extension.length);
+        var suffix = 0;
+        while (fs.existsSync(filepath)) {
+          suffix++;
+          fileKey = fn + suffix + extension; //once we exit the loop, this is what will actually be used
+          filepath = path.join(absolutePath, fileKey);
+        }
+      }
+      // Update the fileObj - we dont save it to the db but sets the fileKey
+      fileObj.copies[name].key = fileKey;
+      // Return the stream handle
+      return fs.createWriteStream(filepath, options);
+    },
+
+/////// DEPRECATE?
     get: function(fileObj, callback) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, null); }
       var fileKey = fileInfo.key;
-      
+
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
@@ -54,7 +95,7 @@ FS.Store.FileSystem = function(name, options) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, null); }
       var fileKey = fileInfo.key;
-      
+
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
@@ -83,10 +124,10 @@ FS.Store.FileSystem = function(name, options) {
     },
     put: function(fileObj, options, callback) {
       options = options || {};
-      
+
       var fileKey = fileObj.collectionName + '-' + fileObj._id + '-' + fileObj.name;
       var buffer = fileObj.getBuffer();
-      
+
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
@@ -111,18 +152,21 @@ FS.Store.FileSystem = function(name, options) {
         }
       });
     },
+///////// EO DEPRECATE?
+
+
     del: function(fileObj, callback) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, true); }
       var fileKey = fileInfo.key;
-      
+
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
       // Call node unlink file
       fs.unlink(filepath, callback);
     },
-    stats: function(fileKey, callback) {      
+    stats: function(fileKey, callback) {
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
