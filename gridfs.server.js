@@ -1,5 +1,7 @@
 var path = Npm.require('path');
 var mongodb = Npm.require('mongodb');
+var Grid = Npm.require('gridfs-stream');
+
 var chunkSize = 262144; // 256k is default GridFS chunk size
 
 /**
@@ -18,6 +20,7 @@ var chunkSize = 262144; // 256k is default GridFS chunk size
 FS.Store.GridFS = function(name, options) {
   var self = this;
   options = options || {};
+
   var gridfsName = name;
   var mongoOptions = options.mongoOptions || {};
 
@@ -39,7 +42,50 @@ FS.Store.GridFS = function(name, options) {
   return new FS.StorageAdapter(name, options, {
 
     typeName: 'storage.gridfs',
+    createReadStream: function(fileObj, options) {
+      var self = this;
+      var fileInfo = fileObj.getCopyInfo(name);
+      if (!fileInfo) {
+        return new Error('File not found on this store "' + name + '"');
+      }
 
+      var fileKey = fileInfo.key;
+
+      // Init GridFS
+      var gfs = new Grid(self.db, mongodb);
+
+      return gfs.createReadStream({
+        filename: fileKey,
+        root: gridfsName,
+      });
+
+    },
+    createWriteStream: function(fileObj, options) {
+      var self = this;
+      options = options || {};
+
+      var fileKey = fileObj.collectionName + fileObj._id;
+
+      // XXX: support overwrite?
+
+      // Update the fileObj - we dont save it to the db but sets the fileKey
+      fileObj.copies[name].key = fileKey;
+
+      // Init GridFS
+      var gfs = new Grid(self.db, mongodb);
+
+      var writeStream = gfs.createWriteStream({
+        filename: fileKey,
+        mode: 'w',
+        root: gridfsName,
+        chunk_size: options.chunk_size || chunkSize,
+        metadata: fileObj.metadata || null,
+        content_type: fileObj.type || 'application/octet-stream'
+      });
+
+      return writeStream;
+
+    },
     get: function(fileObj, callback) {
       var self = this;
       var fileInfo = fileObj.getCopyInfo(name);
@@ -151,9 +197,13 @@ FS.Store.GridFS = function(name, options) {
 
     init: function(callback) {
       var self = this;
+
       mongodb.MongoClient.connect(options.mongoUrl, mongoOptions, function (err, db) {
         if (err) { return callback(err); }
         self.db = db;
+
+        console.log('GridFS init ' + name + ' on ' + options.mongoUrl);
+
         callback(null);
       });
     }

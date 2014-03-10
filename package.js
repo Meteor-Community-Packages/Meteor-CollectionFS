@@ -1,10 +1,11 @@
 Package.describe({
-  name: "cfs-gridfs",
-  summary: "GridFS storage adapter for CollectionFS"
+  name: 'cfs-gridfs',
+  summary: 'GridFS storage adapter for CollectionFS'
 });
 
 Npm.depends({
-  mongodb: "1.3.23"
+  mongodb: '1.3.23',
+  'gridfs-stream': '0.4.1'
 });
 
 Package.on_use(function(api) {
