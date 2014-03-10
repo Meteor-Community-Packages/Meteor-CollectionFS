@@ -18,13 +18,20 @@ var chunkSize = 262144; // 256k is default GridFS chunk size
 FS.Store.GridFS = function(name, options) {
   var self = this;
   options = options || {};
-  var gridfsName = name
+  var gridfsName = name;
+  var mongoOptions = options.mongoOptions || {};
 
   if (!(self instanceof FS.Store.GridFS))
     throw new Error('FS.Store.GridFS missing keyword "new"');
 
   if (!options.mongoUrl) {
     options.mongoUrl = process.env.MONGO_URL;
+    // When using a Meteor MongoDB instance, preface name with "cfs_gridfs."
+    gridfsName = "cfs_gridfs." + name;
+  }
+
+  if (!options.mongoOptions) {
+    options.mongoOptions = {  }
     // When using a Meteor MongoDB instance, preface name with "cfs_gridfs."
     gridfsName = "cfs_gridfs." + name;
   }
@@ -144,7 +151,7 @@ FS.Store.GridFS = function(name, options) {
 
     init: function(callback) {
       var self = this;
-      mongodb.MongoClient.connect(options.mongoUrl, function (err, db) {
+      mongodb.MongoClient.connect(options.mongoUrl, mongoOptions, function (err, db) {
         if (err) { return callback(err); }
         self.db = db;
         callback(null);

@@ -22,6 +22,7 @@ $ mrt add cfs-gridfs
 ```js
 var imageStore = new FS.Store.GridFS("images", {
   mongoUrl: 'mongodb://127.0.0.1:27017/test/', // optional, defaults to Meteor's local MongoDB
+  mongoOptions: {...},  // optional, see note below
   beforeSave: myBeforeSaveFunction, //optional
   maxTries: 1 //optional, default 5
 });
@@ -30,6 +31,8 @@ Images = new FS.Collection("images", {
   stores: [imageStore]
 });
 ```
+
+More control over the MongoDB connection is available by specifying [MongoClient.connect options](http://mongodb.github.io/node-mongodb-native/driver-articles/mongoclient.html#mongoclient-connect-options) as a `mongoOptions` attribute in the options object on the constructor.
 
 Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
 package documentation for more information.
