@@ -34,9 +34,7 @@ FS.Store.GridFS = function(name, options) {
   }
 
   if (!options.mongoOptions) {
-    options.mongoOptions = {  }
-    // When using a Meteor MongoDB instance, preface name with "cfs_gridfs."
-    gridfsName = "cfs_gridfs." + name;
+    options.mongoOptions = { db: { native_parser: true }, server: { auto_reconnect: true }};
   }
 
   return new FS.StorageAdapter(name, options, {
