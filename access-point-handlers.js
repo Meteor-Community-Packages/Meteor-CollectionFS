@@ -189,4 +189,6 @@ httpPutUpdateHandler = function httpPutUpdateHandler(readStream, ref) {
 
   // Send response
   self.setStatusCode(200);
+
+  return { _id: file._id, chunk: chunk };
 };
