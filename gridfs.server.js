@@ -77,6 +77,7 @@ FS.Store.GridFS = function(name, options) {
         mode: 'w',
         root: gridfsName,
         chunk_size: options.chunk_size || chunkSize,
+        aliases: [fileObj.name],
         metadata: fileObj.metadata || null,
         content_type: fileObj.type || 'application/octet-stream'
       });
@@ -144,6 +145,7 @@ FS.Store.GridFS = function(name, options) {
         var gridOptions = {
           root: gridfsName,
           chunk_size: options.chunk_size || chunkSize,
+          aliases: [fileObj.name],
           metadata: fileObj.metadata || null,
           content_type: fileObj.type || 'application/octet-stream'
         };
