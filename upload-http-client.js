@@ -14,11 +14,11 @@ var _taskHandler = function(task, next) {
     if (err) {
       next(new Meteor.Error(err.error, err.message));
     } else {
-      
+
       FS.debug && console.log('PUT to URL', task.url, task.urlParams);
-      
+
       httpCall("PUT", task.url, {
-        params: _.extend({start: task.start}, task.urlParams),
+        params: _.extend({chunk: task.chunk}, task.urlParams),
         content: data,
         headers: {
           'Content-Type': task.fileObj.type
@@ -102,7 +102,7 @@ UploadTransferQueue = function(options) {
    */
   self.uploadFile = function(fileObj) {
     FS.debug && console.log("HTTP uploadFile");
-    
+
     // Make sure we are handed a FS.File
     if (!(fileObj instanceof FS.File)) {
       throw new Error('Transfer queue expects a FS.File');
@@ -125,10 +125,12 @@ UploadTransferQueue = function(options) {
       var id = fileObj._id;
 
       // Get the collection chunk size
-      var chunkSize = fileObj.collection.options.chunkSize;
+      //var chunkSize = fileObj.collection.options.chunkSize;
+      var chunkSize = fileObj.chunkSize;
 
       // Calculate the number of chunks to upload
-      var chunks = Math.ceil(fileObj.size / chunkSize);
+      //var chunks = Math.ceil(fileObj.size / chunkSize);
+      var chunks = fileObj.chunkSum;
 
       if (chunks === 0)
         return;
@@ -207,7 +209,7 @@ UploadTransferQueue = function(options) {
 /**
  * @namespace FS
  * @type UploadTransferQueue
- * 
+ *
  * There is a single uploads transfer queue per client (not per CFS)
  */
 FS.HTTP.uploadQueue = new UploadTransferQueue();
@@ -216,7 +218,7 @@ FS.HTTP.uploadQueue = new UploadTransferQueue();
  * FS.File extensions
  */
 
-/** 
+/**
  * @method FS.File.prototype.resume
  * @public
  * @param {File|Blob|Buffer} ref
