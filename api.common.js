@@ -30,6 +30,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // so that it is available when FileWorker calls saveCopies.
     // This will also trigger file handling from collection observes.
     else if (Meteor.isServer) {
+      // XXX: Deprecated - What job should it have when streaming?
       FS.TempStore.ensureForFile(fileObj);
     }
   }
@@ -37,6 +38,12 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
   function checkAndInsert(fileObj) {
     // Set reference to this collection
     fileObj.collectionName = self.name;
+    // Set the chunkSize to match the current collection chunkSize
+    fileObj.chunkSize = self.options.chunkSize;
+    // counter for uploaded chunks
+    fileObj.chunkCount = 0;
+    // Calc the number of chunks
+    fileObj.chunkSum = Math.ceil(fileObj.size / fileObj.chunkSize);
 
     // Check filters
     if (!fileObj.fileIsAllowed()) {
