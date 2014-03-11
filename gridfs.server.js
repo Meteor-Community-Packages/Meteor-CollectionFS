@@ -2,7 +2,7 @@ var path = Npm.require('path');
 var mongodb = Npm.require('mongodb');
 var Grid = Npm.require('gridfs-stream');
 
-var chunkSize = 262144; // 256k is default GridFS chunk size
+var chunkSize = 1024*1024*2; // 256k is default GridFS chunk size, but performs terribly for largish files
 
 /**
  * @public
