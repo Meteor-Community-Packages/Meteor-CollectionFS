@@ -48,7 +48,7 @@ FS.TempStore = {};
 
 // Naming convention for file folder
 _filePath = function(fileObj) {
-  return fileObj._id + '.' + fileObj.collectionName;
+  return path.join(tempFolder, fileObj._id + '.' + fileObj.collectionName);
 };
 
 // Naming convention for chunk files
@@ -77,6 +77,7 @@ FS.TempStore.removeFile = function(fileObj) {
 // WRITE STREAM
 FS.TempStore.createWriteStream = function(fileObj, chunk) {
   var self = this;
+
   // File path
   var filePath = _filePath(fileObj);
 
@@ -90,15 +91,21 @@ FS.TempStore.createWriteStream = function(fileObj, chunk) {
   }
 
   // Find a nice location for the chunk data
-  var filePath = path.join(filePath, _chunkPath(chunk));
+  var chunkPath = path.join(filePath, _chunkPath(chunk));
+
+  // Check if its a new chunk
+  var newChunk = !fs.existsSync(chunkPath);
 
   // Create the stream as Meteor safe stream
-  var writeStream = FS.Utility.safeStream(fs.createWriteStream( filePath ) );
+  var writeStream = FS.Utility.safeStream(fs.createWriteStream( chunkPath ) );
 
   // When the stream closes we update the chunkCount
   writeStream.safeOn('close', function() {
+    console.log('NEXT CHUNK: ' + chunk);
     // Progress
-    fileObj.update({ $inc: { chunkCount: 1 }});
+    if (newChunk) {
+      fileObj.update({ $inc: { chunkCount: 1 }});
+    }
   });
 
   return writeStream;
