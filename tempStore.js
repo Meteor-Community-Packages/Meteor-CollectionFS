@@ -101,7 +101,6 @@ FS.TempStore.createWriteStream = function(fileObj, chunk) {
 
   // When the stream closes we update the chunkCount
   writeStream.safeOn('close', function() {
-    console.log('NEXT CHUNK: ' + chunk);
     // Progress
     if (newChunk) {
       fileObj.update({ $inc: { chunkCount: 1 }});
@@ -116,14 +115,21 @@ _TempstoreReadStream = function(fileObj, options) {
   var self = this;
   Readable.call(this, options);
 
+  // Init current chunk pointer
   self.currentChunk = 0;
+
+  // Init the sum of chunk
   self.chunkSum = fileObj.chunkSum;
 
+  // Init the file path in temporary storage
   self.filePath = _filePath(fileObj);
 };
 
+// Add readable stream methods
 util.inherits(_TempstoreReadStream, Readable);
 
+// Create our custom read
+// XXX: This could support read size if set
 _TempstoreReadStream.prototype._read = function() {
   var self = this;
 
@@ -133,12 +139,13 @@ _TempstoreReadStream.prototype._read = function() {
     // Load chunk - we assume its there
     this.push(fs.readFileSync(chunkPath));
   } else {
+    // Finish
     this.push(null);
   }
 
 };
 
-
+// Create a nice api handle
 FS.TempStore.createReadStream = function(fileObj) {
   return new _TempstoreReadStream(fileObj);
 };
