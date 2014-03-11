@@ -81,7 +81,7 @@ FS.FileWorker.observe = function(fsCollection) {
  */
 function getReadyQuery(storeName) {
   var selector = {
-    $where: "this.bytesUploaded === this.size"
+    $where: "this.chunkSum === this.chunkCount"
   };
 
   selector['copies.' + storeName] = null;
@@ -195,8 +195,8 @@ function saveCopy(fsFile, storeName, options) {
         console.log('-----------ENDED STREAM');
       });
 
-      targetStream.on('final', function() {
-        console.log('-----------Final STREAM');
+      targetStream.on('finish', function() {
+        console.log('-----------finish STREAM');
       });
 
       targetStream.on('error', function() {
@@ -204,7 +204,7 @@ function saveCopy(fsFile, storeName, options) {
       });
     }
 
-    targetStream.safeOn('close', function(f) {
+    targetStream.safeOn('close', function() {
       // Update the time - this could also be fetched from api.stats in the
       // storage adapter eg. by adding on event
       fsFile.copies[storeName].utime = Date();
