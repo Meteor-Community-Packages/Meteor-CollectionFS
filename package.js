@@ -11,8 +11,6 @@ Package.on_use(function(api) {
     'cfs-transfer',
     // Want to make use of the file object and its api, yes!
     'cfs-file',
-    // Rig the FS.File EJSON type
-    'cfs-ejson-file',
     // Add the FS.Collection to keep track of everything
     'cfs-collection',
     // Add the option to have ddp and http access point
