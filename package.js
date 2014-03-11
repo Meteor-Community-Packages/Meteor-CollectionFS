@@ -1,23 +1,32 @@
 Package.describe({
+  name: 'cfs-access-point',
   summary: 'CollectionFS, add ddp and http accesspoint capability'
 });
 
 Package.on_use(function(api) {
-  api.use(['cfs-base-package', 'cfs-file']);
 
-  api.use(['ejson', 'underscore', 'check', 'http-methods', 'http-publish']);
+  api.use([
+    //CFS packages
+    'cfs-base-package',
+    'cfs-file',
+    //Core packages
+    'underscore',
+    'check',
+    'ejson',
+    //Other packages
+    'http-methods',
+    'http-publish'
+  ]);
 
   api.add_files([
     'access-point-common.js',
     'access-point-handlers.js',
-    'access-point-server.js',
-    'accessPoint.js' // move this stuff to another package
+    'access-point-server.js'
   ], 'server');
-  
+
   api.add_files([
     'access-point-common.js',
-    'access-point-client.js',
-    'accessPoint.js' // move this stuff to another package
+    'access-point-client.js'
   ], 'client');
 });
 
