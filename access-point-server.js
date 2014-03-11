@@ -64,12 +64,11 @@ var _existingMountPoints = {};
 /**
  * @method defaultSelectorFunction
  * @private
- * @param {any} data Data returned by HTTP.method
  * @returns { collection, file }
  *
  * This is the default selector function
  */
-var defaultSelectorFunction = function(data) {
+var defaultSelectorFunction = function() {
   var self = this;
   // Selector function
   //
@@ -111,16 +110,17 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
   var selectorFunction = selector_f || defaultSelectorFunction;
 
   var accessPoint = {
+    'stream': true,
     'post': function(data) {
       // Use the selector for finding the collection and file reference
-      var ref = selectorFunction.apply(this, [data]);
+      var ref = selectorFunction.call(this);
 
       // We dont support post - this would be normal insert eg. of filerecord?
       throw new Meteor.Error(501, "Not implemented", "Post is not supported");
     },
     'put': function(data) {
       // Use the selector for finding the collection and file reference
-      var ref = selectorFunction.apply(this, [data]);
+      var ref = selectorFunction.call(this);
 
       // Make sure we have a collection reference
       if (!ref.collection)
@@ -130,6 +130,7 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
       if (ref.file === null) {
         // No id supplied so we will return the published list of files ala
         // http.publish in json format?
+        console.log('PUT without file id??');
         return httpPutInsertHandler.apply(this, [data, ref]);
       } else {
         if (ref.file) {
@@ -141,7 +142,7 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
     },
     'get': function(data) {
       // Use the selector for finding the collection and file reference
-      var ref = selectorFunction.apply(this, [data]);
+      var ref = selectorFunction.call(this);
 
       // Make sure we have a collection reference
       if (!ref.collection)
@@ -151,10 +152,10 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
       if (ref.file === null) {
         // No id supplied so we will return the published list of files ala
         // http.publish in json format?
-        return httpGetListHandler.apply(this, [data, ref]);
+        return httpGetListHandler.apply(this, [ref]);
       } else {
         if (ref.file) {
-          return httpGetHandler.apply(this, [data, ref]);
+          return httpGetHandler.apply(this, [ref]);
         } else {
           throw new Meteor.Error(404, "Not Found", 'No file found');
         }
@@ -162,7 +163,7 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
     },
     'delete': function(data) {
       // Use the selector for finding the collection and file reference
-      var ref = selectorFunction.apply(this, [data]);
+      var ref = selectorFunction.call(this);
 
       // Make sure we have a collection reference
       if (!ref.collection)
@@ -170,7 +171,7 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
 
       // Make sure we have a file reference
       if (ref.file) {
-        return httpDelHandler.apply(this, [data, ref]);
+        return httpDelHandler.apply(this, [ref]);
       } else {
         throw new Meteor.Error(404, "Not Found", 'No file found');
       }

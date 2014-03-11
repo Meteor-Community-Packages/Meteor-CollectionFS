@@ -7,7 +7,7 @@ getHeaders = [];
  *
  * HTTP DEL request handler
  */
-httpDelHandler = function httpDelHandler(data, ref) {
+httpDelHandler = function httpDelHandler(ref) {
   var self = this;
   var opts = _.extend({}, self.query || {}, self.params || {});
 
@@ -35,7 +35,7 @@ httpDelHandler = function httpDelHandler(data, ref) {
  *
  * HTTP GET request handler
  */
-httpGetHandler = function httpGetHandler(data, ref) {
+httpGetHandler = function httpGetHandler(ref) {
   var self = this;
   // Once we have the file, we can test allow/deny validators
   FS.Utility.validateAction(ref.collection._validators['download'], ref.file, self.userId);
@@ -120,64 +120,72 @@ httpGetHandler = function httpGetHandler(data, ref) {
 
 };
 
-httpPutInsertHandler = function httpPutInsertHandler(data, ref) {
+httpPutInsertHandler = function httpPutInsertHandler(readStream, ref) {
   var self = this;
   var opts = _.extend({}, self.query || {}, self.params || {});
+  // Get filename if set
   var filename = opts.filename;
+  // XXX: Get number of chunks?
+  var chunkSum = opts.chunks;
+
+  // Get chunk if set
+  var chunk = parseInt(opts.chunk, 10);
+  if (isNaN(chunk)) chunk = 0;
 
   FS.debug && console.log("HTTP PUT (insert) handler");
 
-  // Make sure the data we received is a buffer
-  check(data, Buffer);
-
   // Create file object
-  var file = new FS.File({
-    collectionName: ref.collection.name
-  });
-
-  // Set the filename if one was provided
-  if (filename && filename.length) {
-    file.name = filename;
-  }
+  var fileDoc = {
+    collectionName: ref.collection.name,
+    // Get content type
+    type: (self.requestHeaders['content-type'] || 'application/octet-stream'),
+    // Set the filename if one was provided
+    name: ''+(filename || ''),
+    // Set chunkSize
+    chunkSize: ref.collection.chunkSize,
+    //
+    chunkCount: 0,
+    //
+    chunkSum: chunkSum
+  };
 
   // Validate with insert allow/deny
   FS.Utility.validateAction(ref.collection.files._validators['insert'], file, self.userId);
 
-  // Get content type
-  var type = self.requestHeaders['content-type'] || 'application/octet-stream';
+  // Get the new id for the file
+  var id = ref.collection.files.insert(fileDoc);
 
-  // Attach data to file; this will set size and type properties for the file
-  file.setDataFromBuffer(data, type);
+  // Set the id in the doc for a complete file reference
+  fileDoc._id = id;
 
-  // Insert file into collection, triggering data storage
+  // Create the nice FS.File
+  fileObj = new FS.File(fileDoc);
+
+  // Pipe the data to tempstore...
+  readStream.pipe( FS.TempStore.createWriteStream(fileObj, chunk) );
+
+  // Insert file into collection, triggering readStream storage
   file = ref.collection.insert(file);
 
   // Send response
   self.setStatusCode(200);
+
+  // Return the new file id
   return {_id: file._id};
 };
 
-httpPutUpdateHandler = function httpPutUpdateHandler(data, ref) {
+httpPutUpdateHandler = function httpPutUpdateHandler(readStream, ref) {
   var self = this;
   var opts = _.extend({}, self.query || {}, self.params || {});
-  var start = parseInt(opts.start, 10);
-  if (isNaN(start)) start = 0;
+  var chunk = parseInt(opts.chunk, 10);
+  if (isNaN(chunk)) chunk = 0;
 
-  // Make sure the data we received is a buffer
-  check(data, Buffer);
-
-  FS.debug && console.log("HTTP PUT (update) handler received", data.length, "bytes chunk for start position", start);
-
+  FS.debug && console.log("HTTP PUT (update) handler received chunk: ", chunk);
 
   // Validate with update allow/deny; also mounts and retrieves the file
   FS.Utility.validateAction(ref.collection.files._validators['update'], ref.file, self.userId);
 
-  // Save chunk in temporary store
-  FS.TempStore.saveChunk(ref.file, data, start, function(err) {
-    if (err) {
-      throw new Error("Unable to load chunk at position " + start + ": " + err.message);
-    }
-  });
+  readStream.pipe( FS.TempStore.createWriteStream(ref.file, chunk) );
 
   // Send response
   self.setStatusCode(200);
