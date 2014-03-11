@@ -1,4 +1,4 @@
-/** 
+/**
  * @method FS.File
  * @namespace FS.File
  * @public
@@ -35,7 +35,7 @@ FS.File = function(ref, createdByTransform) {
   self._attachFile(ref);
 };
 
-/** 
+/**
  * @method FS.File.prototype.uploadProgress
  * @public
  * @returns {number} The server confirmed upload progress
@@ -49,11 +49,11 @@ FS.File.prototype.uploadProgress = function() {
     self.getFileRecord();
 
     // Return the confirmed progress
-    return Math.round(self.bytesUploaded / self.size * 100);
+    return Math.round(self.chunkCount / self.chunkSum * 100);
   }
 };
 
-/** 
+/**
  * @method FS.File.prototype.controlledByDeps
  * @public
  * @returns {FS.Collection} Returns true if this FS.File is reactive
@@ -68,7 +68,7 @@ FS.File.prototype.controlledByDeps = function() {
   return self.createdByTransform && Deps.active;
 };
 
-/** 
+/**
  * @method FS.File.prototype.getCollection
  * @public
  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
@@ -96,7 +96,7 @@ FS.File.prototype.getCollection = function() {
   return self.collection; //possibly undefined, but that's desired behavior
 };
 
-/** 
+/**
  * @method FS.File.prototype.isMounted
  * @public
  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
@@ -106,7 +106,7 @@ FS.File.prototype.getCollection = function() {
  */
 FS.File.prototype.isMounted = FS.File.prototype.getCollection;
 
-/** 
+/**
  * @method FS.File.prototype.getFileRecord Returns the fileRecord
  * @public
  * @returns {object} The filerecord
@@ -133,13 +133,13 @@ FS.File.prototype.getFileRecord = function() {
   }
 };
 
-/** 
+/**
  * @method FS.File.prototype.update
  * @public
  * @param {modifier} modifier
  * @param {object} [options]
  * @param {function} [callback]
- * 
+ *
  * Updates the fileRecord.
  */
 FS.File.prototype.update = function(modifier, options, callback) {
@@ -196,7 +196,7 @@ FS.File.prototype.remove = function(callback) {
   }
 };
 
-/** 
+/**
  * @method FS.File.prototype.moveTo
  * @param {FS.Collection} targetCollection
  * @private // Marked private until implemented
@@ -207,7 +207,7 @@ FS.File.prototype.remove = function(callback) {
  * > Note: Not yet implemented
  */
 
-/** 
+/**
  * @method FS.File.prototype.get
  * @public
  * @param {object} [options]
@@ -250,7 +250,7 @@ FS.File.prototype.getExtension = function() {
   return (found > 0 ? name.substr(found).toLowerCase() : '');
 };
 
-/** 
+/**
  * @method FS.File.prototype.toDataUrl
  * @public
  * @param {function} callback Callback(err, dataUrl) (callback is optional on server)
@@ -309,7 +309,7 @@ FS.File.prototype.toDataUrl = function(callback) {
  * @param {string} [filename] - The name to use for the new FS.File instance
  * @param {FS.File~newFsFileCallback} callback - Optional on the server.
  * @return {undefined}
- * 
+ *
  * Loads data from a remote URL into a new FS.File and passes it to callback.
  * If a callback is not provided on the server, will block and return the
  * new FS.File instance with remote data downloaded into it.
@@ -317,7 +317,7 @@ FS.File.prototype.toDataUrl = function(callback) {
 FS.File.fromUrl = function(url, filename, callback) {
   if (!Match.test(url, String))
     throw new Error("FS.File.fromUrl requires a string url as the first argument");
-  
+
   var fsFile = new FS.File({name: filename});
   return fsFile.setDataFromUrl(url, callback);
 };
@@ -335,7 +335,7 @@ function checkContentType(fsFile, storeName, startOfType) {
   return false;
 }
 
-/** 
+/**
  * @method FS.File.prototype.isImage Is it an image file?
  * @public
  * @param {object} [options]
@@ -350,7 +350,7 @@ FS.File.prototype.isImage = function(options) {
   return checkContentType(this, (options || {}).store, 'image/');
 };
 
-/** 
+/**
  * @method FS.File.prototype.isVideo Is it a video file?
  * @public
  * @param {object} [options]
@@ -365,7 +365,7 @@ FS.File.prototype.isVideo = function(options) {
   return checkContentType(this, (options || {}).store, 'video/');
 };
 
-/** 
+/**
  * @method FS.File.prototype.isAudio Is it an audio file?
  * @public
  * @param {object} [options]
@@ -380,7 +380,7 @@ FS.File.prototype.isAudio = function(options) {
   return checkContentType(this, (options || {}).store, 'audio/');
 };
 
-/** 
+/**
  * @method FS.File.prototype.isUploaded Is this file completely uploaded?
  * @public
  * @returns {boolean} True if the number of uploaded bytes is equal to the file size.
@@ -391,10 +391,10 @@ FS.File.prototype.isUploaded = function() {
   // Make sure we use the updated file record
   self.getFileRecord();
 
-  return self.bytesUploaded === self.size;
+  return self.chunkCount === self.chunkSum;
 };
 
-/** 
+/**
  * @method FS.File.prototype.chunkIsUploaded Is the chunk completely uploaded?
  * @public
  * @param {number} start
@@ -409,7 +409,7 @@ FS.File.prototype.chunkIsUploaded = function(start) {
   return !!_.findWhere(self.chunks, {start: start});
 };
 
-/** 
+/**
  * @method FS.File.prototype.hasCopy
  * @public
  * @param {string} storeName Name of the store to check for a copy of this file
@@ -436,7 +436,7 @@ FS.File.prototype.hasCopy = function(storeName, optimistic) {
   return false;
 };
 
-/** 
+/**
  * @method FS.File.prototype.getCopyInfo
  * @public
  * @param {string} storeName Name of the store for which to get copy info.
@@ -449,7 +449,7 @@ FS.File.prototype.getCopyInfo = function(storeName) {
   return (self.copies && self.copies[storeName]) || null;
 };
 
-/** 
+/**
  * @method FS.File.prototype.hasMaster Does the attached collection allow this file?
  * @public
  * @returns {boolean} True if the attached collection allows this file.
@@ -472,7 +472,7 @@ FS.File.prototype.fileIsAllowed = function() {
     }
     var saveAllFileExtensions = (filter.allow.extensions.length === 0);
     var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
-    
+
     // Get info about the file
     var filename = self.name;
     var contentType = self.type;
@@ -485,7 +485,7 @@ FS.File.prototype.fileIsAllowed = function() {
       filter.onInvalid && filter.onInvalid(filename + " has an unknown file size");
       return false;
     }
-    
+
     // Do extension checks only if we have a filename
     if (filename) {
       var ext = self.getExtension();
@@ -496,7 +496,7 @@ FS.File.prototype.fileIsAllowed = function() {
         return false;
       }
     }
-    
+
     // Do content type checks
     if (!((saveAllContentTypes ||
             contentTypeInList(filter.allow.contentTypes, contentType)) &&
@@ -504,7 +504,7 @@ FS.File.prototype.fileIsAllowed = function() {
       filter.onInvalid && filter.onInvalid(filename + ' is of the type "' + contentType + '", which is not allowed');
       return false;
     }
-    
+
     // Do max size check
     if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
       filter.onInvalid && filter.onInvalid(filename + " is too big");
@@ -522,7 +522,7 @@ FS.File.prototype.fileIsAllowed = function() {
  * @param {String[]} list - Array of content types
  * @param {String} contentType - The content type
  * @returns {Boolean}
- * 
+ *
  * Returns true if the content type is in the list, or if it matches
  * one of the special types in the list, e.g., "image/*".
  */
