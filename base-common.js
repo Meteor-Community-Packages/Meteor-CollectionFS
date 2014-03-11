@@ -89,6 +89,13 @@ FS.Utility.cloneFileRecord = function(rec) {
   var result = _Utility.cloneFileUnit(rec) || {};
   // Base reference
   result.collectionName = '' + rec.collectionName;
+  // chunk ref
+  result.chunkSize = rec.chunkSize;
+  // count for transfered chunks
+  result.chunkCount = rec.chunkCount;
+  // count for transfered chunks
+  result.chunkSum = rec.chunkSum || Math.ceil(rec.size / rec.chunkSize);
+  // Deprecate?
   result.bytesUploaded = _Utility.defaultZero(rec.bytesUploaded);
 
   if (_.isObject(rec.metadata)) {
@@ -123,7 +130,7 @@ FS.Utility.cloneFileRecord = function(rec) {
  * @public
  * @param {Error} [err]
  * @returns {undefined}
- * 
+ *
  * Can be used as a default callback for client methods that need a callback.
  * Simply throws the provided error if there is one.
  */
@@ -138,7 +145,7 @@ FS.Utility.defaultCallback = function(err) {
  * @param {Function} callback - A callback function, if you have one. Can be undefined or null.
  * @param {String} err - Error text
  * @returns {undefined}
- * 
+ *
  * Creates an Error instance with the given text. If callback is a function,
  * passes the error to that function. Otherwise throws it. Useful for dealing
  * with errors in methods that optionally accept a callback.

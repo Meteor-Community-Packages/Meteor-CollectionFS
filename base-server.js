@@ -3,7 +3,7 @@
  * @public
  * @param {Uint8Array} data
  * @returns {Buffer}
- * 
+ *
  * Converts a Uint8Array instance to a Node Buffer instance
  */
 FS.Utility.binaryToBuffer = function(data) {
@@ -20,7 +20,7 @@ FS.Utility.binaryToBuffer = function(data) {
  * @public
  * @param {Buffer} data
  * @returns {Uint8Array}
- * 
+ *
  * Converts a Node Buffer instance to a Uint8Array instance
  */
 FS.Utility.bufferToBinary = function(data) {
@@ -30,4 +30,22 @@ FS.Utility.bufferToBinary = function(data) {
     binary[i] = data[i];
   }
   return binary;
+};
+
+FS.Utility.safeCallback = function (callback) {
+    // Make callback safe for Meteor code
+    return Meteor.bindEnvironment(callback, function(err) { throw err; });
+};
+
+FS.Utility.safeStream = function(nodestream) {
+  if (!nodestream || typeof nodestream.on !== 'function')
+    throw new Error('Storage Adapter "' + self.name + '" did not return write stream');
+
+  // Create Meteor safe events
+  nodestream.safeOn = function(name, callback) {
+    return nodestream.on(name, FS.Utility.safeCallback(callback));
+  };
+
+  // Return the modified stream - modified anyway
+  return nodestream;
 };
