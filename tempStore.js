@@ -16,178 +16,103 @@
  */
 
 fs = Npm.require('fs');
-tmp = Npm.require('temp');
+path = Npm.require('path');
+os = Npm.require('os');
+
 var Readable = Npm.require('stream').Readable;
 var util = Npm.require('util');
 
 var storeCollection = new Meteor.Collection("cfs.tempstore");
 
+// We get the os default temp folder and create a folder "cfs" in there
+var tempFolder = path.resolve(os.tmpDir(), 'cfs');
+
+// Create the temp folder
+if (!fs.existsSync(tempFolder)) {
+  try {
+    fs.mkdirSync(tempFolder);
+  } catch(err) {
+    throw new Error('Could not create temporary storage');
+  }
+}
+
+console.log('TempStore: ' + tempFolder);
+
 /** @namespace FS.TempStore
  * @property FS.TempStore
  * @type {object}
  */
-FS.TempStore = {
-  /** @method FS.TempStore.saveChunk
-   * @param {FS.File} fsFile
-   * @param {Buffer} buffer
-   * @param {number} start
-   * @param {function} callback callback(err)
-   * @todo In some ways it would make sense to save chunks into temp folder pr. file, naming the chunks `1.bin`, `2.bin` ... `n.bin`
-   */
-  saveChunk: function saveChunk(fileObj, buffer, start, callback) {
-    var total = buffer.length, tempFile, bytesChange;
-
-    if (typeof callback !== "function") {
-      throw new Error("FS.File.saveChunk requires a callback");
-    }
-
-    var existing = storeCollection.findOne({fileId: fileObj._id, collectionName: fileObj.collectionName, start: start});
-    if (existing) {
-      tempFile = existing.tempFile;
-      bytesChange = 0;
-    } else {
-      // create it in the OS temp directory with a random unique name ending with ".bin"
-      tempFile = tmp.path({suffix: '.bin'});
-      FS.debug && console.log('Chunk saved ' + tempFile);
-      // and make note of this file
-      storeCollection.insert({
-        fileId: fileObj._id,
-        collectionName: fileObj.collectionName,
-        start: start,
-        size: total,
-        tempFile: tempFile
-      });
-      bytesChange = total;
-    }
-
-    // Write the chunk data into the temporary file
-    fs.writeFile(tempFile, buffer, Meteor.bindEnvironment(function(err) {
-      if (err) {
-        callback(err);
-      } else {
-        fileObj.update({$inc: {bytesUploaded: bytesChange}}, function(err) {
-          callback(err); //don't pass along the second arg
-        });
-      }
-    }, function(err) {
-      callback(err);
-    }));
-  },
-  /** @method FS.TempStore.getDataForFile
-   * @param {FS.File} fileObj
-   * @param {function} callback callback(err, fileObjWithData)
-   * @todo This cannot handle large files eg. 2gb or more?
-   */
-  getDataForFile: function getDataForFile(fileObj, callback) {
-throw new Error('Deprecated in favor of Stream');
-    var existing = storeCollection.find({fileId: fileObj._id, collectionName: fileObj.collectionName});
-    if (!existing.count()) {
-      callback(new Error('getDataForFile: No temporary chunks!'));
-      return;
-    }
-
-    existing.rewind();
-
-    var tempBinary = EJSON.newBinary(fileObj.size);
-    var total = 0, stop = false;
-    existing.forEach(function(chunk) {
-      if (!stop) {
-        var start = chunk.start;
-        // Call node readFile
-        fs.readFile(chunk.tempFile, Meteor.bindEnvironment(function(err, buffer) {
-          if (buffer) {
-            // Copy chunk buffer into full file buffer at correct starting position
-            for (var i = 0, ln = buffer.length; i < ln; i++) {
-              tempBinary[start + i] = buffer[i];
-              total++;
-            }
-            // If all chunks have been copied, set the fileObj
-            // binary and call the callback
-            if (total === fileObj.size) {
-              fileObj.binary = tempBinary;
-              callback(null, fileObj);
-              stop = true;
-            }
-          } else {
-            callback(err);
-            stop = true;
-          }
-        }, function(err) {
-          callback(err);
-          stop = true;
-        }));
-      }
-    });
-  },
-  /** @method FS.TempStore.deleteChunks
-   * @param {FS.File} fileObj
-   * @param {function} callback callback(err)
-   */
-  deleteChunks: function deleteChunks(fileObj, callback) {
-    var stop = false, count, deletedCount = 0;
-    callback = callback || FS.Utility.defaultCallback;
-
-    var existing = storeCollection.find({fileId: fileObj._id, collectionName: fileObj.collectionName});
-
-    if (!existing.count()) {
-      callback();
-      return;
-    }
-
-    function success() {
-      deletedCount++;
-      if (deletedCount === count) {
-        storeCollection.remove({fileId: fileObj._id, collectionName: fileObj.collectionName});
-        callback();
-      }
-    }
-
-    existing.rewind();
-
-    existing.forEach(function(chunk) {
-      if (!stop) {
-        if (!fs.existsSync(chunk.tempFile)) {
-          success();
-        } else {
-          fs.unlink(chunk.tempFile, Meteor.bindEnvironment(function(err) {
-            if (err) {
-              callback(err);
-              stop = true;
-            } else {
-              success();
-            }
-          }, function(err) {
-            callback(err);
-            stop = true;
-          }));
-        }
-      }
-    });
-  },
-  /** @method FS.TempStore.ensureForFile
-   * @param {FS.File} fileObj
-   * @param {function} callback callback(err)
-   */
-  ensureForFile: function ensureForFile(fileObj, callback) {
-    callback = callback || FS.Utility.defaultCallback;
-    FS.TempStore.saveChunk(fileObj, fileObj.getBuffer(), 0, callback);
-  }
-};
-
+FS.TempStore = {};
 
 // Stream implementation
 
+// Naming convention for file folder
+_filePath = function(fileObj) {
+  return fileObj._id + '.' + fileObj.collectionName;
+};
 
+// Naming convention for chunk files
+_chunkPath = function(n) {
+  return n + '.chunk';
+};
+
+FS.TempStore.removeFile = function(fileObj) {
+  var self = this;
+  // File path
+  var filePath = _filePath(fileObj);
+  // We only start work if its found
+  if (fs.existsSync( filePath )) {
+    // Read all the chunks in folder
+    chunkPaths = fs.readdirSync(_filePath(fileObj) );
+    // Unlink each file
+    for (var i = 0; i < chunkPaths; i++) {
+      fs.unlinkSync( chunkPaths[i] );
+    }
+    // Unlink the folder itself
+    fs.rmdirSync( filePath );
+  }
+
+};
+
+// WRITE STREAM
+FS.TempStore.createWriteStream = function(fileObj, chunk) {
+  var self = this;
+  // File path
+  var filePath = _filePath(fileObj);
+
+  // Make sure we have a place to put files...
+  if (!fs.existsSync( filePath )) {
+    try {
+      fs.mkdirSync( filePath );
+    } catch(err) {
+      throw new Error('FS.Tempstore.createWriteStream cannot access temporary filesystem');
+    }
+  }
+
+  // Find a nice location for the chunk data
+  var filePath = path.join(filePath, _chunkPath(chunk));
+
+  // Create the stream as Meteor safe stream
+  var writeStream = FS.Utility.safeStream(fs.createWriteStream( filePath ) );
+
+  // When the stream closes we update the chunkCount
+  writeStream.safeOn('close', function() {
+    // Progress
+    fileObj.update({ $inc: { chunkCount: 1 }});
+  });
+
+  return writeStream;
+};
+
+// READSTREAM
 _TempstoreReadStream = function(fileObj, options) {
   var self = this;
   Readable.call(this, options);
-  self.chunks = [];
-  self.currentChunk = 0;
 
-  var cursor = storeCollection.find({fileId: fileObj._id, collectionName: fileObj.collectionName});
-  cursor.forEach(function(chunk) {
-    self.chunks.push(chunk.tempFile);
-  });
+  self.currentChunk = 0;
+  self.chunkSum = fileObj.chunkSum;
+
+  self.filePath = _filePath(fileObj);
 };
 
 util.inherits(_TempstoreReadStream, Readable);
@@ -195,12 +120,13 @@ util.inherits(_TempstoreReadStream, Readable);
 _TempstoreReadStream.prototype._read = function() {
   var self = this;
 
-  var chunkPath = self.chunks[self.currentChunk++];
-
-  if (typeof chunkPath === 'undefined') {
-    this.push(null);
-  } else {
+  if (self.currentChunk < self.chunkSum) {
+    // Get the chunk path
+    var chunkPath = path.join(self.filePath, _chunkPath(self.currentChunk++) );
+    // Load chunk - we assume its there
     this.push(fs.readFileSync(chunkPath));
+  } else {
+    this.push(null);
   }
 
 };
@@ -209,10 +135,3 @@ _TempstoreReadStream.prototype._read = function() {
 FS.TempStore.createReadStream = function(fileObj) {
   return new _TempstoreReadStream(fileObj);
 };
-/** @method FS.TempStore.getDataForFileSync
- * @param {FS.File} fileObj
- *
- * Synchronous version of FS.TempStore.getDataForFile. Returns the file
- * with data attached, or throws an error.
- */
-FS.TempStore.getDataForFileSync = Meteor._wrapAsync(FS.TempStore.getDataForFile);

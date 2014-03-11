@@ -2,9 +2,9 @@ Package.describe({
   summary: 'CollectionFS, temporary storage'
 });
 
-Npm.depends({
-  temp: "0.6.0"
-});
+// Npm.depends({
+//   temp: "0.6.0"
+// });
 
 Package.on_use(function(api) {
 
