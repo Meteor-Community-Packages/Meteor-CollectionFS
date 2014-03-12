@@ -123,10 +123,22 @@ FS.File.prototype.createReadStream = function(storeName) {
 };
 
 //TODO this might need some work
-FS.File.prototype.createWriteStream = function(store) {
+FS.File.prototype.createWriteStream = function(storeName) {
   var self = this;
-  // Stream to the store using storage adapter
-  self.getCollection();
-  store = self.collection.storesLookup[store] || self.collection.primaryStore;
-  return store.adapter.createWriteStream(self);
+
+  // We have to have a mounted file in order for this to work
+  if (self.isMounted()) {
+    if (FS.TempStore && FS.FileWorker) {
+      // If we have worker installed - we pass the file to FS.TempStore
+      // We dont need the storeName since all stores will be generated from
+      // TempStore.
+      // This should trigger FS.FileWorker at some point?
+      FS.TempStore.createWriteStream(self);
+    } else {
+      // Stream directly to the store using storage adapter
+      var storage = self.collection.storesLookup[storeName] || self.collection.primaryStore;
+      return storage.adapter.createWriteStream(self);
+  } else {
+    throw new Meteor.Error('File not mounted');
+  }
 };
