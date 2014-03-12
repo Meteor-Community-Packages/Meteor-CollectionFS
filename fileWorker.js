@@ -177,52 +177,53 @@ function saveCopy(fsFile, storeName, options) {
     throw new Error('No store named "' + storeName + '" exists');
   }
 
+  var targetStream = storage.adapter.createWriteStream(fsFile);
 
-  // If the supplied fsFile does not have a buffer loaded already,
-  // try to load it from the temporary file.
-  if (!fsFile.hasData()) {
-    FS.debug && console.log('saving to store ' + storeName);
-
-    var targetStream = storage.adapter.createWriteStream(fsFile);
-    var sourceStream = FS.TempStore.createReadStream(fsFile);
-
-    if (FS.debug) {
-      targetStream.on('close', function() {
-        console.log('-----------CLOSE STREAM');
-      });
-
-      targetStream.on('end', function() {
-        console.log('-----------ENDED STREAM');
-      });
-
-      targetStream.on('finish', function() {
-        console.log('-----------finish STREAM');
-      });
-
-      targetStream.on('error', function() {
-        console.log('-----------ERROR STREAM');
-      });
-    }
-
-    targetStream.safeOn('close', function() {
-      // Update the time - this could also be fetched from api.stats in the
-      // storage adapter eg. by adding on event
-      fsFile.copies[storeName].utime = Date();
-
-      var modifier = {};
-      modifier["copies." + storeName] = fsFile.copies[storeName];
-      // Update the main file object with the modifier
-      fsFile.update({$set: modifier});
-
+  if (FS.debug) {
+    targetStream.on('close', function() {
+      console.log('-----------CLOSE STREAM');
     });
 
-    targetStream.safeOn('error', function() {
-      // TODO:
+    targetStream.on('end', function() {
+      console.log('-----------ENDED STREAM');
     });
-    // Pipe the temp data into the storage adapter
-    sourceStream.pipe(targetStream);
-    //fsFile = FS.TempStore.getDataForFileSync(fsFile);
+
+    targetStream.on('finish', function() {
+      console.log('-----------finish STREAM');
+    });
+
+    targetStream.on('error', function() {
+      console.log('-----------ERROR STREAM');
+    });
   }
+
+  targetStream.safeOn('close', function() {
+    // Update the time - this could also be fetched from api.stats in the
+    // storage adapter eg. by adding on event
+    fsFile.copies[storeName].utime = Date();
+
+    var modifier = {};
+    modifier["copies." + storeName] = fsFile.copies[storeName];
+    // Update the main file object with the modifier
+    fsFile.update({$set: modifier});
+
+  });
+
+  targetStream.safeOn('error', function() {
+    // TODO:
+  });
+
+  FS.debug && console.log('saving to store ' + storeName);
+
+  if (storage.beforeSave) {
+    // Call the beforeSave function provided by the user
+    // XXX: If we use Transform streams instead then no more use for beforeSave
+    storage.beforeSave.apply(fsFile, [targetStream]);
+  } else {
+    // Pipe the temp data into the storage adapter
+    FS.TempStore.createReadStream(fsFile).pipe(targetStream);
+  }
+  //fsFile = FS.TempStore.getDataForFileSync(fsFile);
 
   // var result;
 
@@ -276,6 +277,6 @@ function saveCopy(fsFile, storeName, options) {
 
 // function copyOfFileObjectWithData(fsFile) {
 //   var fsFileClone = fsFile.clone();
-//   fsFileClone.attachData(fsFile.getBinary());
+//   fsFileClone.setDataFromBinary(fsFile.data.getBinary());
 //   return fsFileClone;
 // }
