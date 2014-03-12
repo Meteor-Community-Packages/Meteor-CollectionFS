@@ -85,101 +85,106 @@ FS.Store.GridFS = function(name, options) {
       return writeStream;
 
     },
-    get: function(fileObj, callback) {
-      var self = this;
-      var fileInfo = fileObj.getCopyInfo(name);
-      if (!fileInfo) { return callback(null, null); }
-      var fileKey = fileInfo.key;
 
-      mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, function (err, existing) {
-        if (err) { return callback(err); }
-        if (!existing) { return callback(null, null); }
-        var gstore = new mongodb.GridStore(self.db, fileKey, 'r', { root: gridfsName });
-        gstore.open(function (err, gs) {
-          if (err) { return callback(err); }
-          gs.read(function (err, result) {
-            if (err) { return callback(err); }
-            gs.close(function (err) {
-              if (err) { return callback(err); }
-              callback(null, result);
-            });
-          });
-        });
-      });
-    },
+    // // Deprecated
+    // get: function(fileObj, callback) {
+    //   var self = this;
+    //   var fileInfo = fileObj.getCopyInfo(name);
+    //   if (!fileInfo) { return callback(null, null); }
+    //   var fileKey = fileInfo.key;
 
-    getBytes: function(fileObj, start, end, callback) {
-      var self = this;
-      var fileInfo = fileObj.getCopyInfo(name);
-      if (!fileInfo) { return callback(null, null); }
-      var fileKey = fileInfo.key;
-      mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, function (err, existing) {
-        if (err) { return callback(err); }
-        if (!existing) { return callback(null, null); }
-        var gstore = new mongodb.GridStore(self.db, fileKey, 'r', { root: gridfsName });
-        gstore.open(function (err, gs) {
-          if (err) { return callback(err); }
-          gs.seek(start, function (err) {
-            if (err) { return callback(err); }
-            gs.read(end - start, function (err, result) {
-              if (err) { return callback(err); }
-              gs.close(function (err) {
-                if (err) { return callback(err); }
-                callback(null, result);
-              });
-            });
-          });
-        });
-      });
-    },
+    //   mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, function (err, existing) {
+    //     if (err) { return callback(err); }
+    //     if (!existing) { return callback(null, null); }
+    //     var gstore = new mongodb.GridStore(self.db, fileKey, 'r', { root: gridfsName });
+    //     gstore.open(function (err, gs) {
+    //       if (err) { return callback(err); }
+    //       gs.read(function (err, result) {
+    //         if (err) { return callback(err); }
+    //         gs.close(function (err) {
+    //           if (err) { return callback(err); }
+    //           callback(null, result);
+    //         });
+    //       });
+    //     });
+    //   });
+    // },
 
-    put: function(fileObj, options, callback) {
-      var self = this;
-      options = options || {};
+    // // Deprecated
+    // getBytes: function(fileObj, start, end, callback) {
+    //   var self = this;
+    //   var fileInfo = fileObj.getCopyInfo(name);
+    //   if (!fileInfo) { return callback(null, null); }
+    //   var fileKey = fileInfo.key;
+    //   mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, function (err, existing) {
+    //     if (err) { return callback(err); }
+    //     if (!existing) { return callback(null, null); }
+    //     var gstore = new mongodb.GridStore(self.db, fileKey, 'r', { root: gridfsName });
+    //     gstore.open(function (err, gs) {
+    //       if (err) { return callback(err); }
+    //       gs.seek(start, function (err) {
+    //         if (err) { return callback(err); }
+    //         gs.read(end - start, function (err, result) {
+    //           if (err) { return callback(err); }
+    //           gs.close(function (err) {
+    //             if (err) { return callback(err); }
+    //             callback(null, result);
+    //           });
+    //         });
+    //       });
+    //     });
+    //   });
+    // },
 
-      var fileKey = fileObj.collectionName + fileObj._id;
-      var buffer = fileObj.getBuffer();
+    // // Deprecated
+    // put: function(fileObj, options, callback) {
+    //   var self = this;
+    //   options = options || {};
 
-      // Write buffer to store once we have a suitable fileKey
-      var writeBuffer = function (newFileKey) {
-        var gridOptions = {
-          root: gridfsName,
-          chunk_size: options.chunk_size || chunkSize,
-          aliases: [fileObj.name],
-          metadata: fileObj.metadata || null,
-          content_type: fileObj.type || 'application/octet-stream'
-        };
-        var gstore = new mongodb.GridStore(self.db, newFileKey, 'w', gridOptions);
-        gstore.open(function (err, gs) {
-          if (err) { return callback(err); }
-          gs.write(buffer, function (err, result) {
-            if (err) { return callback(err); }
-            gs.close(function (err) {
-              if (err) { return callback(err); }
-              callback(null, newFileKey);
-            });
-          });
-        });
-      };
+    //   var fileKey = fileObj.collectionName + fileObj._id;
+    //   var buffer = fileObj.getBuffer();
 
-      if (options.overwrite) {
-        writeBuffer(fileKey);
-      } else {
-        var fn = fileKey;
-        var findUnusedFileKey = function (err, existing) {
-          if (err) { return callback(err); }
-          if (existing) {
-            // Avoid deep recursion by appending a 6-digit base 36 pseudorandom number
-            fileKey = fn + '_' + Math.floor(Math.random() * 2176782335).toString(36);
-            mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, findUnusedFileKey);
-          } else {
-            writeBuffer(fileKey);
-          }
-        };
-        mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, findUnusedFileKey);
-      }
-    },
+    //   // Write buffer to store once we have a suitable fileKey
+    //   var writeBuffer = function (newFileKey) {
+    //     var gridOptions = {
+    //       root: gridfsName,
+    //       chunk_size: options.chunk_size || chunkSize,
+    //       aliases: [fileObj.name],
+    //       metadata: fileObj.metadata || null,
+    //       content_type: fileObj.type || 'application/octet-stream'
+    //     };
+    //     var gstore = new mongodb.GridStore(self.db, newFileKey, 'w', gridOptions);
+    //     gstore.open(function (err, gs) {
+    //       if (err) { return callback(err); }
+    //       gs.write(buffer, function (err, result) {
+    //         if (err) { return callback(err); }
+    //         gs.close(function (err) {
+    //           if (err) { return callback(err); }
+    //           callback(null, newFileKey);
+    //         });
+    //       });
+    //     });
+    //   };
 
+    //   if (options.overwrite) {
+    //     writeBuffer(fileKey);
+    //   } else {
+    //     var fn = fileKey;
+    //     var findUnusedFileKey = function (err, existing) {
+    //       if (err) { return callback(err); }
+    //       if (existing) {
+    //         // Avoid deep recursion by appending a 6-digit base 36 pseudorandom number
+    //         fileKey = fn + '_' + Math.floor(Math.random() * 2176782335).toString(36);
+    //         mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, findUnusedFileKey);
+    //       } else {
+    //         writeBuffer(fileKey);
+    //       }
+    //     };
+    //     mongodb.GridStore.exist(self.db, fileKey, gridfsName, {}, findUnusedFileKey);
+    //   }
+    // },
+
+    // Refactor to "remove"
     del: function(fileObj, callback) {
       var self = this;
       var fileInfo = fileObj.getCopyInfo(name);
@@ -191,6 +196,7 @@ FS.Store.GridFS = function(name, options) {
       });
     },
 
+    // Not implemented
     watch: function() {
       throw new Error("GridFS storage adapter does not support the sync option");
     },
