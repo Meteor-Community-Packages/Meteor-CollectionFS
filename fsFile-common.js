@@ -11,13 +11,12 @@ FS.File = function(ref, createdByTransform) {
 
   self.createdByTransform = createdByTransform;
 
-  if (typeof ref !== 'object')
-    throw new Error('FS.File expects an object as argument');
+  if (typeof ref !== 'object') {
+    ref = {};
+  }
 
   // Extend self with filerecord related data
-  if (typeof ref === "object") {
-    _.extend(self, FS.Utility.cloneFileRecord(ref));
-  }
+  _.extend(self, FS.Utility.cloneFileRecord(ref));
 
   if ((typeof File !== "undefined" && ref instanceof File) ||
     (typeof Blob !== "undefined" && ref instanceof Blob)){
