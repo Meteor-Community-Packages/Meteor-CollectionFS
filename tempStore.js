@@ -54,6 +54,14 @@ _filePath = function(fileObj) {
 // Naming convention for chunk files
 _chunkPath = function(n) {
   return n + '.chunk';
+
+FS.TempStore.exists = function(fileObj) {
+  if (fileObj.isMounted()) {
+    return fs.existsSync(_filePath(fileObj));
+  } else {
+    // It cant be
+    return false;
+  }
 };
 
 FS.TempStore.removeFile = function(fileObj) {
