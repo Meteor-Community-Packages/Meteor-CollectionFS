@@ -110,9 +110,20 @@ FS.TempStore.createWriteStream = function(fileObj, chunk) {
 
   // When the stream closes we update the chunkCount
   writeStream.safeOn('close', function() {
-    // Progress
-    if (newChunk) {
-      fileObj.update({ $inc: { chunkCount: 1 }});
+    if (typeof chunk === 'undefined') {
+
+      // We created a writestream without chunk defined meaning this was used
+      // as a regular createWriteStream method so we only stream to one chunk
+      // file - 0.chunk - therefor setting the chunkCount and chunkSum to 1
+      fileObj.update({ $set: { chunkCount: 1, chunkSum: 1 }});
+
+    } else {
+
+      // Progress
+      if (newChunk) {
+        fileObj.update({ $inc: { chunkCount: 1 }});
+      }
+
     }
   });
 
