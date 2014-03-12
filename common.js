@@ -25,7 +25,7 @@ FS.Collection = function(name, options) {
   self.options = {
     filter: null, //optional
     stores: [], //required
-    chunkSize: 512 * 1024 // 2MB default; should be overridden to 128K when using DDP upload to eliminate UI blocking
+    chunkSize: 2 * 1024 * 1024 // 2MB default; should be overridden to 128K when using DDP upload to eliminate UI blocking
   };
 
   // Define a default uploader based on which upload packages are present,
