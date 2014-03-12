@@ -131,10 +131,10 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
         // No id supplied so we will return the published list of files ala
         // http.publish in json format?
         console.log('PUT without file id??');
-        return httpPutInsertHandler.apply(this, [data, ref]);
+        return httpPutInsertHandler.apply(this, [ref]);
       } else {
         if (ref.file) {
-          return httpPutUpdateHandler.apply(this, [data, ref]);
+          return httpPutUpdateHandler.apply(this, [ref]);
         } else {
           throw new Meteor.Error(404, "Not Found", 'No file found');
         }

@@ -116,11 +116,11 @@ httpGetHandler = function httpGetHandler(ref) {
   // Inform clients that we accept ranges for resumable chunked downloads
   self.addHeader('Accept-Ranges', 'bytes');
 
-  return storage.adapter.createReadStream(ref.file);
+  storage.adapter.createReadStream(ref.file).pipe(self.createWriteStream());
 
 };
 
-httpPutInsertHandler = function httpPutInsertHandler(readStream, ref) {
+httpPutInsertHandler = function httpPutInsertHandler(ref) {
   var self = this;
   var opts = _.extend({}, self.query || {}, self.params || {});
   // Get filename if set
@@ -162,7 +162,7 @@ httpPutInsertHandler = function httpPutInsertHandler(readStream, ref) {
   fileObj = new FS.File(fileDoc);
 
   // Pipe the data to tempstore...
-  readStream.pipe( FS.TempStore.createWriteStream(fileObj, chunk) );
+  self.createReadStream().pipe( FS.TempStore.createWriteStream(fileObj, chunk) );
 
   // Insert file into collection, triggering readStream storage
   file = ref.collection.insert(file);
@@ -174,7 +174,7 @@ httpPutInsertHandler = function httpPutInsertHandler(readStream, ref) {
   return {_id: file._id};
 };
 
-httpPutUpdateHandler = function httpPutUpdateHandler(readStream, ref) {
+httpPutUpdateHandler = function httpPutUpdateHandler(ref) {
   var self = this;
   var opts = _.extend({}, self.query || {}, self.params || {});
   var chunk = parseInt(opts.chunk, 10);
@@ -185,7 +185,7 @@ httpPutUpdateHandler = function httpPutUpdateHandler(readStream, ref) {
   // Validate with update allow/deny; also mounts and retrieves the file
   FS.Utility.validateAction(ref.collection.files._validators['update'], ref.file, self.userId);
 
-  readStream.pipe( FS.TempStore.createWriteStream(ref.file, chunk) );
+  self.createReadStream().pipe( FS.TempStore.createWriteStream(ref.file, chunk) );
 
   // Send response
   self.setStatusCode(200);
