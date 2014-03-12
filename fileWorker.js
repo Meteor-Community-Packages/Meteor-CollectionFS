@@ -274,8 +274,8 @@ function saveCopy(fsFile, storeName, options) {
 
 }
 
-function copyOfFileObjectWithData(fsFile) {
-  var fsFileClone = fsFile.clone();
-  fsFileClone.setDataFromBinary(fsFile.getBinary());
-  return fsFileClone;
-}
+// function copyOfFileObjectWithData(fsFile) {
+//   var fsFileClone = fsFile.clone();
+//   fsFileClone.attachData(fsFile.getBinary());
+//   return fsFileClone;
+// }
