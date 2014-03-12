@@ -96,19 +96,29 @@ FS.File.prototype.get = function(options) {
 };
 
 //TODO this might need some work
-FS.File.prototype.createReadStream = function(store) {
+FS.File.prototype.createReadStream = function(storeName) {
   var self = this;
-  if (!store && self.data) {
+  // If we dont have a store name but got Buffer data?
+  if (!storeName && self.data) {
     // Stream from attached data if present
     return self.data.createReadStream();
-  } else if (!store && FS.TempStore) {
-    // Stream from temp store
+
+  } else if (!storeName && FS.TempStore && FS.TempStore.exists(self)) {
+    // Stream from temp store - its a bit slower than regular streams?
     return FS.TempStore.createReadStream(self);
+
   } else {
+
     // Stream from the store using storage adapter
-    self.getCollection();
-    store = self.collection.storesLookup[store] || self.collection.primaryStore;
-    return store.adapter.createReadStream(self);
+    if (self.isMounted()) {
+      //
+      var storage = self.collection.storesLookup[storeName] || self.collection.primaryStore;
+      // return stream
+      return storage.adapter.createReadStream(self);
+    } else {
+      throw new Meteor.Error('File not mounted');
+    }
+
   }
 };
 
