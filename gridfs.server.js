@@ -37,6 +37,10 @@ FS.Store.GridFS = function(name, options) {
     options.mongoOptions = { db: { native_parser: true }, server: { auto_reconnect: true }};
   }
 
+  if (options.chunkSize) {
+    chunkSize = options.chunkSize;
+  }
+
   return new FS.StorageAdapter(name, options, {
 
     typeName: 'storage.gridfs',
