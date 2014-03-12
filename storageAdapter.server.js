@@ -57,7 +57,7 @@ FS.StorageAdapter = function(name, options, api) {
     if (!(fsFile instanceof FS.File)) {
       throw new Error('Storage adapter "' + name + '" ' + type + ' requires fsFile');
     }
-    if (!fsFile.hasData() && (type === "insert" || type === "update")) {
+    if (!fsFile.data && (type === "insert" || type === "update")) {
       throw new Error('Storage adapter "' + name + '" ' + type + ' requires fsFile with data');
     }
   };
