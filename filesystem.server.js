@@ -79,82 +79,82 @@ FS.Store.FileSystem = function(name, options) {
       return fs.createWriteStream(filepath, options);
     },
 
-/////// DEPRECATE?
-    get: function(fileObj, callback) {
-      var fileInfo = fileObj.getCopyInfo(name);
-      if (!fileInfo) { return callback(null, null); }
-      var fileKey = fileInfo.key;
+// /////// DEPRECATE?
+//     get: function(fileObj, callback) {
+//       var fileInfo = fileObj.getCopyInfo(name);
+//       if (!fileInfo) { return callback(null, null); }
+//       var fileKey = fileInfo.key;
 
-      // this is the Storage adapter scope
-      var filepath = path.join(absolutePath, fileKey);
+//       // this is the Storage adapter scope
+//       var filepath = path.join(absolutePath, fileKey);
 
-      // Call node readFile
-      fs.readFile(filepath, callback);
-    },
-    getBytes: function(fileObj, start, end, callback) {
-      var fileInfo = fileObj.getCopyInfo(name);
-      if (!fileInfo) { return callback(null, null); }
-      var fileKey = fileInfo.key;
+//       // Call node readFile
+//       fs.readFile(filepath, callback);
+//     },
+//     getBytes: function(fileObj, start, end, callback) {
+//       var fileInfo = fileObj.getCopyInfo(name);
+//       if (!fileInfo) { return callback(null, null); }
+//       var fileKey = fileInfo.key;
 
-      // this is the Storage adapter scope
-      var filepath = path.join(absolutePath, fileKey);
+//       // this is the Storage adapter scope
+//       var filepath = path.join(absolutePath, fileKey);
 
-      // Call node readFile
-      if (typeof start === "number" && typeof end === "number") {
-        var size = end - start;
-        var buffer = new Buffer(size);
-        //open file for reading
-        fs.open(filepath, 'r', function(err, fd) {
-          if (err)
-            callback(err);
-          //read bytes
-          fs.read(fd, buffer, 0, size, start, function(err, bytesRead, buffer) {
-            if (err)
-              callback(err);
-            fs.close(fd, function(err) {
-              if (err)
-                FS.debug && console.log("FileSystemStore getBytes: Error closing file");
-              callback(null, buffer);
-            });
-          });
-        });
-      } else {
-        callback(new Error('FileSystemStore getBytes: Invalid start or stop values'));
-      }
-    },
-    put: function(fileObj, options, callback) {
-      options = options || {};
+//       // Call node readFile
+//       if (typeof start === "number" && typeof end === "number") {
+//         var size = end - start;
+//         var buffer = new Buffer(size);
+//         //open file for reading
+//         fs.open(filepath, 'r', function(err, fd) {
+//           if (err)
+//             callback(err);
+//           //read bytes
+//           fs.read(fd, buffer, 0, size, start, function(err, bytesRead, buffer) {
+//             if (err)
+//               callback(err);
+//             fs.close(fd, function(err) {
+//               if (err)
+//                 FS.debug && console.log("FileSystemStore getBytes: Error closing file");
+//               callback(null, buffer);
+//             });
+//           });
+//         });
+//       } else {
+//         callback(new Error('FileSystemStore getBytes: Invalid start or stop values'));
+//       }
+//     },
+//     put: function(fileObj, options, callback) {
+//       options = options || {};
 
-      var fileKey = fileObj.collectionName + '-' + fileObj._id + '-' + fileObj.name;
-      var buffer = fileObj.getBuffer();
+//       var fileKey = fileObj.collectionName + '-' + fileObj._id + '-' + fileObj.name;
+//       var buffer = fileObj.getBuffer();
 
-      // this is the Storage adapter scope
-      var filepath = path.join(absolutePath, fileKey);
+//       // this is the Storage adapter scope
+//       var filepath = path.join(absolutePath, fileKey);
 
-      if (!options.overwrite) {
-        // Change filename if necessary so that we can write to a new file
-        var extension = path.extname(fileKey);
-        var fn = fileKey.substr(0, fileKey.length - extension.length);
-        var suffix = 0;
-        while (fs.existsSync(filepath)) {
-          suffix++;
-          fileKey = fn + suffix + extension; //once we exit the loop, this is what will actually be used
-          filepath = path.join(absolutePath, fileKey);
-        }
-      }
+//       if (!options.overwrite) {
+//         // Change filename if necessary so that we can write to a new file
+//         var extension = path.extname(fileKey);
+//         var fn = fileKey.substr(0, fileKey.length - extension.length);
+//         var suffix = 0;
+//         while (fs.existsSync(filepath)) {
+//           suffix++;
+//           fileKey = fn + suffix + extension; //once we exit the loop, this is what will actually be used
+//           filepath = path.join(absolutePath, fileKey);
+//         }
+//       }
 
-      // Call node writeFile
-      fs.writeFile(filepath, buffer, function(err) {
-        if (err) {
-          callback(err);
-        } else {
-          callback(null, fileKey);
-        }
-      });
-    },
-///////// EO DEPRECATE?
+//       // Call node writeFile
+//       fs.writeFile(filepath, buffer, function(err) {
+//         if (err) {
+//           callback(err);
+//         } else {
+//           callback(null, fileKey);
+//         }
+//       });
+//     },
+// ///////// EO DEPRECATE?
 
-
+    // Refactor into "remove"
     del: function(fileObj, callback) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, true); }
