@@ -4,7 +4,8 @@ Package.describe({
 });
 
 Npm.depends({
-  mime: "1.2.11"
+  mime: "1.2.11",
+  'simple-bufferstream': "0.0.4"
 });
 
 Package.on_use(function(api) {
@@ -16,16 +17,15 @@ Package.on_use(function(api) {
   api.use(['cfs-filesaver'], 'client');
 
   api.add_files([
-    'fsFile-common.js',
-    'fsFile-data-get.js',
-    'fsFile-data-set.js',
-    'fsFile-client.js'
+    'fsData-common.js',
+    'fsData-client.js',
+    'fsFile-common.js'
   ], 'client');
 
   api.add_files([
+    'fsData-common.js',
+    'fsData-server.js',
     'fsFile-common.js',
-    'fsFile-data-get.js',
-    'fsFile-data-set.js',
     'fsFile-server.js'
   ], 'server');
 });

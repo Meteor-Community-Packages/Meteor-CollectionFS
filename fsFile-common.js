@@ -17,23 +17,38 @@ FS.File = function(ref, createdByTransform) {
   // Extend self with filerecord related data
   _.extend(self, FS.Utility.cloneFileRecord(ref));
 
-  /** @method FS.File.prototype._attachFile
-   * @param {File|Blob} ref File or Blob instance to attach
-   * @private
-   */
-  self._attachFile = function(ref) {
-    var self = this;
-    if (typeof File !== "undefined" && ref instanceof File) {
-      self.utime = ref.lastModifiedDate;
-      self.blob = ref; // File inherits from Blob so this is OK
-    } else if (typeof Blob !== "undefined" && ref instanceof Blob) {
-      self.utime = new Date;
-      self.blob = ref;
-    }
-  };
-
-  self._attachFile(ref);
+  if ((typeof File !== "undefined" && ref instanceof File) ||
+    (typeof Blob !== "undefined" && ref instanceof Blob)){
+    self.attachData(ref);
+  }
 };
+
+/**
+ * @method FS.File.prototype.attachData
+ * @public
+ * @param {File|Blob|Buffer|ArrayBuffer|Uint8Array|String} data The data that you want to attach to the file.
+ * @param {String} [type] The data content (MIME) type, if known
+ * @returns {undefined}
+ *
+ * Equivalent to `fsFile.data = new FS.Data(data, type)` except that other properties may be
+ * set on the FS.File instance, too
+ */
+FS.File.prototype.attachData = function fsFileAttachData(data, type) {
+  var self = this;
+
+  self.data = new FS.Data(data, type);
+  if (type) {
+    self.type = type;
+  }
+
+  if (typeof File !== "undefined" && data instanceof File) {
+    self.utime = data.lastModifiedDate;
+    self.size = data.size;
+  } else if (typeof Blob !== "undefined" && data instanceof Blob) {
+    self.utime = new Date;
+    self.size = data.size;
+  }
+});
 
 /**
  * @method FS.File.prototype.uploadProgress
@@ -208,32 +223,6 @@ FS.File.prototype.remove = function(callback) {
  */
 
 /**
- * @method FS.File.prototype.get
- * @public
- * @param {object} [options]
- * @param {string} [options.storeName] Name of the store to get from. If not defined
- * on the client, the first store saved into `fsFile.copies` is used. If not
- * defined on the server, the first store defined in `options.stores` for the
- * collection is used. So if there is only one store, you can generally omit
- * this, but if there are multiple, it's best to specify.
- * @param {number} [options.start] Start position
- * @param {number} [options.end] End position
- * @param {number} [options.format="binary"] On the server, do you want "buffer" or "binary"?
- * @returns {Uint8Array|Buffer} The data
- *
- * Client: Instructs the DownloadTransferQueue to begin downloading the file copy
- * Server: Returns the Buffer data for the copy
- */
-FS.File.prototype.get = function(options) {
-  var self = this;
-  // Make sure options are set
-  options = options || {};
-
-  // Call the client / server dependent code
-  return self._get(options);
-};
-
-/**
  * @method FS.File.prototype.getExtension Returns the lowercase file extension
  * @public
  * @returns {string} The extension eg.: `jpg` or if not found then an empty string ''
@@ -248,78 +237,6 @@ FS.File.prototype.getExtension = function() {
   var found = name.lastIndexOf('.') + 1;
   // Return the extension if found else ''
   return (found > 0 ? name.substr(found).toLowerCase() : '');
-};
-
-/**
- * @method FS.File.prototype.toDataUrl
- * @public
- * @param {function} callback Callback(err, dataUrl) (callback is optional on server)
- * @todo Split client and server code
- */
-FS.File.prototype.toDataUrl = function(callback) {
-  var self = this;
-
-  if (Meteor.isClient) {
-    if (typeof callback !== 'function')
-      throw new Error("toDataUrl requires function as callback");
-
-    if (typeof FileReader === "undefined") {
-      callback(new Error("Browser does not support FileReader"));
-      return;
-    }
-
-    var fileReader = new FileReader();
-    fileReader.onload = function(event) {
-      callback(null, event.target.result);
-    };
-    fileReader.onerror = function(err) {
-      callback(err);
-    };
-    try {
-      var blob = self.getBlob();
-      fileReader.readAsDataURL(blob);
-    } catch (err) {
-      callback(err);
-    }
-  }
-
-  else if (Meteor.isServer) {
-    var hasCallback = (typeof callback === 'function');
-    callback = callback || FS.Utility.defaultCallback;
-    var buffer = self.getBuffer();
-    if (!buffer || !self.type) {
-      callback(new Error("toDataUrl requires a buffer loaded in the FS.File and a contentType"));
-      return;
-    }
-
-    var data_uri_prefix = "data:" + self.type + ";base64,";
-    var url = data_uri_prefix + buffer.toString("base64");
-    if (hasCallback) {
-      callback(null, url);
-    } else {
-      return url;
-    }
-  }
-};
-
-/**
- * @method FS.File.fromUrl
- * @public
- * @param {string} url - A full url that points to a remote file
- * @param {string} [filename] - The name to use for the new FS.File instance
- * @param {FS.File~newFsFileCallback} callback - Optional on the server.
- * @return {undefined}
- *
- * Loads data from a remote URL into a new FS.File and passes it to callback.
- * If a callback is not provided on the server, will block and return the
- * new FS.File instance with remote data downloaded into it.
- */
-FS.File.fromUrl = function(url, filename, callback) {
-  if (!Match.test(url, String))
-    throw new Error("FS.File.fromUrl requires a string url as the first argument");
-
-  var fsFile = new FS.File({name: filename});
-  return fsFile.setDataFromUrl(url, callback);
 };
 
 function checkContentType(fsFile, storeName, startOfType) {
