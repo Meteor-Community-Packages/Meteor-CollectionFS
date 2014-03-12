@@ -10,13 +10,13 @@
  */
 var _taskHandler = function(task, next) {
   FS.debug && console.log("uploading chunk " + task.chunk + ", bytes " + task.start + " to " + Math.min(task.end, task.fileObj.size) + " of " + task.fileObj.size);
-  task.fileObj.getBinary(task.start, task.end, function gotBinaryCallback(err, data) {
+  task.fileObj.data.getBinary(task.start, task.end, function gotBinaryCallback(err, data) {
     if (err) {
       next(new Meteor.Error(err.error, err.message));
     } else {
-      
+
       FS.debug && console.log('PUT to URL', task.url, task.urlParams);
-      
+
       httpCall("PUT", task.url, {
         params: _.extend({start: task.start}, task.urlParams),
         content: data,
@@ -102,7 +102,7 @@ UploadTransferQueue = function(options) {
    */
   self.uploadFile = function(fileObj) {
     FS.debug && console.log("HTTP uploadFile");
-    
+
     // Make sure we are handed a FS.File
     if (!(fileObj instanceof FS.File)) {
       throw new Error('Transfer queue expects a FS.File');
@@ -207,7 +207,7 @@ UploadTransferQueue = function(options) {
 /**
  * @namespace FS
  * @type UploadTransferQueue
- * 
+ *
  * There is a single uploads transfer queue per client (not per CFS)
  */
 FS.HTTP.uploadQueue = new UploadTransferQueue();
@@ -216,7 +216,7 @@ FS.HTTP.uploadQueue = new UploadTransferQueue();
  * FS.File extensions
  */
 
-/** 
+/**
  * @method FS.File.prototype.resume
  * @public
  * @param {File|Blob|Buffer} ref
