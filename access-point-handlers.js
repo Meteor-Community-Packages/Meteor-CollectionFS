@@ -116,6 +116,7 @@ httpGetHandler = function httpGetHandler(ref) {
   // Inform clients that we accept ranges for resumable chunked downloads
   self.addHeader('Accept-Ranges', 'bytes');
 
+  //ref.file.createReadStream(storeName).pipe(self.createWriteStream());
   storage.adapter.createReadStream(ref.file).pipe(self.createWriteStream());
 
 };
