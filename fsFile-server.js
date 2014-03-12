@@ -138,6 +138,7 @@ FS.File.prototype.createWriteStream = function(storeName) {
       // Stream directly to the store using storage adapter
       var storage = self.collection.storesLookup[storeName] || self.collection.primaryStore;
       return storage.adapter.createWriteStream(self);
+    }
   } else {
     throw new Meteor.Error('File not mounted');
   }
