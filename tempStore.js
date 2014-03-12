@@ -53,7 +53,8 @@ _filePath = function(fileObj) {
 
 // Naming convention for chunk files
 _chunkPath = function(n) {
-  return n + '.chunk';
+  return (n || 0) + '.chunk';
+};
 
 FS.TempStore.exists = function(fileObj) {
   if (fileObj.isMounted()) {
