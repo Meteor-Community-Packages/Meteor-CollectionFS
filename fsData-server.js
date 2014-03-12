@@ -74,7 +74,7 @@ function _getDataUri(self, callback) {
 
   var buffer = self.getBuffer();
   if (!buffer || !self.type) {
-    callback(new Error("toDataUrl requires a buffer loaded in the FS.File and a contentType"));
+    callback(new Error("getDataUri requires a buffer loaded in the FS.File and a contentType"));
     return;
   }
 

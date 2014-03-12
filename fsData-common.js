@@ -40,7 +40,7 @@ FS.Data = function(data, type) {
   } else if (typeof data === "string") {
     if (data.slice(0, 5) === "data:") {
       self.dataUri = data;
-    } else if (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:" || data.slice(0, 2) === "//") {
+    } else if (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:") {
       self.url = data;
     } else if (Meteor.isServer) {
       self.filepath = data;
