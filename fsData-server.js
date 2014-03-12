@@ -1,6 +1,6 @@
 var request = Npm.require("request");
 var fs = Npm.require("fs");
-var sbs = require('simple-bufferstream')
+var sbs = Npm.require('simple-bufferstream')
 
 function _getBuffer(self, callback) {
   if (self.buffer) {

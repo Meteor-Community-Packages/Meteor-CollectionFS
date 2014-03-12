@@ -119,4 +119,4 @@ FS.File.prototype.createWriteStream = function(store) {
   self.getCollection();
   store = self.collection.storesLookup[store] || self.collection.primaryStore;
   return store.createWriteStream();
-});
+};
