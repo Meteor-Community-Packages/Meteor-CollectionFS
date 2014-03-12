@@ -48,7 +48,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, type) {
     self.utime = new Date;
     self.size = data.size;
   }
-});
+};
 
 /**
  * @method FS.File.prototype.uploadProgress
