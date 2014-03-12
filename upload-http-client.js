@@ -18,7 +18,7 @@ var _taskHandler = function(task, next) {
       FS.debug && console.log('PUT to URL', task.url, task.urlParams);
 
       httpCall("PUT", task.url, {
-        params: _.extend({start: task.start}, task.urlParams),
+        params: _.extend({chunk: task.chunk}, task.urlParams),
         content: data,
         headers: {
           'Content-Type': task.fileObj.type
@@ -125,10 +125,12 @@ UploadTransferQueue = function(options) {
       var id = fileObj._id;
 
       // Get the collection chunk size
-      var chunkSize = fileObj.collection.options.chunkSize;
+      //var chunkSize = fileObj.collection.options.chunkSize;
+      var chunkSize = fileObj.chunkSize;
 
       // Calculate the number of chunks to upload
-      var chunks = Math.ceil(fileObj.size / chunkSize);
+      //var chunks = Math.ceil(fileObj.size / chunkSize);
+      var chunks = fileObj.chunkSum;
 
       if (chunks === 0)
         return;
