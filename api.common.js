@@ -30,8 +30,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // so that it is available when FileWorker calls saveCopies.
     // This will also trigger file handling from collection observes.
     else if (Meteor.isServer) {
-      // XXX: Deprecated - What job should it have when streaming?
-      FS.TempStore.ensureForFile(fileObj);
+      fileObj.createReadStream().pipe(FS.TempStore.createWriteStream());
     }
   }
 
@@ -77,30 +76,15 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
   // Parse, adjust fileRef
   if (fileRef instanceof FS.File) {
     return checkAndInsert(fileRef);
-  } else if (Meteor.isClient && typeof File !== "undefined" && fileRef instanceof File) {
-    // For convenience, allow File to be passed directly on the client
-    return checkAndInsert(new FS.File(fileRef));
-  } else if (typeof fileRef === "string") {
-    // For convenience, allow URL to be passed and we will download it and
-    // insert
-    if (Meteor.isServer) {
-      if (callback) {
-        FS.File.fromUrl(fileRef, function(error, fileObj) {
-          if (error) {
-            callback(error);
-          } else {
-            checkAndInsert(fileObj);
-          }
-        });
-      } else {
-        return checkAndInsert(FS.File.fromUrl(fileRef));
-      }
-    } else {
-      // On client, call a method to do the download and insert on the server
-      Meteor.call('_cfs_downloadAndAddFile', fileRef, self.name, callback);
-    }
+  } else if (Meteor.isClient && typeof fileRef === "string" && (fileRef.slice(0, 5) === "http:" || fileRef.slice(0, 6) === "https:")) {
+    // On client, call a method to do the download and insert on the server
+    Meteor.call('_cfs_downloadAndAddFile', fileRef, self.name, callback);
   } else {
-    return passOrThrow(new Error('FS.Collection insert expects File, FS.File, or URL string to insert'));
+    // For convenience, allow URL, filepath, etc. to be passed as first arg,
+    // and we will attach that to a new fileobj for them
+    var fileObj = new FS.File(fileRef);
+    fileObj.attachData(fileRef);
+    return checkAndInsert(fileObj);
   }
 };
 
