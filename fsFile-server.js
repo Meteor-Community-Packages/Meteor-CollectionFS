@@ -108,7 +108,7 @@ FS.File.prototype.createReadStream = function(store) {
     // Stream from the store using storage adapter
     self.getCollection();
     store = self.collection.storesLookup[store] || self.collection.primaryStore;
-    return store.createReadStream();
+    return store.adapter.createReadStream(self);
   }
 };
 
@@ -118,5 +118,5 @@ FS.File.prototype.createWriteStream = function(store) {
   // Stream to the store using storage adapter
   self.getCollection();
   store = self.collection.storesLookup[store] || self.collection.primaryStore;
-  return store.createWriteStream();
+  return store.adapter.createWriteStream(self);
 };
