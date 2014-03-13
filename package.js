@@ -3,7 +3,8 @@ Package.describe({
 });
 
 Npm.depends({
-  'aws-sdk': "2.0.0-rc9"
+  'aws-sdk': "2.0.0-rc9",
+  'temp': '0.7.0'
 });
 
 Package.on_use(function(api) {

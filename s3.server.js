@@ -1,4 +1,115 @@
+// We use the official aws sdk
 var AWS = Npm.require('aws-sdk');
+
+// We ideally want to pass through the stream to s3
+var PassThrough = Npm.require('stream').PassThrough;
+
+// ... But this is not allways possible since S3 requires the data length set
+var TransformStream = Npm.require('stream').Transform;
+
+// We create a temp file if needed for the indirect streaming
+var fs = Npm.require('fs');
+var temp = Npm.require('temp');
+
+// We use inherites
+var util = Npm.require('util');
+
+var Stream = Npm.require('stream');
+
+// Well now, S3 requires content length but we want a general streaming pattern
+// in cfs. The createWriteStream will use this
+function indirectS3Stream(options, callback) {
+  var self = this;
+
+  // Use new to fire up this baby
+  if (!(this instanceof indirectS3Stream))
+    return new indirectS3Stream(options);
+
+  // So we use the transform stream patter - even though we only use the write
+  // part. We do this to take advantage of the _flush mechanism for repporting
+  // back errors and halting the stream until we have actually uploaded the data
+  // to the s3 server.
+  TransformStream.call(this, options);
+
+  // We require a callback for returning stream, length etc.
+  if (typeof callback !== 'function')
+    throw new Error('S3 SA indirectS3Stream needs callback');
+
+  // We calculate the size on the run, this way we dont need to do fs.stats
+  // to get file size
+  self._cfsDataLength = 0;
+
+  // This doesnt make the big difference - setting it to true makes sure both
+  // read/write streams are ended
+  self.allowHalfOpen = true;
+
+  // Callback - will be served with
+  // 1. readStream
+  // 2. length of data
+  // 3. callback to repport errors and end the stream
+  self.callback = callback;
+
+  // Get a temporary filename
+  self.tempName = temp.path({ suffix: '.cfsS3.bin'});
+
+  // Create a temporary file for as buffer - keeping the data out of memory
+  self.tempWriteStream = fs.createWriteStream(self.tempName);
+};
+
+util.inherits(indirectS3Stream, TransformStream);
+
+// We rig the transform - it basically dumps the data into the tempfile
+// and sums up the data length
+indirectS3Stream.prototype._transform = function(chunk, encoding, done) {
+  var self = this;
+
+  // Add to data length
+  self._cfsDataLength += chunk.length;
+
+  // Push to the write stream and let this call done
+  self.tempWriteStream.write(chunk, encoding, done);
+};
+
+indirectS3Stream.prototype._flush = function(done) {
+  var self = this;
+
+  // End write stream
+  self.tempWriteStream.end();
+
+  // Create write stream from temp file
+  var readStream = fs.createReadStream(self.tempName);
+
+  readStream.on('error', function(err) {
+    // Clean up the tempfile
+    try {
+      fs.unlinkSync(self.tempName);
+    } catch(e) {
+      // noop we already got an error to repport
+    }
+    // Emit the passed error
+    self.emit('error', err);
+  });
+
+  // Return readstream and size of it
+  return self.callback(readStream, self._cfsDataLength, function(err) {
+    // When done we emit events
+    if (err) {
+      self.emit('error', err);
+    } else {
+      self.emit('close');
+    }
+
+    // Clean up the tempfile
+    try {
+      fs.unlinkSync(self.tempName);
+    }catch(e) {
+      // We dont care too much. XXX: should this be handled?
+    }
+    // Call done - this is not respected
+    done(err);
+  });
+};
+
 var validS3ServiceParamKeys = [
   'endpoint',
   'accessKeyId',
@@ -86,27 +197,115 @@ FS.Store.S3 = function(name, options) {
 
   var defaultAcl = options.ACL || 'private';
 
+  // Remove serviceParams from SA options
+ // options = _.omit(options, validS3ServiceParamKeys);
+
   var serviceParams = _.extend({
+    Bucket: bucket,
     region: null, //required
     accessKeyId: null, //required
-    secretAccessKey: null //required
+    secretAccessKey: null, //required
+    ACL: defaultAcl
   }, options);
 
   // Whitelist serviceParams, else aws-sdk throws an error
-  serviceParams = _.pick(serviceParams, validS3ServiceParamKeys);
-  // Remove serviceParams from SA options
-  options = _.omit(options, validS3ServiceParamKeys);
-  
+  // XXX: I've commented this at the moment... It stopped things from working
+  // we have to check up on this
+  // serviceParams = _.pick(serviceParams, validS3ServiceParamKeys);
+
   // Create S3 service
   var S3 = new AWS.S3(serviceParams);
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.s3',
+    createReadStream: function(fileObj, options) {
+      var fileInfo = fileObj.getCopyInfo(name);
+      if (!fileInfo) {
+        return new Error('File not found on this store "' + name + '"');
+      }
+      var fileKey = folder + fileInfo.key;
+
+      return S3.getObject({
+        Bucket: bucket,
+        Key: fileKey
+      }).createReadStream();
+    },
+    // Comment to documentation: Set options.ContentLength otherwise the
+    // indirect stream will be used creating extra overhead on the filesystem.
+    // An easy way if the data is not transformed is to set the
+    // options.ContentLength = fileObj.size ...
+    createWriteStream: function(fileObj, options) {
+      options = options || {};
+
+      // Create the uniq fileKey
+      var fileKey = fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name;
+
+      // Update the fileObj - we dont save it to the db but sets the fileKey
+      fileObj.copies[name].key = fileKey;
+
+      // Set options
+      var options = _.extend({
+        Bucket: bucket,
+        Key: folder + fileKey,
+      }, options);
+
+      if (options.ContentLength > 0) {
+        // This is direct streaming
+
+        // Create a simple pass through stream
+        var dpStream = new PassThrough();
+
+        // Set the body to the pass through stream
+        options.Body = dpStream;
+
+        console.log('putObject direct streaming size: ' + options.ContentLength);
+
+        S3.putObject(options, function(err) {
+          if (err) {
+            // Emit S3 error to the stream
+            dpStream.emit('error', err);
+          } else {
+            // Emit a close event - this triggers a complete method
+            dpStream.emit('close');
+          }
+        });
+
+        // Return the pass through stream
+        return dpStream;
+
+      } else {
+        // No content length? bugger - AWS needs a length for security reasons
+        // so we need to stop by the filesystem to get the length - we dont
+        // want this buffered up in memory...
+        //
+        var dpStream = new indirectS3Stream({}, function(readStream, size, callback) {
+          console.log('CALLBACK got size: ', size);
+
+          // Set the body to the readstream
+          options.Body = readStream;
+
+          // Set the content length
+          options.ContentLength = size;
+
+          // Send the data to the S3
+          S3.putObject(options, callback);
+
+        });
+
+        dpStream.on('error', function(err) {
+          console.log(err);
+        });
+
+        return dpStream;
+      }
+    },
+
+/////// DEPRECATE?
     get: function(fileObj, callback) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, null); }
       var fileKey = folder + fileInfo.key;
-      
+
       S3.getObject({
         Bucket: bucket,
         Key: fileKey
@@ -116,7 +315,7 @@ FS.Store.S3 = function(name, options) {
     },
     put: function(fileObj, opts, callback) {
       opts = opts || {};
-      
+
       var fileKey = fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name;
       var buffer = fileObj.getBuffer();
 
@@ -131,18 +330,20 @@ FS.Store.S3 = function(name, options) {
 
       // Whitelist serviceParams, else aws-sdk throws an error
       params = _.pick(params, validS3PutParamKeys);
-      
+
       // TODO handle overwrite or fileKey adjustments based on opts.overwrite
 
       S3.putObject(params, function(error) {
         callback(error, error ? void 0 : fileKey);
       });
     },
+///////// EO DEPRECATE?
+
     del: function(fileObj, callback) {
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, null); }
       var fileKey = folder + fileInfo.key;
-      
+
       S3.deleteObject({
         Bucket: bucket,
         Key: fileKey
