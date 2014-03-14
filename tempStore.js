@@ -19,10 +19,12 @@ fs = Npm.require('fs');
 path = Npm.require('path');
 os = Npm.require('os');
 
+// The FS.TempStore emits events that others are able to listen to
+var EventEmitter = Npm.require('events').EventEmitter;
+
+// We have a special stream concating all chunk files into one readable stream
 var Readable = Npm.require('stream').Readable;
 var util = Npm.require('util');
-
-var storeCollection = new Meteor.Collection("cfs.tempstore");
 
 // We get the os default temp folder and create a folder "cfs" in there
 var tempFolder = path.resolve(os.tmpDir(), 'cfs');
@@ -42,7 +44,19 @@ console.log('TempStore: ' + tempFolder);
  * @property FS.TempStore
  * @type {object}
  */
-FS.TempStore = {};
+
+// Make it an event emitter
+FS.TempStore = new EventEmitter();
+
+// We update the fileObj on progress
+FS.TempStore.on('progress', function(fileObj, chunk, count) {
+  // Update the chunkCount on the fileObject
+  fileObj.update({ $set: { chunkCount: count }});
+});
+
+// FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
+//   console.log(fileObj.name + ' is uploaded!!');
+// });
 
 // Stream implementation
 
@@ -56,6 +70,10 @@ _chunkPath = function(n) {
   return (n || 0) + '.chunk';
 };
 
+/**
+ * @method FS.TempStore.exists
+ * @param {FS.File} File object
+ */
 FS.TempStore.exists = function(fileObj) {
   if (fileObj.isMounted()) {
     return fs.existsSync(_filePath(fileObj));
@@ -65,12 +83,34 @@ FS.TempStore.exists = function(fileObj) {
   }
 };
 
+FS.TempStore.listParts = function(fileObj) {
+  var self = this;
+  // List of missing chunks
+  var partList = {};
+  // File path
+  var filePath = _filePath(fileObj);
+  // We only start work if its found
+  if (fs.existsSync( filePath )) {
+    // Read all the chunks in folder
+    chunkPaths = fs.readdirSync(_filePath(fileObj) );
+    // Unlink each file
+    for (var i = 0; i < chunkPaths; i++) {
+      // add part number to list
+      partList[i] = i;
+    }
+  }
+  // return the part list
+  return partList;
+};
+
 FS.TempStore.removeFile = function(fileObj) {
   var self = this;
   // File path
   var filePath = _filePath(fileObj);
   // We only start work if its found
   if (fs.existsSync( filePath )) {
+    // Emit event
+    self.emit('remove', fileObj, filePath);
     // Read all the chunks in folder
     chunkPaths = fs.readdirSync(_filePath(fileObj) );
     // Unlink each file
@@ -80,54 +120,69 @@ FS.TempStore.removeFile = function(fileObj) {
     // Unlink the folder itself
     fs.rmdirSync( filePath );
   }
-
 };
 
 // WRITE STREAM
 FS.TempStore.createWriteStream = function(fileObj, chunk) {
   var self = this;
 
-  // File path
-  var filePath = _filePath(fileObj);
+  if (fileObj.isMounted()) {
+    // File path
+    var filePath = _filePath(fileObj);
 
-  // Make sure we have a place to put files...
-  if (!fs.existsSync( filePath )) {
-    try {
-      fs.mkdirSync( filePath );
-    } catch(err) {
-      throw new Error('FS.Tempstore.createWriteStream cannot access temporary filesystem');
-    }
-  }
-
-  // Find a nice location for the chunk data
-  var chunkPath = path.join(filePath, _chunkPath(chunk));
-
-  // Check if its a new chunk
-  var newChunk = !fs.existsSync(chunkPath);
-
-  // Create the stream as Meteor safe stream
-  var writeStream = FS.Utility.safeStream(fs.createWriteStream( chunkPath ) );
-
-  // When the stream closes we update the chunkCount
-  writeStream.safeOn('close', function() {
-    if (typeof chunk === 'undefined') {
-
-      // We created a writestream without chunk defined meaning this was used
-      // as a regular createWriteStream method so we only stream to one chunk
-      // file - 0.chunk - therefor setting the chunkCount and chunkSum to 1
-      fileObj.update({ $set: { chunkCount: 1, chunkSum: 1 }});
-
-    } else {
-
-      // Progress
-      if (newChunk) {
-        fileObj.update({ $inc: { chunkCount: 1 }});
+    // Make sure we have a place to put files...
+    if (!fs.existsSync( filePath )) {
+      try {
+        fs.mkdirSync( filePath );
+        self.emit('start', fileObj, chunk);
+      } catch(err) {
+        throw new Error('FS.Tempstore.createWriteStream cannot access temporary filesystem');
       }
-
     }
-  });
 
-  return writeStream;
+    // Find a nice location for the chunk data
+    var chunkPath = path.join(filePath, _chunkPath(chunk));
+
+    // Create the stream as Meteor safe stream
+    var writeStream = FS.Utility.safeStream(fs.createWriteStream( chunkPath ) );
+
+    // Check if its a new chunk
+    // XXX: Deprecate not used
+    var newChunk = !fs.existsSync(chunkPath);
+
+    // When the stream closes we update the chunkCount
+    writeStream.safeOn('close', function() {
+      var chunkCount = fs.readdirSync(filePath).length;
+
+      if (typeof chunk === 'undefined') {
+
+        // We created a writestream without chunk defined meaning this was used
+        // as a regular createWriteStream method so we only stream to one chunk
+        // file - 0.chunk - therefor setting the chunkCount and chunkSum to 1
+
+        // Emit fileObj, current chunk and chunk count
+        self.emit('progress', fileObj, 0, chunkCount);
+
+        // We know this upload is complete - this could be a server transport
+        self.emit('uploaded', fileObj, true); // set true marking "one stream"
+
+      } else {
+        // Progress
+        self.emit('progress', fileObj, chunk, chunkCount);
+
+        // Check if upload is completed
+        if (chunkCount === fileObj.chunkSum) {
+          self.emit('uploaded', fileObj);
+        }
+
+      }
+    });
+
+    return writeStream;
+
+  } else {
+    throw new Error('FS.TempStore.createWriteStream cannot work with unmounted file');
+  }
 };
 
 // READSTREAM
@@ -143,6 +198,7 @@ _TempstoreReadStream = function(fileObj, options) {
 
   // Init the file path in temporary storage
   self.filePath = _filePath(fileObj);
+
 };
 
 // Add readable stream methods
@@ -167,5 +223,9 @@ _TempstoreReadStream.prototype._read = function() {
 
 // Create a nice api handle
 FS.TempStore.createReadStream = function(fileObj) {
-  return new _TempstoreReadStream(fileObj);
+  if (fileObj.isMounted()) {
+    return new _TempstoreReadStream(fileObj);
+  } else {
+    throw new Error('FS.TempStore.createReadStream cannot work with unmounted file');
+  }
 };
