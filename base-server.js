@@ -37,9 +37,9 @@ FS.Utility.safeCallback = function (callback) {
     return Meteor.bindEnvironment(callback, function(err) { throw err; });
 };
 
-FS.Utility.safeStream = function(nodestream) {
+FS.Utility.safeStream = function(nodestream, name) {
   if (!nodestream || typeof nodestream.on !== 'function')
-    throw new Error('Storage Adapter "' + self.name + '" did not return write stream');
+    throw new Error('Storage Adapter "' + name + '" did not return write stream');
 
   // Create Meteor safe events
   nodestream.safeOn = function(name, callback) {
