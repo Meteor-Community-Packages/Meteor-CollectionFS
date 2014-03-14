@@ -18,12 +18,12 @@ var Stream = Npm.require('stream');
 
 // Well now, S3 requires content length but we want a general streaming pattern
 // in cfs. The createWriteStream will use this
-function indirectS3Stream(options, callback) {
+function IndirectS3Stream(options, callback) {
   var self = this;
 
   // Use new to fire up this baby
-  if (!(this instanceof indirectS3Stream))
-    return new indirectS3Stream(options);
+  if (!(this instanceof IndirectS3Stream))
+    return new IndirectS3Stream(options);
 
   // So we use the transform stream patter - even though we only use the write
   // part. We do this to take advantage of the _flush mechanism for repporting
@@ -33,7 +33,7 @@ function indirectS3Stream(options, callback) {
 
   // We require a callback for returning stream, length etc.
   if (typeof callback !== 'function')
-    throw new Error('S3 SA indirectS3Stream needs callback');
+    throw new Error('S3 SA IndirectS3Stream needs callback');
 
   // We calculate the size on the run, this way we dont need to do fs.stats
   // to get file size
@@ -56,11 +56,11 @@ function indirectS3Stream(options, callback) {
   self.tempWriteStream = fs.createWriteStream(self.tempName);
 };
 
-util.inherits(indirectS3Stream, TransformStream);
+util.inherits(IndirectS3Stream, TransformStream);
 
 // We rig the transform - it basically dumps the data into the tempfile
 // and sums up the data length
-indirectS3Stream.prototype._transform = function(chunk, encoding, done) {
+IndirectS3Stream.prototype._transform = function(chunk, encoding, done) {
   var self = this;
 
   // Add to data length
@@ -70,7 +70,7 @@ indirectS3Stream.prototype._transform = function(chunk, encoding, done) {
   self.tempWriteStream.write(chunk, encoding, done);
 };
 
-indirectS3Stream.prototype._flush = function(done) {
+IndirectS3Stream.prototype._flush = function(done) {
   var self = this;
 
   // End write stream
@@ -109,6 +109,67 @@ indirectS3Stream.prototype._flush = function(done) {
     done(err);
   });
 };
+
+AWS.S3.prototype.createReadStream = function(params, options) {
+  // Simple wrapper
+  return this.getObject(params).createReadStream();
+};
+
+AWS.S3.prototype.createWriteStream = function(params, options) {
+  var self = this;
+  params = params || {};
+
+  if (params.ContentLength > 0) {
+    // This is direct streaming
+
+    // Create a simple pass through stream
+    var PassThroughStream = new PassThrough();
+
+    // Set the body to the pass through stream
+    params.Body = PassThroughStream;
+
+    console.log('putObject direct streaming size: ' + params.ContentLength);
+
+    self.putObject(params, function(err) {
+      if (err) {
+        // Emit S3 error to the stream
+        PassThroughStream.emit('error', err);
+      } else {
+        // Emit a close event - this triggers a complete method
+        PassThroughStream.emit('close');
+      }
+    });
+
+    // Return the pass through stream
+    return PassThroughStream;
+
+  } else {
+    // No content length? bugger - AWS needs a length for security reasons
+    // so we need to stop by the filesystem to get the length - we dont
+    // want this buffered up in memory...
+    //
+    var indirectS3Stream = new IndirectS3Stream({}, function(readStream, size, callback) {
+      console.log('CALLBACK got size: ', size);
+
+      // Set the body to the readstream
+      params.Body = readStream;
+
+      // Set the content length
+      params.ContentLength = size;
+
+      // Send the data to the S3
+      self.putObject(params, callback);
+
+    });
+
+    indirectS3Stream.on('error', function(err) {
+      console.log(err);
+    });
+
+    return indirectS3Stream;
+  }
+};
+
 
 var validS3ServiceParamKeys = [
   'endpoint',
@@ -225,10 +286,11 @@ FS.Store.S3 = function(name, options) {
       }
       var fileKey = folder + fileInfo.key;
 
-      return S3.getObject({
+      return S3.createReadStream({
         Bucket: bucket,
         Key: fileKey
-      }).createReadStream();
+      });
+
     },
     // Comment to documentation: Set options.ContentLength otherwise the
     // indirect stream will be used creating extra overhead on the filesystem.
@@ -249,55 +311,7 @@ FS.Store.S3 = function(name, options) {
         Key: folder + fileKey,
       }, options);
 
-      if (options.ContentLength > 0) {
-        // This is direct streaming
-
-        // Create a simple pass through stream
-        var dpStream = new PassThrough();
-
-        // Set the body to the pass through stream
-        options.Body = dpStream;
-
-        console.log('putObject direct streaming size: ' + options.ContentLength);
-
-        S3.putObject(options, function(err) {
-          if (err) {
-            // Emit S3 error to the stream
-            dpStream.emit('error', err);
-          } else {
-            // Emit a close event - this triggers a complete method
-            dpStream.emit('close');
-          }
-        });
-
-        // Return the pass through stream
-        return dpStream;
-
-      } else {
-        // No content length? bugger - AWS needs a length for security reasons
-        // so we need to stop by the filesystem to get the length - we dont
-        // want this buffered up in memory...
-        //
-        var dpStream = new indirectS3Stream({}, function(readStream, size, callback) {
-          console.log('CALLBACK got size: ', size);
-
-          // Set the body to the readstream
-          options.Body = readStream;
-
-          // Set the content length
-          options.ContentLength = size;
-
-          // Send the data to the S3
-          S3.putObject(options, callback);
-
-        });
-
-        dpStream.on('error', function(err) {
-          console.log(err);
-        });
-
-        return dpStream;
-      }
+      return S3.createWriteStream(options);
     },
 
 /////// DEPRECATE?
