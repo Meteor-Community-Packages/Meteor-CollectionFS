@@ -143,3 +143,29 @@ FS.File.prototype.createWriteStream = function(storeName) {
     throw new Meteor.Error('File not mounted');
   }
 };
+
+Meteor.methods({
+  // Does a HEAD request to URL to get the type, utime, and size prior to actually downloading the data.
+  // That way we can do filter checks without actually downloading.
+  '_cfs_getUrlInfo': function (url) {
+    this.unblock();
+
+    var response = HTTP.call("HEAD", url);
+    var headers = response.headers;
+    var result = {};
+
+    if (headers['content-type']) {
+      result.type = headers['content-type'];
+    }
+
+    if (headers['content-length']) {
+      result.size = headers['content-length'];
+    }
+
+    if (headers['last-modified']) {
+      result.utime = new Date(headers['last-modified']);
+    }
+
+    return result;
+  }
+});

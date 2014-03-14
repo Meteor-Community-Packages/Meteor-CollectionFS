@@ -9,18 +9,18 @@
 FS.File = function(ref, createdByTransform) {
   var self = this;
 
-  self.createdByTransform = createdByTransform;
-
-  if (typeof ref !== 'object') {
-    ref = {};
-  }
-
-  // Extend self with filerecord related data
-  _.extend(self, FS.Utility.cloneFileRecord(ref));
+  self.createdByTransform = !!createdByTransform;
 
   if ((typeof File !== "undefined" && ref instanceof File) ||
     (typeof Blob !== "undefined" && ref instanceof Blob)){
     self.attachData(ref);
+  } else {
+    if (typeof ref !== 'object') {
+      ref = {};
+    }
+
+    // Extend self with filerecord related data
+    _.extend(self, FS.Utility.cloneFileRecord(ref));
   }
 };
 
@@ -28,27 +28,60 @@ FS.File = function(ref, createdByTransform) {
  * @method FS.File.prototype.attachData
  * @public
  * @param {File|Blob|Buffer|ArrayBuffer|Uint8Array|String} data The data that you want to attach to the file.
- * @param {String} [type] The data content (MIME) type, if known
+ * @param {Object} [options] Options
+ * @param {String} [options.type] The data content (MIME) type, if known.
+ * @param {Function} [callback] Callback function, callback(error), optional unless data is a URL
  * @returns {undefined}
- *
- * Equivalent to `fsFile.data = new FS.Data(data, type)` except that other properties may be
- * set on the FS.File instance, too
  */
-FS.File.prototype.attachData = function fsFileAttachData(data, type) {
+FS.File.prototype.attachData = function fsFileAttachData(data, options, callback) {
   var self = this;
 
-  self.data = new FS.Data(data, type);
-  if (type) {
-    self.type = type;
+  if (!callback && typeof options === "function") {
+    callback = options;
+    options = {};
   }
+  options = options || {};
 
+  callback = callback || FS.Utility.defaultCallback;
+
+  // Set any other properties we can determine from the source data
+  // File
   if (typeof File !== "undefined" && data instanceof File) {
+    self.name = data.name;
     self.utime = data.lastModifiedDate;
     self.size = data.size;
-  } else if (typeof Blob !== "undefined" && data instanceof Blob) {
+    setData(data.type);
+  }
+  // Blob
+  else if (typeof Blob !== "undefined" && data instanceof Blob) {
     self.utime = new Date;
     self.size = data.size;
+    setData(data.type);
   }
+  // URL: we need to do a HEAD request to get the type because type
+  // is required for filtering to work.
+  else if (typeof data === "string" && (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:")) {
+    Meteor.call('_cfs_getUrlInfo', data, function (error, result) {
+      if (error) {
+        callback(error);
+      } else {
+        _.extend(self, result);
+        setData(self.type);
+      }
+    });
+  }
+  // Everything else
+  else {
+    setData(options.type);
+  }
+
+  // Set the data
+  function setData(type) {
+    self.data = new FS.Data(data, type);
+    self.type = self.data.type;
+    callback();
+  }
+
 };
 
 /**
@@ -313,21 +346,6 @@ FS.File.prototype.isUploaded = function() {
 };
 
 /**
- * @method FS.File.prototype.chunkIsUploaded Is the chunk completely uploaded?
- * @public
- * @param {number} start
- * @returns {boolean} True if the chunk starting at start has already been uploaded successfully.
- */
-FS.File.prototype.chunkIsUploaded = function(start) {
-  var self = this;
-
-  // Make sure we use the updated file record
-  self.getFileRecord();
-
-  return !!_.findWhere(self.chunks, {start: start});
-};
-
-/**
  * @method FS.File.prototype.hasCopy
  * @public
  * @param {string} storeName Name of the store to check for a copy of this file
@@ -365,105 +383,4 @@ FS.File.prototype.getCopyInfo = function(storeName) {
   // Make sure we use the updated file record
   self.getFileRecord();
   return (self.copies && self.copies[storeName]) || null;
-};
-
-/**
- * @method FS.File.prototype.hasMaster Does the attached collection allow this file?
- * @public
- * @returns {boolean} True if the attached collection allows this file.
- *
- * Checks based on any filters defined on the attached collection. If the
- * file is not valid according to the filters, this method returns false
- * and also calls the filter `onInvalid` method defined for the attached
- * collection, passing it an English error string that explains why it
- * failed.
- *
- */
-FS.File.prototype.fileIsAllowed = function() {
-  var self = this;
-
-  if (self.isMounted()) {
-    // Get filters
-    var filter = self.collection.options.filter;
-    if (!filter) {
-      return true;
-    }
-    var saveAllFileExtensions = (filter.allow.extensions.length === 0);
-    var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
-
-    // Get info about the file
-    var filename = self.name;
-    var contentType = self.type;
-    if (!contentType) {
-      filter.onInvalid && filter.onInvalid(filename + " has an unknown content type");
-      return false;
-    }
-    var fileSize = self.size;
-    if (!fileSize || isNaN(fileSize)) {
-      filter.onInvalid && filter.onInvalid(filename + " has an unknown file size");
-      return false;
-    }
-
-    // Do extension checks only if we have a filename
-    if (filename) {
-      var ext = self.getExtension();
-      if (!((saveAllFileExtensions ||
-              _.indexOf(filter.allow.extensions, ext) !== -1) &&
-              _.indexOf(filter.deny.extensions, ext) === -1)) {
-        filter.onInvalid && filter.onInvalid(filename + ' has the extension "' + ext + '", which is not allowed');
-        return false;
-      }
-    }
-
-    // Do content type checks
-    if (!((saveAllContentTypes ||
-            contentTypeInList(filter.allow.contentTypes, contentType)) &&
-            !contentTypeInList(filter.deny.contentTypes, contentType))) {
-      filter.onInvalid && filter.onInvalid(filename + ' is of the type "' + contentType + '", which is not allowed');
-      return false;
-    }
-
-    // Do max size check
-    if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
-      filter.onInvalid && filter.onInvalid(filename + " is too big");
-      return false;
-    }
-    return true;
-
-  }
-
-};
-
-/**
- * @method contentTypeInList Is the content type string in the list?
- * @private
- * @param {String[]} list - Array of content types
- * @param {String} contentType - The content type
- * @returns {Boolean}
- *
- * Returns true if the content type is in the list, or if it matches
- * one of the special types in the list, e.g., "image/*".
- */
-var contentTypeInList = function contentTypeInList(list, contentType) {
-  var listType, found = false;
-  for (var i = 0, ln = list.length; i < ln; i++) {
-    listType = list[i];
-    if (listType === contentType) {
-      found = true;
-      break;
-    }
-    if (listType === "image/*" && contentType.indexOf("image/") === 0) {
-      found = true;
-      break;
-    }
-    if (listType === "audio/*" && contentType.indexOf("audio/") === 0) {
-      found = true;
-      break;
-    }
-    if (listType === "video/*" && contentType.indexOf("video/") === 0) {
-      found = true;
-      break;
-    }
-  }
-  return found;
 };
