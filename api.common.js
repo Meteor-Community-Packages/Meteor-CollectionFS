@@ -97,7 +97,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // and we will attach that to a new fileobj for them
     var fileObj = new FS.File(fileRef);
     fileObj.attachData(fileRef);
-    return checkAndInsert(fileRef);
+    return checkAndInsert(fileObj);
   }
 };
 
