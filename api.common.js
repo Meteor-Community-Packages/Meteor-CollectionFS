@@ -1,8 +1,8 @@
 /** @method FS.Collection.prototype.insert Insert `File` or `FS.File` or remote URL into collection
  * @public
- * @param {FS.File|File|String} fileRef File, FS.File, or string representing a remote URL
+ * @param {File|Blob|Buffer|ArrayBuffer|Uint8Array|String} fileRef File, FS.File, or other data to insert
  * @param {function} [callback] Callback `function(error, fileObj)`
- * @returns {FS.File} The `file object`
+ * @returns {FS.File|undefined} The `file object`
  * [Meteor docs](http://docs.meteor.com/#insert)
  */
 FS.Collection.prototype.insert = function(fileRef, callback) {
@@ -21,6 +21,15 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
   }
 
   function beginStorage(fileObj) {
+    // Set collection name
+    fileObj.collectionName = self.name;
+    // Set the chunkSize to match the current collection chunkSize
+    fileObj.chunkSize = self.options.chunkSize;
+    // Set counter for uploaded chunks
+    fileObj.chunkCount = 0;
+    // Calc the number of chunks
+    fileObj.chunkSum = Math.ceil(fileObj.size / fileObj.chunkSize);
+
     // If on client, begin uploading the data
     if (Meteor.isClient) {
       self.options.uploader && self.options.uploader(fileObj);
@@ -30,23 +39,15 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // so that it is available when FileWorker calls saveCopies.
     // This will also trigger file handling from collection observes.
     else if (Meteor.isServer) {
-      fileObj.createReadStream().pipe(FS.TempStore.createWriteStream());
+      fileObj.createReadStream().pipe(FS.TempStore.createWriteStream(fileObj));
     }
   }
 
   function checkAndInsert(fileObj) {
-    // Set reference to this collection
-    fileObj.collectionName = self.name;
-    // Set the chunkSize to match the current collection chunkSize
-    fileObj.chunkSize = self.options.chunkSize;
-    // counter for uploaded chunks
-    fileObj.chunkCount = 0;
-    // Calc the number of chunks
-    fileObj.chunkSum = Math.ceil(fileObj.size / fileObj.chunkSize);
-
-    // Check filters
-    if (!fileObj.fileIsAllowed()) {
-      delete fileObj.collectionName;
+    // Check filters. This is called in deny functions, too, but we call here to catch
+    // server inserts and to catch client inserts early, allowing us to call `onInvalid` on
+    // the client and save a trip to the server.
+    if (!self.allowsFile(fileObj)) {
       return passOrThrow(new Error('FS.Collection insert: file does not pass collection filters'));
     }
 
@@ -59,9 +60,10 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
           if (fileObj._id) {
             delete fileObj._id;
           }
-          delete fileObj.collectionName;
         } else {
-          fileObj._id = id; // just to be safe, since this could be before or after the insert method returns
+          // Set _id, just to be safe, since this could be before or after the insert method returns
+          fileObj._id = id;
+          // Pass to uploader or stream data to the temp store
           beginStorage(fileObj);
         }
         callback(err, err ? void 0 : fileObj);
@@ -76,15 +78,26 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
   // Parse, adjust fileRef
   if (fileRef instanceof FS.File) {
     return checkAndInsert(fileRef);
-  } else if (Meteor.isClient && typeof fileRef === "string" && (fileRef.slice(0, 5) === "http:" || fileRef.slice(0, 6) === "https:")) {
-    // On client, call a method to do the download and insert on the server
-    Meteor.call('_cfs_downloadAndAddFile', fileRef, self.name, callback);
+  } else if (typeof fileRef === "string" && (fileRef.slice(0, 5) === "http:" || fileRef.slice(0, 6) === "https:")) {
+    if (callback) {
+      var fileObj = new FS.File();
+      fileObj.attachData(fileRef, function attachDataCallback(error) {
+        if (error) {
+          callback(error);
+        } else {
+          checkAndInsert(fileObj);
+        }
+      });
+      return fileObj;
+    } else {
+      throw new Error("When passing a URL to FS.Collection.insert, you must provide a callback.");
+    }
   } else {
     // For convenience, allow URL, filepath, etc. to be passed as first arg,
     // and we will attach that to a new fileobj for them
     var fileObj = new FS.File(fileRef);
     fileObj.attachData(fileRef);
-    return checkAndInsert(fileObj);
+    return checkAndInsert(fileRef);
   }
 };
 
@@ -241,3 +254,99 @@ FS.Collection.prototype.deny = function(options) {
 };
 
 // TODO: Upsert?
+
+/**
+ * @method FS.Collection.prototype.allowsFile Does the collection allow the specified file?
+ * @public
+ * @returns {boolean} True if the collection allows this file.
+ *
+ * Checks based on any filters defined on the collection. If the
+ * file is not valid according to the filters, this method returns false
+ * and also calls the filter `onInvalid` method defined for the
+ * collection, passing it an English error string that explains why it
+ * failed.
+ */
+FS.Collection.prototype.allowsFile = function fsColAllowsFile(fileObj) {
+  var self = this;
+
+  // Get filters
+  var filter = self.options.filter;
+  if (!filter) {
+    return true;
+  }
+  var saveAllFileExtensions = (filter.allow.extensions.length === 0);
+  var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
+
+  // Get info about the file
+  var filename = fileObj.name;
+  var contentType = fileObj.type;
+  if (!contentType) {
+    filter.onInvalid && filter.onInvalid(filename + " has an unknown content type");
+    return false;
+  }
+  var fileSize = fileObj.size;
+  if (!fileSize || isNaN(fileSize)) {
+    filter.onInvalid && filter.onInvalid(filename + " has an unknown file size");
+    return false;
+  }
+
+  // Do extension checks only if we have a filename
+  if (filename) {
+    var ext = fileObj.getExtension();
+    if (!((saveAllFileExtensions ||
+            _.indexOf(filter.allow.extensions, ext) !== -1) &&
+            _.indexOf(filter.deny.extensions, ext) === -1)) {
+      filter.onInvalid && filter.onInvalid(filename + ' has the extension "' + ext + '", which is not allowed');
+      return false;
+    }
+  }
+
+  // Do content type checks
+  if (!((saveAllContentTypes ||
+          contentTypeInList(filter.allow.contentTypes, contentType)) &&
+          !contentTypeInList(filter.deny.contentTypes, contentType))) {
+    filter.onInvalid && filter.onInvalid(filename + ' is of the type "' + contentType + '", which is not allowed');
+    return false;
+  }
+
+  // Do max size check
+  if (typeof filter.maxSize === "number" && fileSize > filter.maxSize) {
+    filter.onInvalid && filter.onInvalid(filename + " is too big");
+    return false;
+  }
+  return true;
+};
+
+/**
+ * @method contentTypeInList Is the content type string in the list?
+ * @private
+ * @param {String[]} list - Array of content types
+ * @param {String} contentType - The content type
+ * @returns {Boolean}
+ *
+ * Returns true if the content type is in the list, or if it matches
+ * one of the special types in the list, e.g., "image/*".
+ */
+function contentTypeInList(list, contentType) {
+  var listType, found = false;
+  for (var i = 0, ln = list.length; i < ln; i++) {
+    listType = list[i];
+    if (listType === contentType) {
+      found = true;
+      break;
+    }
+    if (listType === "image/*" && contentType.indexOf("image/") === 0) {
+      found = true;
+      break;
+    }
+    if (listType === "audio/*" && contentType.indexOf("audio/") === 0) {
+      found = true;
+      break;
+    }
+    if (listType === "video/*" && contentType.indexOf("video/") === 0) {
+      found = true;
+      break;
+    }
+  }
+  return found;
+}

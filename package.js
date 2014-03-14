@@ -18,7 +18,6 @@ Package.on_use(function(api) {
   ], 'client');
 
   api.add_files([
-    'server.js',
     'common.js',
     'api.common.js'
   ], 'server');

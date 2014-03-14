@@ -130,13 +130,13 @@ FS.Collection = function(name, options) {
   // for inserts and updates that initiate from untrusted code.
   self.files.deny({
     insert: function(userId, fsFile) {
-      return !fsFile.fileIsAllowed();
+      return !self.allowsFile(fsFile);
     },
     update: function(userId, fsFile, fields, modifier) {
       // TODO will need some kind of additional security here:
       // Don't allow them to change the type, size, name, and
       // anything else that would be security or data integrity issue.
-      return !fsFile.fileIsAllowed();
+      return !self.allowsFile(fsFile);
     },
     fetch: []
   });
