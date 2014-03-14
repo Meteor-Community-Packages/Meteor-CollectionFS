@@ -41,20 +41,13 @@ _Utility.cloneFileUnit = function(unit) {
     var newUnit = {
       size: _Utility.defaultZero(unit.size)
     };
-    if (unit._id) {
-      newUnit._id = '' + unit._id;
-    }
-    if (unit.name) {
-      newUnit.name = '' + unit.name;
-    }
-    if (unit.type) {
-      newUnit.type = '' + unit.type;
-    }
+    _.each(['_id', 'name', 'type', 'key'], function (prop) {
+      if (unit[prop]) {
+        newUnit[prop] = '' + unit[prop];
+      }
+    });
     if (unit.utime) {
       newUnit.utime = unit.utime;
-    }
-    if (unit.key) {
-      newUnit.key = unit.key;
     }
     return newUnit;
   }
@@ -88,14 +81,25 @@ _Utility.cloneFileAttempt = function(attempt) {
 FS.Utility.cloneFileRecord = function(rec) {
   var result = _Utility.cloneFileUnit(rec) || {};
   // Base reference
-  result.collectionName = '' + rec.collectionName;
+  if (rec.collectionName) {
+    result.collectionName = '' + rec.collectionName;
+  }
   // chunk ref
-  result.chunkSize = rec.chunkSize;
+  if (rec.chunkSize != null) {
+    result.chunkSize = rec.chunkSize;
+  }
   // count for transfered chunks
-  result.chunkCount = rec.chunkCount;
+  if (rec.chunkCount != null) {
+    result.chunkCount = rec.chunkCount;
+  }
   // count for transfered chunks
-  result.chunkSum = rec.chunkSum || Math.ceil(rec.size / rec.chunkSize);
-  // Deprecate?
+  if (rec.chunkSum != null) {
+    result.chunkSum = rec.chunkSum;
+  } else if (rec.size != null && rec.chunkSize != null) {
+    result.chunkSum = Math.ceil(rec.size / rec.chunkSize);
+  }
+
+  // TODO Deprecate?
   result.bytesUploaded = _Utility.defaultZero(rec.bytesUploaded);
 
   if (_.isObject(rec.metadata)) {
