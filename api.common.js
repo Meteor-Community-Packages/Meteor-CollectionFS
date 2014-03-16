@@ -21,14 +21,6 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
   }
 
   function beginStorage(fileObj) {
-    // Set collection name
-    fileObj.collectionName = self.name;
-    // Set the chunkSize to match the current collection chunkSize
-    fileObj.chunkSize = self.options.chunkSize;
-    // Set counter for uploaded chunks
-    fileObj.chunkCount = 0;
-    // Calc the number of chunks
-    fileObj.chunkSum = Math.ceil(fileObj.size / fileObj.chunkSize);
 
     // If on client, begin uploading the data
     if (Meteor.isClient) {
@@ -50,6 +42,15 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     if (!self.allowsFile(fileObj)) {
       return passOrThrow(new Error('FS.Collection insert: file does not pass collection filters'));
     }
+
+    // Set collection name
+    fileObj.collectionName = self.name;
+    // Set the chunkSize to match the current collection chunkSize
+    fileObj.chunkSize = self.options.chunkSize;
+    // Set counter for uploaded chunks
+    fileObj.chunkCount = 0;
+    // Calc the number of chunks
+    fileObj.chunkSum = Math.ceil(fileObj.size / fileObj.chunkSize);
 
     // Insert the file into db
     // We call cloneFileRecord as an easy way of extracting the properties
