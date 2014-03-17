@@ -71,6 +71,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
       });
     } else {
       fileObj._id = self.files.insert(FS.Utility.cloneFileRecord(fileObj));
+      // Pass to uploader or stream data to the temp store
       beginStorage(fileObj);
     }
     return fileObj;
@@ -79,9 +80,11 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
   // Parse, adjust fileRef
   if (fileRef instanceof FS.File) {
     return checkAndInsert(fileRef);
-  } else if (typeof fileRef === "string" && (fileRef.slice(0, 5) === "http:" || fileRef.slice(0, 6) === "https:")) {
+  } else {
+    // For convenience, allow File, Blob, Buffer, data URI, filepath, URL, etc. to be passed as first arg,
+    // and we will attach that to a new fileobj for them
+    var fileObj = new FS.File(fileRef);
     if (callback) {
-      var fileObj = new FS.File();
       fileObj.attachData(fileRef, function attachDataCallback(error) {
         if (error) {
           callback(error);
@@ -89,16 +92,13 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
           checkAndInsert(fileObj);
         }
       });
-      return fileObj;
     } else {
-      throw new Error("When passing a URL to FS.Collection.insert, you must provide a callback.");
+      // We ensure there's a callback on the client, so if there isn't one at this point,
+      // we must be on the server expecting synchronous behavior.
+      fileObj.attachData(fileRef);
+      checkAndInsert(fileObj);
     }
-  } else {
-    // For convenience, allow URL, filepath, etc. to be passed as first arg,
-    // and we will attach that to a new fileobj for them
-    var fileObj = new FS.File(fileRef);
-    fileObj.attachData(fileRef);
-    return checkAndInsert(fileObj);
+    return fileObj;
   }
 };
 
