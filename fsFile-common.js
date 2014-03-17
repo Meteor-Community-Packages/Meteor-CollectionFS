@@ -30,7 +30,7 @@ FS.File = function(ref, createdByTransform) {
  * @param {File|Blob|Buffer|ArrayBuffer|Uint8Array|String} data The data that you want to attach to the file.
  * @param {Object} [options] Options
  * @param {String} [options.type] The data content (MIME) type, if known.
- * @param {Function} [callback] Callback function, callback(error), optional unless data is a URL
+ * @param {Function} [callback] Callback function, callback(error). On the client, a callback is required if data is a URL.
  * @returns {undefined}
  */
 FS.File.prototype.attachData = function fsFileAttachData(data, options, callback) {
@@ -42,7 +42,9 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   }
   options = options || {};
 
-  callback = callback || FS.Utility.defaultCallback;
+  if (Meteor.isClient && !callback) {
+    callback = FS.Utility.defaultCallback;
+  }
 
   // Set any other properties we can determine from the source data
   // File
@@ -61,14 +63,20 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   // URL: we need to do a HEAD request to get the type because type
   // is required for filtering to work.
   else if (typeof data === "string" && (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:")) {
-    Meteor.call('_cfs_getUrlInfo', data, function (error, result) {
-      if (error) {
-        callback(error);
-      } else {
-        _.extend(self, result);
-        setData(self.type);
-      }
-    });
+    if (!callback) {
+      var result = Meteor.call('_cfs_getUrlInfo', data);
+      _.extend(self, result);
+      setData(self.type);
+    } else {
+      Meteor.call('_cfs_getUrlInfo', data, function (error, result) {
+        if (error) {
+          callback(error);
+        } else {
+          _.extend(self, result);
+          setData(self.type);
+        }
+      });
+    }
   }
   // Everything else
   else {
@@ -79,7 +87,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   function setData(type) {
     self.data = new FS.Data(data, type);
     self.type = self.data.type;
-    callback();
+    callback && callback();
   }
 
 };
