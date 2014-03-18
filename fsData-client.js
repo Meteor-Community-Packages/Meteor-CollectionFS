@@ -67,7 +67,7 @@ FS.Data.prototype.getBinary = function fsDataGetBinary(start, end, callback) {
       callback(error);
     } else {
       if (typeof start === "number" && typeof end === "number") {
-        var size = self.size();
+        var size = blob.size;
         // Return the requested chunk of binary data
         if (start >= size) {
           callback(new Error("FS.File getBinary: start position beyond end of data (" + size + ")"));
