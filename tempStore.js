@@ -92,7 +92,7 @@ FS.TempStore.listParts = function(fileObj) {
   // We only start work if its found
   if (fs.existsSync( filePath )) {
     // Read all the chunks in folder
-    chunkPaths = fs.readdirSync(_filePath(fileObj) );
+    chunkPaths = fs.readdirSync(filePath);
     // Unlink each file
     for (var i = 0; i < chunkPaths; i++) {
       // add part number to list
@@ -112,10 +112,11 @@ FS.TempStore.removeFile = function(fileObj) {
     // Emit event
     self.emit('remove', fileObj, filePath);
     // Read all the chunks in folder
-    chunkPaths = fs.readdirSync(_filePath(fileObj) );
+    chunkPaths = fs.readdirSync(filePath);
     // Unlink each file
-    for (var i = 0; i < chunkPaths; i++) {
-      fs.unlinkSync( chunkPaths[i] );
+    for (var i = 0; i < chunkPaths.length; i++) {
+      // Get the chunk path
+      fs.unlinkSync(path.join(filePath, chunkPaths[i]));
     }
     // Unlink the folder itself
     fs.rmdirSync( filePath );
