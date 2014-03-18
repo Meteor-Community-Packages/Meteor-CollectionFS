@@ -6,7 +6,9 @@ function _getBuffer(self, callback) {
   if (self.buffer) {
     callback(null, self.buffer);
   } else if (self.dataUri) {
-
+    var data = self.dataUri.substr(self.dataUri.indexOf('base64') + 7);
+    self.buffer = new Buffer(data, 'base64');
+    callback(null, self.buffer);
   } else if (self.url) {
     request({
       url: self.url,
@@ -112,4 +114,15 @@ FS.Data.prototype.createReadStream = function() {
     // Stream from filesystem
     return fs.createReadStream(self.filepath);
   }
+};
+
+FS.Data.prototype.size = function fsDataSize() {
+  var self = this;
+
+  if (typeof self._size === "number") {
+    return self._size;
+  }
+
+  self._size = self.getBuffer().length;
+  return self._size;
 };

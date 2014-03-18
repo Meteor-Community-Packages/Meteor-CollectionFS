@@ -31,11 +31,18 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-  api.use('collectionFS');
+  api.use(['collectionFS', 'http-methods']);
   api.use('test-helpers', 'server');
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
            'random', 'deps']);
 
-  api.add_files('tests/server-tests.js', 'server');
-  api.add_files('tests/client-tests.js', 'client');
+  api.add_files([
+    'tests/data-server-tests.js',
+    'tests/file-server-tests.js'
+  ], 'server');
+
+  api.add_files([
+    'tests/data-client-tests.js',
+    'tests/file-client-tests.js'
+  ], 'client');
 });

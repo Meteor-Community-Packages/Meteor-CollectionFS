@@ -21,6 +21,10 @@
 		"collectionFS": {
 			"git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
 			"branch": "devel"
+		},
+		"http-methods": {
+			"git": "https://github.com/CollectionFS/Meteor-http-methods.git",
+			"branch": "master"
 		}
 	}
 }

@@ -29,6 +29,7 @@ FS.Data = function(data, type) {
     self.type = data.type;
   } else if (typeof Buffer !== "undefined" && data instanceof Buffer) {
     self.buffer = data;
+    self.type = type;
   } else if (typeof ArrayBuffer !== "undefined" && data instanceof ArrayBuffer) {
     if (typeof Buffer !== "undefined") {
       self.buffer = new Buffer( new Uint8Array(data) );
@@ -38,11 +39,17 @@ FS.Data = function(data, type) {
       self.type = type;
     }
   } else if (EJSON.isBinary(data)) {
-    self.buffer = new Buffer( data );
-    self.type = type;
+    if (typeof Buffer !== "undefined") {
+      self.buffer = new Buffer(data);
+      self.type = type;
+    } else if (typeof Blob !== "undefined") {
+      self.blob = new Blob([data], {type: type});
+      self.type = type;
+    }
   } else if (typeof data === "string") {
     if (data.slice(0, 5) === "data:") {
       self.dataUri = data;
+      self.type = data.slice(5, data.indexOf(';'));
     } else if (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:") {
       self.url = data;
       self.type = type;
@@ -55,12 +62,4 @@ FS.Data = function(data, type) {
   } else {
     throw new Error("FS.Data constructor received data that it doesn't support");
   }
-};
-
-FS.Data.prototype.size = function fsDataSize() {
-  var self = this;
-  if (self.blob) return self.blob.size;
-  if (self.buffer) return self.buffer.length;
-  //XXX we don't know the size of stuff we will stream yet; what to do about this?
-  return 0;
 };

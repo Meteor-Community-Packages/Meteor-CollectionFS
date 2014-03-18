@@ -11,14 +11,15 @@ FS.Data.prototype.getBlob = function (callback) {
   if (self.blob) {
     callback(null, self.blob);
   } else if (self.dataUri) {
-
+    self.blob = dataURItoBlob(self.dataUri, self.type);
+    callback(null, self.blob);
   } else if (self.url) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', self.url, true);
     xhr.responseType = "blob";
     xhr.onload = function(data) {
-      self.blob = data;
-      callback(null, data);
+      self.blob = xhr.response;
+      callback(null, self.blob);
     };
     xhr.onerror = function(err) {
       callback(err);
@@ -147,3 +148,31 @@ FS.Data.prototype.getDataUri = function(callback) {
     }
   });
 };
+
+FS.Data.prototype.size = function fsDataSize(callback) {
+  var self = this;
+
+  if (!callback) {
+    throw new Error("On the client, FS.Data.size requires a callback");
+  }
+
+  if (typeof self._size === "number") {
+    return self._size;
+  }
+
+  return self.getBlob(function (error, blob) {
+    if (error) {
+      callback(error);
+    } else {
+      self._size = blob.size;
+      callback(null, blob.size);
+    }
+  });
+};
+
+// XXX Move to Utility in base?
+function dataURItoBlob(dataURI, dataTYPE) {
+  var binary = atob(dataURI.split(',')[1]), array = [];
+  for(var i = 0; i < binary.length; i++) array.push(binary.charCodeAt(i));
+  return new Blob([new Uint8Array(array)], {type: dataTYPE});
+}
