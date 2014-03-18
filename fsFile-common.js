@@ -237,7 +237,6 @@ FS.File.prototype.remove = function(callback) {
     return self.collection.files.remove({_id: self._id}, function(err, res) {
       if (!err) {
         delete self._id;
-        delete self.binary;
         delete self.collection;
         delete self.collectionName;
       }
@@ -269,12 +268,7 @@ FS.File.prototype.getExtension = function() {
   var self = this;
   // Make sure our file record is updated
   self.getFileRecord();
-  // Get name from file record
-  var name = self.name;
-  // Seekout the last '.' if found
-  var found = name.lastIndexOf('.') + 1;
-  // Return the extension if found else ''
-  return (found > 0 ? name.substr(found).toLowerCase() : '');
+  return FS.Utility.getFileExtension(self.name);
 };
 
 function checkContentType(fsFile, storeName, startOfType) {
