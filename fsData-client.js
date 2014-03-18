@@ -121,6 +121,11 @@ FS.Data.prototype.saveAs = function fsDataSaveAs(filename) {
  * @param {function} callback callback(err, dataUri)
  */
 FS.Data.prototype.getDataUri = function(callback) {
+  // XXX: We could consider using: URL.createObjectURL(blob);
+  // This will create a reference to the blob data instead of a clone
+  // This is part of the File API - as the rest - Not sure how to generally
+  // support from IE10, FF26, Chrome 31, safari 7, opera 19, ios 6, android 4
+
   var self = this;
 
   if (typeof callback !== 'function')
