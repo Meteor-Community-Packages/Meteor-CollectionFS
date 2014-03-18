@@ -46,7 +46,7 @@ FS.FileWorker.observe = function(fsCollection) {
   fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
     added: function(fsFile) {
       FS.debug && console.log("FileWorker ADDED - calling deleteChunks for", fsFile._id);
-      FS.TempStore.deleteChunks(fsFile);
+      FS.TempStore.removeFile(fsFile);
     }
   });
 
