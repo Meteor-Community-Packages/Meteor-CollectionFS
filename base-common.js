@@ -210,3 +210,16 @@ FS.Utility.validateAction = function validateAction(validators, fileObj, userId)
     throw new Meteor.Error(403, "Access denied");
   }
 };
+
+/**
+ * @method FS.Utility.getFileExtension
+ * @private
+ * @param {String} name - A filename or URL that may or may not have an extension.
+ * @returns {String} The extension or an empty string if no extension found.
+ */
+FS.Utility.getFileExtension = function utilGetFileExtension(name) {
+  // Seekout the last '.' if found
+  var found = name.lastIndexOf('.') + 1;
+  // Return the extension if found else ''
+  return (found > 0 ? name.substr(found).toLowerCase() : '');
+};
