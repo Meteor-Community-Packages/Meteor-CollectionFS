@@ -99,6 +99,7 @@ UploadTransferQueue = function(options) {
   /** @method UploadTransferQueue.uploadFile
    * @param {FS.File} File to upload
    * @todo Check that a file can only be added once - maybe a visual helper on the FS.File?
+   * @todo Have an initial request to the server getting uploaded chunks for resume
    */
   self.uploadFile = function(fileObj) {
     FS.debug && console.log("HTTP uploadFile");
