@@ -55,6 +55,8 @@ FS.FileWorker.observe = function(fsCollection) {
   fsCollection.files.find().observe({
     removed: function(fsFile) {
       FS.debug && console.log('FileWorker REMOVED - removing all stored data for', fsFile._id);
+      //remove from temp store
+      FS.TempStore.removeFile(fsFile);
       //delete from all stores
       _.each(fsCollection.options.stores, function(store) {
         store.remove(fsFile, {ignoreMissing: true});
