@@ -1,14 +1,14 @@
 {
-  "name": "cfs-tempstore",
-  "description": "CollectionFS, temporary storage",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-tempstore",
-  "author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-  "version": "0.0.2",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
-  "packages": {
-    "cfs-base-package": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-      "branch": "master"      
-    }
-  }  
+	"name": "cfs-tempstore",
+	"description": "CollectionFS, temporary storage",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-tempstore",
+	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
+	"version": "0.0.3",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
+	"packages": {
+		"cfs-base-package": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+			"branch": "master"
+		}
+	}
 }
