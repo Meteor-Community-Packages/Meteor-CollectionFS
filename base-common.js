@@ -10,6 +10,9 @@ FS.AccessPoint = {};
 // namespace for utillities
 FS.Utility = {};
 
+// namespace for transform streams
+FS.Transform = {};
+
 // An internal collection reference
 FS._collections = {};
 
