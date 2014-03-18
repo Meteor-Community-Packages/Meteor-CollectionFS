@@ -233,10 +233,6 @@ FS.File.prototype.update = function(modifier, options, callback) {
 FS.File.prototype.remove = function(callback) {
   var self = this;
   callback = callback || FS.Utility.defaultCallback;
-  // Remove any associated temp files
-  if (Meteor.isServer) {
-    FS.TempStore.deleteChunks(self);
-  }
   if (self.isMounted()) {
     return self.collection.files.remove({_id: self._id}, function(err, res) {
       if (!err) {
