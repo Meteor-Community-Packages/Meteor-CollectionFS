@@ -7,8 +7,6 @@ Package.on_use(function(api) {
   api.imply([
     // Base util rigs the basis for the FS scope and some general helper mehtods
     'cfs-base-package',
-    // Transfer is basically the up and download queues via ddp
-    'cfs-transfer',
     // Want to make use of the file object and its api, yes!
     'cfs-file',
     // Add the FS.Collection to keep track of everything
