@@ -10,9 +10,21 @@ Npm.depends({
 
 Package.on_use(function(api) {
 
-  api.use(['cfs-base-package', 'cfs-storage-adapter']);
+  // This imply is needed for tests, and is technically probably correct anyway.
+  api.imply([
+    'cfs-base-package'
+  ]);
 
-  api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata', 'http']);
+  api.use([
+    'cfs-base-package',
+    'cfs-storage-adapter',
+    'deps',
+    'underscore',
+    'check',
+    'livedata',
+    'mongo-livedata',
+    'http'
+  ]);
 
   api.use(['cfs-filesaver'], 'client');
 
@@ -31,10 +43,20 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-  api.use(['collectionFS', 'http-methods']);
-  api.use('test-helpers', 'server');
-  api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
-           'random', 'deps']);
+
+  api.use([
+    'cfs-base-package',
+    'cfs-file',
+    'cfs-collection',
+    'http-methods',
+    'test-helpers',
+    'tinytest',
+    'underscore',
+    'ejson',
+    'ordered-dict',
+    'random',
+    'deps'
+  ]);
 
   api.add_files([
     'tests/data-server-tests.js',
