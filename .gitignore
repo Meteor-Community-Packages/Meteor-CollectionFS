@@ -2,3 +2,5 @@
 .npm*
 /nbproject*
 /smart.lock
+/packages/
+*.DS_Store
