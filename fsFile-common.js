@@ -31,7 +31,7 @@ FS.File = function(ref, createdByTransform) {
  * @param {Object} [options] Options
  * @param {String} [options.type] The data content (MIME) type, if known.
  * @param {Function} [callback] Callback function, callback(error). On the client, a callback is required if data is a URL.
- * @returns {undefined}
+ * @returns {FS.File} This FS.File instance.
  */
 FS.File.prototype.attachData = function fsFileAttachData(data, options, callback) {
   var self = this;
@@ -96,6 +96,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
     callback && callback();
   }
 
+  return self; //allow chaining
 };
 
 /**
@@ -105,15 +106,11 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
  */
 FS.File.prototype.uploadProgress = function() {
   var self = this;
-  // If we are passed a file object and the object is mounted on a collection
-  if (self.isMounted()) {
+  // Make sure our file record is updated
+  self.getFileRecord();
 
-    // Make sure our file record is updated
-    self.getFileRecord();
-
-    // Return the confirmed progress
-    return Math.round(self.chunkCount / self.chunkSum * 100);
-  }
+  // Return the confirmed progress
+  return Math.round((self.chunkCount || 0) / (self.chunkSum || 1) * 100);
 };
 
 /**
@@ -163,9 +160,6 @@ FS.File.prototype.getCollection = function() {
  * @method FS.File.prototype.isMounted
  * @public
  * @returns {FS.Collection} Returns attached collection or undefined if not mounted
- *
- * > Note: This will throw an error if collection not found and file is mounted
- * > *(got an invalid collectionName)*
  */
 FS.File.prototype.isMounted = FS.File.prototype.getCollection;
 
@@ -207,25 +201,30 @@ FS.File.prototype.getFileRecord = function() {
  */
 FS.File.prototype.update = function(modifier, options, callback) {
   var self = this;
+
   FS.debug && console.log('UPDATE: ' + JSON.stringify(modifier));
+
   // Make sure we have options and callback
   if (!callback && typeof options === 'function') {
     callback = options;
     options = {};
   }
+  callback = callback || FS.Utility.defaultCallback;
 
-  if (self.isMounted()) {
-    // Call collection update - File record
-    return self.collection.files.update({_id: self._id}, modifier, options, function(err, count) {
-      // Update the fileRecord if it was changed and on the client
-      // The server-side methods will pull the fileRecord if needed
-      if (count > 0 && Meteor.isClient)
-        self.getFileRecord();
-      // If we have a callback then call it
-      if (typeof callback === 'function')
-        callback(err, count);
-    });
+  if (!self.isMounted()) {
+    callback(new Error("Cannot update a file that is not associated with a collection"));
+    return;
   }
+
+  // Call collection update - File record
+  return self.collection.files.update({_id: self._id}, modifier, options, function(err, count) {
+    // Update the fileRecord if it was changed and on the client
+    // The server-side methods will pull the fileRecord if needed
+    if (count > 0 && Meteor.isClient)
+      self.getFileRecord();
+    // Call callback
+    callback(err, count);
+  });
 };
 
 /**
@@ -238,20 +237,24 @@ FS.File.prototype.update = function(modifier, options, callback) {
  */
 FS.File.prototype.remove = function(callback) {
   var self = this;
+
+  FS.debug && console.log('REMOVE: ' + self._id);
+
   callback = callback || FS.Utility.defaultCallback;
-  if (self.isMounted()) {
-    return self.collection.files.remove({_id: self._id}, function(err, res) {
-      if (!err) {
-        delete self._id;
-        delete self.collection;
-        delete self.collectionName;
-      }
-      callback(err, res);
-    });
-  } else {
+
+  if (!self.isMounted()) {
     callback(new Error("Cannot remove a file that is not associated with a collection"));
     return;
   }
+
+  return self.collection.files.remove({_id: self._id}, function(err, res) {
+    if (!err) {
+      delete self._id;
+      delete self.collection;
+      delete self.collectionName;
+    }
+    callback(err, res);
+  });
 };
 
 /**
