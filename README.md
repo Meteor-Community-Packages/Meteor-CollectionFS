@@ -1,4 +1,4 @@
-cfs-file
+cfs-file [![Build Status](https://travis-ci.org/CollectionFS/Meteor-cfs-file.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-cfs-file)
 =========================
 
 This is a Meteor package used by
