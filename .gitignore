@@ -1,5 +1,6 @@
-.DS_Store
-
 .build*
 .npm*
-uploads
+/nbproject*
+/smart.lock
+/packages/
+*.DS_Store
