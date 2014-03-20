@@ -42,18 +42,23 @@ function _getBuffer(self, callback) {
 /**
  * @method FS.Data.prototype.getBuffer
  * @public
- * @returns {Buffer}
+ * @param {function} [callback] callback(err, buffer)
+ * @returns {Buffer|undefined}
  *
- * Returns a Buffer representing this data.
+ * Returns a Buffer representing this data, or passes the Buffer to a callback.
  */
-FS.Data.prototype.getBuffer = function fsDataGetBuffer() {
-  return Meteor._wrapAsync(_getBuffer)(this);
+FS.Data.prototype.getBuffer = function fsDataGetBuffer(callback) {
+  if (callback) {
+    return _getBuffer(this, callback);
+  } else {
+    return Meteor._wrapAsync(_getBuffer)(this);
+  }
 };
 
 /**
- * @method FS.Data.prototype.getBuffer
+ * @method FS.Data.prototype.saveToFile
  * @public
- * @returns {Buffer}
+ * @returns {undefined}
  *
  * Saves this data to a filepath on the local filesystem.
  */
