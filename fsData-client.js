@@ -177,7 +177,7 @@ FS.Data.prototype.size = function fsDataSize(callback) {
 
 // XXX Move to Utility in base?
 function dataURItoBlob(dataURI, dataTYPE) {
-  var binary = atob(dataURI.split(',')[1]), array = [];
-  for(var i = 0; i < binary.length; i++) array.push(binary.charCodeAt(i));
+  var str = atob(dataURI.split(',')[1]), array = [];
+  for(var i = 0; i < str.length; i++) array.push(str.charCodeAt(i));
   return new Blob([new Uint8Array(array)], {type: dataTYPE});
 }

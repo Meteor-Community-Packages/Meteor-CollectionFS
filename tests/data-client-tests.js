@@ -72,10 +72,14 @@ Tinytest.addAsync('cfs-data - client - getBlob', function(test, onComplete) {
 
     if (blob instanceof Blob) {
       var reader = new FileReader();
-      reader.addEventListener("loadend", function() {
+      reader.onload = function(event) {
         test.equal(reader.result, 'Hello World', testType + ' got back blob with incorrect data');
         continueIfDone();
-      });
+      };
+      reader.onerror = function(err) {
+        test.equal(reader.error, null, testType + ' error reading blob as text');
+        continueIfDone();
+      };
       reader.readAsText(blob, 'utf-8');
     } else {
       continueIfDone();
@@ -124,7 +128,7 @@ Tinytest.addAsync('cfs-data - client - getBinary', function(test, onComplete) {
     test.isTrue(EJSON.isBinary(binary), testType + ' got no binary');
 
     if (EJSON.isBinary(binary)) {
-      test.equal(String.fromCharCode.apply(null, binary), 'Hello World', testType + ' got back binary with incorrect data');
+      test.equal(bin2str(binary), 'Hello World', testType + ' got back binary with incorrect data');
       continueIfDone();
     } else {
       continueIfDone();
