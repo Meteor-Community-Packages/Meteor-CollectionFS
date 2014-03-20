@@ -4,6 +4,7 @@ CollectionFS
 NOTE: This branch is under active development right now (2014-3-20). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
+
 __ETR: Before April__
 
 CollectionFS is a smart package for Meteor that provides a complete file
