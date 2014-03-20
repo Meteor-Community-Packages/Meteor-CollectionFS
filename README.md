@@ -438,7 +438,7 @@ TODO add
 
 ### Insert One File From a Remote URL
 
-~~In either client or server code:
+~~In either client or server code:~~
 
 ```js
 Pictures.insert(url, function (error, fileObj) {
@@ -480,7 +480,7 @@ Pictures.insert(fileObj);
 ```
 
 Note that `FS.File.fromUrl` will not work on the client if the remote resource's
-CORS header does not allow the download.~~
+~~CORS header does not allow the download.~~
 
 ### Add Metadata to a File Before Inserting
 
@@ -504,7 +504,7 @@ myFsFile.update({$set: {'metadata.foo': 'bar'}});
 
 > We can insert `FS.Files` directly into the `Meteor.Collection` due to `cfs-ejson-file` package.
 
-~~This works in either client or server code:
+This works in either client or server code:
 
 ```js
 Pictures.insert(myFile, function (error, fileObj) {
