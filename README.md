@@ -26,7 +26,7 @@ Use `mrt add collectionFS` to install or clone `devel` into your package folder.
 packages you want to use. See the Storage Adapters
 section for a list of the available storage adapter packages.
 
-Deprecating:
+> Deprecating:
 > Most people will probably want `cfs-handlebars`. If you're dealing with image files, you'll probably want `cfs-graphicsmagick`. Note that you'll have to also install GraphicsMagick and/or ImageMagick on the server or development machine. See the README for the `cfs-graphicsmagick` package. All the packages have their own README files you should read.
 
 
@@ -150,44 +150,45 @@ Storage adapters also handle retrieving the file data and removing the file data
 when you delete the file.
 
 ## File Manipulation
-
-You may want to manipulate files before saving them. For example, if a user
-uploads a large image, you may want to reduce its resolution, crop it,
-compress it, etc. before allowing the storage adapter to save it. You may also
-want to convert to another content type or change the filename.
-~~You can do all of this by defining a `beforeSave` method.
-
-A `beforeSave` method can be defined for any store. It does not receive any
+// TODO show an example of `transform` options on SA's and how they stream data.
+> 
+> You may want to manipulate files before saving them. For example, if a user
+> uploads a large image, you may want to reduce its resolution, crop it,
+> compress it, etc. before allowing the storage adapter to save it. You may also
+> want to convert to another content type or change the filename.
+> You can do all of this by defining a `beforeSave` method.
+> 
+> A `beforeSave` method can be defined for any store. It does not receive any
 arguments, but its context is the
-`FS.File` being saved, which you can alter as necessary.
-
-The most common scenario is image manipulation, and for this there is a
+> `FS.File` being saved, which you can alter as necessary.
+> 
+> The most common scenario is image manipulation, and for this there is a
 convenient package,
-[cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick),
-that allows you to easily call `GraphicsMagick` methods on the `FS.File`
+> [cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick),
+> that allows you to easily call `GraphicsMagick` methods on the `FS.File`
 data. Here's an example:
-
-*server.js:*
-
-```js
-var imageStore = new FS.Store.FileSystem("images", {
-  path: "~/uploads",
-  beforeSave: function () {
-    this.gm().resize(60, 60).blur(7, 3).save();
-  }
-});
-
-Images = new FS.Collection("images", {
-  stores: [imageStore]
-});
-```
-
-It's pretty easy to understand. First call `gm()` on the `FS.File` to enter
+> 
+> *server.js:*
+> 
+> ```js
+> var imageStore = new FS.Store.FileSystem("images", {
+>   path: "~/uploads",
+>   beforeSave: function () {
+>     this.gm().resize(60, 60).blur(7, 3).save();
+>   }
+> });
+> 
+> Images = new FS.Collection("images", {
+>   stores: [imageStore]
+> });
+> ```
+> 
+> It's pretty easy to understand. First call `gm()` on the `FS.File` to enter
 a special GraphicsMagick context, then call any methods from the node `gm` package,
 and finally call `save()` to update the `FS.File` data with those modifications.
-Refer to the
-[cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick)
-package documentation for more information.~~
+> Refer to the
+> [cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick)
+> package documentation for more information.
 
 ## Filtering
 
@@ -301,13 +302,11 @@ Calling insert on the server should be done only when you have the file
 somewhere on the server filesystem already or you're downloading it from a
 remote URL.
 
-~~## Handlebars
-
-To simplify your life, consider using the
-[cfs-handlebars](https://github.com/CollectionFS/Meteor-cfs-handlebars)
-package, which provides
-several helpers to easily display `FS.File` information, create file inputs,
-create download or delete buttons, show file transfer progress, and more.~~
+> ## Handlebars
+> 
+> To simplify your life, consider using the
+[cfs-handlebars](https://github.com/CollectionFS/Meteor-cfs-handlebars) package, which provides
+> several helpers to easily display `FS.File` information, create file inputs, create download or delete buttons, show file transfer progress, and more.
 
 ## Custom Connections
 
@@ -437,50 +436,51 @@ TODO add
 TODO add
 
 ### Insert One File From a Remote URL
-
-~~In either client or server code:~~
-
-```js
-Pictures.insert(url, function (error, fileObj) {
-  //fileObj is the inserted FS.File instance
-  //data has been automatically retrieved from the remote URL and stored
-});
-```
-
-On the server, you can omit the callback and the method will block until the
+// TODO this api changed patter, use `attachData` or direct insert to `FS.Collection`
+> 
+> In either client or server code:
+> 
+> ```js
+> Pictures.insert(url, function (error, fileObj) {
+>   //fileObj is the inserted FS.File instance
+>   //data has been automatically retrieved from the remote URL and stored
+> });
+> ```
+> 
+> On the server, you can omit the callback and the method will block until the
 data download and insert are both complete. Then it will return the new FS.File
 instance. On the client, you can omit the callback and any errors will be thrown.
-
-When you call `insert` with a URL string as the first argument on the client,
+> 
+> When you call `insert` with a URL string as the first argument on the client,
 the remote data download and the actual insert both take place on the server.
 This is helpful for lightweight clients and also avoids CORS issues. When this
 happens, the callback will still be called after the remote download and insert
 is finished, but the return value of `insert` will always be `undefined` (because
 the insert did not happen on the client).
-
-Note that a drawback of passing the URL directly to `insert` is that the file
+> 
+> Note that a drawback of passing the URL directly to `insert` is that the file
 will be inserted without a name. If you want to give it a name, you can do it
 this way:
-
-```js
-FS.File.fromUrl(url, 'name.jpg', function (error, fileObj) {
-  //data has been automatically retrieved from the remote URL and attached to fileObj
-  Pictures.insert(fileObj, function (error, fileObj) {
-    //fileObj._id is now set
-  });
-});
-```
-
-Or in server code:
-
-```js
-var fileObj = FS.File.fromUrl(url, 'name.jpg');
-Pictures.insert(fileObj);
-//fileObj._id is now set
-```
-
-Note that `FS.File.fromUrl` will not work on the client if the remote resource's
-~~CORS header does not allow the download.~~
+> 
+> ```js
+> FS.File.fromUrl(url, 'name.jpg', function (error, fileObj) {
+>   //data has been automatically retrieved from the remote URL and attached to fileObj
+>   Pictures.insert(fileObj, function (error, fileObj) {
+>     //fileObj._id is now set
+>   });
+> });
+> ```
+> 
+> Or in server code:
+> 
+> ```js
+> var fileObj = FS.File.fromUrl(url, 'name.jpg');
+> Pictures.insert(fileObj);
+> //fileObj._id is now set
+> ```
+> 
+> Note that `FS.File.fromUrl` will not work on the client if the remote resource's
+> CORS header does not allow the download.
 
 ### Add Metadata to a File Before Inserting
 
@@ -503,22 +503,22 @@ myFsFile.update({$set: {'metadata.foo': 'bar'}});
 ### Store a Reference to an Inserted File in Another Collection
 
 > We can insert `FS.Files` directly into the `Meteor.Collection` due to `cfs-ejson-file` package.
-
-This works in either client or server code:
-
-```js
-Pictures.insert(myFile, function (error, fileObj) {
-  if (!error) {
-    Items.update({_id: relatedItemId}, {$set: {pictureId: fileObj._id}});
-  } else {
-    throw error;
-  }
-});
-```
-
-This works in server code only:
-
-```js
-var fileObj = Pictures.insert(myFile);
-Items.update({_id: relatedItemId}, {$set: {pictureId: fileObj._id}});
-```~~
+> 
+> This works in either client or server code:
+> 
+> ```js
+> Pictures.insert(myFile, function (error, fileObj) {
+>   if (!error) {
+>     Items.update({_id: relatedItemId}, {$set: {pictureId: fileObj._id}});
+>   } else {
+>     throw error;
+>   }
+> });
+> ```
+> 
+> This works in server code only:
+> 
+> ```js
+> var fileObj = Pictures.insert(myFile);
+> Items.update({_id: relatedItemId}, {$set: {pictureId: fileObj._id}});
+> ```
