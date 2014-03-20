@@ -10,10 +10,6 @@
       "git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
       "branch": "master"
     },
-    "cfs-transfer": {
-      "git": "https://github.com/CollectionFS/Meteor-cfs-transfer.git",
-      "branch": "master"
-    },
     "cfs-file": {
       "git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
       "branch": "master"
