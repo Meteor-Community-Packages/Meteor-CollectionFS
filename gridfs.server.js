@@ -45,7 +45,6 @@ FS.Store.GridFS = function(name, options) {
 
     typeName: 'storage.gridfs',
     createReadStream: function(fileObj, options) {
-      var self = this;
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) {
         return new Error('File not found on this store "' + name + '"');
@@ -63,7 +62,6 @@ FS.Store.GridFS = function(name, options) {
 
     },
     createWriteStream: function(fileObj, options) {
-      var self = this;
       options = options || {};
 
       var fileKey = fileObj.collectionName + fileObj._id;
@@ -190,7 +188,6 @@ FS.Store.GridFS = function(name, options) {
 
     // Refactor to "remove"
     del: function(fileObj, callback) {
-      var self = this;
       var fileInfo = fileObj.getCopyInfo(name);
       if (!fileInfo) { return callback(null, true); }
       var fileKey = fileInfo.key;
@@ -206,8 +203,6 @@ FS.Store.GridFS = function(name, options) {
     },
 
     init: function(callback) {
-      var self = this;
-
       mongodb.MongoClient.connect(options.mongoUrl, mongoOptions, function (err, db) {
         if (err) { return callback(err); }
         self.db = db;
