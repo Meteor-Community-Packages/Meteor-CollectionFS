@@ -38,6 +38,14 @@ FS.StorageAdapter = function(name, options, api) {
     name: name
   });
 
+  // This supports optional transform/transformTo and transformFrom
+  self._transform = new FS.Transform({
+    store: api,
+    // Optional transformation functions:
+    transformTo: options.transform || options.transformTo,
+    transformFrom: options.transformFrom
+  });
+
   // Create a nicer abstracted adapter interface
   self.adapter = {};
 
@@ -45,7 +53,7 @@ FS.StorageAdapter = function(name, options, api) {
   self.adapter.createReadStream = function(fileObj, options) {
     FS.debug && console.log('createReadStream ' + self.name);
 
-    return FS.Utility.safeStream( api.createReadStream.call(self, fileObj, options) );
+    return FS.Utility.safeStream( self._transform.createReadStream(fileObj, options) );
 
   };
 
@@ -65,7 +73,7 @@ FS.StorageAdapter = function(name, options, api) {
       };
     }
 
-    return FS.Utility.safeStream(api.createWriteStream.call(self, fileObj, options) );
+    return FS.Utility.safeStream( self._transform.createWriteStream(fileObj, options) );
   };
 
 
