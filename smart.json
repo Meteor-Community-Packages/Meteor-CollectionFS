@@ -22,10 +22,7 @@
 			"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
 			"branch": "master"
 		},
-		"collectionFS": {
-			"git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
-			"branch": "devel"
-		},
+		"collectionFS": {},
 		"cfs-gridfs": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
 			"branch": "master"

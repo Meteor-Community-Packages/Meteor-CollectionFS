@@ -5,6 +5,11 @@ Package.describe({
 
 Package.on_use(function(api) {
 
+  // This imply is needed for tests, and is technically probably correct anyway.
+  api.imply([
+    'cfs-base-package'
+  ]);
+
   api.use([
     //CFS packages
     'cfs-base-package',
@@ -31,11 +36,22 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-  api.use(['collectionFS', 'cfs-gridfs']);
-  api.use('test-helpers', 'server');
-  api.use('http', 'client');
-  api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
-           'random', 'deps']);
+
+  api.use([
+    //CFS packages
+    'cfs-access-point',
+    'collectionFS',
+    'cfs-gridfs',
+    //Core packages
+    'test-helpers',
+    'http',
+    'tinytest',
+    'underscore',
+    'ejson',
+    'ordered-dict',
+    'random',
+    'deps'
+  ]);
 
   api.add_files('tests/client-tests.js', 'client');
   api.add_files('tests/server-tests.js', 'server');
