@@ -20,7 +20,7 @@ __Arguments__
 
 * __type__ *{String}*  (Optional)
 
- The data content (MIME) type, if known
+ The data content (MIME) type, if known. Required if the first argument is a Buffer, ArrayBuffer, Uint8Array, or URL
 
 
 
@@ -78,7 +78,7 @@ __Returns__  *{undefined}*
 
 Passes a Uint8Array representing this data to a callback.
 
-> ```FS.Data.prototype.getBinary = function fsDataGetBinary(start, end, callback) { ...``` [fsData-client.js:40](fsData-client.js#L40)
+> ```FS.Data.prototype.getBinary = function fsDataGetBinary(start, end, callback) { ...``` [fsData-client.js:41](fsData-client.js#L41)
 
 
 -
@@ -97,7 +97,7 @@ Tells the browser to save the data like a normal downloaded file,
 using the provided filename.
 
 
-> ```FS.Data.prototype.saveAs = function fsDataSaveAs(filename) { ...``` [fsData-client.js:102](fsData-client.js#L102)
+> ```FS.Data.prototype.saveAs = function fsDataSaveAs(filename) { ...``` [fsData-client.js:103](fsData-client.js#L103)
 
 
 -
@@ -114,7 +114,7 @@ __Arguments__
 
 
 
-> ```FS.Data.prototype.getDataUri = function(callback) { ...``` [fsData-client.js:122](fsData-client.js#L122)
+> ```FS.Data.prototype.getDataUri = function(callback) { ...``` [fsData-client.js:123](fsData-client.js#L123)
 
 
 ***
@@ -145,7 +145,7 @@ __TODO__
 
 -
 
-### <a name="FS.File.prototype.attachData"></a>*fsFile*.attachData(data, [type])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+### <a name="FS.File.prototype.attachData"></a>*fsFile*.attachData(data, [options], [callback])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
 
 *This method __attachData__ is defined in `prototype` of `FS.File`*
 
@@ -155,18 +155,24 @@ __Arguments__
 
  The data that you want to attach to the file.
 
-* __type__ *{String}*  (Optional)
+* __options__ *{Object}*  (Optional)
 
- The data content (MIME) type, if known
+ Options
+
+    * __type__ *{String}*  (Optional)
+
+    The data content (MIME) type, if known.
+
+* __callback__ *{Function}*  (Optional)
+
+ Callback function, callback(error). On the client, a callback is required if data is a URL.
 
 
-__Returns__  *{undefined}*
+__Returns__  *{FS.File}*
+This FS.File instance.
 
 
-Equivalent to `fsFile.data = new FS.Data(data, type)` except that other properties may be
-set on the FS.File instance, too
-
-> ```FS.File.prototype.attachData = function fsFileAttachData(data, type) { ...``` [fsFile-common.js:36](fsFile-common.js#L36)
+> ```FS.File.prototype.attachData = function fsFileAttachData(data, options, callback) { ...``` [fsFile-common.js:36](fsFile-common.js#L36)
 
 
 -
@@ -179,7 +185,7 @@ __Returns__  *{number}*
 The server confirmed upload progress
 
 
-> ```FS.File.prototype.uploadProgress = function() { ...``` [fsFile-common.js:58](fsFile-common.js#L58)
+> ```FS.File.prototype.uploadProgress = function() { ...``` [fsFile-common.js:110](fsFile-common.js#L110)
 
 
 -
@@ -197,7 +203,7 @@ Returns true if this FS.File is reactive
 > mean that our fileRecord is fully updated by Meteor and we are mounted on
 > a collection
 
-> ```FS.File.prototype.controlledByDeps = function() { ...``` [fsFile-common.js:81](fsFile-common.js#L81)
+> ```FS.File.prototype.controlledByDeps = function() { ...``` [fsFile-common.js:129](fsFile-common.js#L129)
 
 
 -
@@ -210,7 +216,7 @@ __Returns__  *{FS.Collection}*
 Returns attached collection or undefined if not mounted
 
 
-> ```FS.File.prototype.getCollection = function() { ...``` [fsFile-common.js:91](fsFile-common.js#L91)
+> ```FS.File.prototype.getCollection = function() { ...``` [fsFile-common.js:139](fsFile-common.js#L139)
 
 
 -
@@ -223,10 +229,7 @@ __Returns__  *{FS.Collection}*
 Returns attached collection or undefined if not mounted
 
 
-> Note: This will throw an error if collection not found and file is mounted
-> *(got an invalid collectionName)*
-
-> ```FS.File.prototype.isMounted = FS.File.prototype.getCollection;``` [fsFile-common.js:122](fsFile-common.js#L122)
+> ```FS.File.prototype.isMounted = FS.File.prototype.getCollection;``` [fsFile-common.js:167](fsFile-common.js#L167)
 
 
 -
@@ -239,7 +242,7 @@ __Returns__  *{object}*
 The filerecord
 
 
-> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile-common.js:129](fsFile-common.js#L129)
+> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile-common.js:174](fsFile-common.js#L174)
 
 
 -
@@ -257,7 +260,7 @@ __Arguments__
 
 Updates the fileRecord.
 
-> ```FS.File.prototype.update = function(modifier, options, callback) { ...``` [fsFile-common.js:160](fsFile-common.js#L160)
+> ```FS.File.prototype.update = function(modifier, options, callback) { ...``` [fsFile-common.js:205](fsFile-common.js#L205)
 
 
 -
@@ -278,7 +281,7 @@ Count
 
 
 
-> ```FS.File.prototype.remove = function(callback) { ...``` [fsFile-common.js:191](fsFile-common.js#L191)
+> ```FS.File.prototype.remove = function(callback) { ...``` [fsFile-common.js:241](fsFile-common.js#L241)
 
 
 -
@@ -302,7 +305,7 @@ Move the file from current collection to another collection
 
 > Note: Not yet implemented
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:230](fsFile-common.js#L230)
+> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:279](fsFile-common.js#L279)
 
 
 -
@@ -315,7 +318,7 @@ __Returns__  *{string}*
 The extension eg.: `jpg` or if not found then an empty string ''
 
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:230](fsFile-common.js#L230)
+> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:279](fsFile-common.js#L279)
 
 
 -
@@ -338,7 +341,7 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isImage = function(options) { ...``` [fsFile-common.js:266](fsFile-common.js#L266)
+> ```FS.File.prototype.isImage = function(options) { ...``` [fsFile-common.js:310](fsFile-common.js#L310)
 
 
 -
@@ -361,7 +364,7 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isVideo = function(options) { ...``` [fsFile-common.js:281](fsFile-common.js#L281)
+> ```FS.File.prototype.isVideo = function(options) { ...``` [fsFile-common.js:325](fsFile-common.js#L325)
 
 
 -
@@ -384,7 +387,7 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isAudio = function(options) { ...``` [fsFile-common.js:296](fsFile-common.js#L296)
+> ```FS.File.prototype.isAudio = function(options) { ...``` [fsFile-common.js:340](fsFile-common.js#L340)
 
 
 -
@@ -397,24 +400,7 @@ __Returns__  *{boolean}*
 True if the number of uploaded bytes is equal to the file size.
 
 
-> ```FS.File.prototype.isUploaded = function() { ...``` [fsFile-common.js:305](fsFile-common.js#L305)
-
-
--
-
-### <a name="FS.File.prototype.chunkIsUploaded"></a>*fsFile*.chunkIsUploaded(start)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
-
-*This method __chunkIsUploaded__ is defined in `prototype` of `FS.File`*
-
-__Arguments__
-
-* __start__ *{number}*  
-
-__Returns__  *{boolean}*
-True if the chunk starting at start has already been uploaded successfully.
-
-
-> ```FS.File.prototype.chunkIsUploaded = function(start) { ...``` [fsFile-common.js:320](fsFile-common.js#L320)
+> ```FS.File.prototype.isUploaded = function() { ...``` [fsFile-common.js:349](fsFile-common.js#L349)
 
 
 -
@@ -444,7 +430,7 @@ param is the boolean value to return. Are we `optimistic` that the copy
 could exist. This is the case in `FS.File.url` we are optimistic that the
 copy supplied by the user exists.
 
-> ```FS.File.prototype.hasCopy = function(storeName, optimistic) { ...``` [fsFile-common.js:342](fsFile-common.js#L342)
+> ```FS.File.prototype.hasCopy = function(storeName, optimistic) { ...``` [fsFile-common.js:371](fsFile-common.js#L371)
 
 
 -
@@ -464,53 +450,7 @@ __Returns__  *{Object}*
 The file details, e.g., name, size, key, etc., specific to the copy saved in this store.
 
 
-> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:362](fsFile-common.js#L362)
-
-
--
-
-### <a name="FS.File.prototype.hasMaster"></a>*fsFile*.hasMaster()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
-
-*This method __hasMaster__ is defined in `prototype` of `FS.File`*
-
-__Returns__  *{boolean}*
-True if the attached collection allows this file.
-
-
-Checks based on any filters defined on the attached collection. If the
-file is not valid according to the filters, this method returns false
-and also calls the filter `onInvalid` method defined for the attached
-collection, passing it an English error string that explains why it
-failed.
-
-
-> ```FS.File.prototype.fileIsAllowed = function() { ...``` [fsFile-common.js:381](fsFile-common.js#L381)
-
-
--
-
-### <a name="contentTypeInList"></a>contentTypeInList(list, contentType)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
-
-*This method is private*
-
-__Arguments__
-
-* __list__ *{[String[]](#String[])}*  
-
- Array of content types
-
-* __contentType__ *{String}*  
-
- The content type
-
-
-__Returns__  *{Boolean}*
-
-
-Returns true if the content type is in the list, or if it matches
-one of the special types in the list, e.g., "image/*".
-
-> ```var contentTypeInList = function contentTypeInList(list, contentType) { ...``` [fsFile-common.js:446](fsFile-common.js#L446)
+> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:391](fsFile-common.js#L391)
 
 
 ***
@@ -528,7 +468,7 @@ __Returns__  *{Buffer}*
 
 Returns a Buffer representing this data.
 
-> ```FS.Data.prototype.getBuffer = function fsDataGetBuffer() { ...``` [fsData-server.js:47](fsData-server.js#L47)
+> ```FS.Data.prototype.getBuffer = function fsDataGetBuffer() { ...``` [fsData-server.js:49](fsData-server.js#L49)
 
 
 -
@@ -542,7 +482,7 @@ __Returns__  *{Buffer}*
 
 Saves this data to a filepath on the local filesystem.
 
-> ```FS.Data.prototype.saveToFile = function(filePath) { ...``` [fsData-server.js:58](fsData-server.js#L58)
+> ```FS.Data.prototype.saveToFile = function(filePath) { ...``` [fsData-server.js:60](fsData-server.js#L60)
 
 
 -
@@ -561,7 +501,7 @@ __Arguments__
 
 If no callback, returns the data URI.
 
-> ```FS.Data.prototype.getDataUri = function(callback) { ...``` [fsData-server.js:93](fsData-server.js#L93)
+> ```FS.Data.prototype.getDataUri = function(callback) { ...``` [fsData-server.js:95](fsData-server.js#L95)
 
 
 ***

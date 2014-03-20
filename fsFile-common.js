@@ -87,6 +87,9 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   function setData(type) {
     self.data = new FS.Data(data, type);
     self.type = self.data.type;
+    if (typeof self.size !== "number") {
+      self.size = self.data.size();
+    }
 
     // See if we can extract a file name from URL or filepath
     if (!self.name && typeof data === "string" && FS.Utility.getFileExtension(data).length) {

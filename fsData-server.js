@@ -123,6 +123,15 @@ FS.Data.prototype.size = function fsDataSize() {
     return self._size;
   }
 
+  // if filepath, we can get the size without buffering
+  if (self.filepath) {
+    var stats = fs.statSync(self.filepath);
+    if (stats && typeof stats.size === "number") {
+      self._size = stats.size;
+      return self._size;
+    }
+  }
+
   self._size = self.getBuffer().length;
   return self._size;
 };
