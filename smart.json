@@ -14,9 +14,6 @@
 			"git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
 			"branch": "master"
 		},
-		"collectionFS": {
-			"git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
-			"branch": "devel"
-		}
+		"collectionFS": {}
 	}
 }
