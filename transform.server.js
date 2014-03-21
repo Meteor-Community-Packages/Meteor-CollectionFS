@@ -1,5 +1,6 @@
 var PassThrough = Npm.require('stream').PassThrough;
 
+// XXX: Add some kind of check to see if GM is actually installed on the system
 var gm = Npm.require('gm');
 
 // XXX: This could be in a seperate package? if needed.
@@ -19,8 +20,8 @@ FS.Transform = function(options) {
   self.storage = (options.store.adapter)?options.store.adapter: options.store;
 
   // Fetch the transformation functions if any
-  self.transformTo = options.transform || options.transformTo;
-  self.transformFrom = options.transformTo;
+  self.transformWrite = options.transformWrite;
+  self.transformRead = options.transformWrite;
 };
 
 // Allow packages to add scope
@@ -34,7 +35,7 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
   // Rig write stream
   var destinationStream = self.storage.createWriteStream(fileObj, options);
 
-  if (typeof self.transformTo === 'function') {
+  if (typeof self.transformWrite === 'function') {
     // Load the configuration
 
     // Rig read stream for gm
@@ -42,10 +43,10 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
 
     // Rig transform
     try {
-      self.transformTo.call(FS.Transform.scope, fileObj, sourceStream, destinationStream);
+      self.transformWrite.call(FS.Transform.scope, fileObj, sourceStream, destinationStream);
     } catch(err) {
       // We emit an error - should we throw an error?
-      sourceStream.emit('error', 'FS.Transform.createWriteStream "' + name + '" transform function failed');
+      sourceStream.emit('error', 'FS.Transform.createWriteStream transform function failed');
     }
 
     // Return write stream
@@ -62,17 +63,17 @@ FS.Transform.prototype.createReadStream = function(fileObj, options) {
   // Rig read stream
   var sourceStream = self.storage.createReadStream(fileObj, options);
 
-  if (typeof self.transformFrom === 'function') {
+  if (typeof self.transformRead === 'function') {
 
     // Rig write stream
     var destinationStream = new PassThrough();
 
     // Rig transform
     try {
-      self.transformFrom.call(FS.Transform.scope, fileObj, sourceStream, destinationStream);
+      self.transformRead.call(FS.Transform.scope, fileObj, sourceStream, destinationStream);
     } catch(err) {
       // We emit an error - should we throw an error?
-      sourceStream.emit('error', 'FS.Transform.createReadStream "' + name + '" transform function failed');
+      sourceStream.emit('error', 'FS.Transform.createReadStream transform function failed');
     }
 
     // Return write stream

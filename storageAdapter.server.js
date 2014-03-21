@@ -38,12 +38,12 @@ FS.StorageAdapter = function(name, options, api) {
     name: name
   });
 
-  // This supports optional transform/transformTo and transformFrom
+  // This supports optional transformWrite and transformRead
   self._transform = new FS.Transform({
     store: api,
     // Optional transformation functions:
-    transformTo: options.transform || options.transformTo,
-    transformFrom: options.transformFrom
+    transformWrite: || options.transformWrite,
+    transformRead: options.transformRead
   });
 
   // Create a nicer abstracted adapter interface
