@@ -1,8 +1,8 @@
 {
-  "name": "cfs-filesaver",
-  "description": "CollectionFS, FileSaver by Eli Grey, http://eligrey.com",
-  "homepage": "https://github.com/CollectionFS/Meteor-cfs-filesaver",
-  "author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-  "version": "0.0.2",
-  "git": "https://github.com/CollectionFS/Meteor-cfs-filesaver.git"
+	"name": "cfs-filesaver",
+	"description": "CollectionFS, FileSaver by Eli Grey, http://eligrey.com",
+	"homepage": "https://github.com/CollectionFS/Meteor-cfs-filesaver",
+	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
+	"version": "0.0.3",
+	"git": "https://github.com/CollectionFS/Meteor-cfs-filesaver.git"
 }
