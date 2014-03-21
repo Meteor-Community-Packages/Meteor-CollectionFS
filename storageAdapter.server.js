@@ -42,7 +42,7 @@ FS.StorageAdapter = function(name, options, api) {
   self._transform = new FS.Transform({
     store: api,
     // Optional transformation functions:
-    transformWrite: || options.transformWrite,
+    transformWrite: options.transformWrite,
     transformRead: options.transformRead
   });
 
