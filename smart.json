@@ -6,25 +6,10 @@
 	"version": "0.0.17",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
 	"packages": {
-		"cfs-base-package": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-			"branch": "master"
-		},
-		"cfs-filesaver": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-filesaver.git",
-			"branch": "master"
-		},
-		"cfs-storage-adapter": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
-			"branch": "master"
-		},
-		"cfs-collection": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-collection.git",
-			"branch": "master"
-		},
-		"http-methods": {
-			"git": "https://github.com/CollectionFS/Meteor-http-methods.git",
-			"branch": "master"
-		}
+		"cfs-base-package": {},
+		"cfs-filesaver": {},
+		"cfs-storage-adapter": {},
+		"cfs-collection": {},
+		"http-methods": {}
 	}
 }
