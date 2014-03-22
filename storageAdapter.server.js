@@ -76,7 +76,50 @@ delete options.transformRead;
       };
     }
 
-    return FS.Utility.safeStream( self._transform.createWriteStream(fileObj, options) );
+    var writeStream = FS.Utility.safeStream( self._transform.createWriteStream(fileObj, options) );
+
+
+    if (FS.debug) {
+      writeStream.on('stored', function() {
+        console.log('-----------STORED STREAM', name);
+      });
+
+      writeStream.on('close', function() {
+        console.log('-----------CLOSE STREAM', name);
+      });
+
+      writeStream.on('end', function() {
+        console.log('-----------END STREAM', name);
+      });
+
+      writeStream.on('finish', function() {
+        console.log('-----------FINISH STREAM', name);
+      });
+
+      writeStream.on('error', function() {
+        console.log('-----------ERROR STREAM', name);
+      });
+    }
+
+    // Its really only the storage adapter who knows if the file is uploaded
+    //
+    // We have to use our own event making sure the storage process is completed
+    // this is mainly
+    writeStream.safeOn('stored', function() {
+
+      // Update the time - this could also be fetched from api.stats in the
+      // storage adapter eg. by adding on event
+      fileObj.copies[name].utime = Date();
+
+      var modifier = {};
+      modifier["copies." + name] = fileObj.copies[name];
+      // Update the main file object with the modifier
+      fileObj.update({$set: modifier});
+
+    });
+
+
+    return writeStream;
   };
 
 
