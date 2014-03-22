@@ -181,42 +181,6 @@ function saveCopy(fsFile, storeName, options) {
 
   var targetStream = storage.adapter.createWriteStream(fsFile);
 
-  if (FS.debug) {
-    targetStream.on('done', function() {
-      console.log('-----------DONE STREAM', storeName);
-    });
-
-    targetStream.on('close', function() {
-      console.log('-----------CLOSE STREAM', storeName);
-    });
-
-    targetStream.on('end', function() {
-      console.log('-----------END STREAM', storeName);
-    });
-
-    targetStream.on('finish', function() {
-      console.log('-----------FINISH STREAM', storeName);
-    });
-
-    targetStream.on('error', function() {
-      console.log('-----------ERROR STREAM', storeName);
-    });
-  }
-
-  // We have to use our own event making sure the storage process is completed
-  // this is mainly
-  targetStream.safeOn('end', function() {
-    // Update the time - this could also be fetched from api.stats in the
-    // storage adapter eg. by adding on event
-    fsFile.copies[storeName].utime = Date();
-
-    var modifier = {};
-    modifier["copies." + storeName] = fsFile.copies[storeName];
-    // Update the main file object with the modifier
-    fsFile.update({$set: modifier});
-
-  });
-
   targetStream.safeOn('error', function(err) {
     // TODO:
     console.log('GOT an error in stream while storeing to SA?');
