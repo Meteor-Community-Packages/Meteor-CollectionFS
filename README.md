@@ -151,6 +151,21 @@ Storage adapters also handle retrieving the file data and removing the file data
 when you delete the file.
 
 ## File Manipulation
+
+```js
+  // Init a GridFS store:
+  var gridfs = new FS.Store.GridFS('gridfsimages', {
+    // We want to transform the writes to the store using streams:
+    transformWrite: function(fileObj, readStream, writeStream) {
+
+      // Transform the image into a 10x10px thumbnail
+      this.gm(readStream, fileObj.name).resize('10', '10').stream().pipe(writeStream);
+
+      // To pass it through:
+      //readStream.pipe(writeStream);
+    }     
+  });
+```
 // TODO show an example of `transform` options on SA's and how they stream data.
 > 
 > You may want to manipulate files before saving them. For example, if a user
