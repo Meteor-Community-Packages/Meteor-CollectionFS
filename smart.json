@@ -6,9 +6,6 @@
 	"version": "0.0.4",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
 	"packages": {
-		"cfs-base-package": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-			"branch": "master"
-		}
+		"cfs-base-package": {}
 	}
 }
