@@ -85,6 +85,7 @@ FS.Store.GridFS = function(name, options) {
       });
 
       writeStream.on('close', function() {
+        if (FS.debug) console.log('SA GridFS - DONE!');
         writeStream.emit('end');
       });
 
