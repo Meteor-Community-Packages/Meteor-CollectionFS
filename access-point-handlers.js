@@ -117,7 +117,17 @@ httpGetHandler = function httpGetHandler(ref) {
   self.addHeader('Accept-Ranges', 'bytes');
 
   //ref.file.createReadStream(storeName).pipe(self.createWriteStream());
-  storage.adapter.createReadStream(ref.file).pipe(self.createWriteStream());
+  var readStream = storage.adapter.createReadStream(ref.file);
+
+  readStream.on('error', function(err) {
+    // Send proper error message on get error
+    if (err.message && err.statusCode) {
+      self.Error(new Meteor.Error(err.statusCode, err.message));
+    } else {
+      self.Error(new Meteor.Error(503, 'Service unavailable'));
+    }
+  });
+  readStream.pipe(self.createWriteStream());
 
 };
 
