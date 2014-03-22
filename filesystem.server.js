@@ -80,7 +80,10 @@ FS.Store.FileSystem = function(name, options) {
 
       // The filesystem does not emit the "end" event only close - so we
       // manually send the end event
-      writeStream.on('close', function() { writeStream.emit('end'); });
+      writeStream.on('close', function() {
+        if (FS.debug) console.log('SA FileSystem - DONE!!');
+        writeStream.emit('end');
+      });
 
       return writeStream;
     },
