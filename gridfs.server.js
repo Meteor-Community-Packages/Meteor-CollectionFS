@@ -85,7 +85,7 @@ FS.Store.GridFS = function(name, options) {
       });
 
       writeStream.on('close', function() {
-        writeStream.emit('done');
+        writeStream.emit('end');
       });
 
       return writeStream;
