@@ -46,6 +46,9 @@ FS.StorageAdapter = function(name, options, api) {
     transformRead: options.transformRead
   });
 
+delete options.transformWrite;
+delete options.transformRead;
+
   // Create a nicer abstracted adapter interface
   self.adapter = {};
 
