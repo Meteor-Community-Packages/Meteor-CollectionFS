@@ -1,6 +1,7 @@
 var PassThrough = Npm.require('stream').PassThrough;
 
 // XXX: Add some kind of check to see if GM is actually installed on the system
+// Its important to check for gm support in the os - its not trivial debuggin...
 var gm = Npm.require('gm');
 
 // XXX: This could be in a seperate package? if needed.
@@ -50,6 +51,7 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
     // Rig transform
     try {
       self.transformWrite.call(FS.Transform.scope, fileObj, sourceStream, destinationStream);
+      // XXX: If the transform function returns a buffer should we stream that?
     } catch(err) {
       // We emit an error - should we throw an error?
       sourceStream.emit('error', 'FS.Transform.createWriteStream transform function failed');
