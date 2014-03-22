@@ -41,10 +41,6 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
     // Rig read stream for gm
     var sourceStream = new PassThrough();
 
-    sourceStream.on('end', function() {
-      sourceStream.emit('done');
-    });
-
     // Rig transform
     try {
       self.transformWrite.call(FS.Transform.scope, fileObj, sourceStream, destinationStream);
