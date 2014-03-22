@@ -146,7 +146,7 @@ UploadTransferQueue = function(options) {
         maxProcessing: 1,
         maxFailures: 5,
         jumpOnFailure: true,
-        autostart: true,
+        autostart: false,
         isPaused: false,
         filo: false
       });
