@@ -125,8 +125,8 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
             if(err) {
               writeStream.emit('error', err);
             } else {
-              // Emit the cfs done event for uploads
-              writeStream.emit('done', result);
+              // Emit the cfs end event for uploads
+              writeStream.emit('end', result);
             }
 
           });
