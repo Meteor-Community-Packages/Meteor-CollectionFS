@@ -6,11 +6,9 @@
 	"version": "0.0.19",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
 	"packages": {
-		"cfs-base-package": {},
+		"collectionFS": {},
 		"http-methods": {},
 		"http-publish": {},
-		"cfs-file": {},
-		"collectionFS": {},
 		"cfs-gridfs": {}
 	}
 }
