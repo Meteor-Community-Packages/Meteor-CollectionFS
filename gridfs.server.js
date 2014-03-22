@@ -84,6 +84,10 @@ FS.Store.GridFS = function(name, options) {
         content_type: fileObj.type || 'application/octet-stream'
       });
 
+      writeStream.on('close', function() {
+        writeStream.emit('done');
+      });
+
       return writeStream;
 
     },
