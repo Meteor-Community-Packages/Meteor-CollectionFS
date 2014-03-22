@@ -182,24 +182,30 @@ function saveCopy(fsFile, storeName, options) {
   var targetStream = storage.adapter.createWriteStream(fsFile);
 
   if (FS.debug) {
+    targetStream.on('done', function() {
+      console.log('-----------DONE STREAM', storeName);
+    });
+
     targetStream.on('close', function() {
-      console.log('-----------CLOSE STREAM');
+      console.log('-----------CLOSE STREAM', storeName);
     });
 
     targetStream.on('end', function() {
-      console.log('-----------ENDED STREAM');
+      console.log('-----------END STREAM', storeName);
     });
 
     targetStream.on('finish', function() {
-      console.log('-----------finish STREAM');
+      console.log('-----------FINISH STREAM', storeName);
     });
 
     targetStream.on('error', function() {
-      console.log('-----------ERROR STREAM');
+      console.log('-----------ERROR STREAM', storeName);
     });
   }
 
-  targetStream.safeOn('close', function() {
+  // We have to use our own event making sure the storage process is completed
+  // this is mainly
+  targetStream.safeOn('end', function() {
     // Update the time - this could also be fetched from api.stats in the
     // storage adapter eg. by adding on event
     fsFile.copies[storeName].utime = Date();
@@ -211,74 +217,16 @@ function saveCopy(fsFile, storeName, options) {
 
   });
 
-  targetStream.safeOn('error', function() {
+  targetStream.safeOn('error', function(err) {
     // TODO:
+    console.log('GOT an error in stream while storeing to SA?');
+    throw new err;
   });
 
   FS.debug && console.log('saving to store ' + storeName);
 
-  if (storage.beforeSave) {
-    // Call the beforeSave function provided by the user
-    // XXX: If we use Transform streams instead then no more use for beforeSave
-    storage.beforeSave.apply(fsFile, [targetStream]);
-  } else {
-    // Pipe the temp data into the storage adapter
-    FS.TempStore.createReadStream(fsFile).pipe(targetStream);
-  }
-  //fsFile = FS.TempStore.getDataForFileSync(fsFile);
+  // Pipe the temp data into the storage adapter
+  FS.TempStore.createReadStream(fsFile).pipe(targetStream);
 
-  // var result;
-
-  // FS.debug && console.log('running beforeSave for store ' + storeName);
-
-  // // Call the beforeSave function provided by the user
-  // // XXX: If we use Transform streams instead then no more use for beforeSave
-  // if (store.beforeSave) {
-  //   // Get a new copy and a fresh buffer each time in case beforeSave changes anything
-  //   fsFile = copyOfFileObjectWithData(fsFile);
-
-  //   if (store.beforeSave.apply(fsFile) === false) {
-  //     result = false;
-  //   }
-  // }
-
-  // FS.debug && console.log('saving to store ' + storeName);
-
-  // // Save to store
-  // if (result !== false) {
-  //   if (options.overwrite) {
-  //     result = store.update(fsFile);
-  //   } else {
-  //     result = store.insert(fsFile);
-  //   }
-  // }
-
-  // // Process result
-  // if (result === null) {
-  //   FS.debug && console.log('saving to store ' + storeName + ' failed temporarily');
-  //   // Temporary failure; let the fsFile log it and potentially decide
-  //   // to give up.
-  //   // TODO get rid of logCopyFailure and handle failures with powerqueue
-  //   fsFile.logCopyFailure(storeName, store.options.maxTries);
-  // } else {
-  //   if (result === false) {
-  //     FS.debug && console.log('saving to store ' + storeName + ' failed permanently or was cancelled by beforeSave');
-  //   } else {
-  //     FS.debug && console.log('saving to store ' + storeName + ' succeeded');
-  //   }
-  //   // Update the main file object
-  //   // result might be false, which indicates that this copy
-  //   // should never be created in the future.
-  //   var modifier = {};
-  //   modifier["copies." + storeName] = result;
-  //   // Update the main file object with the modifier
-  //   fsFile.update({$set: modifier});
-  // }
 
 }
-
-// function copyOfFileObjectWithData(fsFile) {
-//   var fsFileClone = fsFile.clone();
-//   fsFileClone.setDataFromBinary(fsFile.data.getBinary());
-//   return fsFileClone;
-// }
