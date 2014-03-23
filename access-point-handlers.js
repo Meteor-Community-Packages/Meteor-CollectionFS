@@ -38,7 +38,8 @@ httpDelHandler = function httpDelHandler(ref) {
 httpGetHandler = function httpGetHandler(ref) {
   var self = this;
   // Once we have the file, we can test allow/deny validators
-  FS.Utility.validateAction(ref.collection._validators['download'], ref.file, self.userId);
+  // XXX: pass on the "share" query eg. ?share=342hkjh23ggj for shared url access?
+  FS.Utility.validateAction(ref.collection._validators['download'], ref.file, self.userId /*, self.query.shareId*/);
 
   var storeName = ref.storeName;
 
