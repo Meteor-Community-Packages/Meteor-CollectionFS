@@ -6,9 +6,21 @@
 	"version": "0.0.6",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-upload-http.git",
 	"packages": {
-		"cfs-base-package": {},
-		"cfs-access-point": {},
-		"power-queue": {},
-		"reactive-list": {}
+		"cfs-base-package": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+			"branch": "master"
+		},
+		"cfs-access-point": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
+			"branch": "master"
+		},
+		"power-queue": {
+			"git": "https://github.com/CollectionFS/Meteor-power-queue.git",
+			"branch": "master"
+		},
+		"reactive-list": {
+			"git": "https://github.com/CollectionFS/Meteor-reactive-list.git",
+			"branch": "master"
+		}
 	}
 }
