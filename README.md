@@ -4,7 +4,16 @@ NOTE: This branch is under active development right now (2014-3-20). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
+If you have Documentation feedback/requests please post on [issue 206](https://github.com/CollectionFS/Meteor-CollectionFS/issues/206)
+
 __ETR: Before April__
+
+> For the old api:
+> ```js
+>   "packages": {
+>     "collectionFS": "0.3.7",
+>   }
+> ```
 
 CollectionFS is a smart package for Meteor that provides a complete file
 management solution including uploading, downloading, storage, synchronization,
