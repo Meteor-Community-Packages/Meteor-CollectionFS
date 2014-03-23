@@ -1,6 +1,6 @@
 #CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-3-20). It has
+NOTE: This branch is under active development right now (2014-3-23). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
