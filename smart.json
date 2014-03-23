@@ -6,8 +6,17 @@
 	"version": "0.4.1",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-collection.git",
 	"packages": {
-		"cfs-base-package": {},
-		"cfs-upload-ddp": {},
-		"cfs-upload-http": {}
+		"cfs-base-package": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
+			"branch": "master"
+		},
+		"cfs-upload-ddp": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-upload-ddp.git",
+			"branch": "master"
+		},
+		"cfs-upload-http": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-upload-http.git",
+			"branch": "master"
+		}
 	}
 }
