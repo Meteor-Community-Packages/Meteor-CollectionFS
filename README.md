@@ -8,7 +8,7 @@ If you have Documentation feedback/requests please post on [issue 206](https://g
 
 __ETR: Before April__
 
-> For the old api:
+> For the old api, edit your `smart.json`:
 > ```js
 >   "packages": {
 >     "collectionFS": "0.3.7",
