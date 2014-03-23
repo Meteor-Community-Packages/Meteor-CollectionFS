@@ -3,7 +3,7 @@
 	"description": "CollectionFS, file worker - handles file copies/versions",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-worker",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-worker.git",
 	"packages": {
 		"cfs-base-package": {
