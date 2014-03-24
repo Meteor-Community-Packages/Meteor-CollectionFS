@@ -1,6 +1,6 @@
 #CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-3-23). It has
+NOTE: This branch is under active development right now (2014-3-24). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -28,6 +28,13 @@ As such.
 
 Install Meteorite. Run command `mrt add collectionFS`  to install or clone `devel` into your package folder.
 
+__NOTE: use `mrt update --force` if you get errors!__
+`mrt` is choking and will throw errors like:
+```
+✘ [branch: https://github.com/CollectionFS/Meteor-cfs-base-package.git#master] conflicts with [latest]
+Can't resolve dependencies! Use --force if you don't mind mrt taking a wild guess and running your app anyway.
+```
+Ignore this message for all `CollectionFS` packages - it just overwrites and should work fine - the new Meteor package system should fix this when released.
 
 'collectionFS' is the main package. Beyond that, you only need to add the
 packages you want to use. See the Storage Adapters
