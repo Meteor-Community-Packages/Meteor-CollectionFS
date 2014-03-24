@@ -61,10 +61,10 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
   var _originalEnd = writeStream.end;
   writeStream.end = function (chunk, encoding, callback) {
     // Call the super
-    _originalEnd.call(this, chunk, encoding, callback);
-
-    // Make sure we only run when the s3 upload is ready
-    runWhenReady(function() { flushChunk(); });
+    _originalEnd.call(this, chunk, encoding, function () {
+      // Make sure we only run when the s3 upload is ready
+      runWhenReady(function() { flushChunk(callback); });
+    });
   };
 
   var flushChunk = function (callback) {
