@@ -14,7 +14,7 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
   var self = this;
 
   //Create the writeable stream interface.
-  writeStream = Writable({
+  var writeStream = Writable({
     highWaterMark: 4194304 // 4 MB
   });
 
@@ -44,8 +44,9 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
   writeStream._write = function (chunk, enc, next) {
     currentChunk = Buffer.concat([currentChunk, chunk]);
 
-    // If the current chunk buffer is getting to large, or the stream piped in has ended then flush
-    // the chunk buffer downstream to S3 via the multipart upload API.
+    // If the current chunk buffer is getting to large, or the stream piped in
+    // has ended then flush the chunk buffer downstream to S3 via the multipart
+    // upload API.
     if(currentChunk.length > maxChunkSize) {
       // Make sure we only run when the s3 upload is ready
       runWhenReady(function() { flushChunk(next); });
@@ -55,8 +56,8 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
     }
   };
 
-  // Overwrite the end method so that we can hijack it to flush the last part and then complete
-  // the multipart upload
+  // Overwrite the end method so that we can hijack it to flush the last part
+  // and then complete the multipart upload
   var _originalEnd = writeStream.end;
   writeStream.end = function (chunk, encoding, callback) {
     // Call the super
@@ -67,8 +68,9 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
   };
 
   var flushChunk = function (callback) {
-    if (multipartUploadID === null)
+    if (multipartUploadID === null) {
       throw new Error('Internal error multipartUploadID is null');
+    }
     // Get the chunk data
     var uploadingChunk = Buffer(currentChunk.length);
     currentChunk.copy(uploadingChunk);
@@ -89,8 +91,9 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
       PartNumber: localChunkNumber
     }, function (err, result) {
       // Call the next data
-      if(typeof callback == 'function')
+      if(typeof callback === 'function') {
         callback();
+      }
 
       if(err) {
         writeStream.emit('error', err);
@@ -110,9 +113,11 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
           uploadedSize: uploadedSize
         });
 
-        // The incoming stream has finished giving us all data and we have finished uploading all that data to S3.
-        // So tell S3 to assemble those parts we uploaded into the final product.
-        if(writeStream._writableState.ended === true & uploadedSize == receivedSize) {
+        // The incoming stream has finished giving us all data and we have
+        // finished uploading all that data to S3. So tell S3 to assemble those
+        // parts we uploaded into the final product.
+        if(writeStream._writableState.ended === true &&
+                uploadedSize === receivedSize) {
           // Complete the upload
           self.completeMultipartUpload({
             Bucket: params.Bucket,
@@ -126,7 +131,9 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
               writeStream.emit('error', err);
             } else {
               // Emit the cfs end event for uploads
-              if (FS.debug) console.log('SA S3 - DONE!!');
+              if (FS.debug) {
+                console.log('SA S3 - DONE!!');
+              }
               writeStream.emit('end', result);
             }
 
