@@ -23,12 +23,10 @@ created.
 
 ## Installation
 
-### Current Instructions
-
 Right now this branch should be used for testing or experimentation only.
 As such.
 
-Use `mrt add collectionFS` to install or clone `devel` into your package folder.
+Install Meteorite. Run command `mrt add collectionFS`  to install or clone `devel` into your package folder.
 
 
 'collectionFS' is the main package. Beyond that, you only need to add the
@@ -56,17 +54,6 @@ just run `mrt update` again at any time.
 
 If you're having trouble, you can alternatively try cloning
 [this repo](https://github.com/copleykj/CollectionFS-Demo).
-
-### Eventual Instructions
-
-Install using Meteorite. When in a Meteorite-managed app directory, enter:
-
-```
-$ mrt add collectionFS
-```
-
-You may need to add additional packages depending on how you are using
-CollectionFS. Continue reading for details.
 
 ## Introduction
 
