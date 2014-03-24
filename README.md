@@ -6,15 +6,6 @@ but don't use in production yet.
 
 If you have Documentation feedback/requests please post on [issue 206](https://github.com/CollectionFS/Meteor-CollectionFS/issues/206)
 
-__ETR: Before April__
-
-> For the old api, edit your `smart.json`:
-> ```js
->   "packages": {
->     "collectionFS": "0.3.7",
->   }
-> ```
-
 CollectionFS is a smart package for Meteor that provides a complete file
 management solution including uploading, downloading, storage, synchronization,
 manipulation, and copying. It supports several storage adapters for saving to
@@ -23,44 +14,50 @@ created.
 
 ## Installation
 
-Right now this branch should be used for testing or experimentation only.
-As such.
+Install Meteorite, if you have not yet done so, and then:
 
-Install Meteorite. Run command `mrt add collectionFS`  to install or clone `devel` into your package folder.
+```bash
+$ cd <app dir>
+$ mrt add collectionFS
+$ mrt add <storage adapter package>
+$ mrt add <CFS add-on packages>
+``` 
 
-__NOTE: use `mrt update --force` if you get errors!__
-`mrt` is choking and will throw errors like:
+You must add `collectionFS`, which is the main package, and at least one storage
+adapter package. See the Storage Adapters section for a list of the available
+storage adapter packages. Depending on what you need to do, you may need to add
+additional add-on packages. These are explained in the documentation sections
+to which they apply.
+
+To pull down the most recent updates to every package,
+just run `mrt update` again at any time. If you're having trouble, you can
+alternatively try cloning [this repo](https://github.com/copleykj/CollectionFS-Demo).
+
+### Using the Old API
+
+Adding the `collectionFS` package currently gives you the 0.4.x release, which is
+the new API documented here and in development on the `devel` branch. This API is
+fairly stable and allows you to do much more than the old API, but it currently
+lacks complete tests and may change a bit prior to the `1.0` release. If you prefer
+to use the old API, edit your app's `smart.json` so that the `collectionFS` line
+looks like this:
+
+```js
+ "packages": {
+   "collectionFS": "0.3.7"
+ }
 ```
-✘ [branch: https://github.com/CollectionFS/Meteor-cfs-base-package.git#master] conflicts with [latest]
-Can't resolve dependencies! Use --force if you don't mind mrt taking a wild guess and running your app anyway.
-```
-Ignore this message for all `CollectionFS` packages - it just overwrites and should work fine - the new Meteor package system should fix this when released.
 
-'collectionFS' is the main package. Beyond that, you only need to add the
-packages you want to use. See the Storage Adapters
-section for a list of the available storage adapter packages.
-
-> Deprecating:
-> Most people will probably want `cfs-handlebars`. If you're dealing with image files, you'll probably want `cfs-graphicsmagick`. Note that you'll have to also install GraphicsMagick and/or ImageMagick on the server or development machine. See the README for the `cfs-graphicsmagick` package. All the packages have their own README files you should read.
-
-
-
-After updating `smart.json`, run some commands:
+If you have tried the new API, you can remove any other CFS packages that might be
+in your `smart.json` file. Then run the following commands:
 
 ```bash
 $ cd <app dir>
 $ mrt update
 $ meteor add collectionFS
-$ meteor add <package name>
 ```
 
 You must call `meteor add` for all packages that you manually added to `smart.json`.
-
-Then you should be good to go. To pull down the most recent updates to every package,
-just run `mrt update` again at any time.
-
-If you're having trouble, you can alternatively try cloning
-[this repo](https://github.com/copleykj/CollectionFS-Demo).
 
 ## Introduction
 
@@ -71,12 +68,15 @@ The CollectionFS package makes available two important global variables:
 on the client or server. It is similar to the browser `File` object (and can be
 created from a `File` object), but it has additional properties and methods.
 * A `FS.Collection` provides a collection in which information about 
-files can be stored. It also provides
-the necessary mechanisms to upload and download the files, track
-upload and download progress reactively, pause and resume uploads and downloads,
-and more.
+files can be stored.
 
 A document from a `FS.Collection` is represented as a `FS.File`.
+
+CollectionFS also provides an HTTP upload package that has the necessary
+mechanisms to upload files, track upload progress reactively, and pause and
+resume uploads. This can be swapped for a DDP upload package, but we do
+not currently recommend using DDP for uploads due to known issues with
+the current DDP spec and large files.
 
 ## Getting Started
 
@@ -91,16 +91,18 @@ var Images = new FS.Collection("images", {
 ```
 
 In this example, we've defined a FS.Collection named "images", which will
-be a new collection in your MongoDB database with the name "_cfs.images.filerecord". We've
+be a new collection in your MongoDB database with the name "cfs.images.filerecord". We've
 also told it to store the files in `~/uploads` on the local filesystem.
 
 Your FS.Collection variable does not necessarily have to be global on the
 client or the server, but be sure to give it the same name (the first argument)
 on both the client and the server.
 
-It's highly recommended that you put the server code in a server-only file that
-will not be sent to the client because the storage adapters sometimes require
-sensitive information like access keys.
+_If you're using a storage adapter that requires sensitive information such as
+access keys, we recommend supplying that information using environment variables.
+If you instead decide to pass options to the storage adapter constructor,
+then be sure that you do that only in the server code (and not simply within a
+`Meteor.isServer` block)._
 
 Now we can upload a file from the client. Here is an example of doing so from
 the change event handler of an HTML file input:
@@ -110,23 +112,56 @@ Template.myForm.events({
   'change .myFileInput': function(event, template) {
     var files = event.target.files;
     for (var i = 0, ln = files.length; i < ln; i++) {
-      Images.insert(files[i], function (err, id) {
-        //Inserted new doc with _id = id, and kicked off the data upload using DDP
+      Images.insert(files[i], function (err, fileObj) {
+        //Inserted new doc with ID fileObj._id, and kicked off the data upload using HTTP
       });
     }
   }
 });
 ```
 
-> Note: The `FS.Utility.eachFile` can be used instead of `for`
+You can optionally make this code a bit cleaner by using a provided utility
+method, `FS.Utility.eachFile`:
+
+```js
+Template.myForm.events({
+  'change .myFileInput': function(event, template) {
+    FS.Utility.eachFile(event, function(file) {
+      Images.insert(file, function (err, fileObj) {
+        //Inserted new doc with ID fileObj._id, and kicked off the data upload using HTTP
+      });
+    });
+  }
+});
+```
 
 Notice that the only thing we're doing is passing the browser-provided `File`
 object to `Images.insert()`. This will create a `FS.File` from the
 `File`, link it with the `Images` FS.Collection, and then immediately
 begin uploading the data to the server with reactive progress updates.
 
-On both the client and the server, the `insert` method can directly
-accept a `FS.File`, too, but you must load data into it first.
+The `insert` method can directly accept a variety of different file
+representations as its first argument:
+
+* `File` object (client only)
+* `Blob` object (client only)
+* `Uint8Array`
+* `ArrayBuffer`
+* `Buffer` (server only)
+* A full URL that begins with "http:" or "https:"
+* A local filepath (server only)
+* A data URI string
+
+Where possible, streams are used, so in general you should avoid using any
+of the buffer/binary options unless you have no choice, perhaps because you
+are generating small files in memory.
+
+The most common usage is to pass a `File` object on the client or a URL on
+either the client or the server. Note that when you pass a URL on the client,
+the actual data download from that URL happens on the server, so you don't
+need to worry about CORS. In fact, we recommend doing all inserts on the
+client (managing security through allow/deny), unless you are generating
+the data on the server.
 
 ## After the Upload
 
@@ -153,6 +188,18 @@ Storage adapters also handle retrieving the file data and removing the file data
 when you delete the file.
 
 ## File Manipulation
+ 
+You may want to manipulate files before saving them. For example, if a user
+uploads a large image, you may want to reduce its resolution, crop it,
+compress it, etc. before allowing the storage adapter to save it. You may also
+want to convert to another content type or change the filename or encrypt
+the file. You can do all of this by defining stream transformations on a
+store.
+
+The most common type of transformation is a "write" transformation, that is,
+a function that changes the data as it is initially stored. You can define
+this function using the `transformWrite` option on any store constructor.
+Here is an example:
 
 ```js
   // Init a GridFS store:
@@ -165,48 +212,18 @@ when you delete the file.
 
       // To pass it through:
       //readStream.pipe(writeStream);
+      
+      // You can also change the fileObj before storing it
+      //fileObj.update({$set: {name: 'newname.png'}});
     }     
   });
 ```
-// TODO show an example of `transform` options on SA's and how they stream data.
-> 
-> You may want to manipulate files before saving them. For example, if a user
-> uploads a large image, you may want to reduce its resolution, crop it,
-> compress it, etc. before allowing the storage adapter to save it. You may also
-> want to convert to another content type or change the filename.
-> You can do all of this by defining a `beforeSave` method.
-> 
-> A `beforeSave` method can be defined for any store. It does not receive any
-arguments, but its context is the
-> `FS.File` being saved, which you can alter as necessary.
-> 
-> The most common scenario is image manipulation, and for this there is a
-convenient package,
-> [cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick),
-> that allows you to easily call `GraphicsMagick` methods on the `FS.File`
-data. Here's an example:
-> 
-> *server.js:*
-> 
-> ```js
-> var imageStore = new FS.Store.FileSystem("images", {
->   path: "~/uploads",
->   beforeSave: function () {
->     this.gm().resize(60, 60).blur(7, 3).save();
->   }
-> });
-> 
-> Images = new FS.Collection("images", {
->   stores: [imageStore]
-> });
-> ```
-> 
-> It's pretty easy to understand. First call `gm()` on the `FS.File` to enter
-a special GraphicsMagick context, then call any methods from the node `gm` package,
-and finally call `save()` to update the `FS.File` data with those modifications.
-> Refer to the
-> [cfs-graphicsmagick](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick)
-> package documentation for more information.
+
+Note the we provide the node `gm` package on `this` within a transform function.
+You could also use any other node package that can transform streams. If the
+transformation requires a companion transformation when the data is later read
+out of the store (such as encrypt/decrypt), you can define a `transformRead`
+function as well.
 
 ## Filtering
 
@@ -253,10 +270,6 @@ only *in addition to* content type checks, and not instead of content type check
 
 The file extensions must be specified without a leading period.
 
-*Tip: You can do more advanced filtering in your `beforeSave` function.
-If you return `false` from the `beforeSave` function for a store,
-the file will never be saved in that store.*
-
 ## Security
 
 File uploads and downloads can be secured using standard Meteor `allow`
@@ -302,6 +315,9 @@ fsCollection.insert(fsFile, function (err) {
 });
 ```
 
+Note that you will want to verify this `owner` metadata in a `deny` function
+since the client could put any user ID there.
+
 ## Using `insert` Properly
 
 When you need to insert a file that's located on a client, always call 
@@ -317,38 +333,96 @@ client-side inserts actually saves you all of this complex work, and that's
 why we recommend it.
 
 Calling insert on the server should be done only when you have the file
-somewhere on the server filesystem already or you're downloading it from a
-remote URL.
+somewhere on the server filesystem already or you're generating the data
+on the server.
 
-> ## Handlebars
-> 
-> To simplify your life, consider using the
-[cfs-handlebars](https://github.com/CollectionFS/Meteor-cfs-handlebars) package, which provides
-> several helpers to easily display `FS.File` information, create file inputs, create download or delete buttons, show file transfer progress, and more.
+## UI Helpers
 
-## Custom Connections
+Some of the API methods are designed to be usable as UI helpers.
 
-TODO move this to the transfer package readmes
+### FS.File Instance Helper Methods
 
-To use a custom DDP connection for uploads or downloads, override the default
-transfer queue with your own, passing in your custom connection:
+### url
 
-```js
-if (Meteor.isClient) {
-  // There is a single uploads transfer queue per client (not per FS.Collection)
-  FS.downloadQueue = new DownloadTransferQueue({ connection: DDP.connect(myUrl) });
+Returns the HTTP file URL for the current FS.File.
 
-  // There is a single downloads transfer queue per client (not per FS.Collection)
-  FS.uploadQueue = new UploadTransferQueue({ connection: DDP.connect(myUrl) });
-}
+Use with an `FS.File` instance as the current context.
+
+Specify a `store` attribute to get the URL for a specific store. If you don't
+specify the store name, the URL will be for the copy in the first defined store.
+
+```html
+{{#each images}}
+  URL: {{url}}
+  <img src="{{url store='thumbnail'}}" alt="thumbnail">
+{{/each}}
+```
+
+### isImage
+
+Returns true if the copy of this file in the specified store has an image
+content type. If the file object is unmounted or was not saved in the specified
+store, the content type of the original file is checked instead.
+
+Use with an `FS.File` instance as the current context.
+
+```html
+{{#if isImage}}
+{{/if}}
+{{#if isImage store='thumbnail'}}
+{{/if}}
+```
+
+### isAudio
+
+Returns true if the copy of this file in the specified store has an audio
+content type. If the file object is unmounted or was not saved in the specified
+store, the content type of the original file is checked instead.
+
+Use with an `FS.File` instance as the current context.
+
+```html
+{{#if isImage}}
+{{/if}}
+{{#if isImage store='thumbnail'}}
+{{/if}}
+```
+
+### isVideo
+
+Returns true if the copy of this file in the specified store has a video
+content type. If the file object is unmounted or was not saved in the specified
+store, the content type of the original file is checked instead.
+
+Use with an `FS.File` instance as the current context.
+
+```html
+{{#if isImage}}
+{{/if}}
+{{#if isImage store='thumbnail'}}
+{{/if}}
+```
+
+### isUploaded
+
+Returns true if all the data for the file has been successfully received on the
+server. It may not have been stored yet.
+
+Use with an `FS.File` instance as the current context.
+
+```html
+{{#with fileObj}}
+{{#if isUploaded}}
+{{/if}}
+{{/with}}
 ```
 
 ## Customizing the HTTP URLs and Headers
 
 CollectionFS automatically mounts an HTTP access point that supports secure
-GET and DEL requests for all FS.Collection instances.
+GET, PUT, HEAD, and DELETE requests for all FS.Collection instances.
 
-To change the base URL for both GET and DEL requests:
+To change the base URL for the endpoints:
 
 *common.js*
 
@@ -369,35 +443,6 @@ FS.HTTP.setHeadersForGet([
 ]);
 ```
 
-## Drag and Drop
-Install the `ui-dropped-event` package. It adds the `dropped` event to the Meteor templates.
-
-> Note the `FS.Utility.eachFile` utility function - it supports files from both `<input>` and `dropped` files.
-
-Template
-```html
-  <div id="dropzone" class="dropzone">
-    <div style="text-align: center; color: gray;">Drop file to upload</div>
-  </div>
-```
-
-Javascript
-```js
-  Template.hello.events({
-    // Catch the dropped event
-    'dropped #dropzone': function(event, temp) {
-      console.log('files droped');
-
-      // If using the cfs api
-      FS.Utility.eachFile(event, function(file) {
-        var id = images.insert(file);
-        console.log('Inserted file ');
-        console.log(id);
-      });
-    }
-  });
-```
-
 ## Optimizing
 
 * When you insert a file, a worker begins saving copies of it to all of the
@@ -413,96 +458,117 @@ a "sample" store over a "full-length" store.
 
 The following code examples will get you started with common tasks.
 
-### Insert One File From File Input
+### Insert One or More Files From File Input
 
 In client code:
 
 ```js
 Template.myForm.events({
   'change .myFileInput': function(event, template) {
-    var files = event.target.files;
-    Images.insert(files[0], function (err, fileObj) {
-      //if !err, fileObj is now in the Images collection and its data is being uploaded
+    FS.Utility.eachFile(event, function(file) {
+      Images.insert(file, function (err, fileObj) {
+        //If !err, we have inserted new doc with ID fileObj._id, and
+        //kicked off the data upload using HTTP
+      });
     });
   }
 });
 ```
 
-### Insert Multiple Files From Multiple File Input
+Note that this works regardless of whether the file input accepts multiple files.
 
-In client code:
+### Insert One Or More Files Dropped on an Element
 
+Install the `ui-dropped-event` package. It adds the `dropped` event to the Meteor templates.
+
+> Note the `FS.Utility.eachFile` utility function - it supports files from both `<input>` and `dropped` files.
+
+Template
+```html
+<div id="dropzone" class="dropzone">
+  <div style="text-align: center; color: gray;">Drop file to upload</div>
+</div>
+```
+
+Javascript
 ```js
-Template.myForm.events({
-  'change .myFileInput': function(event, template) {
-    var files = event.target.files;
-    for (var i = 0, ln = files.length; i < ln; i++) {
-      Images.insert(files[i], function (err, fileObj) {
-        //if !err, fileObj is now in the Images collection and its data is being uploaded
+Template.hello.events({
+  // Catch the dropped event
+  'dropped #dropzone': function(event, temp) {
+    console.log('files dropped');
+    FS.Utility.eachFile(event, function(file) {
+      Images.insert(file, function (err, fileObj) {
+        //If !err, we have inserted new doc with ID fileObj._id, and
+        //kicked off the data upload using HTTP
       });
-    }
+    });
   }
 });
 ```
 
-### Insert One File From Drop Zone
-
-TODO add
-
-### Insert Multiple Files From Drop Zone
-
-TODO add
-
 ### Insert One File From a Remote URL
-// TODO this api changed patter, use `attachData` or direct insert to `FS.Collection`
-> 
-> In either client or server code:
-> 
-> ```js
-> Pictures.insert(url, function (error, fileObj) {
->   //fileObj is the inserted FS.File instance
->   //data has been automatically retrieved from the remote URL and stored
-> });
-> ```
-> 
-> On the server, you can omit the callback and the method will block until the
+ 
+In either client or server code:
+
+```js
+Images.insert(url, function (error, fileObj) {
+  //If !error, we have inserted new doc with ID fileObj._id, and
+  //remote URL data will be downloaded and stored on the server. The
+  //URL must support a HEAD request since we do one to get the 
+  //content type, size, etc. for filtering inserts.
+});
+```
+
+On the server, you can omit the callback and the method will block until the
 data download and insert are both complete. Then it will return the new FS.File
-instance. On the client, you can omit the callback and any errors will be thrown.
-> 
-> When you call `insert` with a URL string as the first argument on the client,
-the remote data download and the actual insert both take place on the server.
-This is helpful for lightweight clients and also avoids CORS issues. When this
-happens, the callback will still be called after the remote download and insert
-is finished, but the return value of `insert` will always be `undefined` (because
-the insert did not happen on the client).
-> 
-> Note that a drawback of passing the URL directly to `insert` is that the file
-will be inserted without a name. If you want to give it a name, you can do it
-this way:
-> 
-> ```js
-> FS.File.fromUrl(url, 'name.jpg', function (error, fileObj) {
->   //data has been automatically retrieved from the remote URL and attached to fileObj
->   Pictures.insert(fileObj, function (error, fileObj) {
->     //fileObj._id is now set
->   });
-> });
-> ```
-> 
-> Or in server code:
-> 
-> ```js
-> var fileObj = FS.File.fromUrl(url, 'name.jpg');
-> Pictures.insert(fileObj);
-> //fileObj._id is now set
-> ```
-> 
-> Note that `FS.File.fromUrl` will not work on the client if the remote resource's
-> CORS header does not allow the download.
+instance.
 
-### Add Metadata to a File Before Inserting
+```js
+var newFileObj = Images.insert(url);
+```
 
-TODO add
+On the client, you can omit the callback if you don't need to
+access the resulting FS.File instance, and any errors will be thrown.
+
+When you pass a URL directly to `insert`, the filename will be extracted
+from the end of the URL string, but only if it ends with an extension. Otherwise
+filename will be null. If you want to avoid a null filename, you will have to
+explicitly attach the URL to a new FS.File instance and set the `name`:
+
+```js
+var newFile = new FS.File();
+newFile.attachData(url, function (error) {
+  if (error) throw error;
+  newFile.name = "newImage.png";
+  Images.insert(newFile, function (error, fileObj) {
+    //If !error, we have inserted new doc with ID fileObj._id, and
+    //remote URL data will be downloaded and stored on the server. The
+    //URL must support a HEAD request since we do one to get the 
+    //content type, size, etc. for filtering inserts.
+  });
+});
+```
+
+### Add Custom Metadata to a File Before Inserting
+
+Set the `metadata` property to your custom metadata object before inserting. For example,
+with a file input:
+
+```js
+Template.myForm.events({
+  'change .myFileInput': function(event, template) {
+    FS.Utility.eachFile(event, function(file) {
+      var newFile = new FS.File(file);
+      newFile.attachData(file);
+      newFile.metadata = {foo: "bar"};
+      Images.insert(newFile, function (err, fileObj) {
+        //If !err, we have inserted new doc with ID fileObj._id, and
+        //kicked off the data upload using HTTP
+      });
+    });
+  }
+});
+```
 
 ### Update Existing File's Metadata
 
@@ -517,26 +583,3 @@ If you have the `FS.File` instance, you can call `update` on it:
 ```js
 myFsFile.update({$set: {'metadata.foo': 'bar'}});
 ```
-
-### Store a Reference to an Inserted File in Another Collection
-
-> We can insert `FS.Files` directly into the `Meteor.Collection` due to `cfs-ejson-file` package.
-> 
-> This works in either client or server code:
-> 
-> ```js
-> Pictures.insert(myFile, function (error, fileObj) {
->   if (!error) {
->     Items.update({_id: relatedItemId}, {$set: {pictureId: fileObj._id}});
->   } else {
->     throw error;
->   }
-> });
-> ```
-> 
-> This works in server code only:
-> 
-> ```js
-> var fileObj = Pictures.insert(myFile);
-> Items.update({_id: relatedItemId}, {$set: {pictureId: fileObj._id}});
-> ```
