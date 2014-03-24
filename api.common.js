@@ -12,6 +12,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     callback = FS.Utility.defaultCallback;
   }
 
+  // XXX: This function should be outfactored to FS.Utility
   function passOrThrow(error) {
     if (callback) {
       callback(error);
@@ -20,6 +21,12 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     }
   }
 
+  // XXX:
+  // We should out factor beginStorage to FS.File.beginStorage
+  // the client side storage adapters should be the one providing
+  // the upload either via http/ddp or direct upload
+  // Could be cool to have a streaming api on the client side
+  // having a createReadStream etc. on the client too...
   function beginStorage(fileObj) {
 
     // If on client, begin uploading the data
@@ -35,6 +42,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     }
   }
 
+  // XXX: would be great if this function could be simplyfied - if even possible?
   function checkAndInsert(fileObj) {
     // Check filters. This is called in deny functions, too, but we call here to catch
     // server inserts and to catch client inserts early, allowing us to call `onInvalid` on
