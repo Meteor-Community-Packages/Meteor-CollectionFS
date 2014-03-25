@@ -115,7 +115,7 @@ delete options.transformRead;
 
       // Update the time - this could also be fetched from api.stats in the
       // storage adapter eg. by adding on event
-      fileObj.copies[name].updatedAt = Date();
+      fileObj.copies[name].updatedAt = new Date();
 
       // If the file object copy havent got a createdAt then set this
       if (typeof fileObj.copies[name].createdAt === 'undefined') {
