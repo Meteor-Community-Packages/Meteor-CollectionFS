@@ -50,8 +50,23 @@ FS.TempStore = new EventEmitter();
 
 // We update the fileObj on progress
 FS.TempStore.on('progress', function(fileObj, chunk, count) {
+  // Update the chunk counter
+  var modifyer = { chunkCount: count };
+
+  // Check if all chunks are uploaded
+  if (count === fileObj.chunkSum) {
+    // Check if the file has been uploaded before
+    if (typeof fileObj.uploadedAt === 'undefined') {
+      // We set the uploadedAt date
+      modifyer.uploadedAt = Date();
+    } else {
+      // We have been uploaded so an event were file data is updated is
+      // called synchronizing - so this must be a synchronizedAt?
+      modifyer.synchronizedAt = Date();
+    }
+  }
   // Update the chunkCount on the fileObject
-  fileObj.update({ $set: { chunkCount: count }});
+  fileObj.update({ $set: modifyer });
 });
 
 // FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
