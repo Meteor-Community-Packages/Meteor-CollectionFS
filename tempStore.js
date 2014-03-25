@@ -58,11 +58,11 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
     // Check if the file has been uploaded before
     if (typeof fileObj.uploadedAt === 'undefined') {
       // We set the uploadedAt date
-      modifyer.uploadedAt = Date();
+      modifyer.uploadedAt = new Date();
     } else {
       // We have been uploaded so an event were file data is updated is
       // called synchronizing - so this must be a synchronizedAt?
-      modifyer.synchronizedAt = Date();
+      modifyer.synchronizedAt = new Date();
     }
   }
   // Update the chunkCount on the fileObject
