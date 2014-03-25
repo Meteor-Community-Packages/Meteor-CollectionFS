@@ -3,36 +3,36 @@
 	"description": "Meteor file management system with uploads, downloads, file manipulation and copying, and multiple storage adaptors",
 	"homepage": "https://github.com/CollectionFS/Meteor-CollectionFS",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.4.3",
+	"version": "0.4.4",
 	"git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
 	"packages": {
 		"cfs-base-package": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-			"branch": "master"			
+			"branch": "master"
 		},
 		"cfs-file": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
-			"branch": "master"			
+			"branch": "master"
 		},
 		"cfs-ejson-file": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-ejson-file.git",
-			"branch": "master"			
+			"branch": "master"
 		},
 		"cfs-collection": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-collection.git",
-			"branch": "master"			
+			"branch": "master"
 		},
 		"cfs-access-point": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
-			"branch": "master"			
+			"branch": "master"
 		},
 		"cfs-worker": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-worker.git",
-			"branch": "master"			
+			"branch": "master"
 		},
 		"cfs-upload-http": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-upload-http.git",
-			"branch": "master"			
+			"branch": "master"
 		}
 	}
 }
