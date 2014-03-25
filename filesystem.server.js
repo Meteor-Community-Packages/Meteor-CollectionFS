@@ -73,16 +73,15 @@ FS.Store.FileSystem = function(name, options) {
           filepath = path.join(absolutePath, fileKey);
         }
       }
-      // Update the fileObj - we dont save it to the db but sets the fileKey
-      fileObj.copies[name].key = fileKey;
+
       // Return the stream handle
       var writeStream = fs.createWriteStream(filepath, options);
 
       // The filesystem does not emit the "end" event only close - so we
       // manually send the end event
       writeStream.on('close', function() {
-        if (FS.debug) console.log('SA FileSystem - DONE!!');
-        writeStream.emit('end');
+        if (FS.debug) console.log('SA FileSystem - DONE!! fileKey: "' + fileKey + '"');
+        writeStream.emit('end', fileKey);
       });
 
       return writeStream;
