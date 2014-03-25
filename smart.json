@@ -3,7 +3,7 @@
 	"description": "CollectionFS, Class for creating Storage adapters",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.0.12",
+	"version": "0.0.13",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
 	"packages": {
 		"cfs-base-package": {
