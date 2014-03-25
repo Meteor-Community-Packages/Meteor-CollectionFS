@@ -105,11 +105,22 @@ delete options.transformRead;
     //
     // We have to use our own event making sure the storage process is completed
     // this is mainly
-    writeStream.safeOn('stored', function() {
+    writeStream.safeOn('stored', function(fileKey) {
+      if (typeof fileKey === 'undefined') {
+        throw new Error('SA ' + name + ' type ' + api.typeName + ' did not return a fileKey');
+      }
+      FS.debug && console.log('SA', name, 'stored', fileKey);
+      // Set the fileKey
+      fileObj.copies[name].key = fileKey;
 
       // Update the time - this could also be fetched from api.stats in the
       // storage adapter eg. by adding on event
-      fileObj.copies[name].utime = Date();
+      fileObj.copies[name].updatedAt = Date();
+
+      // If the file object copy havent got a createdAt then set this
+      if (typeof fileObj.copies[name].createdAt === 'undefined') {
+        fileObj.copies[name].createdAt = fileObj.copies[name].updatedAt;
+      }
 
       var modifier = {};
       modifier["copies." + name] = fileObj.copies[name];
