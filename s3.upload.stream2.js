@@ -26,7 +26,10 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
   var maxChunkSize = 5242880;
   var multipartUploadID = null;
   var waitingCallback;
-  var fileKey = options && (options.fileKey || options.Key);
+  var fileKey = params && (params.fileKey || params.Key);
+
+  // Clean up for AWS sdk
+  delete params.fileKey;
 
   // This small function stops the write stream until we have connected with
   // the s3 server
