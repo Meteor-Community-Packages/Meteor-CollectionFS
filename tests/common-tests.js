@@ -42,14 +42,14 @@ Tinytest.add('cfs-base-package - _Utility.cloneFileUnit', function(test) {
     _id: 'foo',
     name: 'bar',
     type: 'test',
-    utime: 12,
+    updatedAt: 12,
     spam: 'dont add me'
   }), {
     size: 10,
     _id: 'foo',
     name: 'bar',
     type: 'test',
-    utime: 12,
+    updatedAt: 12,
   }), 'Should only clone the allowed fields');
 
 });
