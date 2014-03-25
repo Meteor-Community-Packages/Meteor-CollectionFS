@@ -46,8 +46,17 @@ _Utility.cloneFileUnit = function(unit) {
         newUnit[prop] = '' + unit[prop];
       }
     });
-    if (unit.utime) {
-      newUnit.utime = unit.utime;
+    if (unit.createdAt) {
+      newUnit.createdAt = unit.createdAt;
+    }
+    if (unit.updatedAt) {
+      newUnit.updatedAt = unit.updatedAt;
+    }
+    if (unit.uploadedAt) {
+      newUnit.uploadedAt = unit.uploadedAt;
+    }
+    if (unit.synchronizedAt) {
+      newUnit.synchronizedAt = unit.synchronizedAt;
     }
     return newUnit;
   }
