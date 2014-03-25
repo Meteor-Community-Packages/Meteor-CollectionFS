@@ -68,9 +68,6 @@ FS.Store.GridFS = function(name, options) {
 
       // XXX: support overwrite?
 
-      // Update the fileObj - we dont save it to the db but sets the fileKey
-      fileObj.copies[name].key = fileKey;
-
       // Init GridFS
       var gfs = new Grid(self.db, mongodb);
 
@@ -86,7 +83,8 @@ FS.Store.GridFS = function(name, options) {
 
       writeStream.on('close', function() {
         if (FS.debug) console.log('SA GridFS - DONE!');
-        writeStream.emit('end');
+        // Emit end and return the fileKey
+        writeStream.emit('end', fileKey);
       });
 
       return writeStream;
