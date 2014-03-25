@@ -138,9 +138,26 @@ FS.TempStore.removeFile = function(fileObj) {
   }
 };
 
+
 // WRITE STREAM
-FS.TempStore.createWriteStream = function(fileObj, chunk) {
+FS.TempStore.createWriteStream = function(fileObj, options) {
   var self = this;
+
+  // XXX: it should be possible for a store to sync by storing data into the
+  // tempstore - this could be done nicely by setting the store name as string
+  // in the chunk variable?
+  // This store name could be passed on the the fileworker via the uploaded
+  // event
+  // So the uploaded event can return:
+  // undefined - if data is stored into and should sync out to all storage adapters
+  // number - if a chunk has been uploaded
+  // string - if a storage adapter wants to sync its data to the other SA's
+
+
+
+
+  // If chunk is a number we use that otherwise we set it to 0
+  var chunk = (options === +options)?options: 0;
 
   if (fileObj.isMounted()) {
     // File path
@@ -170,27 +187,41 @@ FS.TempStore.createWriteStream = function(fileObj, chunk) {
     writeStream.safeOn('close', function() {
       var chunkCount = fs.readdirSync(filePath).length;
 
-      if (typeof chunk === 'undefined') {
+      // Progress
+      self.emit('progress', fileObj, chunk, chunkCount);
+
+      if (options === +options) {
+        // options is number - this is a chunked upload
+
+
+        // Check if upload is completed
+        if (chunkCount === fileObj.chunkSum) {
+          self.emit('stored', fileObj);
+          self.emit('ready', fileObj, chunkCount);
+        }
+
+      } else if (options === ''+options) {
+        // options is a string - so we are passed the name of syncronizing SA
+        self.emit('synchronized', fileObj, options);
+        self.emit('ready', fileObj, options);
+
+      } else if (typeof options === 'undefined') {
+        // options is not defined - this is direct use of server api
 
         // We created a writestream without chunk defined meaning this was used
         // as a regular createWriteStream method so we only stream to one chunk
         // file - 0.chunk - therefor setting the chunkCount and chunkSum to 1
 
-        // Emit fileObj, current chunk and chunk count
-        self.emit('progress', fileObj, 0, chunkCount);
 
         // We know this upload is complete - this could be a server transport
-        self.emit('uploaded', fileObj, true); // set true marking "one stream"
+        // set true marking "one stream" since chunk number is not defined
+        // we assume that we are accessed by others than the Access Point /
+        // file upload - This could be server streaming or client direct uploads
+        self.emit('uploaded', fileObj);
+        self.emit('ready', fileObj);
 
       } else {
-        // Progress
-        self.emit('progress', fileObj, chunk, chunkCount);
-
-        // Check if upload is completed
-        if (chunkCount === fileObj.chunkSum) {
-          self.emit('uploaded', fileObj);
-        }
-
+        throw new Error('FS.TempStore.createWriteStream got unexpected type in options');
       }
     });
 
