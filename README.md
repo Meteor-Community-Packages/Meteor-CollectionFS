@@ -33,6 +33,8 @@ To pull down the most recent updates to every package,
 just run `mrt update` again at any time. If you're having trouble, you can
 alternatively try cloning [this repo](https://github.com/copleykj/CollectionFS-Demo).
 
+> Make sure your `smart.json` says `"collectinFS": {}` *pointing to the latest version*
+
 ### Using the Old API
 
 Adding the `collectionFS` package currently gives you the 0.4.x release, which is
