@@ -1,11 +1,5 @@
 var PassThrough = Npm.require('stream').PassThrough;
 
-// XXX: Add some kind of check to see if GM is actually installed on the system
-// Its important to check for gm support in the os - its not trivial debuggin...
-var gm = Npm.require('gm');
-
-// XXX: This could be in a seperate package? if needed.
-
 FS.Transform = function(options) {
   var self = this;
 
@@ -26,9 +20,7 @@ FS.Transform = function(options) {
 };
 
 // Allow packages to add scope
-FS.Transform.scope = {
-  gm: gm
-};
+FS.Transform.scope = {};
 
 // The transformation stream triggers an "stored" event when data is stored into
 // the storage adapter

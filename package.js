@@ -2,10 +2,6 @@ Package.describe({
   summary: 'CollectionFS, Class for creating Storage adapters'
 });
 
-Npm.depends({
-  gm: "1.13.3"
-});
-
 Package.on_use(function(api) {
   api.use([
     'cfs-base-package'
