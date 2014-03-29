@@ -27,8 +27,18 @@ FS.Transform.scope = {};
 FS.Transform.prototype.createWriteStream = function(fileObj, options) {
   var self = this;
 
+  // Get the file key
+  var fileKey = self.storage.fileKey(fileObj);
+
   // Rig write stream
-  var destinationStream = self.storage.createWriteStream(fileObj, options);
+  var destinationStream = self.storage.createWriteStream(fileKey, {
+    // Not all SA's can set these options and cfs dont depend on setting these
+    // but its nice if other systems are accessing the SA that some of the data
+    // is also available to those
+    aliases: [fileObj.name],
+    contentType: fileObj.type,
+    metadata: fileObj.metadata
+  });
 
   if (typeof self.transformWrite === 'function') {
 
@@ -67,8 +77,18 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
 FS.Transform.prototype.createReadStream = function(fileObj, options) {
   var self = this;
 
+  // XXX: We can check the copy info, but the readstream wil fail no matter what
+  // var fileInfo = fileObj.getCopyInfo(name);
+  // if (!fileInfo) {
+  //   return new Error('File not found on this store "' + name + '"');
+  // }
+  // var fileKey = folder + fileInfo.key;
+
+  // Get the file key
+  var fileKey = self.storage.fileKey(fileObj);
+
   // Rig read stream
-  var sourceStream = self.storage.createReadStream(fileObj, options);
+  var sourceStream = self.storage.createReadStream(fileKey, options);
 
   if (typeof self.transformRead === 'function') {
     // Rig write stream

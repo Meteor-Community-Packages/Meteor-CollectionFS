@@ -20,11 +20,17 @@ FS.StorageAdapter = function(name, options, api) {
   }
 
   // Deprecate put & get maybe refactor del into remove
-  _.each('del,typeName,createReadStream,createWriteStream'.split(','), function(name) {
+  _.each('fileKey,remove,typeName,createReadStream,createWriteStream'.split(','), function(name) {
     if (typeof api[name] === 'undefined') {
       throw new Error('FS.StorageAdapter please define an api.' + name + '');
     }
   });
+
+  // Create an internal namespace, starting a name with underscore is only
+  // allowed for stores marked with options.internal === true
+  if (options.internal !== true && name[0] === '_') {
+    throw new Error('A storage adapter name may not begin with "_"');
+  }
 
   // store reference for easy lookup by name
   if (typeof _storageAdapters[name] !== 'undefined') {
@@ -35,7 +41,8 @@ FS.StorageAdapter = function(name, options, api) {
 
   // extend self with options and other info
   _.extend(this, options || {}, {
-    name: name
+    name: name,
+    typeName: api.typeName
   });
 
   // This supports optional transformWrite and transformRead
@@ -52,10 +59,17 @@ delete options.transformRead;
   // Create a nicer abstracted adapter interface
   self.adapter = {};
 
+  self.adapter.fileKey = function(fileObj) {
+    return api.fileKey(fileObj);
+  };
+
   // Return readable stream
   self.adapter.createReadStream = function(fileObj, options) {
     FS.debug && console.log('createReadStream ' + self.name);
-
+    if (self.internal) {
+      // So, the internal take a fileKey
+      return FS.Utility.safeStream( api.createReadStream(fileObj, options) );
+    }
     return FS.Utility.safeStream( self._transform.createReadStream(fileObj, options) );
 
   };
@@ -64,6 +78,10 @@ delete options.transformRead;
   self.adapter.createWriteStream = function(fileObj, options) {
 
     FS.debug && console.log('createWriteStream ' + self.name);
+    if (self.internal) {
+      // The internal takes a fileKey - not fileObj
+      return FS.Utility.safeStream(  api.createWriteStream(fileObj, options) );
+    }
 
     if (typeof fileObj.copies == 'undefined' || fileObj.copies === null) {
       fileObj.copies = {};
@@ -135,38 +153,43 @@ delete options.transformRead;
 
 
   //internal
-  self._removeAsync = function(fsFile, callback) {
+  self._removeAsync = function(fileKey, callback) {
     // Remove the file from the store
-    api.del.call(self, fsFile, callback);
+    api.remove.call(self, fileKey, callback);
   };
 
   /**
    * @method FS.StorageAdapter.prototype.remove
    * @public
    * @param {FS.File} fsFile The FS.File instance to be stored.
-   * @param {Object} [options] unused
    * @param {Function} [callback] If not provided, will block and return true or false
    * @todo refactor into self.adapter.remove to make the adapter interface complete
    *
    * Attempts to remove a file from the store. Returns true if removed or not
    * found, or false if the file couldn't be removed.
    */
-  self.remove = function(fsFile, options, callback) {
+  self.adapter.remove = function(fileObj, callback) {
     FS.debug && console.log("---SA REMOVE");
-    if (!(fsFile instanceof FS.File))
-      throw new Error('Storage adapter "' + name + '" remove requires fsFile');
 
-    if (!callback && typeof options === "function") {
-      callback = options;
-      options = {};
-    }
-    options = options || {};
+    // We throw an error if fileObj is not a FS.File instance
+    // Except: if this is used as an internal SA - we then expect fileKey
+    // if (!self.internal && !(fileObj instanceof FS.File))
+    //   throw new Error('Storage adapter "' + name + '" remove requires fileObj');
+
+    // Get the fileKey
+    var fileKey = (fileObj instanceof FS.File)? api.fileKey(fileObj) : fileObj;
 
     if (callback) {
-      return self._removeAsync(fsFile, FS.Utility.safeCallback(callback));
+      return self._removeAsync(fileKey, FS.Utility.safeCallback(callback));
     } else {
-      return Meteor._wrapAsync(self._removeAsync)(fsFile);
+      return Meteor._wrapAsync(self._removeAsync)(fileKey);
     }
+  };
+
+  self.remove = function(fileObj, callback) {
+    // Add deprecation note
+    console.warn('Storage.remove is deprecating, use "Storage.adapter.remove"');
+    return self.adapter.remove(fileObj, callback);
   };
 
   if (typeof api.init === 'function') {
