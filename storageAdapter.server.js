@@ -20,7 +20,7 @@ FS.StorageAdapter = function(name, options, api) {
   }
 
   // Deprecate put & get maybe refactor del into remove
-  _.each('fileKey,remove,typeName,createReadStream,createWriteStream'.split(','), function(name) {
+  FS.Utility.each('fileKey,remove,typeName,createReadStream,createWriteStream'.split(','), function(name) {
     if (typeof api[name] === 'undefined') {
       throw new Error('FS.StorageAdapter please define an api. "' + name + '" ' + (api.typeName || ''));
     }
@@ -40,7 +40,7 @@ FS.StorageAdapter = function(name, options, api) {
   }
 
   // extend self with options and other info
-  _.extend(this, options || {}, {
+  FS.Utility.extend(this, options || {}, {
     name: name,
     typeName: api.typeName
   });

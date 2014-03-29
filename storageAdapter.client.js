@@ -36,9 +36,9 @@ FS.StorageAdapter = function(name, options, api) {
   } else {
     _storageAdapters[name] = self;
   }
-  
+
   // extend self with options and other info
-  _.extend(this, options || {}, {
+  FS.Utility.extend(this, options || {}, {
     name: name
   });
 

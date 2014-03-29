@@ -7,7 +7,7 @@ Package.on_use(function(api) {
     'cfs-base-package'
   ]);
 
-  api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata',
+  api.use(['deps', 'check', 'livedata', 'mongo-livedata',
     'ejson']);
 
   api.add_files([
