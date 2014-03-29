@@ -20,7 +20,7 @@ FS.File = function(ref, createdByTransform) {
     }
 
     // Extend self with filerecord related data
-    _.extend(self, FS.Utility.cloneFileRecord(ref));
+    FS.Utility.extend(self, FS.Utility.cloneFileRecord(ref));
   }
 };
 
@@ -65,14 +65,14 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   else if (typeof data === "string" && (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:")) {
     if (!callback) {
       var result = Meteor.call('_cfs_getUrlInfo', data);
-      _.extend(self, result);
+      FS.Utility.extend(self, result);
       setData(self.type);
     } else {
       Meteor.call('_cfs_getUrlInfo', data, function (error, result) {
         if (error) {
           callback(error);
         } else {
-          _.extend(self, result);
+          FS.Utility.extend(self, result);
           setData(self.type);
         }
       });
@@ -187,7 +187,7 @@ FS.File.prototype.getFileRecord = function() {
 
     // Return the fileRecord or an empty object
     var fileRecord = self.collection.files.findOne({_id: self._id}) || {};
-    _.extend(self, fileRecord);
+    FS.Utility.extend(self, fileRecord);
     return fileRecord;
   } else {
     // We return an empty object, this way users can still do `getRecord().size`
@@ -376,11 +376,11 @@ FS.File.prototype.hasCopy = function(storeName, optimistic) {
   // Make sure we use the updated file record
   self.getFileRecord();
   // If we havent the published data then
-  if (_.isEmpty(self.copies)) {
+  if (FS.Utility.isEmpty(self.copies)) {
     return !!optimistic;
   }
   if (typeof storeName === "string") {
-    return (self.copies && !_.isEmpty(self.copies[storeName]));
+    return (self.copies && !FS.Utility.isEmpty(self.copies[storeName]));
   }
   return false;
 };

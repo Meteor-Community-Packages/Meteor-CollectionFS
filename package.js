@@ -20,7 +20,6 @@ Package.on_use(function(api) {
     'cfs-base-package',
     'cfs-storage-adapter',
     'deps',
-    'underscore',
     'check',
     'livedata',
     'mongo-livedata',
