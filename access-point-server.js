@@ -4,8 +4,8 @@ HTTP.publishFormats({
   fileRecordFormat: function (input) {
     // Set the method scope content type to json
     this.setContentType('application/json');
-    if (_.isArray(input)) {
-      return EJSON.stringify(_.map(input, function (obj) {
+    if (FS.Utility.isArray(input)) {
+      return EJSON.stringify(FS.Utility.map(input, function (obj) {
         return FS.Utility.cloneFileRecord(obj);
       }));
     } else {
@@ -75,7 +75,7 @@ var defaultSelectorFunction = function() {
   // This function will have to return the collection and the
   // file. If file not found undefined is returned - if null is returned the
   // search was not possible
-  var opts = _.extend({}, self.query || {}, self.params || {});
+  var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
 
   // Get the collection name from the url
   var collectionName = opts.collectionName;
@@ -183,7 +183,7 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
   // Add debug message
   FS.debug && console.log('Registered HTTP method URLs:');
 
-  _.each(mountPoints, function(mountPoint) {
+  FS.Utility.each(mountPoints, function(mountPoint) {
     // Couple mountpoint and accesspoint
     accessPoints[mountPoint] = accessPoint;
     // Remember our mountpoints
@@ -224,7 +224,7 @@ FS.HTTP.unmount = function(mountPoints) {
   // If we have a list to unmount
   if (unmountList) {
     // Iterate over each item
-    _.each(unmountList, function(mountPoint) {
+    FS.Utility.each(unmountList, function(mountPoint) {
       // Check _existingMountPoints to make sure the mount point exists in our
       // context / was created by the FS.HTTP.mount
       if (_existingMountPoints[mountPoint]) {

@@ -52,7 +52,7 @@ FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
 FS.File.prototype.url = function(options) {
   var self = this;
   options = options || {};
-  options = _.extend({
+  options = FS.Utility.extend({
     store: null,
     auth: null,
     download: false,
@@ -138,7 +138,7 @@ FS.File.prototype.url = function(options) {
 // TODO: should this be prefixed eg. by extending the FS.Utility
 encodeParams = function(params) {
   var buf = [];
-  _.each(params, function(value, key) {
+  FS.Utility.each(params, function(value, key) {
     if (buf.length)
       buf.push('&');
     buf.push(encodeString(key), '=', encodeString(value));

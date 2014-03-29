@@ -9,7 +9,7 @@ getHeaders = [];
  */
 httpDelHandler = function httpDelHandler(ref) {
   var self = this;
-  var opts = _.extend({}, self.query || {}, self.params || {});
+  var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
 
   // If DELETE request, validate with 'remove' allow/deny, delete the file, and return
   FS.Utility.validateAction(ref.collection.files._validators['remove'], ref.file, self.userId);
@@ -110,7 +110,7 @@ httpGetHandler = function httpGetHandler(ref) {
 
   // Add any other custom headers
   // TODO support customizing headers per collection
-  _.each(getHeaders, function(header) {
+  FS.Utility.each(getHeaders, function(header) {
     self.addHeader(header[0], header[1]);
   });
 
@@ -134,7 +134,7 @@ httpGetHandler = function httpGetHandler(ref) {
 
 httpPutInsertHandler = function httpPutInsertHandler(ref) {
   var self = this;
-  var opts = _.extend({}, self.query || {}, self.params || {});
+  var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
   // Get filename if set
   var filename = opts.filename;
   // XXX: Get number of chunks?
@@ -188,7 +188,7 @@ httpPutInsertHandler = function httpPutInsertHandler(ref) {
 
 httpPutUpdateHandler = function httpPutUpdateHandler(ref) {
   var self = this;
-  var opts = _.extend({}, self.query || {}, self.params || {});
+  var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
   var chunk = parseInt(opts.chunk, 10);
   if (isNaN(chunk)) chunk = 0;
 

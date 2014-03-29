@@ -15,7 +15,6 @@ Package.on_use(function(api) {
     'cfs-base-package',
     'cfs-file',
     //Core packages
-    'underscore',
     'check',
     'ejson',
     //Other packages
