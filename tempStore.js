@@ -307,6 +307,11 @@ _TempstoreReadStream.prototype._read = function() {
 
 // Create a nice api handle
 FS.TempStore.createReadStream = function(fileObj) {
+
+  if (!FS.TempStore.Storage)
+    throw new Error('FS.TempStore.createReadStream cannot remove file, we ' +
+            'dont have a storage adapter yet');
+
   if (fileObj.isMounted()) {
     return new _TempstoreReadStream(fileObj);
   } else {
