@@ -26,11 +26,32 @@ var util = Npm.require('util');
 /** @namespace FS.TempStore
  * @property FS.TempStore
  * @type {object}
+ * @public
+ * *it's an event emitter*
  */
 
-// Make it an event emitter
 FS.TempStore = new EventEmitter();
 
+/**
+ * @property {StorageAdapter} FS.TempStore.Storage
+ * @namespace FS.TempStore
+ * @private
+ * This property is set to either `FS.Store.FileSystem` or `FS.Store.GridFS`
+ *
+ * __When and why:__
+ * We normally default to `cfs-filesystem` unless its not installed. *(we default to gridfs if installed)*
+ * But if `cfs-gridfs` and `cfs-worker` is installed we default to `cfs-gridfs`
+ *
+ * If `cfs-gridfs` and `cfs-filesystem` is not installed we log a warning.
+ * the user can set `FS.TempStore.Storage` them selfs eg.:
+ * ```js
+ *   // Its important to set `internal: true` this lets the SA know that we
+ *   // are using this internally and it will give us direct SA api
+ *   FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
+ * ```
+ *
+ * > Note: This is considered as `advanced` use, its not a common pattern.
+ */
 FS.TempStore.Storage = null;
 
 // Select a storage adapter for temp storage
@@ -84,12 +105,23 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
 
 // Stream implementation
 
-// Naming convention for chunk files
+/**
+ * @method _chunkPath
+ * @private
+ * @param {Number} [n] Chunk number
+ * @returns {String} Chunk naming convention
+ */
 _chunkPath = function(n) {
   return (n || 0) + '.chunk';
 };
 
-
+/**
+ * @method _fileReference
+ * @param {FS.File} fileObj
+ * @param {Number} chunk
+ * @private
+ * @returns {String} Generated SA specific fileKey for the chunk
+ */
 _fileReference = function(fileObj, chunk) {
   if (FS.TempStore.Storage) {
 
@@ -106,6 +138,7 @@ _fileReference = function(fileObj, chunk) {
 /**
  * @method FS.TempStore.exists
  * @param {FS.File} File object
+ * @todo This is not yet implemented, milestone 1.1.0
  */
 FS.TempStore.exists = function(fileObj) {
   console.warn('This function is not correctly implemented using SA in TempStore');
@@ -117,6 +150,12 @@ FS.TempStore.exists = function(fileObj) {
   // }
 };
 
+/**
+ * @method FS.TempStore.listParts
+ * @param {FS.File} fileObj
+ * @returns {Object} of parts already stored
+ * @todo This is not yet implemented, milestone 1.1.0
+ */
 FS.TempStore.listParts = function(fileObj) {
   var self = this;
   console.warn('This function is not correctly implemented using SA in TempStore');
@@ -138,6 +177,13 @@ FS.TempStore.listParts = function(fileObj) {
   // return partList;
 };
 
+/**
+ * @method FS.TempStore.removeFile
+ * @public
+ * @param {FS.File} fileObj
+ * This function removes the file from tempstorage - it cares not if file is
+ * already removed or not found, goal is reached anyway.
+ */
 FS.TempStore.removeFile = function(fileObj) {
   var self = this;
   if (FS.TempStore.Storage) {
@@ -157,8 +203,22 @@ FS.TempStore.removeFile = function(fileObj) {
   }
 };
 
-
-// WRITE STREAM
+/**
+ * @method FS.TempStore.createWriteStream
+ * @public
+ * @param {FS.File} fileObj File to store in temporary storage
+ * @param {Number | String} [options]
+ *
+ * `options` of different types mean differnt things:
+ * * `undefined` We store the file in one part
+ * *(Normal server-side api usage)*
+ * * `Number` the number is the part number total is `fileObj.chunkSum`
+ * *(multipart uploads will use this api)*
+ * * `String` the string is the name of the `store` that wants to store file data
+ * *(stores that want to sync their data to the rest of the files stores will use this)*
+ *
+ * > Note: fileObj must be mounted on a `FS.Collection`, it makes no sense to store otherwise
+ */
 FS.TempStore.createWriteStream = function(fileObj, options) {
   var self = this;
 
@@ -175,8 +235,6 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   // undefined - if data is stored into and should sync out to all storage adapters
   // number - if a chunk has been uploaded
   // string - if a storage adapter wants to sync its data to the other SA's
-
-
 
 
   // If chunk is a number we use that otherwise we set it to 0
@@ -243,6 +301,15 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
 };
 
 // READSTREAM
+
+/**
+  * @method FS.TempStore.createReadStream
+  * @param {FS.File} fileObj The file to read
+  * @private
+  * @return {Stream} Returns readable stream
+  *
+  * > Note: This is the true streaming object wrapped by the public api
+  */
 _TempstoreReadStream = function(fileObj, options) {
   var self = this;
   Readable.call(this, options);
@@ -305,7 +372,13 @@ _TempstoreReadStream.prototype._read = function() {
   self.chunkReadStream.resume();
 };
 
-// Create a nice api handle
+/**
+  * @method FS.TempStore.createReadStream
+  * @public
+  * @param {FS.File} fileObj The file to read
+  * @return {Stream} Returns readable stream
+  *
+  */
 FS.TempStore.createReadStream = function(fileObj) {
 
   if (!FS.TempStore.Storage)
