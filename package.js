@@ -6,7 +6,7 @@ Package.describe({
 Package.on_use(function(api) {
   api.use(['cfs-base-package']);
 
-  api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata']);
+  api.use(['deps', 'check', 'livedata', 'mongo-livedata']);
 
   // Weak dependencies for uploaders
   api.use(['cfs-upload-http', 'cfs-upload-ddp'], { weak: true });

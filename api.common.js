@@ -303,8 +303,8 @@ FS.Collection.prototype.allowsFile = function fsColAllowsFile(fileObj) {
   if (filename) {
     var ext = fileObj.getExtension();
     if (!((saveAllFileExtensions ||
-            _.indexOf(filter.allow.extensions, ext) !== -1) &&
-            _.indexOf(filter.deny.extensions, ext) === -1)) {
+            FS.Utility.indexOf(filter.allow.extensions, ext) !== -1) &&
+            FS.Utility.indexOf(filter.deny.extensions, ext) === -1)) {
       filter.onInvalid && filter.onInvalid(filename + ' has the extension "' + ext + '", which is not allowed');
       return false;
     }

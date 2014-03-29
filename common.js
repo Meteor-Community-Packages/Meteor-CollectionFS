@@ -38,7 +38,7 @@ FS.Collection = function(name, options) {
   }
 
   // Extend and overwrite options
-  _.extend(self.options, options || {});
+  FS.Utility.extend(self.options, options || {});
 
   // Set the FS.Collection name
   self.name = name;
@@ -46,11 +46,11 @@ FS.Collection = function(name, options) {
   // Make sure at least one store has been supplied.
   // Usually the stores aren't used on the client, but we need them defined
   // so that we can access their names and use the first one as the default.
-  if (_.isEmpty(self.options.stores)) {
+  if (FS.Utility.isEmpty(self.options.stores)) {
     throw new Error("You must specify at least one store. Please consult the documentation.");
   }
 
-  _.each(self.options.stores, function(store, i) {
+  FS.Utility.each(self.options.stores, function(store, i) {
     // Set the primary store
     if (i === 0) {
       self.primaryStore = store;
@@ -102,7 +102,7 @@ FS.Collection = function(name, options) {
     if (!self.options.filter.maxSize || typeof self.options.filter.maxSize !== "number") {
       self.options.filter.maxSize = null;
     }
-    if (!self.options.filter.allow.extensions || !_.isArray(self.options.filter.allow.extensions)) {
+    if (!self.options.filter.allow.extensions || !FS.Utility.isArray(self.options.filter.allow.extensions)) {
       self.options.filter.allow.extensions = [];
     } else {
       //convert all to lowercase
@@ -110,10 +110,10 @@ FS.Collection = function(name, options) {
         self.options.filter.allow.extensions[i] = self.options.filter.allow.extensions[i].toLowerCase();
       }
     }
-    if (!self.options.filter.allow.contentTypes || !_.isArray(self.options.filter.allow.contentTypes)) {
+    if (!self.options.filter.allow.contentTypes || !FS.Utility.isArray(self.options.filter.allow.contentTypes)) {
       self.options.filter.allow.contentTypes = [];
     }
-    if (!self.options.filter.deny.extensions || !_.isArray(self.options.filter.deny.extensions)) {
+    if (!self.options.filter.deny.extensions || !FS.Utility.isArray(self.options.filter.deny.extensions)) {
       self.options.filter.deny.extensions = [];
     } else {
       //convert all to lowercase
@@ -121,7 +121,7 @@ FS.Collection = function(name, options) {
         self.options.filter.deny.extensions[i] = self.options.filter.deny.extensions[i].toLowerCase();
       }
     }
-    if (!self.options.filter.deny.contentTypes || !_.isArray(self.options.filter.deny.contentTypes)) {
+    if (!self.options.filter.deny.contentTypes || !FS.Utility.isArray(self.options.filter.deny.contentTypes)) {
       self.options.filter.deny.contentTypes = [];
     }
   }
