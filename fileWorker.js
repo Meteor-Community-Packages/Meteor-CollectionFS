@@ -21,7 +21,7 @@ FS.FileWorker.observe = function(fsCollection) {
 
   // Initiate observe for finding newly uploaded/added files that need to be stored
   // per store.
-  _.each(fsCollection.options.stores, function(store) {
+  FS.Utility.each(fsCollection.options.stores, function(store) {
     var storeName = store.name;
     fsCollection.files.find(getReadyQuery(storeName), {
       fields: {
@@ -58,7 +58,7 @@ FS.FileWorker.observe = function(fsCollection) {
       //remove from temp store
       FS.TempStore.removeFile(fsFile);
       //delete from all stores
-      _.each(fsCollection.options.stores, function(storage) {
+      FS.Utility.each(fsCollection.options.stores, function(storage) {
         storage.adapter.remove(fsFile);
       });
     }
