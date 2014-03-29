@@ -36,7 +36,7 @@ __Arguments__
 This function removes the file from tempstorage - it cares not if file is
 already removed or not found, goal is reached anyway.
 
-> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:185](tempStore.js#L185)
+> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:186](tempStore.js#L186)
 
 -
 
@@ -66,7 +66,7 @@ Writeable stream
 
 > Note: fileObj must be mounted on a `FS.Collection`, it makes no sense to store otherwise
 
-> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:221](tempStore.js#L221)
+> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:222](tempStore.js#L222)
 
 -
 
@@ -90,6 +90,6 @@ Returns readable stream
 
 
 
-> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:381](tempStore.js#L381)
+> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:382](tempStore.js#L382)
 
 -

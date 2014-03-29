@@ -31,7 +31,8 @@ var util = Npm.require('util');
 FS.TempStore = new EventEmitter();
 
 /**
- * @property {StorageAdapter} FS.TempStore.Storage
+ * @property FS.TempStore.Storage
+ * @type {StorageAdapter}
  * @namespace FS.TempStore
  * @private
  * This property is set to either `FS.Store.FileSystem` or `FS.Store.GridFS`
