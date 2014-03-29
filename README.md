@@ -12,10 +12,10 @@ way.
 
 > `FS.TempStore` uses the `cfs-storage-adapter` compatible Storage Adapters, both `FS.Store.FileSystem` and `FS.Store.GridFS` will be defaulted. *for more information read the [internal.api.md](internal.api.md)*
 
-#Documentation
+##Documentation
 [API Documentation](api.md)
 
-#Contribute
+##Contribute
 Here's the [complete API documentation](internal.api.md), including private methods.
 
 Update docs, `npm install docmeteor`
