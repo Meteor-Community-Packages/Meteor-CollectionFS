@@ -229,3 +229,20 @@ FS.Utility.getFileExtension = function utilGetFileExtension(name) {
   // Return the extension if found else ''
   return (found > 0 ? name.substr(found).toLowerCase() : '');
 };
+
+// Api wrap for 3party libs like underscore
+FS.Utility.extend = _.extend;
+
+FS.Utility.each = _.each;
+
+FS.Utility.isEmpty = _.isEmpty;
+
+FS.Utility.indexOf = _.indexOf;
+
+FS.Utility.isArray = _.isArray;
+
+FS.Utility.map = _.map;
+
+FS.Utility.once = _.once;
+
+FS.Utility.include = _.include;
