@@ -8,12 +8,6 @@
 
 -
 
--
-FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
-console.log(fileObj.name + ' is uploaded!!');
-});
-Stream implementation
-
 #### <a name="FS.TempStore.removeFile"></a>FS.TempStore.removeFile(fileObj)&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method __removeFile__ is defined in `FS.TempStore`*

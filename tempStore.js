@@ -99,9 +99,9 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
   fileObj.update({ $set: modifyer });
 });
 
-// FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
-//   console.log(fileObj.name + ' is uploaded!!');
-// });
+  // FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
+  //   console.log(fileObj.name + ' is uploaded!!');
+  // });
 
 // Stream implementation
 

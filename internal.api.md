@@ -60,12 +60,6 @@ the user can set `FS.TempStore.Storage` them selfs eg.:
 
 -
 
--
-FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
-console.log(fileObj.name + ' is uploaded!!');
-});
-Stream implementation
-
 #### <a name="_chunkPath"></a>_chunkPath([n])&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This method is private*
