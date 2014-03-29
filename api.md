@@ -1,10 +1,25 @@
+##Temporary Storage
+
+Temporary storage is used for chunked uploads until all chunks are received
+and all copies have been made or given up. In some cases, the original file
+is stored only in temporary storage (for example, if all copies do some
+manipulation in beforeSave). This is why we use the temporary file as the
+basis for each saved copy, and then remove it after all copies are saved.
+
+Every chunk is saved as an individual temporary file. This is safer than
+attempting to write multiple incoming chunks to different positions in a
+single temporary file, which can lead to write conflicts.
+
+Using temp files also allows us to easily resume uploads, even if the server
+restarts, and to keep the working memory clear.
+The FS.TempStore emits events that others are able to listen to
 
 #### <a name="FS.TempStore"></a>FS.TempStore {object}&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This property __TempStore__ is defined in `FS`*
 *it's an event emitter*
 
-> ```FS.TempStore = new EventEmitter();``` [tempStore.js:33](tempStore.js#L33)
+> ```FS.TempStore = new EventEmitter();``` [tempStore.js:31](tempStore.js#L31)
 
 -
 
@@ -21,7 +36,7 @@ __Arguments__
 This function removes the file from tempstorage - it cares not if file is
 already removed or not found, goal is reached anyway.
 
-> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:187](tempStore.js#L187)
+> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:185](tempStore.js#L185)
 
 -
 
@@ -51,7 +66,7 @@ Writeable stream
 
 > Note: fileObj must be mounted on a `FS.Collection`, it makes no sense to store otherwise
 
-> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:223](tempStore.js#L223)
+> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:221](tempStore.js#L221)
 
 -
 
@@ -75,6 +90,6 @@ Returns readable stream
 
 
 
-> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:383](tempStore.js#L383)
+> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:381](tempStore.js#L381)
 
 -

@@ -2,37 +2,28 @@
 > Where: {server}
 
 -
+##Temporary Storage
 
-#### <a name="EventEmitter"></a>EventEmitter {any}&nbsp;&nbsp;<sub><i>Server</i></sub> ####
-```
-Temporary Storage
 Temporary storage is used for chunked uploads until all chunks are received
 and all copies have been made or given up. In some cases, the original file
 is stored only in temporary storage (for example, if all copies do some
 manipulation in beforeSave). This is why we use the temporary file as the
 basis for each saved copy, and then remove it after all copies are saved.
+
 Every chunk is saved as an individual temporary file. This is safer than
 attempting to write multiple incoming chunks to different positions in a
 single temporary file, which can lead to write conflicts.
+
 Using temp files also allows us to easily resume uploads, even if the server
 restarts, and to keep the working memory clear.
-```
--
-*This property is private*
-
-
-
-
-> ```var EventEmitter = Npm.require(``` [tempStore.js:19](tempStore.js#L19)
-
--
+The FS.TempStore emits events that others are able to listen to
 
 #### <a name="FS.TempStore"></a>FS.TempStore {object}&nbsp;&nbsp;<sub><i>Server</i></sub> ####
 -
 *This property __TempStore__ is defined in `FS`*
 *it's an event emitter*
 
-> ```FS.TempStore = new EventEmitter();``` [tempStore.js:33](tempStore.js#L33)
+> ```FS.TempStore = new EventEmitter();``` [tempStore.js:31](tempStore.js#L31)
 
 -
 
@@ -56,7 +47,7 @@ the user can set `FS.TempStore.Storage` them selfs eg.:
 
 > Note: This is considered as `advanced` use, its not a common pattern.
 
-> ```FS.TempStore.Storage = null;``` [tempStore.js:55](tempStore.js#L55)
+> ```FS.TempStore.Storage = null;``` [tempStore.js:53](tempStore.js#L53)
 
 -
 
@@ -75,7 +66,7 @@ __Returns__  *{String}*
 Chunk naming convention
 
 
-> ```_chunkPath = function(n) { ...``` [tempStore.js:114](tempStore.js#L114)
+> ```_chunkPath = function(n) { ...``` [tempStore.js:112](tempStore.js#L112)
 
 -
 
@@ -94,7 +85,7 @@ __Returns__  *{String}*
 Generated SA specific fileKey for the chunk
 
 
-> ```_fileReference = function(fileObj, chunk) { ...``` [tempStore.js:125](tempStore.js#L125)
+> ```_fileReference = function(fileObj, chunk) { ...``` [tempStore.js:123](tempStore.js#L123)
 
 -
 
@@ -115,7 +106,7 @@ __TODO__
 ```
 
 
-> ```FS.TempStore.exists = function(fileObj) { ...``` [tempStore.js:143](tempStore.js#L143)
+> ```FS.TempStore.exists = function(fileObj) { ...``` [tempStore.js:141](tempStore.js#L141)
 
 -
 
@@ -138,7 +129,7 @@ __TODO__
 ```
 
 
-> ```FS.TempStore.listParts = function(fileObj) { ...``` [tempStore.js:159](tempStore.js#L159)
+> ```FS.TempStore.listParts = function(fileObj) { ...``` [tempStore.js:157](tempStore.js#L157)
 
 -
 
@@ -155,7 +146,7 @@ __Arguments__
 This function removes the file from tempstorage - it cares not if file is
 already removed or not found, goal is reached anyway.
 
-> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:187](tempStore.js#L187)
+> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:185](tempStore.js#L185)
 
 -
 
@@ -185,7 +176,7 @@ Writeable stream
 
 > Note: fileObj must be mounted on a `FS.Collection`, it makes no sense to store otherwise
 
-> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:223](tempStore.js#L223)
+> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:221](tempStore.js#L221)
 
 -
 
@@ -207,7 +198,7 @@ Returns readable stream
 
 > Note: This is the true streaming object wrapped by the public api
 
-> ```_TempstoreReadStream = function(fileObj, options) { ...``` [tempStore.js:314](tempStore.js#L314)
+> ```_TempstoreReadStream = function(fileObj, options) { ...``` [tempStore.js:312](tempStore.js#L312)
 
 -
 
@@ -231,6 +222,6 @@ Returns readable stream
 
 
 
-> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:383](tempStore.js#L383)
+> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:381](tempStore.js#L381)
 
 -
