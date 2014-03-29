@@ -1,4 +1,4 @@
-/* 
+/*
  * We use this instead of HTTP.call from the http package for now. If/when
  * PR 1670 is merged and released, we can probably remove this file and begin
  * using HTTP.call directly.
@@ -56,7 +56,7 @@ httpCall = function(method, url, options, callback) {
     content = encodeParams(params_for_body);
   }
 
-  _.extend(headers, options.headers || {});
+  FS.Utility.extend(headers, options.headers || {});
 
   ////////// Callback wrapping //////////
 
@@ -71,7 +71,7 @@ httpCall = function(method, url, options, callback) {
   })(callback);
 
   // safety belt: only call the callback once.
-  callback = _.once(callback);
+  callback = FS.Utility.once(callback);
 
 
   ////////// Kickoff! //////////
@@ -90,7 +90,7 @@ httpCall = function(method, url, options, callback) {
       throw new Error("Can't create XMLHttpRequest"); // ???
 
     xhr.open(method, url, true, username, password);
-    
+
     // support custom "ejson-binary" response type
     // and all browser-supported types
     var convertToBinary;
@@ -130,9 +130,9 @@ httpCall = function(method, url, options, callback) {
 
           var response = {};
           response.statusCode = xhr.status;
-          
+
           var body = xhr.response || xhr.responseText;
-          
+
           // Some browsers don't yet support "json" responseType,
           // but we can replicate it
           if (options.responseType === "json" && typeof body === "string") {
@@ -142,7 +142,7 @@ httpCall = function(method, url, options, callback) {
               body = null;
             }
           }
-          
+
           // Add support for a custom responseType: "ejson-binary"
           if (convertToBinary && typeof ArrayBuffer !== "undefined" && typeof Uint8Array !== "undefined" && body instanceof ArrayBuffer) {
             var view = new Uint8Array(body);
@@ -153,7 +153,7 @@ httpCall = function(method, url, options, callback) {
             }
             body = binaryBody;
           }
-          
+
           response.content = body;
 
           response.headers = {};
@@ -177,7 +177,7 @@ httpCall = function(method, url, options, callback) {
             "content-type: " + xhr.getResponseHeader("content-type");
 
           var headers_raw = header_str.split(/\r?\n/);
-          _.each(headers_raw, function (h) {
+          FS.Utility.each(headers_raw, function (h) {
             var m = /^(.*?):(?:\s+)(.*)$/.exec(h);
             if (m && m.length === 3)
               response.headers[m[1].toLowerCase()] = m[2];
@@ -227,7 +227,7 @@ buildUrl = function(before_qmark, from_qmark, opt_query, opt_params) {
 
 encodeParams = function(params) {
   var buf = [];
-  _.each(params, function(value, key) {
+  FS.Utility.each(params, function(value, key) {
     if (buf.length)
       buf.push('&');
     buf.push(encodeString(key), '=', encodeString(value));
@@ -261,7 +261,7 @@ populateData = function(response) {
   var contentType = (response.headers['content-type'] || ';').split(';')[0];
 
   // Only try to parse data as JSON if server sets correct content type.
-  if (_.include(['application/json', 'text/javascript'], contentType)) {
+  if (FS.Utility.include(['application/json', 'text/javascript'], contentType)) {
     try {
       response.data = JSON.parse(response.content);
     } catch (err) {

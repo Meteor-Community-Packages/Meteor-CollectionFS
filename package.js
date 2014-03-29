@@ -7,7 +7,7 @@ Package.on_use(function(api) {
 
   api.use(['cfs-base-package', 'cfs-tempstore', 'cfs-file', 'cfs-access-point']);
 
-  api.use(['deps', 'underscore', 'check', 'livedata', 'mongo-livedata',
+  api.use(['deps', 'check', 'livedata', 'mongo-livedata',
     'ejson', 'power-queue', 'reactive-list']);
 
   api.add_files([

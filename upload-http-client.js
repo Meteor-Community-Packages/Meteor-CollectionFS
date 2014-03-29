@@ -18,7 +18,7 @@ var _taskHandler = function(task, next) {
       FS.debug && console.log('PUT to URL', task.url, task.urlParams);
 
       httpCall("PUT", task.url, {
-        params: _.extend({chunk: task.chunk}, task.urlParams),
+        params: FS.Utility.extend({chunk: task.chunk}, task.urlParams),
         content: data,
         headers: {
           'Content-Type': task.fileObj.type
