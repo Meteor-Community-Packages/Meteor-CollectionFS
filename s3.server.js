@@ -109,16 +109,14 @@ FS.Store.S3 = function(name, options) {
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.s3',
-    createReadStream: function(fileObj, options) {
-      var fileInfo = fileObj.getCopyInfo(name);
-      if (!fileInfo) {
-        return new Error('File not found on this store "' + name + '"');
-      }
-      var fileKey = folder + fileInfo.key;
+    fileKey: function(fileObj) {
+      return fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name;
+    },
+    createReadStream: function(fileKey, options) {
 
       return S3.createReadStream({
         Bucket: bucket,
-        Key: fileKey
+        Key: folder + fileKey
       });
 
     },
@@ -126,14 +124,15 @@ FS.Store.S3 = function(name, options) {
     // indirect stream will be used creating extra overhead on the filesystem.
     // An easy way if the data is not transformed is to set the
     // options.ContentLength = fileObj.size ...
-    createWriteStream: function(fileObj, options) {
+    createWriteStream: function(fileKey, options) {
       options = options || {};
 
-      // Create the uniq fileKey
-      var fileKey = fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name;
-
-      // Update the fileObj - we dont save it to the db but sets the fileKey
-      fileObj.copies[name].key = fileKey;
+      // We dont support array of aliases
+      delete options.aliases;
+      // We dont support contentType
+      delete options.contentType;
+      // We dont support metadata use Metadata?
+      delete options.metadata;
 
       // Set options
       var options = _.extend({
@@ -144,54 +143,11 @@ FS.Store.S3 = function(name, options) {
 
       return S3.createWriteStream(options);
     },
-
-/////// DEPRECATE?
-    get: function(fileObj, callback) {
-      var fileInfo = fileObj.getCopyInfo(name);
-      if (!fileInfo) { return callback(null, null); }
-      var fileKey = folder + fileInfo.key;
-
-      S3.getObject({
-        Bucket: bucket,
-        Key: fileKey
-      }, function(error, data) {
-        callback(error, data && data.Body);
-      });
-    },
-    put: function(fileObj, opts, callback) {
-      opts = opts || {};
-
-      var fileKey = fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name;
-      var buffer = fileObj.getBuffer();
-
-      var params = _.extend({
-        ContentLength: buffer.length,
-        ContentType: fileObj.type,
-        Bucket: bucket,
-        Body: buffer,
-        ACL: defaultAcl,
-        Key: folder + fileKey
-      }, opts);
-
-      // Whitelist serviceParams, else aws-sdk throws an error
-      params = _.pick(params, validS3PutParamKeys);
-
-      // TODO handle overwrite or fileKey adjustments based on opts.overwrite
-
-      S3.putObject(params, function(error) {
-        callback(error, error ? void 0 : fileKey);
-      });
-    },
-///////// EO DEPRECATE?
-
-    del: function(fileObj, callback) {
-      var fileInfo = fileObj.getCopyInfo(name);
-      if (!fileInfo) { return callback(null, null); }
-      var fileKey = folder + fileInfo.key;
+    remove: function(fileKey, callback) {
 
       S3.deleteObject({
         Bucket: bucket,
-        Key: fileKey
+        Key: folder + fileKey
       }, function(error) {
         callback(error, !error);
       });
