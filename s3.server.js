@@ -91,7 +91,7 @@ FS.Store.S3 = function(name, options) {
   // Remove serviceParams from SA options
  // options = _.omit(options, validS3ServiceParamKeys);
 
-  var serviceParams = _.extend({
+  var serviceParams = FS.Utility.extend({
     Bucket: bucket,
     region: null, //required
     accessKeyId: null, //required
@@ -135,7 +135,7 @@ FS.Store.S3 = function(name, options) {
       delete options.metadata;
 
       // Set options
-      var options = _.extend({
+      var options = FS.Utility.extend({
         Bucket: bucket,
         Key: folder + fileKey,
         fileKey: fileKey
