@@ -56,9 +56,9 @@ FS.TempStore.Storage = null;
 
 // Select a storage adapter for temp storage
 
-// If the file worker is installed we would prefer to use the gridfs sa
-// for scalability. We also default to gridfs if filesystem is not found
 if (FS.Store.GridFS && (FS.FileWorker || !FS.Store.FileSystem)) {
+  // If the file worker is installed we would prefer to use the gridfs sa
+  // for scalability. We also default to gridfs if filesystem is not found
 
   // Use the gridfs
   FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
@@ -208,6 +208,7 @@ FS.TempStore.removeFile = function(fileObj) {
  * @public
  * @param {FS.File} fileObj File to store in temporary storage
  * @param {Number | String} [options]
+ * @returns {Stream} Writeable stream
  *
  * `options` of different types mean differnt things:
  * * `undefined` We store the file in one part

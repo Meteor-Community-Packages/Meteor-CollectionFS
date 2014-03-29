@@ -9,11 +9,6 @@
 -
 
 -
-Select a storage adapter for temp storage
-If the file worker is installed we would prefer to use the gridfs sa
-for scalability. We also default to gridfs if filesystem is not found
-
--
 FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
 console.log(fileObj.name + ' is uploaded!!');
 });
@@ -48,6 +43,9 @@ File to store in temporary storage
 
 -
 
+__Returns__  *{Stream}*
+Writeable stream
+
 
 `options` of different types mean differnt things:
 * `undefined` We store the file in one part
@@ -59,7 +57,7 @@ File to store in temporary storage
 
 > Note: fileObj must be mounted on a `FS.Collection`, it makes no sense to store otherwise
 
-> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:222](tempStore.js#L222)
+> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:223](tempStore.js#L223)
 
 -
 
@@ -83,6 +81,6 @@ Returns readable stream
 
 
 
-> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:382](tempStore.js#L382)
+> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:383](tempStore.js#L383)
 
 -
