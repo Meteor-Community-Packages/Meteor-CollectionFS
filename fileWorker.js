@@ -58,8 +58,8 @@ FS.FileWorker.observe = function(fsCollection) {
       //remove from temp store
       FS.TempStore.removeFile(fsFile);
       //delete from all stores
-      _.each(fsCollection.options.stores, function(store) {
-        store.remove(fsFile, {ignoreMissing: true});
+      _.each(fsCollection.options.stores, function(storage) {
+        storage.adapter.remove(fsFile);
       });
     }
   });
@@ -179,18 +179,13 @@ function saveCopy(fsFile, storeName, options) {
     throw new Error('No store named "' + storeName + '" exists');
   }
 
-  var targetStream = storage.adapter.createWriteStream(fsFile);
-
-  targetStream.safeOn('error', function(err) {
-    // TODO:
-    console.log('GOT an error in stream while storeing to SA?');
-    throw new err;
-  });
-
   FS.debug && console.log('saving to store ' + storeName);
 
+  var writeStream = storage.adapter.createWriteStream(fsFile);
+  var readStream = FS.TempStore.createReadStream(fsFile);
+
   // Pipe the temp data into the storage adapter
-  FS.TempStore.createReadStream(fsFile).pipe(targetStream);
+  readStream.pipe(writeStream);
 
 
 }
