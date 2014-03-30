@@ -12,15 +12,6 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     callback = FS.Utility.defaultCallback;
   }
 
-  // XXX: This function should be outfactored to FS.Utility
-  function passOrThrow(error) {
-    if (callback) {
-      callback(error);
-    } else {
-      throw error;
-    }
-  }
-
   // XXX:
   // We should out factor beginStorage to FS.File.beginStorage
   // the client side storage adapters should be the one providing
@@ -48,7 +39,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // server inserts and to catch client inserts early, allowing us to call `onInvalid` on
     // the client and save a trip to the server.
     if (!self.allowsFile(fileObj)) {
-      return passOrThrow(new Error('FS.Collection insert: file does not pass collection filters'));
+      return FS.Utility.passOrThrow(callback, new Error('FS.Collection insert: file does not pass collection filters'));
     }
 
     // Set collection name
