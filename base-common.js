@@ -147,30 +147,45 @@ FS.Utility.cloneFileRecord = function(rec) {
  * Can be used as a default callback for client methods that need a callback.
  * Simply throws the provided error if there is one.
  */
-FS.Utility.defaultCallback = function(err) {
-  if (err)
-    throw err;
+FS.Utility.defaultCallback = function defaultCallback(err) {
+  if (err) {
+    // Show gentle error if Meteor error
+    if (err instanceof Meteor.Error) {
+      console.error(err.message);
+    } else {
+      // Normal error, just throw error
+      throw err;
+    }
+
+  }
 };
 
 /**
- * @method FS.Utility.handleError
+ * @method FS.Utility.defaultCallback
  * @public
- * @param {Function} callback - A callback function, if you have one. Can be undefined or null.
- * @param {String} err - Error text
- * @returns {undefined}
+ * @param {Function} [f] A callback function, if you have one. Can be undefined or null.
+ * @param {Meteor.Error | Error | String} [err] Error or error message (string)
+ * @returns {Any} the callback result if any
  *
- * Creates an Error instance with the given text. If callback is a function,
- * passes the error to that function. Otherwise throws it. Useful for dealing
- * with errors in methods that optionally accept a callback.
+ * Handle Error, creates an Error instance with the given text. If callback is
+ * a function, passes the error to that function. Otherwise throws it. Useful
+ * for dealing with errors in methods that optionally accept a callback.
  */
-FS.Utility.handleError = function(callback, err) {
-  err = new Error(err);
-  if (callback) {
-    callback(err);
-  } else {
-    throw err;
-  }
-};
+FS.Utility.handleError = function(f, err, result) {
+  // Set callback
+  var callback = (typeof f === 'function')? f : FS.Utility.defaultCallback;
+  // Set the err
+  var error = (err === ''+err)? new Error(err) : err;
+  // callback
+  return callback(error, result);
+}
+
+/**
+ * @method FS.Utility.noop
+ * @public
+ * Use this to hand a no operation / empty function
+ */
+FS.Utility.noop = function() {};
 
 /**
  * @method validateAction
