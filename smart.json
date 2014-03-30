@@ -3,7 +3,7 @@
 	"description": "CollectionFS, temporary storage",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-tempstore",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.0.11",
+	"version": "0.0.12",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-tempstore.git",
 	"packages": {
 		"cfs-base-package": {
@@ -17,6 +17,6 @@
 		"cfs-gridfs": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
 			"branch": "master"
-		}		
+		}
 	}
 }
