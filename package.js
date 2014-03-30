@@ -16,7 +16,12 @@ Package.on_use(function(api) {
     // We might also want to have the server create copies of our files?
     'cfs-worker',
     // By default we want to support uploads over HTTP
-    'cfs-upload-http'
+    'cfs-upload-http',
+    // We have a weak dependency, need it if you want to store data on the local
+    // file system
+    'cfs-filesystem',
+    // We have a weak dependency, need it if you want to store data in mongo
+    'cfs-gridfs'
   ]);
 
 });

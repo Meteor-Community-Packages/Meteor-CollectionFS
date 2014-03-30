@@ -33,6 +33,14 @@
 		"cfs-upload-http": {
 			"git": "https://github.com/CollectionFS/Meteor-cfs-upload-http.git",
 			"branch": "master"
+		},
+		"cfs-filesystem": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-filesystem.git",
+			"branch": "master"
+		},
+		"cfs-gridfs": {
+			"git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
+			"branch": "master"
 		}
 	}
 }
