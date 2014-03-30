@@ -39,7 +39,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // server inserts and to catch client inserts early, allowing us to call `onInvalid` on
     // the client and save a trip to the server.
     if (!self.allowsFile(fileObj)) {
-      return FS.Utility.passOrThrow(callback, new Error('FS.Collection insert: file does not pass collection filters'));
+      return FS.Utility.handleError(callback, 'FS.Collection insert: file does not pass collection filters');
     }
 
     // Set collection name
