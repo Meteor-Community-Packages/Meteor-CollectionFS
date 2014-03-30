@@ -16,7 +16,9 @@ Package.on_use(function(api) {
     // We might also want to have the server create copies of our files?
     'cfs-worker',
     // By default we want to support uploads over HTTP
-    'cfs-upload-http'
+    'cfs-upload-http',
+    // I think this is right
+    'cfs-filesystem'
   ]);
 
 });
