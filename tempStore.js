@@ -193,7 +193,7 @@ FS.TempStore.removeFile = function(fileObj) {
     // Unlink each file
     for (var i = 0; i < fileObj.chunkSum; i++) {
       // Get the chunk path
-      FS.TempStore.Storage.adapter.remove( _fileReference(fileObj, i) );
+      FS.TempStore.Storage.adapter.remove( _fileReference(fileObj, i), FS.Utility.noop);
     }
 
   } else {
