@@ -1,7 +1,7 @@
 cfs-s3
 =========================
 
-NOTE: This package is under active development right now (2014-2-20). It has
+NOTE: This package is under active development right now (2014-3-31). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -69,7 +69,8 @@ var imageStore = new FS.Store.S3("images", {
   secretAccessKey: "account or IAM secret", //required if environment variables are not set
   bucket: "mybucket", //required
   ACL: myValue //optional, default is 'private'
-  beforeSave: myBeforeSaveFunction, //optional
+  transformWrite: myTransformWriteFunction, //optional
+  transformRead: myTransformReadFunction, //optional
   maxTries: 1 //optional, default 5
 });
 
