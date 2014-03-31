@@ -12,6 +12,10 @@ Package.on_use(function(api) {
 
   api.use(['underscore', 'ejson' ]);
 
+  api.use('cfs-filesystem', { weak: true });
+
+  api.use('cfs-gridfs', { weak: true });
+
   api.add_files([
     'tempStore.js'
   ], 'server');
