@@ -200,32 +200,13 @@ store.
 
 The most common type of transformation is a "write" transformation, that is,
 a function that changes the data as it is initially stored. You can define
-this function using the `transformWrite` option on any store constructor.
-Here is an example:
-
-```js
-  // Init a GridFS store:
-  var gridfs = new FS.Store.GridFS('gridfsimages', {
-    // We want to transform the writes to the store using streams:
-    transformWrite: function(fileObj, readStream, writeStream) {
-
-      // Transform the image into a 10x10px thumbnail
-      this.gm(readStream, fileObj.name).resize('10', '10').stream().pipe(writeStream);
-
-      // To pass it through:
-      //readStream.pipe(writeStream);
-      
-      // You can also change the fileObj before storing it
-      //fileObj.update({$set: {name: 'newname.png'}});
-    }     
-  });
-```
-
-Note the we provide the node `gm` package on `this` within a transform function.
-You could also use any other node package that can transform streams. If the
+this function using the `transformWrite` option on any store constructor. If the
 transformation requires a companion transformation when the data is later read
 out of the store (such as encrypt/decrypt), you can define a `transformRead`
 function as well.
+
+For examples of using this feature to transform uploaded images, refer to the
+[documentation](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick) for the `cfs-graphicsmagick` package.
 
 ## Filtering
 
