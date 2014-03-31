@@ -1,7 +1,7 @@
 cfs-filesystem
 =========================
 
-NOTE: This package is under active development right now (2014-2-20). It has
+NOTE: This package is under active development right now (2014-3-31). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -22,8 +22,9 @@ $ mrt add cfs-filesystem
 
 ```js
 var imageStore = new FS.Store.FileSystem("images", {
-  path: "~/app-files/images", //optional, default '~/cfs/files/name'
-  beforeSave: myBeforeSaveFunction, //optional
+  path: "~/app-files/images", //optional, default is "/cfs/files" path within app container
+  transformWrite: myTransformWriteFunction, //optional
+  transformRead: myTransformReadFunction, //optional
   maxTries: 1 //optional, default 5
 });
 
@@ -34,8 +35,3 @@ Images = new FS.Collection("images", {
 
 Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
 package documentation for more information.
-
-## Notes
-
-A FileSystem store theoretically supports the `sync` option, but this feature
-is not yet working correctly.
