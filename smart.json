@@ -6,26 +6,11 @@
 	"version": "0.0.22",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-access-point.git",
 	"packages": {
-		"cfs-base-package": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-			"branch": "master"
-		},
-		"http-methods": {
-			"git": "https://github.com/CollectionFS/Meteor-http-methods.git",
-			"branch": "master"
-		},
-		"http-publish": {
-			"git": "https://github.com/CollectionFS/Meteor-http-publish.git",
-			"branch": "master"
-		},
-		"cfs-file": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-file.git",
-			"branch": "master"
-		},
+		"cfs-base-package": {},
+		"http-methods": {},
+		"http-publish": {},
+		"cfs-file": {},
 		"collectionFS": {},
-		"cfs-gridfs": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-gridfs.git",
-			"branch": "master"
-		}
+		"cfs-gridfs": {}
 	}
 }
