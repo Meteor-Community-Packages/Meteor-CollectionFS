@@ -1,7 +1,7 @@
 cfs-gridfs
 =========================
 
-NOTE: This package is under active development right now (2014-2-20). It has
+NOTE: This package is under active development right now (2014-3-31). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -23,7 +23,8 @@ $ mrt add cfs-gridfs
 var imageStore = new FS.Store.GridFS("images", {
   mongoUrl: 'mongodb://127.0.0.1:27017/test/', // optional, defaults to Meteor's local MongoDB
   mongoOptions: {...},  // optional, see note below
-  beforeSave: myBeforeSaveFunction, // optional
+  transformWrite: myTransformWriteFunction, //optional
+  transformRead: myTransformReadFunction, //optional
   maxTries: 1, // optional, default 5
   chunkSize: 1024*1024  // optional, default GridFS chunk size in bytes (can be overridden per file).
                         // Default: 2MB. Reasonable range: 512KB - 4MB
@@ -38,10 +39,6 @@ More control over the MongoDB connection is available by specifying [MongoClient
 
 Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
 package documentation for more information.
-
-## Notes
-
-A GridFS store does not currently support the `sync` option.
 
 ## API
 
