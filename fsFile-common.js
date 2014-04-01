@@ -87,7 +87,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   function setData(type) {
     self.data = new FS.Data(data, type);
     self.type = self.data.type;
-    if (typeof self.size !== "number") {
+    if (typeof self.size !== "number" || self.size === 0) {
       self.size = self.data.size();
     }
 
