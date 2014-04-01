@@ -9,7 +9,7 @@ DataMan.FilePath = function DataManFilePath(filepath, type) {
 
 /**
  * @method DataMan.FilePath.prototype.getBuffer
- * @public
+ * @private
  * @param {function} callback callback(err, buffer)
  * @returns {Buffer|undefined}
  *
@@ -36,7 +36,7 @@ DataMan.FilePath.prototype.getBuffer = function dataManFilePathGetBuffer(callbac
 
 /**
  * @method DataMan.FilePath.prototype.getDataUri
- * @public
+ * @private
  * @param {function} callback callback(err, dataUri)
  *
  * Passes a data URI representing the data to a callback.
@@ -65,7 +65,7 @@ DataMan.FilePath.prototype.getDataUri = function dataManFilePathGetDataUri(callb
 
 /**
  * @method DataMan.FilePath.prototype.createReadStream
- * @public
+ * @private
  *
  * Returns a read stream for the data.
  */
@@ -77,7 +77,7 @@ DataMan.FilePath.prototype.createReadStream = function dataManFilePathCreateRead
 /**
  * @method DataMan.FilePath.prototype.size
  * @param {function} callback callback(err, size)
- * @public
+ * @private
  *
  * Passes the size in bytes of the data to a callback.
  */
@@ -102,7 +102,7 @@ DataMan.FilePath.prototype.size = function dataManFilePathSize(callback) {
 
 /**
  * @method DataMan.FilePath.prototype.type
- * @public
+ * @private
  *
  * Returns the type of the data.
  */

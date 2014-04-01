@@ -8,7 +8,7 @@ DataMan.DataURI = function DataManDataURI(dataUri) {
 
 /**
  * @method DataMan.DataURI.prototype.getBuffer
- * @public
+ * @private
  * @param {function} callback callback(err, buffer)
  * @returns {Buffer|undefined}
  *
@@ -29,7 +29,7 @@ DataMan.DataURI.prototype.getBuffer = function dataManDataURIGetBuffer(callback)
 
 /**
  * @method DataMan.DataURI.prototype.getDataUri
- * @public
+ * @private
  * @param {function} callback callback(err, dataUri)
  *
  * Passes a data URI representing the data to a callback.
@@ -40,7 +40,7 @@ DataMan.DataURI.prototype.getDataUri = function dataManDataURIGetDataUri(callbac
 
 /**
  * @method DataMan.DataURI.prototype.createReadStream
- * @public
+ * @private
  *
  * Returns a read stream for the data.
  */
@@ -51,7 +51,7 @@ DataMan.DataURI.prototype.createReadStream = function dataManDataURICreateReadSt
 /**
  * @method DataMan.DataURI.prototype.size
  * @param {function} callback callback(err, size)
- * @public
+ * @private
  *
  * Passes the size in bytes of the data to a callback.
  */
@@ -75,7 +75,7 @@ DataMan.DataURI.prototype.size = function dataManDataURISize(callback) {
 
 /**
  * @method DataMan.DataURI.prototype.type
- * @public
+ * @private
  *
  * Returns the type of the data.
  */

@@ -320,6 +320,7 @@ __File: ["server/data-man-buffer.js"](server/data-man-buffer.js) Where: {server}
 
 ### <a name="DataMan.Buffer.prototype.getBuffer"></a>*datamanBuffer*.getBuffer(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __getBuffer__ is defined in `prototype` of `DataMan.Buffer`*
 
 __Arguments__
@@ -341,6 +342,7 @@ Passes a Buffer representing the data to a callback.
 
 ### <a name="DataMan.Buffer.prototype.getDataUri"></a>*datamanBuffer*.getDataUri(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __getDataUri__ is defined in `prototype` of `DataMan.Buffer`*
 
 __Arguments__
@@ -360,6 +362,7 @@ Passes a data URI representing the data in the buffer to a callback.
 
 ### <a name="DataMan.Buffer.prototype.createReadStream"></a>*datamanBuffer*.createReadStream()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __createReadStream__ is defined in `prototype` of `DataMan.Buffer`*
 
 
@@ -372,6 +375,7 @@ Returns a read stream for the data.
 
 ### <a name="DataMan.Buffer.prototype.size"></a>*datamanBuffer*.size(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __size__ is defined in `prototype` of `DataMan.Buffer`*
 
 __Arguments__
@@ -391,6 +395,7 @@ Passes the size in bytes of the data in the buffer to a callback.
 
 ### <a name="DataMan.Buffer.prototype.type"></a>*datamanBuffer*.type()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __type__ is defined in `prototype` of `DataMan.Buffer`*
 
 
@@ -407,6 +412,7 @@ __File: ["server/data-man-datauri.js"](server/data-man-datauri.js) Where: {serve
 
 ### <a name="DataMan.DataURI.prototype.getBuffer"></a>*datamanDatauri*.getBuffer(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __getBuffer__ is defined in `prototype` of `DataMan.DataURI`*
 
 __Arguments__
@@ -428,6 +434,7 @@ Passes a Buffer representing the data to a callback.
 
 ### <a name="DataMan.DataURI.prototype.getDataUri"></a>*datamanDatauri*.getDataUri(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __getDataUri__ is defined in `prototype` of `DataMan.DataURI`*
 
 __Arguments__
@@ -447,6 +454,7 @@ Passes a data URI representing the data to a callback.
 
 ### <a name="DataMan.DataURI.prototype.createReadStream"></a>*datamanDatauri*.createReadStream()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __createReadStream__ is defined in `prototype` of `DataMan.DataURI`*
 
 
@@ -459,6 +467,7 @@ Returns a read stream for the data.
 
 ### <a name="DataMan.DataURI.prototype.size"></a>*datamanDatauri*.size(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __size__ is defined in `prototype` of `DataMan.DataURI`*
 
 __Arguments__
@@ -478,6 +487,7 @@ Passes the size in bytes of the data to a callback.
 
 ### <a name="DataMan.DataURI.prototype.type"></a>*datamanDatauri*.type()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __type__ is defined in `prototype` of `DataMan.DataURI`*
 
 
@@ -494,6 +504,7 @@ __File: ["server/data-man-filepath.js"](server/data-man-filepath.js) Where: {ser
 
 ### <a name="DataMan.FilePath.prototype.getBuffer"></a>*datamanFilepath*.getBuffer(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __getBuffer__ is defined in `prototype` of `DataMan.FilePath`*
 
 __Arguments__
@@ -515,6 +526,7 @@ Passes a Buffer representing the data to a callback.
 
 ### <a name="DataMan.FilePath.prototype.getDataUri"></a>*datamanFilepath*.getDataUri(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __getDataUri__ is defined in `prototype` of `DataMan.FilePath`*
 
 __Arguments__
@@ -534,6 +546,7 @@ Passes a data URI representing the data to a callback.
 
 ### <a name="DataMan.FilePath.prototype.createReadStream"></a>*datamanFilepath*.createReadStream()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __createReadStream__ is defined in `prototype` of `DataMan.FilePath`*
 
 
@@ -546,6 +559,7 @@ Returns a read stream for the data.
 
 ### <a name="DataMan.FilePath.prototype.size"></a>*datamanFilepath*.size(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __size__ is defined in `prototype` of `DataMan.FilePath`*
 
 __Arguments__
@@ -565,6 +579,7 @@ Passes the size in bytes of the data to a callback.
 
 ### <a name="DataMan.FilePath.prototype.type"></a>*datamanFilepath*.type()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __type__ is defined in `prototype` of `DataMan.FilePath`*
 
 
@@ -581,6 +596,7 @@ __File: ["server/data-man-url.js"](server/data-man-url.js) Where: {server}__
 
 ### <a name="DataMan.URL.prototype.getBuffer"></a>*datamanUrl*.getBuffer(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __getBuffer__ is defined in `prototype` of `DataMan.URL`*
 
 __Arguments__
@@ -602,6 +618,7 @@ Passes a Buffer representing the data at the URL to a callback.
 
 ### <a name="DataMan.URL.prototype.getDataUri"></a>*datamanUrl*.getDataUri(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __getDataUri__ is defined in `prototype` of `DataMan.URL`*
 
 __Arguments__
@@ -621,6 +638,7 @@ Passes a data URI representing the data at the URL to a callback.
 
 ### <a name="DataMan.URL.prototype.createReadStream"></a>*datamanUrl*.createReadStream()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __createReadStream__ is defined in `prototype` of `DataMan.URL`*
 
 
@@ -633,6 +651,7 @@ Returns a read stream for the data.
 
 ### <a name="DataMan.URL.prototype.size"></a>*datamanUrl*.size(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __size__ is defined in `prototype` of `DataMan.URL`*
 
 __Arguments__
@@ -652,6 +671,7 @@ Returns the size in bytes of the data at the URL.
 
 ### <a name="DataMan.URL.prototype.type"></a>*datamanUrl*.type()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
+*This method is private*
 *This method __type__ is defined in `prototype` of `DataMan.URL`*
 
 
