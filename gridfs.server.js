@@ -81,20 +81,13 @@ FS.Store.GridFS = function(name, options) {
         content_type: options.contentType || 'application/octet-stream'
       });
 
-      writeStream.on('close', function() {
+      writeStream.on('close', function(file) {
         if (FS.debug) console.log('SA GridFS - DONE!');
-
-        // Get the exact size of the stored file, so that we can pass it to onEnd/onStored.
-        // Since stream transforms might have altered the size, this is the best way to
-        // ensure we update the fileObj.copies with the correct size.
-        gfs.collection(gridfsName).find({ filename: fileKey }).toArray(function (err, files) {
-          var size, updatedAt;
-          if (files && files[0]) {
-            size = files[0].length;
-            updatedAt = files[0].uploadDate;
-          }
-          // Emit end and return the fileKey, size, and updated date
-          writeStream.emit('end', fileKey, size, updatedAt);
+        // Emit end and return the fileKey, size, and updated date
+        writeStream.emit('stored', {
+          fileKey: file._id,
+          size: file.size,
+          storedAt: file.uploadDate || new Date()
         });
       });
 
