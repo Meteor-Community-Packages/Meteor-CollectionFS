@@ -86,7 +86,13 @@ FS.Store.FileSystem = function(name, options) {
             updatedAt = stats.mtime;
           }
           // Emit end and return the fileKey, size, and updated date
-          writeStream.emit('end', fileKey, size, updatedAt);
+          writeStream.emit('stored', {
+            fileKey: fileKey,
+            size: size,
+            storedAt: updatedAt
+          });
+
+
         });
 
       });
