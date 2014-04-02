@@ -75,7 +75,20 @@ FS.Store.FileSystem = function(name, options) {
       // manually send the end event
       writeStream.on('close', function() {
         if (FS.debug) console.log('SA FileSystem - DONE!! fileKey: "' + fileKey + '"');
-        writeStream.emit('end', fileKey);
+
+        // Get the exact size of the stored file, so that we can pass it to onEnd/onStored.
+        // Since stream transforms might have altered the size, this is the best way to
+        // ensure we update the fileObj.copies with the correct size.
+        fs.stat(filepath, function (error, stats) {
+          var size, updatedAt;
+          if (stats) {
+            size = stats.size;
+            updatedAt = stats.mtime;
+          }
+          // Emit end and return the fileKey, size, and updated date
+          writeStream.emit('end', fileKey, size, updatedAt);
+        });
+
       });
 
       return writeStream;
