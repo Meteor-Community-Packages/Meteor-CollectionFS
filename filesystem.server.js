@@ -101,7 +101,8 @@ FS.Store.FileSystem = function(name, options) {
       try {
         // Call node unlink file
         fs.unlink(filepath, callback);
-      }  catch(err) {
+      } catch(err) {
+        // TODO, this might be an error due to missing file, which we should ignore; we're trying to delete it anyway
         if (typeof callback === 'function') {
           // Send error via callback
           callback(err);
