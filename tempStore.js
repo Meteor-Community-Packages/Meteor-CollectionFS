@@ -249,7 +249,7 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     var writeStream = FS.TempStore.Storage.adapter.createWriteStream( chunkReference );
 
     // When the stream closes we update the chunkCount
-    writeStream.safeOn('end', function(fileKey) {
+    writeStream.safeOn('stored', function(result) {
       // var chunkCount = fs.readdirSync(filePath).length;
       // XXX: We should track this in a collection to keep track of chunks
       // This could fail if a chunk is uploaded twice...
