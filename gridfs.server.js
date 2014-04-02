@@ -1,6 +1,7 @@
 var path = Npm.require('path');
 var mongodb = Npm.require('mongodb');
 var Grid = Npm.require('gridfs-stream');
+//var Grid = Npm.require('gridfs-locking-stream');
 
 var chunkSize = 1024*1024*2; // 256k is default GridFS chunk size, but performs terribly for largish files
 
@@ -45,6 +46,11 @@ FS.Store.GridFS = function(name, options) {
 
     typeName: 'storage.gridfs',
     fileKey: function(fileObj) {
+      // We could have this return an object with _id and name
+      // since the stream-lock only allows createStream from id
+      // The TempStore should track uploads by id too - at the moment
+      // TempStore only sets name, _id, collectionName for us to generate the
+      // id from.
       return fileObj.collectionName + fileObj._id;
     },
     createReadStream: function(fileKey, options) {
