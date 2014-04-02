@@ -108,9 +108,6 @@ FS.Utility.cloneFileRecord = function(rec) {
     result.chunkSum = Math.ceil(rec.size / rec.chunkSize);
   }
 
-  // TODO Deprecate?
-  result.bytesUploaded = _Utility.defaultZero(rec.bytesUploaded);
-
   if (_.isObject(rec.metadata)) {
     result.metadata = rec.metadata;
   }
