@@ -1,6 +1,6 @@
 #CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-3-24). It has
+NOTE: This branch is under active development right now (2014-4-1). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -96,9 +96,9 @@ In this example, we've defined a FS.Collection named "images", which will
 be a new collection in your MongoDB database with the name "cfs.images.filerecord". We've
 also told it to store the files in `~/uploads` on the local filesystem.
 
-Your FS.Collection variable does not necessarily have to be global on the
-client or the server, but be sure to give it the same name (the first argument)
-on both the client and the server.
+Your FS.Collection and FS.Store variables do not necessarily have to be
+global on the client or the server, but be sure to give them the same name
+(the first argument in each constructor) on both the client and the server.
 
 _If you're using a storage adapter that requires sensitive information such as
 access keys, we recommend supplying that information using environment variables.
