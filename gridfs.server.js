@@ -86,7 +86,7 @@ FS.Store.GridFS = function(name, options) {
         // Emit end and return the fileKey, size, and updated date
         writeStream.emit('stored', {
           fileKey: file._id,
-          size: file.size,
+          size: file.length,
           storedAt: file.uploadDate || new Date()
         });
       });
