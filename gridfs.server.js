@@ -77,8 +77,19 @@ FS.Store.GridFS = function(name, options) {
 
       writeStream.on('close', function() {
         if (FS.debug) console.log('SA GridFS - DONE!');
-        // Emit end and return the fileKey
-        writeStream.emit('end', fileKey);
+
+        // Get the exact size of the stored file, so that we can pass it to onEnd/onStored.
+        // Since stream transforms might have altered the size, this is the best way to
+        // ensure we update the fileObj.copies with the correct size.
+        gfs.collection(gridfsName).find({ filename: fileKey }).toArray(function (err, files) {
+          var size, updatedAt;
+          if (files && files[0]) {
+            size = files[0].length;
+            updatedAt = files[0].uploadDate;
+          }
+          // Emit end and return the fileKey, size, and updated date
+          writeStream.emit('end', fileKey, size, updatedAt);
+        });
       });
 
       return writeStream;
