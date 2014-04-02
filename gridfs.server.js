@@ -96,10 +96,18 @@ FS.Store.GridFS = function(name, options) {
 
     },
     remove: function(fileKey, callback) {
-      mongodb.GridStore.unlink(self.db, fileKey, { root: gridfsName }, function (err) {
-        if (err) { return callback(err); }
-        callback(null, true);
-      });
+      // Init GridFS
+      var gfs = new Grid(self.db, mongodb);
+
+      try {
+        gfs.remove({ _id: fileKey }, callback);
+      } catch(err) {
+        callback(err);
+      }
+      // mongodb.GridStore.unlink(self.db, fileKey, { root: gridfsName }, function (err) {
+      //   if (err) { return callback(err); }
+      //   callback(null, true);
+      // });
     },
 
     // Not implemented
