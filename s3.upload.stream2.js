@@ -138,7 +138,7 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
               if (FS.debug) {
                 console.log('SA S3 - DONE!!');
               }
-              writeStream.emit('end', fileKey);
+              writeStream.emit('end', fileKey, uploadedSize, new Date);
             }
 
           });

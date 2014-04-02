@@ -34,7 +34,10 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
   var stream = through2(write, flush);
   var bo = backoff.fibonacci(boSettings);
   var lastErr;
+  var fileKey = params && (params.fileKey || params.Key);
 
+  // Clean up for AWS sdk
+  delete params.fileKey;
 
   bo.failAfter(10);
   bo.on('backoff', function() {
@@ -124,7 +127,7 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
           lastErr = err;
           return bo.backoff();
         }
-        stream.emit('end');
+        stream.emit('end', fileKey, 0, new Date); //TODO 0 should be the stored filesize
         stream.emit('done');
       })
     }).on('fail', function() {
