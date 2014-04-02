@@ -45,9 +45,9 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
     // Rig read stream for gm
     var sourceStream = new PassThrough();
 
-    // We trigger a special "stored" event for those listening
-    destinationStream.on('end', function(fileKey, size, updatedAt) {
-      sourceStream.emit('stored', fileKey, size, updatedAt);
+    // We pass on the special "stored" event for those listening
+    destinationStream.on('stored', function(result) {
+      sourceStream.emit('stored', result);
     });
 
     // Rig transform
@@ -62,11 +62,6 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
     // Return write stream
     return sourceStream;
   } else {
-
-    // We trigger a special "stored" event for those listening
-    destinationStream.on('end', function(fileKey) {
-      destinationStream.emit('stored', fileKey);
-    });
 
     // We dont transform just normal SA interface
     return destinationStream;
