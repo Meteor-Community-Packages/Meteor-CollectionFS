@@ -75,8 +75,7 @@ FS.FileWorker.observe = function(fsCollection) {
  *  specified store.
  *
  *  {
- *    $where: "this.bytesUploaded === this.size",
- *    chunks: {$exists: true},
+ *    $where: "this.chunkSum === this.chunkCount",
  *    'copies.storeName`: null,
  *    'failures.copies.storeName.doneTrying': {$ne: true}
  *  }

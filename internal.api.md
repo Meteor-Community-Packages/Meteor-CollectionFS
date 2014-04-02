@@ -59,13 +59,12 @@ have been uploaded but have not yet been stored to the
 specified store.
 
 {
-$where: "this.bytesUploaded === this.size",
-chunks: {$exists: true},
+$where: "this.chunkSum === this.chunkCount",
 'copies.storeName`: null,
 'failures.copies.storeName.doneTrying': {$ne: true}
 }
 
-> ```function getReadyQuery(storeName) { ...``` [fileWorker.js:82](fileWorker.js#L82)
+> ```function getReadyQuery(storeName) { ...``` [fileWorker.js:83](fileWorker.js#L83)
 
 
 -
@@ -117,7 +116,7 @@ REPEATED FOR EACH STORE
 
 -
 
-### <a name="saveCopy"></a>saveCopy(fsFile, storeName, options)&nbsp;&nbsp;<sub><i>undefined</i></sub> ###
+### <a name="saveCopy"></a>saveCopy(fsFile, storeName, options)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
 *This method is private*
 
@@ -138,6 +137,6 @@ Saves to the specified store. If the
 `overwrite` option is `true`, will save to the store even if we already
 have, potentially overwriting any previously saved data. Synchronous.
 
-> ```function saveCopy(fsFile, storeName, options) { ...``` [fileWorker.js:168](fileWorker.js#L168)
+> ```var makeSafeCallback = function (callback) { ...``` [fileWorker.js:168](fileWorker.js#L168)
 
 
