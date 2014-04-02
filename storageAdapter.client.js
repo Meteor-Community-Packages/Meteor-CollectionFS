@@ -14,22 +14,6 @@ FS.StorageAdapter = function(name, options, api) {
     throw new Error('FS.StorageAdapter please define an api');
   }
 
-  if (typeof api.get !== 'function') {
-    throw new Error('FS.StorageAdapter please define an api.get function');
-  }
-
-  if (typeof api.put !== 'function') {
-    throw new Error('FS.StorageAdapter please define an api.put function');
-  }
-
-  if (typeof api.del !== 'function') {
-    throw new Error('FS.StorageAdapter please define an api.del function');
-  }
-
-  if (api.typeName !== '' + api.typeName) {
-    throw new Error('FS.StorageAdapter please define an api.typeName string');
-  }
-
   // store reference for easy lookup by name
   if (typeof _storageAdapters[name] !== 'undefined') {
     throw new Error('Storage name already exists: "' + name + '"');

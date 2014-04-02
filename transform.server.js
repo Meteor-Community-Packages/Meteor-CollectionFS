@@ -46,8 +46,8 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
     var sourceStream = new PassThrough();
 
     // We trigger a special "stored" event for those listening
-    destinationStream.on('end', function(fileKey) {
-      sourceStream.emit('stored', fileKey);
+    destinationStream.on('end', function(fileKey, size, updatedAt) {
+      sourceStream.emit('stored', fileKey, size, updatedAt);
     });
 
     // Rig transform

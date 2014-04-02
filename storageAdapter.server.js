@@ -123,7 +123,7 @@ delete options.transformRead;
     //
     // We have to use our own event making sure the storage process is completed
     // this is mainly
-    writeStream.safeOn('stored', function(fileKey) {
+    writeStream.safeOn('stored', function(fileKey, size, updatedAt) {
       if (typeof fileKey === 'undefined') {
         throw new Error('SA ' + name + ' type ' + api.typeName + ' did not return a fileKey');
       }
@@ -131,9 +131,13 @@ delete options.transformRead;
       // Set the fileKey
       fileObj.copies[name].key = fileKey;
 
-      // Update the time - this could also be fetched from api.stats in the
-      // storage adapter eg. by adding on event
-      fileObj.copies[name].updatedAt = new Date();
+      // Update the size, as provided by the SA, in case it was changed by stream transformation
+      if (typeof size === "number") {
+        fileObj.copies[name].size = size;
+      }
+
+      // Set last updated time, either provided by SA or now
+      fileObj.copies[name].updatedAt = updatedAt || new Date();
 
       // If the file object copy havent got a createdAt then set this
       if (typeof fileObj.copies[name].createdAt === 'undefined') {
