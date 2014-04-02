@@ -31,108 +31,30 @@ _Utility.defaultZero = function(val) {
 };
 
 /**
- * @method _Utility.cloneFileUnit
- * @private
- * @param {Object} unit
- * @returns {Object}
- */
-_Utility.cloneFileUnit = function(unit) {
-  if (_.isObject(unit) && !_.isArray(unit)) {
-    var newUnit = {
-      size: _Utility.defaultZero(unit.size)
-    };
-    _.each(['_id', 'name', 'type', 'key'], function (prop) {
-      if (unit[prop]) {
-        newUnit[prop] = '' + unit[prop];
-      }
-    });
-    if (unit.createdAt) {
-      newUnit.createdAt = unit.createdAt;
-    }
-    if (unit.updatedAt) {
-      newUnit.updatedAt = unit.updatedAt;
-    }
-    if (unit.uploadedAt) {
-      newUnit.uploadedAt = unit.uploadedAt;
-    }
-    if (unit.synchronizedAt) {
-      newUnit.synchronizedAt = unit.synchronizedAt;
-    }
-    return newUnit;
-  }
-  return null;
-};
-
-/**
- * @method _Utility.cloneFileAttempt
- * @private
- * @param {Object} attempt
- * @returns {Object}
- */
-_Utility.cloneFileAttempt = function(attempt) {
-  if (_.isObject(attempt) && !_.isArray(attempt)) {
-    return {
-      count: attempt.count,
-      firstAttempt: attempt.firstAttempt,
-      lastAttempt: attempt.lastAttempt,
-      doneTrying: attempt.doneTrying
-    };
-  }
-  return {};
-};
-
-/**
  * @method FS.Utility.cloneFileRecord
  * @public
  * @param {FS.File|FS.Collection filerecord} rec
  * @returns {Object} Cloned filerecord
+ *
+ * Makes a shallow clone of `rec`, filtering out some properties that might be present if
+ * it's an FS.File instance, but which we never want to be part of the stored
+ * filerecord.
+ *
+ * This is a blacklist clone rather than a whitelist because we want the user to be able
+ * to specify whatever additional properties they wish.
+ *
+ * In general, we expect the following whitelist properties used by the internal and
+ * external APIs:
+ *
+ * _id, name, size, type, chunkCount, chunkSize, chunkSum, copies, createdAt, updatedAt, uploadedAt
+ *
+ * Those properties, and any additional properties added by the user, should be present
+ * in the returned object, which is suitable for inserting into the backing collection or
+ * extending an FS.File instance.
+ *
  */
 FS.Utility.cloneFileRecord = function(rec) {
-  var result = _Utility.cloneFileUnit(rec) || {};
-  // Base reference
-  if (rec.collectionName) {
-    result.collectionName = '' + rec.collectionName;
-  }
-  // chunk ref
-  if (rec.chunkSize != null) {
-    result.chunkSize = rec.chunkSize;
-  }
-  // count for transfered chunks
-  if (rec.chunkCount != null) {
-    result.chunkCount = rec.chunkCount;
-  }
-  // count for transfered chunks
-  if (rec.chunkSum != null) {
-    result.chunkSum = rec.chunkSum;
-  } else if (rec.size != null && rec.chunkSize != null) {
-    result.chunkSum = Math.ceil(rec.size / rec.chunkSize);
-  }
-
-  if (_.isObject(rec.metadata)) {
-    result.metadata = rec.metadata;
-  }
-
-  // clone info about the copies in the stores
-  if (!_.isEmpty(rec.copies)) {
-    result.copies = {};
-    _.each(rec.copies, function(value, key) {
-      result.copies[key] = _Utility.cloneFileUnit(value);
-    });
-  }
-
-  // clone failures
-  if (!_.isEmpty(rec.failures)) {
-    result.failures = {};
-
-    if (!_.isEmpty(rec.failures.copies)) {
-      result.failures.copies = {};
-      _.each(rec.failures.copies, function(value, key) {
-        result.failures.copies[key] = _Utility.cloneFileAttempt(value);
-      });
-    }
-  }
-
-  return result;
+  return _.omit(rec, ['collectionName', 'collection', 'data', 'createdByTransform']);
 };
 
 /**

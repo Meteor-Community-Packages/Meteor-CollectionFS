@@ -28,58 +28,11 @@ Tinytest.add('cfs-base-package - _Utility.defaultZero', function(test) {
   test.equal(_Utility.defaultZero("1"), 1, 'Failes to return 1 when string "1"');
 });
 
-Tinytest.add('cfs-base-package - _Utility.cloneFileUnit', function(test) {
-  test.equal(_Utility.cloneFileUnit(null), null, 'Should not try to clone null');
-  test.equal(_Utility.cloneFileUnit(undefined), null, 'Should not try to clone undefined');
-  test.equal(_Utility.cloneFileUnit(), null, 'Should not try to clone (undefined)');
-  test.equal(_Utility.cloneFileUnit(1), null, 'Should not try to clone numbers');
-  test.equal(_Utility.cloneFileUnit('foo'), null, 'Should not try to clone string');
-  test.equal(_Utility.cloneFileUnit(['foo', 'bar']), null, 'Should not try to clone array');
-  // XXX: Is this the expected behaviour or should it return null?
-  test.equal(_Utility.cloneFileUnit({}), {'size':0}, 'Should return object with size');
-  test.isTrue(equals(_Utility.cloneFileUnit({
-    size: 10,
-    _id: 'foo',
-    name: 'bar',
-    type: 'test',
-    updatedAt: 12,
-    spam: 'dont add me'
-  }), {
-    size: 10,
-    _id: 'foo',
-    name: 'bar',
-    type: 'test',
-    updatedAt: 12,
-  }), 'Should only clone the allowed fields');
-
-});
-
-Tinytest.add('cfs-base-package - _Utility.cloneFileAttempt', function(test) {
-  test.isTrue(equals(_Utility.cloneFileAttempt(null), {}), 'Failed to return object - null');
-  test.isTrue(equals(_Utility.cloneFileAttempt(undefined), {}), 'Failed to return object - undefined');
-  test.isTrue(equals(_Utility.cloneFileAttempt(), {}), 'Failed to return object - (undefined)');
-  test.isTrue(equals(_Utility.cloneFileAttempt(1), {}), 'Failed to return object - numbers');
-  test.isTrue(equals(_Utility.cloneFileAttempt('foo'), {}), 'Failed to return object - string');
-  test.isTrue(equals(_Utility.cloneFileAttempt(['foo', 'bar']), {}), 'Failed to return object - array');
-  test.isTrue(equals(_Utility.cloneFileAttempt({}), {}), 'Failed to return object - array');
-  test.isTrue(equals(_Utility.cloneFileAttempt({
-    count: 10,
-    firstAttempt: 'foo',
-    lastAttempt: 'bar',
-    doneTrying: 'test',
-    spam: 'dont add me'
-  }), {
-    count: 10,
-    firstAttempt: 'foo',
-    lastAttempt: 'bar',
-    doneTrying: 'test',
-  }), 'Should only clone the allowed fields');
-
-});
-
 Tinytest.add('cfs-base-package - FS.Utility.cloneFileRecord', function(test) {
-  test.isTrue(true);
-  // TODO
+  // Given an object with any props, should filter out 'collectionName',
+  // 'collection', 'data', and 'createdByTransform'
+  var result = FS.Utility.cloneFileRecord({a: 1, b: {c: 1}, d: [1, 2], collectionName: 'test', collection: {}, data: {}, createdByTransform: false});
+  test.equal(result, {a: 1, b: {c: 1}, d: [1, 2]});
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.defaultCallback', function(test) {
