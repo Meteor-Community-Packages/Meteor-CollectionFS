@@ -53,8 +53,10 @@ FS.TempStore = new EventEmitter();
  */
 FS.TempStore.Storage = null;
 
-// Select a storage adapter for temp storage
+// XXX: We will never have FS.FileWorker at this point in time since
+// FS.FileWorker depends on us to load first... We Could wait until startup?
 
+// Select a storage adapter for temp storage
 if (FS.Store.GridFS && (FS.FileWorker || !FS.Store.FileSystem)) {
   // If the file worker is installed we would prefer to use the gridfs sa
   // for scalability. We also default to gridfs if filesystem is not found
