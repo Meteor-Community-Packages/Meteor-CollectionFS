@@ -103,8 +103,11 @@ FS.Store.FileSystem = function(name, options) {
     stats: function(fileKey, callback) {
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
-
-      fs.stat(filepath, callback);
+      if (typeof callback === 'function') {
+        fs.stat(filepath, callback);
+      } else {
+        return fs.statSync(filepath);
+      }
     },
     watch: function(callback) {
       function fileKey(filePath) {
