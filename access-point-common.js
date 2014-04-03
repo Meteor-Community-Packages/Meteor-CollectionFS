@@ -27,7 +27,14 @@ FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
   FS.HTTP.uploadUrl = baseUrl + '/files';
 
   // Remount URLs with the new baseUrl, unmounting the old, on the server only
-  Meteor.isServer && mountUrls();
+  if (Meteor.isServer) {
+    FS.HTTP.unmount();
+    FS.HTTP.mount([
+      baseUrl + '/files/:collectionName/:id/:filename',
+      baseUrl + '/files/:collectionName/:id',
+      baseUrl + '/files/:collectionName'
+    ]);
+  }
 };
 
 /*
