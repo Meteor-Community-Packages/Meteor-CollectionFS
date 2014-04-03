@@ -69,6 +69,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
       setData(self.type);
     } else {
       Meteor.call('_cfs_getUrlInfo', data, function (error, result) {
+        FS.debug && console.log("URL HEAD RESULT:", result);
         if (error) {
           callback(error);
         } else {
@@ -85,12 +86,31 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
 
   // Set the data
   function setData(type) {
-    self.data = new FS.Data(data, type);
-    self.type = self.data.type;
-    if (typeof self.size !== "number" || self.size === 0) {
-      self.size = self.data.size();
-    }
+    self.data = new DataMan(data, type);
 
+    // Update the type to match what the data is
+    self.type = self.data.type();
+
+    // Update the size to match what the data is
+    if (!self.size) {
+      if (callback) {
+        self.data.size(function (error, size) {
+          if (error) {
+            callback && callback();
+          } else {
+            self.size = size;
+            setName();
+          }
+        });
+      } else {
+        self.size = self.data.size();
+      }
+    } else {
+      setName();
+    }
+  }
+
+  function setName() {
     // See if we can extract a file name from URL or filepath
     if (!self.name && typeof data === "string" && data.slice(0, 5) !== "data:") {
       var dataWithoutQueryString = data.split('?')[0]; //should have no effect on filepath

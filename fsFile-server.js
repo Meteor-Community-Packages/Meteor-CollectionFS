@@ -95,24 +95,23 @@ FS.File.prototype.get = function(options) {
   }
 };
 
-//TODO this might need some work
 FS.File.prototype.createReadStream = function(storeName) {
   var self = this;
+
   // If we dont have a store name but got Buffer data?
   if (!storeName && self.data) {
+    FS.debug && console.log("fileObj.createReadStream creating read stream for attached data");
     // Stream from attached data if present
     return self.data.createReadStream();
-
   } else if (!storeName && FS.TempStore && FS.TempStore.exists(self)) {
+    FS.debug && console.log("fileObj.createReadStream creating read stream for temp store");
     // Stream from temp store - its a bit slower than regular streams?
     return FS.TempStore.createReadStream(self);
-
   } else {
-
     // Stream from the store using storage adapter
     if (self.isMounted()) {
-      //
       var storage = self.collection.storesLookup[storeName] || self.collection.primaryStore;
+      FS.debug && console.log("fileObj.createReadStream creating read stream for store", storage.name);
       // return stream
       return storage.adapter.createReadStream(self);
     } else {
@@ -122,7 +121,6 @@ FS.File.prototype.createReadStream = function(storeName) {
   }
 };
 
-//TODO this might need some work
 FS.File.prototype.createWriteStream = function(storeName) {
   var self = this;
 
