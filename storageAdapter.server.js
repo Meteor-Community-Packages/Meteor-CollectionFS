@@ -53,8 +53,8 @@ FS.StorageAdapter = function(name, options, api) {
     transformRead: options.transformRead
   });
 
-delete options.transformWrite;
-delete options.transformRead;
+  delete options.transformWrite;
+  delete options.transformRead;
 
   // Create a nicer abstracted adapter interface
   self.adapter = {};
@@ -76,27 +76,28 @@ delete options.transformRead;
 
   // Return readable stream
   self.adapter.createWriteStream = function(fileObj, options) {
+    FS.debug && console.log('createWriteStream ' + self.name + ', internal: ' + self.internal);
+    var writeStream;
 
-    FS.debug && console.log('createWriteStream ' + self.name);
     if (self.internal) {
       // The internal takes a fileKey - not fileObj
-      return FS.Utility.safeStream(  api.createWriteStream(fileObj, options) );
+      writeStream = FS.Utility.safeStream( api.createWriteStream(fileObj, options) );
+    } else {
+      if (typeof fileObj.copies == 'undefined' || fileObj.copies === null) {
+        fileObj.copies = {};
+      }
+      if (typeof fileObj.copies[self.name] === 'undefined') {
+        fileObj.copies[self.name] = {
+          name: fileObj.name,
+          type: fileObj.type,
+          size: fileObj.size
+        };
+      }
+
+      writeStream = FS.Utility.safeStream( self._transform.createWriteStream(fileObj, options) );
     }
 
-    if (typeof fileObj.copies == 'undefined' || fileObj.copies === null) {
-      fileObj.copies = {};
-    }
-    if (typeof fileObj.copies[self.name] === 'undefined') {
-      fileObj.copies[self.name] = {
-        name: fileObj.name,
-        type: fileObj.type,
-        size: fileObj.size
-      };
-    }
-
-    var writeStream = FS.Utility.safeStream( self._transform.createWriteStream(fileObj, options) );
-
-
+    // init debug for both internal and normal
     if (FS.debug) {
       writeStream.on('stored', function() {
         console.log('-----------STORED STREAM', name);
@@ -119,38 +120,39 @@ delete options.transformRead;
       });
     }
 
-    // Its really only the storage adapter who knows if the file is uploaded
-    //
-    // We have to use our own event making sure the storage process is completed
-    // this is mainly
-    writeStream.safeOn('stored', function(result) {
-      if (typeof result.fileKey === 'undefined') {
-        throw new Error('SA ' + name + ' type ' + api.typeName + ' did not return a fileKey');
-      }
-      FS.debug && console.log('SA', name, 'stored', result.fileKey);
-      // Set the fileKey
-      fileObj.copies[name].key = result.fileKey;
+    if (!self.internal) {
+      // Its really only the storage adapter who knows if the file is uploaded
+      //
+      // We have to use our own event making sure the storage process is completed
+      // this is mainly
+      writeStream.safeOn('stored', function(result) {
+        if (typeof result.fileKey === 'undefined') {
+          throw new Error('SA ' + name + ' type ' + api.typeName + ' did not return a fileKey');
+        }
+        FS.debug && console.log('SA', name, 'stored', result.fileKey);
+        // Set the fileKey
+        fileObj.copies[name].key = result.fileKey;
 
-      // Update the size, as provided by the SA, in case it was changed by stream transformation
-      if (typeof result.size === "number") {
-        fileObj.copies[name].size = result.size;
-      }
+        // Update the size, as provided by the SA, in case it was changed by stream transformation
+        if (typeof result.size === "number") {
+          fileObj.copies[name].size = result.size;
+        }
 
-      // Set last updated time, either provided by SA or now
-      fileObj.copies[name].updatedAt = result.storedAt || new Date();
+        // Set last updated time, either provided by SA or now
+        fileObj.copies[name].updatedAt = result.storedAt || new Date();
 
-      // If the file object copy havent got a createdAt then set this
-      if (typeof fileObj.copies[name].createdAt === 'undefined') {
-        fileObj.copies[name].createdAt = fileObj.copies[name].updatedAt;
-      }
+        // If the file object copy havent got a createdAt then set this
+        if (typeof fileObj.copies[name].createdAt === 'undefined') {
+          fileObj.copies[name].createdAt = fileObj.copies[name].updatedAt;
+        }
 
-      var modifier = {};
-      modifier["copies." + name] = fileObj.copies[name];
-      // Update the main file object with the modifier
-      fileObj.update({$set: modifier});
+        var modifier = {};
+        modifier["copies." + name] = fileObj.copies[name];
+        // Update the main file object with the modifier
+        fileObj.update({$set: modifier});
 
-    });
-
+      });
+    }
 
     return writeStream;
   };
