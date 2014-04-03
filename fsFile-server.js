@@ -126,7 +126,7 @@ FS.File.prototype.createWriteStream = function(storeName) {
 
   // We have to have a mounted file in order for this to work
   if (self.isMounted()) {
-    if (FS.TempStore && FS.FileWorker) {
+    if (!storeName && FS.TempStore && FS.FileWorker) {
       // If we have worker installed - we pass the file to FS.TempStore
       // We dont need the storeName since all stores will be generated from
       // TempStore.
