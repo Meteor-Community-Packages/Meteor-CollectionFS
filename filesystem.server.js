@@ -55,19 +55,6 @@ FS.Store.FileSystem = function(name, options) {
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
-      // XXX: not sure we should have this extra overwrite option?
-      if (!options.overwrite) {
-        // Change filename if necessary so that we can write to a new file
-        var extension = path.extname(fileKey);
-        var fn = fileKey.substr(0, fileKey.length - extension.length);
-        var suffix = 0;
-        while (fs.existsSync(filepath)) {
-          suffix++;
-          fileKey = fn + suffix + extension; //once we exit the loop, this is what will actually be used
-          filepath = path.join(absolutePath, fileKey);
-        }
-      }
-
       // Return the stream handle
       var writeStream = fs.createWriteStream(filepath, options);
 
