@@ -66,22 +66,21 @@ FS.Store.FileSystem = function(name, options) {
         // Get the exact size of the stored file, so that we can pass it to onEnd/onStored.
         // Since stream transforms might have altered the size, this is the best way to
         // ensure we update the fileObj.copies with the correct size.
-        fs.stat(filepath, function (error, stats) {
-          var size, updatedAt;
-          if (stats) {
-            size = stats.size;
-            updatedAt = stats.mtime;
-          }
+        try {
+          // Get the stats of the file
+          var stats = fs.statSync(filepath);
+
           // Emit end and return the fileKey, size, and updated date
           writeStream.emit('stored', {
             fileKey: fileKey,
-            size: size,
-            storedAt: updatedAt
+            size: stats.size,
+            storedAt: stats.mtime
           });
 
-
-        });
-
+        } catch(err) {
+          // On error we emit the error on
+          writeStream.emit('error', err);
+        }
       });
 
       return writeStream;
