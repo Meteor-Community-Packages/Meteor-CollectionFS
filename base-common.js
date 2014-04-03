@@ -164,6 +164,23 @@ FS.Utility.getFileExtension = function utilGetFileExtension(name) {
   return (found > 0 ? name.substr(found).toLowerCase() : '');
 };
 
+/*
+ * Borrowed these from http package
+ */
+FS.Utility.encodeParams = function encodeParams(params) {
+  var buf = [];
+  _.each(params, function(value, key) {
+    if (buf.length)
+      buf.push('&');
+    buf.push(encodeString(key), '=', encodeString(value));
+  });
+  return buf.join('').replace(/%20/g, '+');
+};
+
+FS.Utility.encodeString = function encodeString(str) {
+  return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
+};
+
 // Api wrap for 3party libs like underscore
 FS.Utility.extend = _.extend;
 
