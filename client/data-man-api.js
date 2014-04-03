@@ -16,23 +16,23 @@ DataMan = function DataMan(data, type) {
   // and instead rely on obtaining a read stream when the time comes.
   if (typeof File !== "undefined" && data instanceof File) {
     self.blob = data; // File inherits from Blob so this is OK
-    self.type = data.type;
+    self._type = data.type;
   } else if (typeof Blob !== "undefined" && data instanceof Blob) {
     self.blob = data;
-    self.type = data.type;
+    self._type = data.type;
   } else if (typeof ArrayBuffer !== "undefined" && data instanceof ArrayBuffer || EJSON.isBinary(data)) {
     if (typeof Blob === "undefined") {
       throw new Error("Browser must support Blobs to handle an ArrayBuffer or Uint8Array");
     }
     self.blob = new Blob([data], {type: type});
-    self.type = type;
+    self._type = type;
   } else if (typeof data === "string") {
     if (data.slice(0, 5) === "data:") {
       self.dataUri = data;
-      self.type = data.slice(5, data.indexOf(';'));
+      self._type = data.slice(5, data.indexOf(';'));
     } else if (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:") {
       self.url = data;
-      self.type = type;
+      self._type = type;
     } else {
       throw new Error("DataMan constructor received unrecognized data string");
     }
@@ -54,7 +54,7 @@ DataMan.prototype.getBlob = function dataManGetBlob(callback) {
   if (self.blob) {
     callback(null, self.blob);
   } else if (self.dataUri) {
-    self.blob = dataURItoBlob(self.dataUri, self.type);
+    self.blob = dataURItoBlob(self.dataUri, self._type);
     callback(null, self.blob);
   } else if (self.url) {
     var xhr = new XMLHttpRequest();
@@ -124,7 +124,7 @@ DataMan.prototype.getBinary = function dataManGetBinary(start, end, callback) {
           return;
         }
 
-        read(slice.call(blob, start, end, self.type));
+        read(slice.call(blob, start, end, self._type));
       } else {
         // Return the entire binary data
         read(blob);
@@ -216,6 +216,16 @@ DataMan.prototype.size = function dataManSize(callback) {
       callback(null, blob.size);
     }
   });
+};
+
+/**
+ * @method DataMan.prototype.type
+ * @public
+ *
+ * Returns the type of the data.
+ */
+DataMan.prototype.type = function dataManType() {
+  return this._type;
 };
 
 /**
