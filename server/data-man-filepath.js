@@ -71,7 +71,7 @@ DataMan.FilePath.prototype.getDataUri = function dataManFilePathGetDataUri(callb
  */
 DataMan.FilePath.prototype.createReadStream = function dataManFilePathCreateReadStream() {
   // Stream from filesystem
-  return fs.createReadStream(self.filepath);
+  return fs.createReadStream(this.filepath);
 };
 
 /**

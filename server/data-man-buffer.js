@@ -48,7 +48,7 @@ DataMan.Buffer.prototype.getDataUri = function dataManBufferGetDataUri(callback)
  * Returns a read stream for the data.
  */
 DataMan.Buffer.prototype.createReadStream = function dataManBufferCreateReadStream() {
-  return sbs(self.buffer);
+  return sbs(this.buffer);
 };
 
 /**
