@@ -172,7 +172,7 @@ FS.Utility.encodeParams = function encodeParams(params) {
   _.each(params, function(value, key) {
     if (buf.length)
       buf.push('&');
-    buf.push(encodeString(key), '=', encodeString(value));
+    buf.push(FS.Utility.encodeString(key), '=', FS.Utility.encodeString(value));
   });
   return buf.join('').replace(/%20/g, '+');
 };
