@@ -194,8 +194,8 @@ httpPutUpdateHandler = function httpPutUpdateHandler(ref) {
 
   FS.debug && console.log("HTTP PUT (update) handler received chunk: ", chunk);
 
-  // Validate with update allow/deny; also mounts and retrieves the file
-  FS.Utility.validateAction(ref.collection.files._validators['update'], ref.file, self.userId);
+  // Validate with insert allow/deny; also mounts and retrieves the file
+  FS.Utility.validateAction(ref.collection.files._validators['insert'], ref.file, self.userId);
 
   self.createReadStream().pipe( FS.TempStore.createWriteStream(ref.file, chunk) );
 
