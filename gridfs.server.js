@@ -1,5 +1,6 @@
 var path = Npm.require('path');
 var mongodb = Npm.require('mongodb');
+var ObjectID = Npm.require('mongodb').ObjectID;
 var Grid = Npm.require('gridfs-stream');
 //var Grid = Npm.require('gridfs-locking-stream');
 
@@ -51,14 +52,28 @@ FS.Store.GridFS = function(name, options) {
       // The TempStore should track uploads by id too - at the moment
       // TempStore only sets name, _id, collectionName for us to generate the
       // id from.
-      return fileObj.collectionName + fileObj._id;
+
+      // XXX: We should not have to mount the file here - We assume its taken
+      // care of - Otherwise we create new files instead of overwriting
+      var store = fileObj && fileObj.copies && fileObj.copies[name];
+
+      var result = {
+        // We currently allow the TempStore to pass in a mongoId directly
+        // Get the key or create a new
+        _id: fileObj.mongoId || new ObjectID(store && store.key && store.key._str),
+        // Pass on filename or create a filename
+        filename: fileObj.name || (fileObj.collectionName + '-' +fileObj._id),
+      };
+
+      return result;
     },
     createReadStream: function(fileKey, options) {
       // Init GridFS
       var gfs = new Grid(self.db, mongodb);
 
       return gfs.createReadStream({
-        filename: fileKey,
+        _id: fileKey._id,
+        //filename: fileKey.filename,
         root: gridfsName,
       });
 
@@ -70,7 +85,8 @@ FS.Store.GridFS = function(name, options) {
       var gfs = new Grid(self.db, mongodb);
 
       var writeStream = gfs.createWriteStream({
-        filename: fileKey,
+        _id: fileKey._id,
+        filename: fileKey.filename,
         mode: 'w',
         root: gridfsName,
         chunk_size: options.chunk_size || chunkSize,
@@ -99,7 +115,7 @@ FS.Store.GridFS = function(name, options) {
       var gfs = new Grid(self.db, mongodb);
 
       try {
-        gfs.remove({ _id: fileKey, root: gridfsName }, callback);
+        gfs.remove({ _id: fileKey._id, root: gridfsName }, callback);
       } catch(err) {
         callback(err);
       }
