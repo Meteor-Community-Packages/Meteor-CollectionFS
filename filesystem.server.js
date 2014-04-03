@@ -100,20 +100,18 @@ FS.Store.FileSystem = function(name, options) {
       return writeStream;
     },
     remove: function(fileKey, callback) {
-
       // this is the Storage adapter scope
       var filepath = path.join(absolutePath, fileKey);
 
-      try {
-        // Call node unlink file
-        fs.unlink(filepath, callback);
-      } catch(err) {
-        // TODO, this might be an error due to missing file, which we should ignore; we're trying to delete it anyway
-        if (typeof callback === 'function') {
-          // Send error via callback
-          callback(err);
+      // Call node unlink file
+      fs.unlink(filepath, function (error, result) {
+        if (error && error.errno === 34) {
+          console.warn("SA FileSystem: Could not delete " + filepath + " because the file was not found.");
+          callback && callback(null);
+        } else {
+          callback && callback(error, result);
         }
-      }
+      });
     },
     stats: function(fileKey, callback) {
       // this is the Storage adapter scope
