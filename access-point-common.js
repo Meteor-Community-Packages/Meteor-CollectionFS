@@ -26,14 +26,11 @@ FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
   // Change the upload URL so that client uploader packages know what it is
   FS.HTTP.uploadUrl = baseUrl + '/files';
 
-  // Remount URLs with the new baseUrl, unmounting the old, on the server only
-  if (Meteor.isServer) {
-    FS.HTTP.unmount();
-    FS.HTTP.mount([
-      baseUrl + '/files/:collectionName/:id/:filename',
-      baseUrl + '/files/:collectionName/:id',
-      baseUrl + '/files/:collectionName'
-    ]);
+  // Remount URLs with the new baseUrl, unmounting the old, on the server only.
+  // If existingMountPoints is empty, then we haven't run the server startup
+  // code yet, so this new URL will be used at that point for the initial mount.
+  if (Meteor.isServer && !FS.Utility.isEmpty(_existingMountPoints)) {
+    mountUrls();
   }
 };
 
@@ -120,7 +117,7 @@ FS.File.prototype.url = function(options) {
     if (storeName) {
       params.store = storeName;
     }
-    var queryString = encodeParams(params);
+    var queryString = FS.Utility.encodeParams(params);
     if (queryString.length) {
       queryString = '?' + queryString;
     }
@@ -137,22 +134,4 @@ FS.File.prototype.url = function(options) {
     return baseUrl + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
   }
 
-};
-
-/*
- * Borrowed these from http package
- */
-// TODO: should this be prefixed eg. by extending the FS.Utility
-encodeParams = function(params) {
-  var buf = [];
-  FS.Utility.each(params, function(value, key) {
-    if (buf.length)
-      buf.push('&');
-    buf.push(encodeString(key), '=', encodeString(value));
-  });
-  return buf.join('').replace(/%20/g, '+');
-};
-
-encodeString = function(str) {
-  return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 };

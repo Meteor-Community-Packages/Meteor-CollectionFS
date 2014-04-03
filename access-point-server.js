@@ -59,7 +59,7 @@ FS.HTTP.unpublish = function fsHttpUnpublish(collection) {
   HTTP.unpublish(baseUrl + '/record/' + collection.name);
 };
 
-var _existingMountPoints = {};
+_existingMountPoints = {};
 
 /**
  * @method defaultSelectorFunction
@@ -259,14 +259,18 @@ FS.HTTP.unmount = function(mountPoints) {
 //  ]);
 //  ```
 //
-Meteor.startup(function () {
+mountUrls = function mountUrls() {
+  // We unmount first in case we are calling this a second time
+  FS.HTTP.unmount();
 
-  // Start up the basic mount points
   FS.HTTP.mount([
     baseUrl + '/files/:collectionName/:id/:filename',
     baseUrl + '/files/:collectionName/:id',
     baseUrl + '/files/:collectionName'
   ]);
+};
 
-  // FS.debug && console.log("Registered HTTP method URLs:\n\n" + currentHTTPMethodNames.join('\n') + '\n');
+// Start up the basic mount points
+Meteor.startup(function () {
+  mountUrls();
 });
