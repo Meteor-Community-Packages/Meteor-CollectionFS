@@ -1,7 +1,7 @@
 cfs-s3
 =========================
 
-NOTE: This package is under active development right now (2014-3-31). It has
+NOTE: This package is under active development right now (2014-4-4). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -64,11 +64,12 @@ S3Store options, like so:
 
 ```js
 var imageStore = new FS.Store.S3("images", {
-  region: "my-s3-region", //required, or use endpoint option
+  region: "my-s3-region", //optional in most cases
   accessKeyId: "account or IAM key", //required if environment variables are not set
   secretAccessKey: "account or IAM secret", //required if environment variables are not set
   bucket: "mybucket", //required
-  ACL: myValue //optional, default is 'private'
+  ACL: myValue //optional, default is 'private', but you can allow public or secure access routed through your app URL
+  // The rest are generic store options supported by all storage adapters
   transformWrite: myTransformWriteFunction, //optional
   transformRead: myTransformReadFunction, //optional
   maxTries: 1 //optional, default 5
@@ -79,12 +80,22 @@ Images = new FS.Collection("images", {
 });
 ```
 
+### Tips
+
+* Initially try specifying only the `accessKeyId`, `secretAccessKey`, and `bucket` options. Then, if it doesn't work, try adding the `region` option. The `region` option is not usually necessary, but for some S3 regions and setups, you might need it.
+* Once you have things working, you can add any other [global configuration options supported by the `aws-sdk`](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Service-Specific_Configuration). The most common will be `ACL`, for which the allowed values are:
+    * "private"
+    * "public-read"
+    * "public-read-write"
+    * "authenticated-read"
+    * "bucket-owner-read"
+    * "bucket-owner-full-control"
+
 Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
 package documentation for more information.
 
 ## Notes
 
-* An S3 store does not support the `sync` option.
 * Be sure to define your store in a server file that is not shipped to the
 client since it contains credentials. Wrapping in `Meteor.isServer` is not
 secure. For best security, you can omit the key and secret options and instead
