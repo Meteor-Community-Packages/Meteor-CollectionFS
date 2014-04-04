@@ -115,8 +115,8 @@ FS.StorageAdapter = function(name, options, api) {
         console.log('-----------FINISH STREAM', name);
       });
 
-      writeStream.on('error', function() {
-        console.log('-----------ERROR STREAM', name);
+      writeStream.on('error', function(error) {
+        console.log('-----------ERROR STREAM', name, error && (error.message || error.code));
       });
     }
 
