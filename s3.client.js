@@ -17,3 +17,7 @@ FS.Store.S3 = function(name, options) {
 
   FS.Utility.extend(this, { name: name, sync: false, maxTries: 5 }, options || {});
 };
+
+FS.Store.S3.prototype.fileKey: function(fileObj) {
+  return fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name;
+};
