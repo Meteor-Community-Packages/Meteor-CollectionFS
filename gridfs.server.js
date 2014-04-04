@@ -57,22 +57,22 @@ FS.Store.GridFS = function(name, options) {
       // care of - Otherwise we create new files instead of overwriting
       var store = fileObj && fileObj.copies && fileObj.copies[name];
 
-      var result = {
-        // We currently allow the TempStore to pass in a mongoId directly
+      return {
+        // XXX: We currently allow the TempStore to pass in a mongoId directly
         // Get the key or create a new
-        _id: fileObj.mongoId || new ObjectID(store && store.key && store.key._str),
+        _id: fileObj.mongoId || store && store.key,
+        //_id: store && store.key,
         // Pass on filename or create a filename
         filename: fileObj.name || (fileObj.collectionName + '-' +fileObj._id),
       };
 
-      return result;
     },
     createReadStream: function(fileKey, options) {
       // Init GridFS
       var gfs = new Grid(self.db, mongodb);
 
       return gfs.createReadStream({
-        _id: fileKey._id,
+        _id: new ObjectID(fileKey._id),
         //filename: fileKey.filename,
         root: gridfsName,
       });
@@ -85,7 +85,7 @@ FS.Store.GridFS = function(name, options) {
       var gfs = new Grid(self.db, mongodb);
 
       var writeStream = gfs.createWriteStream({
-        _id: fileKey._id,
+        _id: new ObjectID(fileKey._id),
         filename: fileKey.filename,
         mode: 'w',
         root: gridfsName,
@@ -99,12 +99,22 @@ FS.Store.GridFS = function(name, options) {
 
       writeStream.on('close', function(file) {
         if (FS.debug) console.log('SA GridFS - DONE!');
+
         // Emit end and return the fileKey, size, and updated date
         writeStream.emit('stored', {
-          fileKey: file._id,
+          // Set the generated _id so that we know it for future reads and writes.
+          // We store the _id as a string and only convert to ObjectID right before
+          // reading, writing, or deleting. If we store the ObjectID itself,
+          // Meteor (EJSON?) seems to convert it to a LocalCollection.ObjectID,
+          // which GFS doesn't understand.
+          fileKey: file._id.toString(),
           size: file.length,
           storedAt: file.uploadDate || new Date()
         });
+      });
+
+      writeStream.on('error', function(error) {
+        if (FS.debug) console.log('SA GridFS - ERROR!', error);
       });
 
       return writeStream;
@@ -115,7 +125,7 @@ FS.Store.GridFS = function(name, options) {
       var gfs = new Grid(self.db, mongodb);
 
       try {
-        gfs.remove({ _id: fileKey._id, root: gridfsName }, callback);
+        gfs.remove({ _id: new ObjectID(fileKey._id), root: gridfsName }, callback);
       } catch(err) {
         callback(err);
       }
