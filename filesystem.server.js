@@ -40,6 +40,12 @@ FS.Store.FileSystem = function(name, options) {
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.filesystem',
     fileKey: function(fileObj) {
+      // Lookup the copy
+      var store = fileObj && fileObj.copies && fileObj.copies[name];
+      // If the store and key is found return the key
+      if (store && store.key) return store.key;
+
+      // If no store key found we resolve / generate a key
       return fileObj.collectionName + '-' + fileObj._id + '-' + fileObj.name;
     },
     createReadStream: function(fileKey, options) {
