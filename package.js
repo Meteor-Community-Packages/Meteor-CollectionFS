@@ -25,7 +25,8 @@ Package.on_use(function(api) {
     'server/data-man-buffer.js',
     'server/data-man-datauri.js',
     'server/data-man-filepath.js',
-    'server/data-man-url.js'
+    'server/data-man-url.js',
+    'server/data-man-readstream.js'
   ], 'server');
 
 });

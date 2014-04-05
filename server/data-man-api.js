@@ -1,4 +1,5 @@
 var fs = Npm.require("fs");
+var Readable = Npm.require('stream').Readable;
 
 /**
  * @method DataMan
@@ -29,6 +30,8 @@ DataMan = function DataMan(data, type) {
     }
     var buffer = new Buffer(data);
     self.source = new DataMan.Buffer(buffer, type);
+  } else if (typeof Readable !== "undefined" && data instanceof Readable) {
+    self.source = new DataMan.ReadStream(data, type);
   } else if (typeof data === "string") {
     if (data.slice(0, 5) === "data:") {
       self.source = new DataMan.DataURI(data);
@@ -56,22 +59,29 @@ DataMan.prototype.getBuffer = function dataManGetBuffer(callback) {
   return callback ? self.source.getBuffer(callback) : Meteor._wrapAsync(bind(self.source.getBuffer, self.source))();
 };
 
+function _saveToFile(readStream, filePath, callback) {
+  var writeStream = fs.createWriteStream(filePath);
+  writeStream.on('close', Meteor.bindEnvironment(function () {
+    callback();
+  }, function (error) { callback(error); }));
+  writeStream.on('error', Meteor.bindEnvironment(function (error) {
+    callback(error);
+  }, function (error) { callback(error); }));
+  readStream.pipe(writeStream);
+}
+
 /**
  * @method DataMan.prototype.saveToFile
  * @public
+ * @param {String} filePath
+ * @param {Function} callback
  * @returns {undefined}
  *
  * Saves this data to a filepath on the local filesystem.
  */
-DataMan.prototype.saveToFile = function dataManSaveToFile(filePath) {
-  var self = this;
-
-  var buffer = self.getBuffer();
-  if (!(buffer instanceof Buffer)) {
-    throw new Error("DataMan.saveToFile: No data or data retrieval error");
-  }
-
-  return fs.writeFileSync(filePath, buffer);
+DataMan.prototype.saveToFile = function dataManSaveToFile(filePath, callback) {
+  var readStream = this.createReadStream();
+  return callback ? _saveToFile(readStream, filePath, callback) : Meteor._wrapAsync(_saveToFile)(readStream, filePath);
 };
 
 /**

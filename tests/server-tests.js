@@ -38,6 +38,7 @@ var binaryData;
 var dataUriData;
 var urlData;
 var filePathData;
+var streamData;
 
 // Init with Buffer
 Tinytest.addAsync('cfs-data - server - Init with Buffer', function(test, onComplete) {
@@ -91,6 +92,15 @@ Tinytest.addAsync('cfs-data - server - Init with filepath string', function(test
   // filepaths are not converted to Buffers upon init
   test.instanceOf(filePathData.source, DataMan.FilePath);
   test.equal(filePathData.type(), "text/plain");
+  onComplete();
+});
+
+// Init with readable stream
+Tinytest.addAsync('cfs-data - server - Init with readable stream', function(test, onComplete) {
+  streamData = new DataMan(fs.createReadStream(tempFilePath), "text/plain");
+  // filepaths are not converted to Buffers upon init
+  test.instanceOf(streamData.source, DataMan.ReadStream);
+  test.equal(streamData.type(), "text/plain");
   onComplete();
 });
 
@@ -159,7 +169,6 @@ Tinytest.addAsync('cfs-data - server - getBuffer', function(test, onComplete) {
 
   // from filepath (sync)
   testBuffer(null, filePathData.getBuffer(), 'getBuffer filepath sync');
-
 });
 
 // getDataUri
@@ -257,13 +266,25 @@ Tinytest.addAsync('cfs-data - server - size', function(test, onComplete) {
 });
 
 // saveToFile
+// Since saveToFile uses createReadStream, this tests that function also
 Tinytest.addAsync('cfs-data - server - saveToFile', function(test, onComplete) {
-  var total = 6, done = 0;
-  function testSave(dataInstance, testType) {
+  var total = 12, done = 0;
+  function testSave(dataInstance) {
+    var tempName = temp.path({suffix: '.txt'});
+    dataInstance.saveToFile(tempName, function (error) {
+      test.isFalse(!!error);
+      test.equal(fs.readFileSync(tempName, {encoding: 'utf8'}), 'Hello World', 'file was not saved with correct data');
+      done++;
+      if (total === done) {
+        onComplete();
+      }
+    });
+  }
+
+  function testSaveSync(dataInstance) {
     var tempName = temp.path({suffix: '.txt'});
     dataInstance.saveToFile(tempName);
     test.equal(fs.readFileSync(tempName, {encoding: 'utf8'}), 'Hello World', 'file was not saved with correct data');
-
     done++;
     if (total === done) {
       onComplete();
@@ -272,21 +293,27 @@ Tinytest.addAsync('cfs-data - server - saveToFile', function(test, onComplete) {
 
   // from Buffer
   testSave(bufferData);
+  testSaveSync(bufferData);
 
   // from ArrayBuffer
   testSave(arrayBufferData);
+  testSaveSync(arrayBufferData);
 
   // from binary
   testSave(binaryData);
+  testSaveSync(binaryData);
 
   // from data URI
   testSave(dataUriData);
+  testSaveSync(dataUriData);
 
   // from URL
   testSave(urlData);
+  testSaveSync(urlData);
 
   // from filepath
   testSave(filePathData);
+  testSaveSync(filePathData);
 });
 
 //Test API:
