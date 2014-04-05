@@ -104,6 +104,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
         });
       } else {
         self.size = self.data.size();
+        setName();
       }
     } else {
       setName();
