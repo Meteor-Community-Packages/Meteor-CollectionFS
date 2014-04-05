@@ -10,7 +10,16 @@ bin2str = function bin2str(bufView) {
     if(i + 65535 > length) {
       addition = length - i;
     }
-    result += String.fromCharCode.apply(null, bufView.subarray(i,i+addition));
+    try {
+      // this fails on phantomjs due to old webkit bug; hence the try/catch
+      result += String.fromCharCode.apply(null, bufView.subarray(i,i+addition));
+    } catch (e) {
+      var dataArray = [];
+      for (var j = i; j < i+addition; j++) {
+        dataArray.push(bufView[j]);
+      }
+      result += String.fromCharCode.apply(null, dataArray);
+    }
   }
   return result;
 };
