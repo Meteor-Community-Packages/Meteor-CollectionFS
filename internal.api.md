@@ -148,6 +148,18 @@ __Arguments__
 
 -
 
+### <a name="DataMan.prototype.type"></a>*dataman*.type()&nbsp;&nbsp;<sub><i>Client</i></sub> ###
+
+*This method __type__ is defined in `prototype` of `DataMan`*
+
+
+Returns the type of the data.
+
+> ```DataMan.prototype.type = function dataManType() { ...``` [client/data-man-api.js:227](client/data-man-api.js#L227)
+
+
+-
+
 ### <a name="dataURItoBlob"></a>dataURItoBlob(dataURI, dataTYPE)&nbsp;&nbsp;<sub><i>undefined</i></sub> ###
 
 *This method is private*
@@ -169,7 +181,7 @@ A new Blob instance
 
 Converts a data URI to a Blob.
 
-> ```function dataURItoBlob(dataURI, dataTYPE) { ...``` [client/data-man-api.js:230](client/data-man-api.js#L230)
+> ```function dataURItoBlob(dataURI, dataTYPE) { ...``` [client/data-man-api.js:240](client/data-man-api.js#L240)
 
 
 -
@@ -188,7 +200,7 @@ __Returns__  *{undefined}*
 Can be used as a default callback for client methods that need a callback.
 Simply throws the provided error if there is one.
 
-> ```function defaultCallback(err) { ...``` [client/data-man-api.js:245](client/data-man-api.js#L245)
+> ```function defaultCallback(err) { ...``` [client/data-man-api.js:255](client/data-man-api.js#L255)
 
 
 ***
@@ -233,7 +245,7 @@ __Returns__  *{Buffer|undefined}*
 
 Returns a Buffer representing this data, or passes the Buffer to a callback.
 
-> ```DataMan.prototype.getBuffer = function dataManGetBuffer(callback) { ...``` [server/data-man-api.js:56](server/data-man-api.js#L56)
+> ```DataMan.prototype.getBuffer = function dataManGetBuffer(callback) { ...``` [server/data-man-api.js:54](server/data-man-api.js#L54)
 
 
 -
@@ -247,7 +259,7 @@ __Returns__  *{undefined}*
 
 Saves this data to a filepath on the local filesystem.
 
-> ```DataMan.prototype.saveToFile = function dataManSaveToFile(filePath) { ...``` [server/data-man-api.js:68](server/data-man-api.js#L68)
+> ```DataMan.prototype.saveToFile = function dataManSaveToFile(filePath) { ...``` [server/data-man-api.js:66](server/data-man-api.js#L66)
 
 
 -
@@ -266,7 +278,7 @@ __Arguments__
 
 If no callback, returns the data URI.
 
-> ```DataMan.prototype.getDataUri = function dataManGetDataUri(callback) { ...``` [server/data-man-api.js:86](server/data-man-api.js#L86)
+> ```DataMan.prototype.getDataUri = function dataManGetDataUri(callback) { ...``` [server/data-man-api.js:84](server/data-man-api.js#L84)
 
 
 -
@@ -278,7 +290,7 @@ If no callback, returns the data URI.
 
 Returns a read stream for the data.
 
-> ```DataMan.prototype.createReadStream = function dataManCreateReadStream() { ...``` [server/data-man-api.js:97](server/data-man-api.js#L97)
+> ```DataMan.prototype.createReadStream = function dataManCreateReadStream() { ...``` [server/data-man-api.js:95](server/data-man-api.js#L95)
 
 
 -
@@ -297,7 +309,7 @@ __Arguments__
 
 If no callback, returns the size in bytes of the data.
 
-> ```DataMan.prototype.size = function dataManSize(callback) { ...``` [server/data-man-api.js:108](server/data-man-api.js#L108)
+> ```DataMan.prototype.size = function dataManSize(callback) { ...``` [server/data-man-api.js:106](server/data-man-api.js#L106)
 
 
 -
@@ -309,7 +321,7 @@ If no callback, returns the size in bytes of the data.
 
 Returns the type of the data.
 
-> ```DataMan.prototype.type = function dataManType() { ...``` [server/data-man-api.js:119](server/data-man-api.js#L119)
+> ```DataMan.prototype.type = function dataManType() { ...``` [server/data-man-api.js:117](server/data-man-api.js#L117)
 
 
 ***
@@ -317,6 +329,24 @@ Returns the type of the data.
 __File: ["server/data-man-buffer.js"](server/data-man-buffer.js) Where: {server}__
 
 ***
+
+### <a name="DataMan.Buffer"></a>new *dataman*.Buffer(buffer, type)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+
+*This method __Buffer__ is defined in `DataMan`*
+
+__Arguments__
+
+* __buffer__ *{Buffer}*  
+* __type__ *{String}*  
+
+ The data content (MIME) type.
+
+
+
+> ```DataMan.Buffer = function DataManBuffer(buffer, type) { ...``` [server/data-man-buffer.js:10](server/data-man-buffer.js#L10)
+
+
+-
 
 ### <a name="DataMan.Buffer.prototype.getBuffer"></a>*datamanBuffer*.getBuffer(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
@@ -335,7 +365,7 @@ __Returns__  *{Buffer|undefined}*
 
 Passes a Buffer representing the data to a callback.
 
-> ```DataMan.Buffer.prototype.getBuffer = function dataManBufferGetBuffer(callback) { ...``` [server/data-man-buffer.js:17](server/data-man-buffer.js#L17)
+> ```DataMan.Buffer.prototype.getBuffer = function dataManBufferGetBuffer(callback) { ...``` [server/data-man-buffer.js:24](server/data-man-buffer.js#L24)
 
 
 -
@@ -355,7 +385,7 @@ __Arguments__
 
 Passes a data URI representing the data in the buffer to a callback.
 
-> ```DataMan.Buffer.prototype.getDataUri = function dataManBufferGetDataUri(callback) { ...``` [server/data-man-buffer.js:28](server/data-man-buffer.js#L28)
+> ```DataMan.Buffer.prototype.getDataUri = function dataManBufferGetDataUri(callback) { ...``` [server/data-man-buffer.js:35](server/data-man-buffer.js#L35)
 
 
 -
@@ -368,7 +398,7 @@ Passes a data URI representing the data in the buffer to a callback.
 
 Returns a read stream for the data.
 
-> ```DataMan.Buffer.prototype.createReadStream = function dataManBufferCreateReadStream() { ...``` [server/data-man-buffer.js:50](server/data-man-buffer.js#L50)
+> ```DataMan.Buffer.prototype.createReadStream = function dataManBufferCreateReadStream() { ...``` [server/data-man-buffer.js:51](server/data-man-buffer.js#L51)
 
 
 -
@@ -388,7 +418,7 @@ __Arguments__
 
 Passes the size in bytes of the data in the buffer to a callback.
 
-> ```DataMan.Buffer.prototype.size = function dataManBufferSize(callback) { ...``` [server/data-man-buffer.js:61](server/data-man-buffer.js#L61)
+> ```DataMan.Buffer.prototype.size = function dataManBufferSize(callback) { ...``` [server/data-man-buffer.js:62](server/data-man-buffer.js#L62)
 
 
 -
@@ -401,7 +431,7 @@ Passes the size in bytes of the data in the buffer to a callback.
 
 Returns the type of the data.
 
-> ```DataMan.Buffer.prototype.type = function dataManBufferType() { ...``` [server/data-man-buffer.js:79](server/data-man-buffer.js#L79)
+> ```DataMan.Buffer.prototype.type = function dataManBufferType() { ...``` [server/data-man-buffer.js:80](server/data-man-buffer.js#L80)
 
 
 ***
@@ -410,90 +440,16 @@ __File: ["server/data-man-datauri.js"](server/data-man-datauri.js) Where: {serve
 
 ***
 
-### <a name="DataMan.DataURI.prototype.getBuffer"></a>*datamanDatauri*.getBuffer(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+### <a name="DataMan.DataURI"></a>new *dataman*.DataURI(dataUri)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
-*This method is private*
-*This method __getBuffer__ is defined in `prototype` of `DataMan.DataURI`*
-
-__Arguments__
-
-* __callback__ *{function}*  
-
- callback(err, buffer)
-
-
-__Returns__  *{Buffer|undefined}*
-
-
-Passes a Buffer representing the data to a callback.
-
-> ```DataMan.DataURI.prototype.getBuffer = function dataManDataURIGetBuffer(callback) { ...``` [server/data-man-datauri.js:17](server/data-man-datauri.js#L17)
-
-
--
-
-### <a name="DataMan.DataURI.prototype.getDataUri"></a>*datamanDatauri*.getDataUri(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
-
-*This method is private*
-*This method __getDataUri__ is defined in `prototype` of `DataMan.DataURI`*
+*This method __DataURI__ is defined in `DataMan`*
 
 __Arguments__
 
-* __callback__ *{function}*  
-
- callback(err, dataUri)
+* __dataUri__ *{String}*  
 
 
-
-Passes a data URI representing the data to a callback.
-
-> ```DataMan.DataURI.prototype.getDataUri = function dataManDataURIGetDataUri(callback) { ...``` [server/data-man-datauri.js:37](server/data-man-datauri.js#L37)
-
-
--
-
-### <a name="DataMan.DataURI.prototype.createReadStream"></a>*datamanDatauri*.createReadStream()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
-
-*This method is private*
-*This method __createReadStream__ is defined in `prototype` of `DataMan.DataURI`*
-
-
-Returns a read stream for the data.
-
-> ```DataMan.DataURI.prototype.createReadStream = function dataManDataURICreateReadStream() { ...``` [server/data-man-datauri.js:47](server/data-man-datauri.js#L47)
-
-
--
-
-### <a name="DataMan.DataURI.prototype.size"></a>*datamanDatauri*.size(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
-
-*This method is private*
-*This method __size__ is defined in `prototype` of `DataMan.DataURI`*
-
-__Arguments__
-
-* __callback__ *{function}*  
-
- callback(err, size)
-
-
-
-Passes the size in bytes of the data to a callback.
-
-> ```DataMan.DataURI.prototype.size = function dataManDataURISize(callback) { ...``` [server/data-man-datauri.js:58](server/data-man-datauri.js#L58)
-
-
--
-
-### <a name="DataMan.DataURI.prototype.type"></a>*datamanDatauri*.type()&nbsp;&nbsp;<sub><i>Server</i></sub> ###
-
-*This method is private*
-*This method __type__ is defined in `prototype` of `DataMan.DataURI`*
-
-
-Returns the type of the data.
-
-> ```DataMan.DataURI.prototype.type = function dataManDataURIType() { ...``` [server/data-man-datauri.js:82](server/data-man-datauri.js#L82)
+> ```DataMan.DataURI = function DataManDataURI(dataUri) { ...``` [server/data-man-datauri.js:7](server/data-man-datauri.js#L7)
 
 
 ***
@@ -501,6 +457,24 @@ Returns the type of the data.
 __File: ["server/data-man-filepath.js"](server/data-man-filepath.js) Where: {server}__
 
 ***
+
+### <a name="DataMan.FilePath"></a>new *dataman*.FilePath(filepath, [type])&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+
+*This method __FilePath__ is defined in `DataMan`*
+
+__Arguments__
+
+* __filepath__ *{String}*  
+* __type__ *{String}*  (Optional)
+
+ The data content (MIME) type. Will lookup from file if not passed.
+
+
+
+> ```DataMan.FilePath = function DataManFilePath(filepath, type) { ...``` [server/data-man-filepath.js:11](server/data-man-filepath.js#L11)
+
+
+-
 
 ### <a name="DataMan.FilePath.prototype.getBuffer"></a>*datamanFilepath*.getBuffer(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
@@ -519,7 +493,7 @@ __Returns__  *{Buffer|undefined}*
 
 Passes a Buffer representing the data to a callback.
 
-> ```DataMan.FilePath.prototype.getBuffer = function dataManFilePathGetBuffer(callback) { ...``` [server/data-man-filepath.js:18](server/data-man-filepath.js#L18)
+> ```DataMan.FilePath.prototype.getBuffer = function dataManFilePathGetBuffer(callback) { ...``` [server/data-man-filepath.js:25](server/data-man-filepath.js#L25)
 
 
 -
@@ -539,7 +513,7 @@ __Arguments__
 
 Passes a data URI representing the data to a callback.
 
-> ```DataMan.FilePath.prototype.getDataUri = function dataManFilePathGetDataUri(callback) { ...``` [server/data-man-filepath.js:44](server/data-man-filepath.js#L44)
+> ```DataMan.FilePath.prototype.getDataUri = function dataManFilePathGetDataUri(callback) { ...``` [server/data-man-filepath.js:43](server/data-man-filepath.js#L43)
 
 
 -
@@ -552,7 +526,7 @@ Passes a data URI representing the data to a callback.
 
 Returns a read stream for the data.
 
-> ```DataMan.FilePath.prototype.createReadStream = function dataManFilePathCreateReadStream() { ...``` [server/data-man-filepath.js:72](server/data-man-filepath.js#L72)
+> ```DataMan.FilePath.prototype.createReadStream = function dataManFilePathCreateReadStream() { ...``` [server/data-man-filepath.js:67](server/data-man-filepath.js#L67)
 
 
 -
@@ -572,7 +546,7 @@ __Arguments__
 
 Passes the size in bytes of the data to a callback.
 
-> ```DataMan.FilePath.prototype.size = function dataManFilePathSize(callback) { ...``` [server/data-man-filepath.js:84](server/data-man-filepath.js#L84)
+> ```DataMan.FilePath.prototype.size = function dataManFilePathSize(callback) { ...``` [server/data-man-filepath.js:79](server/data-man-filepath.js#L79)
 
 
 -
@@ -585,7 +559,7 @@ Passes the size in bytes of the data to a callback.
 
 Returns the type of the data.
 
-> ```DataMan.FilePath.prototype.type = function dataManFilePathType() { ...``` [server/data-man-filepath.js:109](server/data-man-filepath.js#L109)
+> ```DataMan.FilePath.prototype.type = function dataManFilePathType() { ...``` [server/data-man-filepath.js:104](server/data-man-filepath.js#L104)
 
 
 ***
@@ -593,6 +567,24 @@ Returns the type of the data.
 __File: ["server/data-man-url.js"](server/data-man-url.js) Where: {server}__
 
 ***
+
+### <a name="DataMan.URL"></a>new *dataman*.URL(url, type)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+
+*This method __URL__ is defined in `DataMan`*
+
+__Arguments__
+
+* __url__ *{String}*  
+* __type__ *{String}*  
+
+ The data content (MIME) type.
+
+
+
+> ```DataMan.URL = function DataManURL(url, type) { ...``` [server/data-man-url.js:10](server/data-man-url.js#L10)
+
+
+-
 
 ### <a name="DataMan.URL.prototype.getBuffer"></a>*datamanUrl*.getBuffer(callback)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
@@ -611,7 +603,7 @@ __Returns__  *{Buffer|undefined}*
 
 Passes a Buffer representing the data at the URL to a callback.
 
-> ```DataMan.URL.prototype.getBuffer = function dataManUrlGetBuffer(callback) { ...``` [server/data-man-url.js:17](server/data-man-url.js#L17)
+> ```DataMan.URL.prototype.getBuffer = function dataManUrlGetBuffer(callback) { ...``` [server/data-man-url.js:24](server/data-man-url.js#L24)
 
 
 -
@@ -631,7 +623,7 @@ __Arguments__
 
 Passes a data URI representing the data at the URL to a callback.
 
-> ```DataMan.URL.prototype.getDataUri = function dataManUrlGetDataUri(callback) { ...``` [server/data-man-url.js:50](server/data-man-url.js#L50)
+> ```DataMan.URL.prototype.getDataUri = function dataManUrlGetDataUri(callback) { ...``` [server/data-man-url.js:57](server/data-man-url.js#L57)
 
 
 -
@@ -644,7 +636,7 @@ Passes a data URI representing the data at the URL to a callback.
 
 Returns a read stream for the data.
 
-> ```DataMan.URL.prototype.createReadStream = function dataManUrlCreateReadStream() { ...``` [server/data-man-url.js:78](server/data-man-url.js#L78)
+> ```DataMan.URL.prototype.createReadStream = function dataManUrlCreateReadStream() { ...``` [server/data-man-url.js:85](server/data-man-url.js#L85)
 
 
 -
@@ -664,7 +656,7 @@ __Arguments__
 
 Returns the size in bytes of the data at the URL.
 
-> ```DataMan.URL.prototype.size = function dataManUrlSize(callback) { ...``` [server/data-man-url.js:90](server/data-man-url.js#L90)
+> ```DataMan.URL.prototype.size = function dataManUrlSize(callback) { ...``` [server/data-man-url.js:97](server/data-man-url.js#L97)
 
 
 -
@@ -677,6 +669,6 @@ Returns the size in bytes of the data at the URL.
 
 Returns the type of the data.
 
-> ```DataMan.URL.prototype.type = function dataManUrlType() { ...``` [server/data-man-url.js:114](server/data-man-url.js#L114)
+> ```DataMan.URL.prototype.type = function dataManUrlType() { ...``` [server/data-man-url.js:121](server/data-man-url.js#L121)
 
 

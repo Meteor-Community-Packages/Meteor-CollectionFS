@@ -112,6 +112,18 @@ __Arguments__
 
 -
 
+### <a name="DataMan.prototype.type"></a>*dataman*.type()&nbsp;&nbsp;<sub><i>Client</i></sub> ###
+
+*This method __type__ is defined in `prototype` of `DataMan`*
+
+
+Returns the type of the data.
+
+> ```DataMan.prototype.type = function dataManType() { ...``` [client/data-man-api.js:227](client/data-man-api.js#L227)
+
+
+-
+
 ### <a name="DataMan"></a>new DataMan(data, [type])&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
 
@@ -148,7 +160,7 @@ __Returns__  *{Buffer|undefined}*
 
 Returns a Buffer representing this data, or passes the Buffer to a callback.
 
-> ```DataMan.prototype.getBuffer = function dataManGetBuffer(callback) { ...``` [server/data-man-api.js:56](server/data-man-api.js#L56)
+> ```DataMan.prototype.getBuffer = function dataManGetBuffer(callback) { ...``` [server/data-man-api.js:54](server/data-man-api.js#L54)
 
 
 -
@@ -162,7 +174,7 @@ __Returns__  *{undefined}*
 
 Saves this data to a filepath on the local filesystem.
 
-> ```DataMan.prototype.saveToFile = function dataManSaveToFile(filePath) { ...``` [server/data-man-api.js:68](server/data-man-api.js#L68)
+> ```DataMan.prototype.saveToFile = function dataManSaveToFile(filePath) { ...``` [server/data-man-api.js:66](server/data-man-api.js#L66)
 
 
 -
@@ -181,7 +193,7 @@ __Arguments__
 
 If no callback, returns the data URI.
 
-> ```DataMan.prototype.getDataUri = function dataManGetDataUri(callback) { ...``` [server/data-man-api.js:86](server/data-man-api.js#L86)
+> ```DataMan.prototype.getDataUri = function dataManGetDataUri(callback) { ...``` [server/data-man-api.js:84](server/data-man-api.js#L84)
 
 
 -
@@ -193,7 +205,7 @@ If no callback, returns the data URI.
 
 Returns a read stream for the data.
 
-> ```DataMan.prototype.createReadStream = function dataManCreateReadStream() { ...``` [server/data-man-api.js:97](server/data-man-api.js#L97)
+> ```DataMan.prototype.createReadStream = function dataManCreateReadStream() { ...``` [server/data-man-api.js:95](server/data-man-api.js#L95)
 
 
 -
@@ -212,7 +224,7 @@ __Arguments__
 
 If no callback, returns the size in bytes of the data.
 
-> ```DataMan.prototype.size = function dataManSize(callback) { ...``` [server/data-man-api.js:108](server/data-man-api.js#L108)
+> ```DataMan.prototype.size = function dataManSize(callback) { ...``` [server/data-man-api.js:106](server/data-man-api.js#L106)
 
 
 -
@@ -224,6 +236,74 @@ If no callback, returns the size in bytes of the data.
 
 Returns the type of the data.
 
-> ```DataMan.prototype.type = function dataManType() { ...``` [server/data-man-api.js:119](server/data-man-api.js#L119)
+> ```DataMan.prototype.type = function dataManType() { ...``` [server/data-man-api.js:117](server/data-man-api.js#L117)
+
+
+-
+
+### <a name="DataMan.Buffer"></a>new *dataman*.Buffer(buffer, type)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+
+*This method __Buffer__ is defined in `DataMan`*
+
+__Arguments__
+
+* __buffer__ *{Buffer}*  
+* __type__ *{String}*  
+
+ The data content (MIME) type.
+
+
+
+> ```DataMan.Buffer = function DataManBuffer(buffer, type) { ...``` [server/data-man-buffer.js:10](server/data-man-buffer.js#L10)
+
+
+-
+
+### <a name="DataMan.DataURI"></a>new *dataman*.DataURI(dataUri)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+
+*This method __DataURI__ is defined in `DataMan`*
+
+__Arguments__
+
+* __dataUri__ *{String}*  
+
+
+> ```DataMan.DataURI = function DataManDataURI(dataUri) { ...``` [server/data-man-datauri.js:7](server/data-man-datauri.js#L7)
+
+
+-
+
+### <a name="DataMan.FilePath"></a>new *dataman*.FilePath(filepath, [type])&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+
+*This method __FilePath__ is defined in `DataMan`*
+
+__Arguments__
+
+* __filepath__ *{String}*  
+* __type__ *{String}*  (Optional)
+
+ The data content (MIME) type. Will lookup from file if not passed.
+
+
+
+> ```DataMan.FilePath = function DataManFilePath(filepath, type) { ...``` [server/data-man-filepath.js:11](server/data-man-filepath.js#L11)
+
+
+-
+
+### <a name="DataMan.URL"></a>new *dataman*.URL(url, type)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
+
+*This method __URL__ is defined in `DataMan`*
+
+__Arguments__
+
+* __url__ *{String}*  
+* __type__ *{String}*  
+
+ The data content (MIME) type.
+
+
+
+> ```DataMan.URL = function DataManURL(url, type) { ...``` [server/data-man-url.js:10](server/data-man-url.js#L10)
 
 
