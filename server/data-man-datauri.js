@@ -16,15 +16,8 @@ DataMan.DataURI = function DataManDataURI(dataUri) {
  */
 DataMan.DataURI.prototype.getBuffer = function dataManDataURIGetBuffer(callback) {
   var self = this;
-
-  if (self.buffer) {
-    callback(null, self.buffer);
-    return;
-  }
-
   var data = self.dataUri.substr(self.dataUri.indexOf('base64') + 7);
-  self.buffer = new Buffer(data, 'base64');
-  callback(null, self.buffer);
+  callback(null, new Buffer(data, 'base64'));
 };
 
 /**

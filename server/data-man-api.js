@@ -10,11 +10,9 @@ var fs = Npm.require("fs");
 DataMan = function DataMan(data, type) {
   var self = this;
 
-  // The end result of all this is that we will have one of the following set:
-  // - self.buffer
-  // - self.dataUri
-  // - self.url
-  // - self.filepath
+  // The end result of all this is that we will have this.source set to a correct
+  // data type handler. We are simply detecting what the data arg is.
+  //
   // Unless we already have in-memory data, we don't load anything into memory
   // and instead rely on obtaining a read stream when the time comes.
   if (typeof Buffer !== "undefined" && data instanceof Buffer) {

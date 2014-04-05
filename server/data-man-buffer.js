@@ -27,17 +27,11 @@ DataMan.Buffer.prototype.getBuffer = function dataManBufferGetBuffer(callback) {
  */
 DataMan.Buffer.prototype.getDataUri = function dataManBufferGetDataUri(callback) {
   var self = this;
-
-  if (self.dataUri) {
-    callback(null, self.dataUri);
-    return;
-  }
-
   if (!self._type) {
     callback(new Error("DataMan.getDataUri couldn't get a contentType"));
   } else {
-    self.dataUri = "data:" + self._type + ";base64," + self.buffer.toString("base64");
-    callback(null, self.dataUri);
+    var dataUri = "data:" + self._type + ";base64," + self.buffer.toString("base64");
+    callback(null, dataUri);
   }
 };
 

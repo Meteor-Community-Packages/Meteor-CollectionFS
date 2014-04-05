@@ -18,16 +18,8 @@ DataMan.FilePath = function DataManFilePath(filepath, type) {
 DataMan.FilePath.prototype.getBuffer = function dataManFilePathGetBuffer(callback) {
   var self = this;
 
-  if (self.buffer) {
-    callback(null, self.buffer);
-    return;
-  }
-
   // Call node readFile
   fs.readFile(self.filepath, Meteor.bindEnvironment(function(err, buffer) {
-    if (buffer) {
-      self.buffer = buffer;
-    }
     callback(err, buffer);
   }, function(err) {
     callback(err);
@@ -44,11 +36,6 @@ DataMan.FilePath.prototype.getBuffer = function dataManFilePathGetBuffer(callbac
 DataMan.FilePath.prototype.getDataUri = function dataManFilePathGetDataUri(callback) {
   var self = this;
 
-  if (self.dataUri) {
-    callback(null, self.dataUri);
-    return;
-  }
-
   self.getBuffer(function (error, buffer) {
     if (error) {
       callback(error);
@@ -56,8 +43,9 @@ DataMan.FilePath.prototype.getDataUri = function dataManFilePathGetDataUri(callb
       if (!self._type) {
         callback(new Error("DataMan.getDataUri couldn't get a contentType"));
       } else {
-        self.dataUri = "data:" + self._type + ";base64," + buffer.toString("base64");
-        callback(null, self.dataUri);
+        var dataUri = "data:" + self._type + ";base64," + buffer.toString("base64");
+        buffer = null;
+        callback(null, dataUri);
       }
     }
   });
