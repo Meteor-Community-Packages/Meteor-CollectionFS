@@ -9,7 +9,7 @@ Tinytest.addAsync('cfs-data - client - Init with Blob', function(test, onComplet
   var blob = new Blob(['Hello World'], {type : 'text/plain'});
   blobData = new DataMan(blob);
   test.instanceOf(blobData.blob, Blob);
-  test.equal(blobData.type, "text/plain");
+  test.equal(blobData.type(), "text/plain");
   onComplete();
 });
 
@@ -18,7 +18,7 @@ Tinytest.addAsync('cfs-data - client - Init with ArrayBuffer', function(test, on
   arrayBufferData = new DataMan(str2ab('Hello World'), "text/plain");
   // Should be converted upon init to a Blob
   test.instanceOf(arrayBufferData.blob, Blob);
-  test.equal(arrayBufferData.type, "text/plain");
+  test.equal(arrayBufferData.type(), "text/plain");
   onComplete();
 });
 
@@ -27,7 +27,7 @@ Tinytest.addAsync('cfs-data - client - Init with Binary', function(test, onCompl
   binaryData = new DataMan(new Uint8Array(str2ab('Hello World')), "text/plain");
   // Should be converted upon init to a Blob
   test.instanceOf(arrayBufferData.blob, Blob);
-  test.equal(binaryData.type, "text/plain");
+  test.equal(binaryData.type(), "text/plain");
   onComplete();
 });
 
@@ -37,7 +37,7 @@ Tinytest.addAsync('cfs-data - client - Init with data URI string', function(test
   dataUriData = new DataMan(dataUri);
   // Data URIs are not converted to Blobs upon init
   test.equal(dataUriData.dataUri, dataUri);
-  test.equal(dataUriData.type, "text/plain"); //should be extracted from data URI
+  test.equal(dataUriData.type(), "text/plain"); //should be extracted from data URI
   onComplete();
 });
 
@@ -46,7 +46,7 @@ Tinytest.addAsync('cfs-data - client - Init with URL string', function(test, onC
   urlData = new DataMan(Meteor.absoluteUrl('test'), "text/plain"); //'Hello World'
   // URLs are not converted to Blobs upon init
   test.equal(urlData.url, Meteor.absoluteUrl('test'));
-  test.equal(urlData.type, "text/plain");
+  test.equal(urlData.type(), "text/plain");
   onComplete();
 });
 
