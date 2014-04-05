@@ -1,6 +1,6 @@
 #CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-4-1). It has
+NOTE: This branch is under active development right now (2014-4-4). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -94,7 +94,9 @@ var Images = new FS.Collection("images", {
 
 In this example, we've defined a FS.Collection named "images", which will
 be a new collection in your MongoDB database with the name "cfs.images.filerecord". We've
-also told it to store the files in `~/uploads` on the local filesystem.
+also told it to store the files in `~/uploads` on the local filesystem. If you
+don't specify a `path`, a `cfs/files` folder in your app container (bundle directory)
+will be used.
 
 Your FS.Collection and FS.Store variables do not necessarily have to be
 global on the client or the server, but be sure to give them the same name
@@ -205,8 +207,89 @@ transformation requires a companion transformation when the data is later read
 out of the store (such as encrypt/decrypt), you can define a `transformRead`
 function as well.
 
-For examples of using this feature to transform uploaded images, refer to the
-[documentation](https://github.com/CollectionFS/Meteor-cfs-graphicsmagick) for the `cfs-graphicsmagick` package.
+For illustration purposes, here is an example of a `transformWrite` function that doesn't do anything:
+
+```js
+transformWrite: function(fileObj, readStream, writeStream) {
+  readStream.pipe(writeStream);
+}
+```
+
+The important thing is that you must pipe the `readStream` to the `writeStream` before returning from the function. Generally you will manipulate the stream in some way before piping it.
+
+## Image Manipulation
+
+A common use for `transformWrite` is to manipulate images before saving them.
+To get this set up:
+
+1. Install [GraphicsMagick](http://www.graphicsmagick.org/) or [ImageMagick](http://www.imagemagick.org/script/index.php) on your development machine and on any server that will host your app. (The free Meteor deployment servers do not have either of these, so you can't deploy to there.) These are normal operating system applications, so you have to install them using the correct method for your OS. For example, on Mac OSX you can use `brew install graphicsmagick` assuming you have Homebrew installed.
+2. Add the `graphicsmagick` Meteor package to your app: `mrt add graphicsmagick`
+
+The following are some examples.
+
+### Basic Example
+
+```js
+Images = new FS.Collection("images", {
+    stores: [
+      new FS.Store.FileSystem("images"),
+      new FS.Store.FileSystem("thumbs", {
+        transformWrite: function(fileObj, readStream, writeStream) {
+          // Transform the image into a 10x10px thumbnail
+          gm(readStream, fileObj.name).resize('10', '10').stream().pipe(writeStream);
+        }
+      )
+    ],
+    filter: {
+      allow: {
+        contentTypes: ['image/*'] //allow only images in this FS.Collection
+      }
+    }
+});
+```
+
+*Note that this example requires the `cfs-filesystem` package.*
+
+### Converting to a Different Image Format
+
+To convert every file to a specific image format, you can pass a [GraphicsMagick format string](http://www.graphicsmagick.org/formats.html) to the `stream` method, but you will also need to alter the `FS.File` instance as necessary before returning from the function.
+
+```js
+Images = new FS.Collection("images", {
+    stores: [
+      new FS.Store.FileSystem("images"),
+      new FS.Store.FileSystem("thumbs", {
+        transformWrite: function(fileObj, readStream, writeStream) {
+          // Transform the image into a 10x10px PNG thumbnail.
+          // We must change the name and type, but the new size
+          // will be automatically detected and set.
+          fileObj.copies.thumbs.name = changeExtension(fileObj.copies.thumbs.name, 'png'); //user-defined changeExtension method
+          fileObj.copies.thumbs.type = 'image/png';
+          gm(readStream).resize(60).stream('PNG').pipe(writeStream);
+        }
+      )
+    ],
+    filter: {
+      allow: {
+        contentTypes: ['image/*'] //allow only images in this FS.Collection
+      }
+    }
+});
+```
+
+### Converting a File Already Stored
+
+You may want to adjust a bunch of images that you've already stored. This can be done easily by streaming out of the store and then back into it. The following example is for illustration purposes, but you should not use it on production data unless you have a throttled queue in a separate process or only a very small number of images.
+
+```js
+Images.find().forEach(function (fileObj) {
+  var readStream = fileObj.createReadStream('images');
+  var writeStream = fileObj.createWriteStream('images');
+  gm(readStream).swirl(180).stream().pipe(writeStream);
+});
+```
+
+Note that you could also pipe the readStream from one store to the writeStream from another store to move files between stores, for example if you decide to use a different storage adapter and need to quickly and easily migrate the data. (We have not tested this, but it should be possible.)
 
 ## Filtering
 
@@ -226,7 +309,11 @@ Images = new FS.Collection("images", {
       extensions: ['png']
     },
     onInvalid: function (message) {
-      alert(message);
+      if (Meteor.isClient) {
+        alert(message);
+      } else {
+        console.log(message);
+      }
     }
   }
 });
@@ -251,7 +338,8 @@ The extension checks are used only when there is a filename. It's possible to
 upload a file with no name. Thus, you should generally use extension checks
 only *in addition to* content type checks, and not instead of content type checks.
 
-The file extensions must be specified without a leading period.
+The file extensions must be specified without a leading period. Extension matching
+is case-insensitive.
 
 ## Security
 
@@ -279,8 +367,7 @@ The first argument is the userId and the second argument is the FS.File being
 requested for download.
 * To determine who can *set* file metadata, insert files, and upload file data,
 use "insert" allow/deny functions.
-* To determine who can *set* file metadata, update files, and upload replacement
-file data, use "update" allow/deny functions.
+* To determine who can *update* file metadata, use "update" allow/deny functions.
 * To determine who can *remove* files, which removes all file data and file
 metadata, use "remove" allow/deny functions.
 
@@ -291,8 +378,9 @@ metadata, you must set this information on the file when originally inserting it
 You can then check it in your allow/deny functions.
 
 ```js
-var fsFile = new FS.File(event.target.files[0]);
-fsFile.metadata = {owner: Meteor.userId()};
+var fsFile = new FS.File();
+fsFile.attachData(event.target.files[0]);
+fsFile.owner = Meteor.userId();
 fsCollection.insert(fsFile, function (err) {
   if (err) throw err;
 });
@@ -534,14 +622,14 @@ newFile.attachData(url, function (error) {
 
 ### Add Custom Metadata to a File Before Inserting
 
-Set the `metadata` property to your custom metadata object before inserting. For example,
+You can set any additional properties on your file object before inserting. To avoid conflicts with built-in properties and method names, you may want to group them in one object property, like `metadata`. For example,
 with a file input:
 
 ```js
 Template.myForm.events({
   'change .myFileInput': function(event, template) {
     FS.Utility.eachFile(event, function(file) {
-      var newFile = new FS.File(file);
+      var newFile = new FS.File();
       newFile.attachData(file);
       newFile.metadata = {foo: "bar"};
       Images.insert(newFile, function (err, fileObj) {
