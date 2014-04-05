@@ -20,7 +20,16 @@ FS.Transform = function(options) {
 };
 
 // Allow packages to add scope
-FS.Transform.scope = {};
+FS.Transform.scope = {
+// Deprecate gm scope:
+  gm: function(source, height, color) {
+    console.warn('Deprecation notice: `this.gm` is deprecating in favour of the general global `gm` scope');
+    if (typeof gm !== 'function')
+      throw new Error('No graphicsmagick package installed, `gm` not found in scope, eg. `cfs-graphicsmagick`');
+    return gm(source, height, color);
+  }
+// EO Deprecate gm scope
+};
 
 // The transformation stream triggers an "stored" event when data is stored into
 // the storage adapter
@@ -56,7 +65,8 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
       // XXX: If the transform function returns a buffer should we stream that?
     } catch(err) {
       // We emit an error - should we throw an error?
-      sourceStream.emit('error', 'FS.Transform.createWriteStream transform function failed');
+      console.warn('FS.Transform.createWriteStream transform function failed, Error: ');
+      throw err;
     }
 
     // Return write stream

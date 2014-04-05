@@ -10,6 +10,10 @@ Package.on_use(function(api) {
   api.use(['deps', 'check', 'livedata', 'mongo-livedata',
     'ejson']);
 
+  // We want to make sure that its added to scope for now if installed.
+  // We have set a deprecation warning on the transform scope
+  api.use('cfs-graphicsmagick', 'server', { weak: true });
+
   api.add_files([
     'storageAdapter.client.js'
   ], 'client');
