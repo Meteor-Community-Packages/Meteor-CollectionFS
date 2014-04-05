@@ -1,5 +1,12 @@
 var request = Npm.require("request");
 
+/**
+ * @method DataMan.URL
+ * @public
+ * @constructor
+ * @param {String} url
+ * @param {String} type The data content (MIME) type.
+ */
 DataMan.URL = function DataManURL(url, type) {
   var self = this;
   self.url = url;

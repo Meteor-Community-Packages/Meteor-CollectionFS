@@ -53,7 +53,7 @@ DataMan = function DataMan(data, type) {
  */
 DataMan.prototype.getBuffer = function dataManGetBuffer(callback) {
   var self = this;
-  return callback ? self.source.getBuffer(callback) : Meteor._wrapAsync(_.bind(self.source.getBuffer, self.source))();
+  return callback ? self.source.getBuffer(callback) : Meteor._wrapAsync(bind(self.source.getBuffer, self.source))();
 };
 
 /**
@@ -83,7 +83,7 @@ DataMan.prototype.saveToFile = function dataManSaveToFile(filePath) {
  */
 DataMan.prototype.getDataUri = function dataManGetDataUri(callback) {
   var self = this;
-  return callback ? self.source.getDataUri(callback) : Meteor._wrapAsync(_.bind(self.source.getDataUri, self.source))();
+  return callback ? self.source.getDataUri(callback) : Meteor._wrapAsync(bind(self.source.getDataUri, self.source))();
 };
 
 /**
@@ -105,7 +105,7 @@ DataMan.prototype.createReadStream = function dataManCreateReadStream() {
  */
 DataMan.prototype.size = function dataManSize(callback) {
   var self = this;
-  return callback ? self.source.size(callback) : Meteor._wrapAsync(_.bind(self.source.size, self.source))();
+  return callback ? self.source.size(callback) : Meteor._wrapAsync(bind(self.source.size, self.source))();
 };
 
 /**
@@ -117,3 +117,28 @@ DataMan.prototype.size = function dataManSize(callback) {
 DataMan.prototype.type = function dataManType() {
   return this.source.type();
 };
+
+/*
+ * "bind" shim; from underscorejs, but we avoid a dependency
+ */
+var slice = Array.prototype.slice;
+var nativeBind = Function.prototype.bind;
+var ctor = function(){};
+function isFunction(obj) {
+  return Object.prototype.toString.call(obj) == '[object Function]';
+}
+function bind(func, context) {
+  var args, bound;
+  if (nativeBind && func.bind === nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
+  if (!isFunction(func)) throw new TypeError;
+  args = slice.call(arguments, 2);
+  return bound = function() {
+    if (!(this instanceof bound)) return func.apply(context, args.concat(slice.call(arguments)));
+    ctor.prototype = func.prototype;
+    var self = new ctor;
+    ctor.prototype = null;
+    var result = func.apply(self, args.concat(slice.call(arguments)));
+    if (Object(result) === result) return result;
+    return self;
+  };
+}

@@ -1,3 +1,9 @@
+/**
+ * @method DataMan.DataURI
+ * @public
+ * @constructor
+ * @param {String} dataUri
+ */
 DataMan.DataURI = function DataManDataURI(dataUri) {
   var self = this;
   var pieces = dataUri.match(/^data:(.*);base64,(.*)$/);

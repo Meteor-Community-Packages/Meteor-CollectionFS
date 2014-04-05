@@ -1,5 +1,12 @@
 var sbs = Npm.require('simple-bufferstream');
 
+/**
+ * @method DataMan.Buffer
+ * @public
+ * @constructor
+ * @param {Buffer} buffer
+ * @param {String} type The data content (MIME) type.
+ */
 DataMan.Buffer = function DataManBuffer(buffer, type) {
   var self = this;
   self.buffer = buffer;

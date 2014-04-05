@@ -1,6 +1,13 @@
 var mime = Npm.require('mime');
 var fs = Npm.require("fs");
 
+/**
+ * @method DataMan.FilePath
+ * @public
+ * @constructor
+ * @param {String} filepath
+ * @param {String} [type] The data content (MIME) type. Will lookup from file if not passed.
+ */
 DataMan.FilePath = function DataManFilePath(filepath, type) {
   var self = this;
   self.filepath = filepath;

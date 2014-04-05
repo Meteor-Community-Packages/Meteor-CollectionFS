@@ -11,7 +11,7 @@ Npm.depends({
 });
 
 Package.on_use(function(api) {
-  api.use(['ejson', 'underscore']);
+  api.use(['ejson']);
 
   api.export('DataMan');
 
