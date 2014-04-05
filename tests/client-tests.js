@@ -66,14 +66,14 @@ Tinytest.addAsync('cfs-data - client - getBlob', function(test, onComplete) {
 
     if (blob instanceof Blob) {
       var reader = new FileReader();
-      reader.onload = function(event) {
+      reader.addEventListener("load", function(event) {
         test.equal(reader.result, 'Hello World', testType + ' got back blob with incorrect data');
         continueIfDone();
-      };
-      reader.onerror = function(err) {
+      }, false);
+      reader.addEventListener("error", function(err) {
         test.equal(reader.error, null, testType + ' error reading blob as text');
         continueIfDone();
-      };
+      }, false);
       reader.readAsText(blob, 'utf-8');
     } else {
       continueIfDone();
