@@ -24,11 +24,6 @@ DataMan.URL = function DataManURL(url, type) {
 DataMan.URL.prototype.getBuffer = function dataManUrlGetBuffer(callback) {
   var self = this;
 
-  if (self.buffer) {
-    callback(null, self.buffer);
-    return;
-  }
-
   request({
     url: self.url,
     method: "GET",
@@ -39,8 +34,7 @@ DataMan.URL.prototype.getBuffer = function dataManUrlGetBuffer(callback) {
       callback(err);
     } else {
       self._type = res.headers['content-type'];
-      self.buffer = body;
-      callback(null, self.buffer);
+      callback(null, body);
     }
   }, function(err) {
     callback(err);
@@ -57,11 +51,6 @@ DataMan.URL.prototype.getBuffer = function dataManUrlGetBuffer(callback) {
 DataMan.URL.prototype.getDataUri = function dataManUrlGetDataUri(callback) {
   var self = this;
 
-  if (self.dataUri) {
-    callback(null, self.dataUri);
-    return;
-  }
-
   self.getBuffer(function (error, buffer) {
     if (error) {
       callback(error);
@@ -69,8 +58,8 @@ DataMan.URL.prototype.getDataUri = function dataManUrlGetDataUri(callback) {
       if (!self._type) {
         callback(new Error("DataMan.getDataUri couldn't get a contentType"));
       } else {
-        self.dataUri = "data:" + self._type + ";base64," + buffer.toString("base64");
-        callback(null, self.dataUri);
+        var dataUri = "data:" + self._type + ";base64," + buffer.toString("base64");
+        callback(null, dataUri);
       }
     }
   });
