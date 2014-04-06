@@ -54,7 +54,14 @@ _Utility.defaultZero = function(val) {
  *
  */
 FS.Utility.cloneFileRecord = function(rec) {
-  return _.omit(rec, ['collectionName', 'collection', 'data', 'createdByTransform']);
+  var result = {};
+  var omit = ['collectionName', 'collection', 'data', 'createdByTransform'];
+  for (var prop in rec) {
+    if (rec.hasOwnProperty(prop) && !_.contains(omit, prop)) {
+      result[prop] = rec[prop];
+    }
+  }
+  return result;
 };
 
 /**
@@ -152,16 +159,37 @@ FS.Utility.validateAction = function validateAction(validators, fileObj, userId)
 };
 
 /**
+ * @method FS.Utility.getFileName
+ * @private
+ * @param {String} name - A filename, filepath, or URL
+ * @returns {String} The filename without the URL, filepath, or query string
+ */
+FS.Utility.getFileName = function utilGetFileName(name) {
+  // in case it's a URL, strip off potential query string
+  // should have no effect on filepath
+  name = name.split('?')[0];
+  // strip off beginning path or url
+  var lastSlash = name.lastIndexOf('/');
+  if (lastSlash !== -1) {
+    name = name.slice(lastSlash + 1);
+  }
+  return name;
+};
+
+/**
  * @method FS.Utility.getFileExtension
  * @private
- * @param {String} name - A filename or URL that may or may not have an extension.
+ * @param {String} name - A filename, filepath, or URL that may or may not have an extension.
  * @returns {String} The extension or an empty string if no extension found.
  */
 FS.Utility.getFileExtension = function utilGetFileExtension(name) {
+  name = FS.Utility.getFileName(name);
   // Seekout the last '.' if found
-  var found = name.lastIndexOf('.') + 1;
+  var found = name.lastIndexOf('.');
   // Return the extension if found else ''
-  return (found > 0 ? name.substr(found).toLowerCase() : '');
+  // If found is -1, we return '' because there is no extension
+  // If found is 0, we return '' because it's a hidden file
+  return (found > 0 ? name.slice(found + 1).toLowerCase() : '');
 };
 
 /*

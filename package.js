@@ -4,7 +4,7 @@ Package.describe({
 });
 
 Package.on_use(function(api) {
-  api.use(['deps', 'underscore', 'ejson', 'check']);
+  api.use(['deps', 'underscore', 'ejson']);
 
   if (api.export) {
     api.export('FS');
@@ -15,7 +15,7 @@ Package.on_use(function(api) {
     'base-common.js',
     'base-server.js'
   ], 'server');
-  
+
   api.add_files([
     'base-common.js',
     'base-client.js'
@@ -23,7 +23,7 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-  api.use('cfs-base-package');
+  api.use(['cfs-base-package', 'cfs-file']);
   api.use('test-helpers', 'server');
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
            'random', 'deps']);

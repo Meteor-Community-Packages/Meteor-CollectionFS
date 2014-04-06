@@ -33,11 +33,25 @@ Tinytest.add('cfs-base-package - FS.Utility.cloneFileRecord', function(test) {
   // 'collection', 'data', and 'createdByTransform'
   var result = FS.Utility.cloneFileRecord({a: 1, b: {c: 1}, d: [1, 2], collectionName: 'test', collection: {}, data: {}, createdByTransform: false});
   test.equal(result, {a: 1, b: {c: 1}, d: [1, 2]});
+
+  // Given an FS.File instance, should filter out 'collectionName',
+  // 'collection', 'data', and 'createdByTransform' and return a plain Object
+  var fileObj = new FS.File({a: 1, b: {c: 1}, d: [1, 2], name: 'name.png', type: 'image/png', size: 100, collectionName: 'test', collection: {}, data: {}, createdByTransform: false});
+  test.isTrue(fileObj instanceof FS.File);
+  var result = FS.Utility.cloneFileRecord(fileObj);
+  test.isFalse(result instanceof FS.File);
+  test.isTrue(equals(result, {a: 1, b: {c: 1}, d: [1, 2], name: 'name.png', type: 'image/png', size: 100}));
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.defaultCallback', function(test) {
-  test.isTrue(true);
-  // TODO
+  // should throw an error passed in, but not a Meteor.Error
+  test.throws(function () {
+    var cb = FS.Utility.defaultCallback;
+    cb(new Error('test'));
+  });
+
+  var cb2 = FS.Utility.defaultCallback;
+  test.isUndefined(cb2(new Meteor.Error('test')));
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.handleError', function(test) {
@@ -60,10 +74,45 @@ Tinytest.add('cfs-base-package - FS.Utility.connectionLogin', function(test) {
   // TODO
 });
 
-/*
- * TODO Test utility methods
- */
+Tinytest.add('cfs-base-package - FS.Utility.getFileName', function(test) {
 
+  function gfe(input, expected) {
+    var ext = FS.Utility.getFileName(input);
+    test.equal(ext, expected, 'Got incorrect filename');
+  }
+
+  gfe('bar.png', 'bar.png');
+  gfe('foo/bar.png', 'bar.png');
+  gfe('/foo/foo/bar.png', 'bar.png');
+  gfe('http://foobar.com/file.png', 'file.png');
+  gfe('http://foobar.com/file', 'file');
+  gfe('http://foobar.com/file.png?a=b', 'file.png');
+  gfe('http://foobar.com/.file?a=b', '.file');
+  gfe('file', 'file');
+  gfe('.file', '.file');
+  gfe('foo/.file', '.file');
+  gfe('/foo/foo/.file', '.file');
+});
+
+Tinytest.add('cfs-base-package - FS.Utility.getFileExtension', function(test) {
+
+  function gfe(input, expected) {
+    var ext = FS.Utility.getFileExtension(input);
+    test.equal(ext, expected, 'Got incorrect extension');
+  }
+
+  gfe('bar.png', 'png');
+  gfe('foo/bar.png', 'png');
+  gfe('/foo/foo/bar.png', 'png');
+  gfe('http://foobar.com/file.png', 'png');
+  gfe('http://foobar.com/file', '');
+  gfe('http://foobar.com/file.png?a=b', 'png');
+  gfe('http://foobar.com/file?a=b', '');
+  gfe('file', '');
+  gfe('.file', '');
+  gfe('foo/.file', '');
+  gfe('/foo/foo/.file', '');
+});
 
 //Test API:
 //Tinytest.add('', function(test) {});
