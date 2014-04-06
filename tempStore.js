@@ -52,36 +52,40 @@ FS.TempStore = new EventEmitter();
  * > Note: This is considered as `advanced` use, its not a common pattern.
  */
 FS.TempStore.Storage = null;
+
 // XXX: Temp fix
 var workaroundGridFS = false;
 
-// XXX: We will never have FS.FileWorker at this point in time since
-// FS.FileWorker depends on us to load first... We Could wait until startup?
+// We will not mount a storage adapter until needed. This allows us to check for the
+// existance of FS.FileWorker, which is loaded after this package because it
+// depends on this package.
+function mountStorage() {
 
-// Select a storage adapter for temp storage
-if (FS.Store.GridFS && (FS.FileWorker || !FS.Store.FileSystem)) {
-  // If the file worker is installed we would prefer to use the gridfs sa
-  // for scalability. We also default to gridfs if filesystem is not found
+  if (FS.TempStore.Storage) return;
 
-  // Use the gridfs
-  FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
-  // XXX: Temp fix
-  workaroundGridFS = true;
+  if (FS.Store.GridFS && (FS.FileWorker || !FS.Store.FileSystem)) {
+    // If the file worker is installed we would prefer to use the gridfs sa
+    // for scalability. We also default to gridfs if filesystem is not found
 
-} else if (FS.Store.FileSystem) {
+    // Use the gridfs
+    FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
+    // XXX: Temp fix
+    workaroundGridFS = true;
+  } else if (FS.Store.FileSystem) {
+    // use the Filesystem
+    FS.TempStore.Storage = new FS.Store.FileSystem('_tempstore', { internal: true });
+  } else {
+    throw new Error('FS.TempStore.Storage is not set: Install cfs-filesystem or cfs-gridfs or set it manually');
+  }
 
-  // use the Filesystem
-  FS.TempStore.Storage = new FS.Store.FileSystem('_tempstore', { internal: true });
-
-} else {
-  console.warn('FS.TempStore.Storage is not set, install cfs-filesystem, cfs-gridfs or set it manually');
-}
-
-
-if (FS.TempStore.Storage !== null) {
   FS.debug && console.log('TempStore is mounted on', FS.TempStore.Storage.typeName);
 }
 
+function mountFile(fileObj, name) {
+  if (!fileObj.isMounted()) {
+    throw new Error(name + ' cannot work with unmounted file');
+  }
+}
 
 // We update the fileObj on progress
 FS.TempStore.on('progress', function(fileObj, chunk, count) {
@@ -109,7 +113,6 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
   // });
 
 // Stream implementation
-
 
 // XXX: Would be nice if we could just use the meteor id directly in the mongodb
 // It should be possible?
@@ -160,20 +163,19 @@ _chunkPath = function(n) {
  * @param {Number} chunk
  * @private
  * @returns {String} Generated SA specific fileKey for the chunk
+ *
+ * Note: Calling function should call mountStorage() first, and
+ * make sure that fileObj is mounted.
  */
 _fileReference = function(fileObj, chunk) {
-  if (FS.TempStore.Storage) {
-
-    // Return a fitting fileKey SA specific
-    return FS.TempStore.Storage.adapter.fileKey({
-      collectionName: fileObj.collectionName,
-      _id: fileObj._id,
-      name: _chunkPath(chunk),
-      // Temp workaround, we generate a unik id for the gridFS SA
-      mongoId: workaroundGridFS && meteorToMongoId(fileObj._id, chunk)
-    });
-
-  }
+  // Return a fitting fileKey SA specific
+  return FS.TempStore.Storage.adapter.fileKey({
+    collectionName: fileObj.collectionName,
+    _id: fileObj._id,
+    name: _chunkPath(chunk),
+    // Temp workaround, we generate a unik id for the gridFS SA
+    mongoId: workaroundGridFS && meteorToMongoId(fileObj._id, chunk)
+  });
 };
 
 /**
@@ -227,20 +229,20 @@ FS.TempStore.listParts = function(fileObj) {
  */
 FS.TempStore.removeFile = function(fileObj) {
   var self = this;
-  if (FS.TempStore.Storage) {
 
-    // Emit event
-    self.emit('remove', fileObj);
+  // Ensure that we have a storage adapter mounted; if not, throw an error.
+  mountStorage();
 
-    // Unlink each file
-    for (var i = 0; i < fileObj.chunkSum; i++) {
-      // Get the chunk path
-      FS.TempStore.Storage.adapter.remove( _fileReference(fileObj, i), FS.Utility.noop);
-    }
+  // If fileObj is not mounted or can't be, throw an error
+  mountFile(fileObj, 'FS.TempStore.removeFile');
 
-  } else {
-    throw new Error('FS.TempStore.removeFile cannot remove file, we dont ' +
-            'have a storage adapter yet');
+  // Emit event
+  self.emit('remove', fileObj);
+
+  // Unlink each file
+  for (var i = 0; i < fileObj.chunkSum; i++) {
+    // Get the chunk path
+    FS.TempStore.Storage.adapter.remove( _fileReference(fileObj, i), FS.Utility.noop);
   }
 };
 
@@ -264,9 +266,11 @@ FS.TempStore.removeFile = function(fileObj) {
 FS.TempStore.createWriteStream = function(fileObj, options) {
   var self = this;
 
-  if (!FS.TempStore.Storage)
-    throw new Error('FS.TempStore.createWriteStream cannot remove file, we ' +
-            'dont have a storage adapter yet');
+  // Ensure that we have a storage adapter mounted; if not, throw an error.
+  mountStorage();
+
+  // If fileObj is not mounted or can't be, throw an error
+  mountFile(fileObj, 'FS.TempStore.createWriteStream');
 
   // XXX: it should be possible for a store to sync by storing data into the
   // tempstore - this could be done nicely by setting the store name as string
@@ -278,71 +282,60 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   // number - if a chunk has been uploaded
   // string - if a storage adapter wants to sync its data to the other SA's
 
-  var writeStream;
-  if (fileObj.isMounted()) {
+  // If chunk is a number we use that otherwise we set it to 0
+  var chunk = (options === +options)?options: 0;
 
-    // If chunk is a number we use that otherwise we set it to 0
-    var chunk = (options === +options)?options: 0;
+  // Find a nice location for the chunk data
+  var chunkReference = _fileReference(fileObj, chunk);
 
-    // Find a nice location for the chunk data
-    var chunkReference = _fileReference(fileObj, chunk);
+  // Create the stream as Meteor safe stream
+  var writeStream = FS.TempStore.Storage.adapter.createWriteStream( chunkReference );
 
-    // Create the stream as Meteor safe stream
-    writeStream = FS.TempStore.Storage.adapter.createWriteStream( chunkReference );
+  // When the stream closes we update the chunkCount
+  writeStream.safeOn('stored', function(result) {
+    // var chunkCount = fs.readdirSync(filePath).length;
+    // XXX: We should track this in a collection to keep track of chunks
+    // This could fail if a chunk is uploaded twice...
+    var chunkCount = fileObj.chunkCount + 1;
 
-    // When the stream closes we update the chunkCount
-    writeStream.safeOn('stored', function(result) {
-      // var chunkCount = fs.readdirSync(filePath).length;
-      // XXX: We should track this in a collection to keep track of chunks
-      // This could fail if a chunk is uploaded twice...
-      var chunkCount = fileObj.chunkCount + 1;
+    // Progress
+    self.emit('progress', fileObj, chunk, chunkCount);
 
-      // Progress
-      self.emit('progress', fileObj, chunk, chunkCount);
+    if (options === +options) {
+      // options is number - this is a chunked upload
 
-      if (options === +options) {
-        console.log("SA writeStream saved chunk");
-        // options is number - this is a chunked upload
-
-
-        // Check if upload is completed
-        if (chunkCount === fileObj.chunkSum) {
-          self.emit('stored', fileObj);
-          self.emit('ready', fileObj, chunkCount);
-        }
-
-      } else if (options === ''+options) {
-        console.log("SA writeStream synchronized");
-        // options is a string - so we are passed the name of syncronizing SA
-        self.emit('synchronized', fileObj, options);
-        self.emit('ready', fileObj, options);
-
-      } else if (typeof options === 'undefined') {
-        console.log("SA writeStream UPLOADED");
-        // options is not defined - this is direct use of server api
-
-        // We created a writestream without chunk defined meaning this was used
-        // as a regular createWriteStream method so we only stream to one chunk
-        // file - 0.chunk - therefor setting the chunkCount and chunkSum to 1
-
-
-        // We know this upload is complete - this could be a server transport
-        // set true marking "one stream" since chunk number is not defined
-        // we assume that we are accessed by others than the Access Point /
-        // file upload - This could be server streaming or client direct uploads
-        self.emit('uploaded', fileObj);
-        self.emit('ready', fileObj);
-
-      } else {
-        throw new Error('FS.TempStore.createWriteStream got unexpected type in options');
+      // Check if upload is completed
+      if (chunkCount === fileObj.chunkSum) {
+        self.emit('stored', fileObj);
+        self.emit('ready', fileObj, chunkCount);
       }
-    });
 
-    return writeStream;
+    } else if (options === ''+options) {
+      // options is a string - so we are passed the name of syncronizing SA
+      self.emit('synchronized', fileObj, options);
+      self.emit('ready', fileObj, options);
 
-  } else {
-    throw new Error('FS.TempStore.createWriteStream cannot work with unmounted file');
-  }
+    } else if (typeof options === 'undefined') {
+      // options is not defined - this is direct use of server api
+
+      // We created a writestream without chunk defined meaning this was used
+      // as a regular createWriteStream method so we only stream to one chunk
+      // file - 0.chunk - therefor setting the chunkCount and chunkSum to 1
+
+
+      // We know this upload is complete - this could be a server transport
+      // set true marking "one stream" since chunk number is not defined
+      // we assume that we are accessed by others than the Access Point /
+      // file upload - This could be server streaming or client direct uploads
+      self.emit('uploaded', fileObj);
+      self.emit('ready', fileObj);
+
+    } else {
+      throw new Error('FS.TempStore.createWriteStream got unexpected type in options');
+    }
+  });
+
+  return writeStream;
 };
 
 // READSTREAM
@@ -425,14 +418,11 @@ _TempstoreReadStream.prototype._read = function() {
   *
   */
 FS.TempStore.createReadStream = function(fileObj) {
+  // Ensure that we have a storage adapter mounted; if not, throw an error.
+  mountStorage();
 
-  if (!FS.TempStore.Storage)
-    throw new Error('FS.TempStore.createReadStream cannot remove file, we ' +
-            'dont have a storage adapter yet');
+  // If fileObj is not mounted or can't be, throw an error
+  mountFile(fileObj, 'FS.TempStore.createReadStream');
 
-  if (fileObj.isMounted()) {
-    return new _TempstoreReadStream(fileObj);
-  } else {
-    throw new Error('FS.TempStore.createReadStream cannot work with unmounted file');
-  }
+  return new _TempstoreReadStream(fileObj);
 };

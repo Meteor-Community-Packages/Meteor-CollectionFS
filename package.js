@@ -1,16 +1,10 @@
 Package.describe({
+  name: 'cfs-tempstore',
   summary: 'CollectionFS, temporary storage'
 });
 
-// Npm.depends({
-//   temp: "0.6.0"
-// });
-
 Package.on_use(function(api) {
-
-  api.use([ 'cfs-base-package' ]);
-
-  api.use(['underscore', 'ejson' ]);
+  api.use(['cfs-base-package']);
 
   api.use('cfs-filesystem', { weak: true });
 
