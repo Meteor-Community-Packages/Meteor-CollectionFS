@@ -263,7 +263,7 @@ Images = new FS.Collection("images", {
           // Transform the image into a 10x10px PNG thumbnail.
           // We must change the name and type, but the new size
           // will be automatically detected and set.
-          fileObj.copies.thumbs.name = changeExtension(fileObj.copies.thumbs.name, 'png'); //user-defined changeExtension method
+          fileObj.copies.thumbs.name = FS.Utility.setFileExtension(fileObj.copies.thumbs.name, 'png');
           fileObj.copies.thumbs.type = 'image/png';
           gm(readStream).resize(60).stream('PNG').pipe(writeStream);
         }
