@@ -75,19 +75,15 @@ FS.FileWorker.observe = function(fsCollection) {
  *  specified store.
  *
  *  {
- *    $where: "this.chunkSum === this.chunkCount",
+ *    uploadedAt: {$exists: true},
  *    'copies.storeName`: null,
  *    'failures.copies.storeName.doneTrying': {$ne: true}
  *  }
  */
 function getReadyQuery(storeName) {
-  var selector = {
-    $where: "this.chunkSum === this.chunkCount"
-  };
-
+  var selector = {uploadedAt: {$exists: true}};
   selector['copies.' + storeName] = null;
   selector['failures.copies.' + storeName + '.doneTrying'] = {$ne: true};
-
   return selector;
 }
 
@@ -128,9 +124,7 @@ function getReadyQuery(storeName) {
  */
 function getDoneQuery(stores) {
   var selector = {
-    $and: [
-      {chunks: {$exists: true}}
-    ]
+    $and: []
   };
 
   // Add conditions for all defined stores
@@ -165,10 +159,10 @@ function getDoneQuery(stores) {
  * `overwrite` option is `true`, will save to the store even if we already
  * have, potentially overwriting any previously saved data. Synchronous.
  */
-  var makeSafeCallback = function (callback) {
-      // Make callback safe for Meteor code
-      return Meteor.bindEnvironment(callback, function(err) { throw err; });
-  };
+var makeSafeCallback = function (callback) {
+    // Make callback safe for Meteor code
+    return Meteor.bindEnvironment(callback, function(err) { throw err; });
+};
 
 function saveCopy(fsFile, storeName, options) {
   options = options || {};
@@ -185,6 +179,4 @@ function saveCopy(fsFile, storeName, options) {
 
   // Pipe the temp data into the storage adapter
   readStream.pipe(writeStream);
-
-
 }
