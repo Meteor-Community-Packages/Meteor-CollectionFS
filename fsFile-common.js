@@ -140,8 +140,14 @@ FS.File.prototype.uploadProgress = function() {
   // Make sure our file record is updated
   self.getFileRecord();
 
-  // Return the confirmed progress
-  return Math.round((self.chunkCount || 0) / (self.chunkSum || 1) * 100);
+  // If fully uploaded, return 100
+  if (self.uploadedAt) {
+    return 100;
+  }
+  // Otherwise return the confirmed progress or 0
+  else {
+    return Math.round((self.chunkCount || 0) / (self.chunkSum || 1) * 100);
+  }
 };
 
 /**
@@ -380,7 +386,7 @@ FS.File.prototype.isUploaded = function() {
   // Make sure we use the updated file record
   self.getFileRecord();
 
-  return self.chunkCount === self.chunkSum;
+  return !!self.uploadedAt;
 };
 
 /**
