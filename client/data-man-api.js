@@ -10,7 +10,6 @@ DataMan = function DataMan(data, type) {
 
   // The end result of all this is that we will have one of the following set:
   // - self.blob
-  // - self.dataUri
   // - self.url
   // Unless we already have in-memory data, we don't load anything into memory
   // and instead rely on obtaining a read stream when the time comes.
@@ -28,8 +27,8 @@ DataMan = function DataMan(data, type) {
     self._type = type;
   } else if (typeof data === "string") {
     if (data.slice(0, 5) === "data:") {
-      self.dataUri = data;
       self._type = data.slice(5, data.indexOf(';'));
+      self.blob = dataURItoBlob(data, self._type);
     } else if (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:") {
       self.url = data;
       self._type = type;
@@ -44,30 +43,36 @@ DataMan = function DataMan(data, type) {
 /**
  * @method DataMan.prototype.getBlob
  * @public
- * @param {Function} callback - callback(error, blob)
- * @returns {undefined}
+ * @param {Function} [callback] - callback(error, blob)
+ * @returns {undefined|Blob}
  *
- * Passes a Blob representing this data to a callback.
+ * Passes a Blob representing this data to a callback or returns
+ * the Blob if no callback is provided. A callback is required
+ * if getting a Blob for a URL.
  */
 DataMan.prototype.getBlob = function dataManGetBlob(callback) {
   var self = this;
-  if (self.blob) {
-    callback(null, self.blob);
-  } else if (self.dataUri) {
-    self.blob = dataURItoBlob(self.dataUri, self._type);
-    callback(null, self.blob);
-  } else if (self.url) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', self.url, true);
-    xhr.responseType = "blob";
-    xhr.onload = function(data) {
-      self.blob = xhr.response;
+
+  if (callback) {
+    if (self.blob) {
       callback(null, self.blob);
-    };
-    xhr.onerror = function(err) {
-      callback(err);
-    };
-    xhr.send();
+    } else if (self.url) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', self.url, true);
+      xhr.responseType = "blob";
+      xhr.onload = function(data) {
+        self.blob = xhr.response;
+        callback(null, self.blob);
+      };
+      xhr.onerror = function(err) {
+        callback(err);
+      };
+      xhr.send();
+    }
+  } else {
+    if (self.url)
+      throw new Error('DataMan.getBlob requires a callback when managing a URL');
+    return self.blob;
   }
 };
 
@@ -181,8 +186,8 @@ DataMan.prototype.getDataUri = function dataManGetDataUri(callback) {
 
   var fileReader = new FileReader();
   fileReader.onload = function(event) {
-    self.dataUri = event.target.result;
-    callback(null, self.dataUri);
+    var dataUri = event.target.result;
+    callback(null, dataUri);
   };
   fileReader.onerror = function(err) {
     callback(err);
@@ -197,25 +202,41 @@ DataMan.prototype.getDataUri = function dataManGetDataUri(callback) {
   });
 };
 
+/**
+ * @method DataMan.prototype.size
+ * @public
+ * @param {function} [callback] callback(err, size)
+ *
+ * Passes the size of the data to the callback, if provided,
+ * or returns it. A callback is required to get the size of a URL on the client.
+ */
 DataMan.prototype.size = function dataManSize(callback) {
   var self = this;
 
-  if (!callback) {
-    throw new Error("On the client, DataMan.size requires a callback");
-  }
-
-  if (typeof self._size === "number") {
-    return self._size;
-  }
-
-  return self.getBlob(function (error, blob) {
-    if (error) {
-      callback(error);
+  if (callback) {
+    if (typeof self._size === "number") {
+      callback(null, self._size);
     } else {
-      self._size = blob.size;
-      callback(null, blob.size);
+      self.getBlob(function (error, blob) {
+        if (error) {
+          callback(error);
+        } else {
+          self._size = blob.size;
+          callback(null, self._size);
+        }
+      });
     }
-  });
+  } else {
+    if (self.url) {
+      throw new Error("On the client, DataMan.size requires a callback when getting size for a URL on the client");
+    } else if (typeof self._size === "number") {
+      return self._size;
+    } else {
+      var blob = self.getBlob();
+      self._size = blob.size;
+      return self._size;
+    }
+  }
 };
 
 /**

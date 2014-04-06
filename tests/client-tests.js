@@ -35,8 +35,8 @@ Tinytest.addAsync('cfs-data - client - Init with Binary', function(test, onCompl
 Tinytest.addAsync('cfs-data - client - Init with data URI string', function(test, onComplete) {
   var dataUri = 'data:text/plain;base64,SGVsbG8gV29ybGQ='; //'Hello World'
   dataUriData = new DataMan(dataUri);
-  // Data URIs are not converted to Blobs upon init
-  test.equal(dataUriData.dataUri, dataUri);
+  // Should be converted upon init to a Blob
+  test.instanceOf(dataUriData.blob, Blob);
   test.equal(dataUriData.type(), "text/plain"); //should be extracted from data URI
   onComplete();
 });
@@ -52,7 +52,7 @@ Tinytest.addAsync('cfs-data - client - Init with URL string', function(test, onC
 
 // getBlob
 Tinytest.addAsync('cfs-data - client - getBlob', function(test, onComplete) {
-  var total = 5, done = 0;
+  var total = 10, done = 0;
   function continueIfDone() {
     done++;
     if (total === done) {
@@ -85,25 +85,44 @@ Tinytest.addAsync('cfs-data - client - getBlob', function(test, onComplete) {
     testBlob(error, blob, 'getBlob from Blob');
   });
 
+  // from Blob (no callback)
+  testBlob(false, blobData.getBlob(), 'getBlob from Blob');
+
   // from ArrayBuffer
   arrayBufferData.getBlob(function (error, blob) {
     testBlob(error, blob, 'getBlob from ArrayBuffer');
   });
+
+  // from ArrayBuffer (no callback)
+  testBlob(false, arrayBufferData.getBlob(), 'getBlob from ArrayBuffer');
 
   // from binary
   binaryData.getBlob(function (error, blob) {
     testBlob(error, blob, 'getBlob from binary');
   });
 
+  // from binary (no callback)
+  testBlob(false, binaryData.getBlob(), 'getBlob from binary');
+
   // from data URI
   dataUriData.getBlob(function (error, blob) {
     testBlob(error, blob, 'getBlob from data URI');
   });
 
+  // from data URI (no callback)
+  testBlob(false, dataUriData.getBlob(), 'getBlob from data URI');
+
   // from URL
   urlData.getBlob(function (error, blob) {
     testBlob(error, blob, 'getBlob from URL');
   });
+
+  // from URL (no callback)
+  test.throws(function () {
+    // callback is required for URLs on the client
+    urlData.getBlob();
+  });
+  continueIfDone();
 
 });
 
@@ -197,15 +216,18 @@ Tinytest.addAsync('cfs-data - client - getDataUri', function(test, onComplete) {
 
 // size
 Tinytest.addAsync('cfs-data - client - size', function(test, onComplete) {
-  var total = 5, done = 0;
-  function testSize(error, size, testType) {
-    test.isFalse(!!error, testType + ' got error: ' + (error && error.message));
-    test.equal(size, 11, testType + ' got wrong size');
-
+  var total = 10, done = 0;
+  function continueIfDone() {
     done++;
     if (total === done) {
       onComplete();
     }
+  }
+
+  function testSize(error, size, testType) {
+    test.isFalse(!!error, testType + ' got error: ' + (error && error.message));
+    test.equal(size, 11, testType + ' got wrong size');
+    continueIfDone();
   }
 
   // from Blob
@@ -213,25 +235,44 @@ Tinytest.addAsync('cfs-data - client - size', function(test, onComplete) {
     testSize(error, size, 'size from Blob');
   });
 
+  // from Blob (no callback)
+  testSize(false, blobData.size(), 'size from Blob');
+
   // from ArrayBuffer
   arrayBufferData.size(function (error, size) {
     testSize(error, size, 'size from ArrayBuffer');
   });
+
+  // from ArrayBuffer (no callback)
+  testSize(false, arrayBufferData.size(), 'size from ArrayBuffer');
 
   // from binary
   binaryData.size(function (error, size) {
     testSize(error, size, 'size from binary');
   });
 
+  // from binary (no callback)
+  testSize(false, binaryData.size(), 'size from binary');
+
   // from data URI
   dataUriData.size(function (error, size) {
     testSize(error, size, 'size from data URI');
   });
 
+  // from data URI (no callback)
+  testSize(false, dataUriData.size(), 'size from data URI');
+
   // from URL
   urlData.size(function (error, size) {
     testSize(error, size, 'size from URL');
   });
+
+  // from URL (no callback)
+  test.throws(function () {
+    // callback is required for URLs on the client
+    urlData.size();
+  });
+  continueIfDone();
 });
 
 //Test API:

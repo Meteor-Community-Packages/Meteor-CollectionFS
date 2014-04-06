@@ -6,6 +6,7 @@
 	"version": "0.0.1",
 	"git": "https://github.com/CollectionFS/Meteor-data-man.git",
 	"packages": {
+		"cfs-filesaver": {},
 		"http-methods": {}
 	}
 }
