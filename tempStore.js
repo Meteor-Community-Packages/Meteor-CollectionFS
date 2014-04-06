@@ -90,22 +90,30 @@ function mountFile(fileObj, name) {
 // We update the fileObj on progress
 FS.TempStore.on('progress', function(fileObj, chunk, count) {
   // Update the chunk counter
-  var modifyer = { chunkCount: count };
+  var modifier;
 
   // Check if all chunks are uploaded
   if (count === fileObj.chunkSum) {
+    // We no longer need the chunk info
+    // TODO TempStore should have a collection for tracking the number of chunks per file so we don't need to rely on the fileObj.chunkSum
+    // modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
+    modifier = { $set: {}, $unset: {chunkCount: 1, chunkSize: 1} };
+
     // Check if the file has been uploaded before
     if (typeof fileObj.uploadedAt === 'undefined') {
       // We set the uploadedAt date
-      modifyer.uploadedAt = new Date();
+      modifier.$set.uploadedAt = new Date();
     } else {
       // We have been uploaded so an event were file data is updated is
       // called synchronizing - so this must be a synchronizedAt?
-      modifyer.synchronizedAt = new Date();
+      modifier.$set.synchronizedAt = new Date();
     }
+  } else {
+    modifier = { $set: {chunkCount: count} };
   }
+
   // Update the chunkCount on the fileObject
-  fileObj.update({ $set: modifyer });
+  fileObj.update(modifier);
 });
 
   // FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
@@ -240,6 +248,7 @@ FS.TempStore.removeFile = function(fileObj) {
   self.emit('remove', fileObj);
 
   // Unlink each file
+  // TODO TempStore should have a collection for tracking the number of chunks per file so we don't need to rely on the fileObj.chunkSum
   for (var i = 0; i < fileObj.chunkSum; i++) {
     // Get the chunk path
     FS.TempStore.Storage.adapter.remove( _fileReference(fileObj, i), FS.Utility.noop);
@@ -297,6 +306,7 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     // XXX: We should track this in a collection to keep track of chunks
     // This could fail if a chunk is uploaded twice...
     var chunkCount = fileObj.chunkCount + 1;
+    var done = (chunkCount === fileObj.chunkSum); // check this here since the 'progress' event handler will delete the chunkSum prop
 
     // Progress
     self.emit('progress', fileObj, chunk, chunkCount);
@@ -304,8 +314,8 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     if (options === +options) {
       // options is number - this is a chunked upload
 
-      // Check if upload is completed
-      if (chunkCount === fileObj.chunkSum) {
+      // If upload is completed, fire events
+      if (done) {
         self.emit('stored', fileObj);
         self.emit('ready', fileObj, chunkCount);
       }
@@ -358,6 +368,7 @@ _TempstoreReadStream = function(fileObj, options) {
   self.currentChunk = 0;
 
   // Init the sum of chunk
+  // TODO TempStore should have a collection for tracking the number of chunks per file so we don't need to rely on the fileObj.chunkSum
   self.chunkSum = fileObj.chunkSum;
 
   // Fire up the chunk read stream
