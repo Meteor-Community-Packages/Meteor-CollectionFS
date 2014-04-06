@@ -52,15 +52,21 @@ FS.TempStore = new EventEmitter();
  * > Note: This is considered as `advanced` use, its not a common pattern.
  */
 FS.TempStore.Storage = null;
+// XXX: Temp fix
+var workaroundGridFS = false;
+
+// XXX: We will never have FS.FileWorker at this point in time since
+// FS.FileWorker depends on us to load first... We Could wait until startup?
 
 // Select a storage adapter for temp storage
-
 if (FS.Store.GridFS && (FS.FileWorker || !FS.Store.FileSystem)) {
   // If the file worker is installed we would prefer to use the gridfs sa
   // for scalability. We also default to gridfs if filesystem is not found
 
   // Use the gridfs
   FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
+  // XXX: Temp fix
+  workaroundGridFS = true;
 
 } else if (FS.Store.FileSystem) {
 
@@ -104,6 +110,40 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
 
 // Stream implementation
 
+
+// XXX: Would be nice if we could just use the meteor id directly in the mongodb
+// It should be possible?
+var UNMISTAKABLE_CHARS = "23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz";
+
+var UNMISTAKABLE_CHARS_LOOKUP = {};
+for (var a = 0; a < UNMISTAKABLE_CHARS.length; a++) {
+  UNMISTAKABLE_CHARS_LOOKUP[UNMISTAKABLE_CHARS[a]] = a;
+}
+
+var meteorToMongoId = function(meteorId, chunk) {
+  var unit = UNMISTAKABLE_CHARS.length;
+  var index = 1;
+  result = 0;
+  for (var i = 0; i < meteorId.length; i++) {
+    if (typeof UNMISTAKABLE_CHARS_LOOKUP[meteorId[i]] !== 'undefined') {
+      // Add the number at index
+      result += UNMISTAKABLE_CHARS_LOOKUP[meteorId[i]] * index;
+      // Inc index by ^unit
+      index *= unit;
+    } else {
+      throw new Error('Not a meteor ID');
+    }
+  }
+
+  // Inc by ^unit
+  result += chunk * index;
+
+  // convert to hex
+  result = result.toString(16).substring(0, 24);
+
+  return result;
+};
+
 /**
  * @method _chunkPath
  * @private
@@ -128,7 +168,9 @@ _fileReference = function(fileObj, chunk) {
     return FS.TempStore.Storage.adapter.fileKey({
       collectionName: fileObj.collectionName,
       _id: fileObj._id,
-      name: _chunkPath(chunk)
+      name: _chunkPath(chunk),
+      // Temp workaround, we generate a unik id for the gridFS SA
+      mongoId: workaroundGridFS && meteorToMongoId(fileObj._id, chunk)
     });
 
   }
