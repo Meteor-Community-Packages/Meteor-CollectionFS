@@ -20,7 +20,7 @@ FS.File = function(ref, createdByTransform) {
     }
 
     // Extend self with filerecord related data
-    FS.Utility.extend(self, FS.Utility.cloneFileRecord(ref));
+    FS.Utility.extend(self, FS.Utility.cloneFileRecord(ref, {full: true}));
   }
 };
 
