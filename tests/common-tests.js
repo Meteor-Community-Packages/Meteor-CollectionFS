@@ -76,42 +76,56 @@ Tinytest.add('cfs-base-package - FS.Utility.connectionLogin', function(test) {
 
 Tinytest.add('cfs-base-package - FS.Utility.getFileName', function(test) {
 
-  function gfe(input, expected) {
+  function t(input, expected) {
     var ext = FS.Utility.getFileName(input);
     test.equal(ext, expected, 'Got incorrect filename');
   }
 
-  gfe('bar.png', 'bar.png');
-  gfe('foo/bar.png', 'bar.png');
-  gfe('/foo/foo/bar.png', 'bar.png');
-  gfe('http://foobar.com/file.png', 'file.png');
-  gfe('http://foobar.com/file', 'file');
-  gfe('http://foobar.com/file.png?a=b', 'file.png');
-  gfe('http://foobar.com/.file?a=b', '.file');
-  gfe('file', 'file');
-  gfe('.file', '.file');
-  gfe('foo/.file', '.file');
-  gfe('/foo/foo/.file', '.file');
+  t('bar.png', 'bar.png');
+  t('foo/bar.png', 'bar.png');
+  t('/foo/foo/bar.png', 'bar.png');
+  t('http://foobar.com/file.png', 'file.png');
+  t('http://foobar.com/file', 'file');
+  t('http://foobar.com/file.png?a=b', 'file.png');
+  t('http://foobar.com/.file?a=b', '.file');
+  t('file', 'file');
+  t('.file', '.file');
+  t('foo/.file', '.file');
+  t('/foo/foo/.file', '.file');
 });
 
 Tinytest.add('cfs-base-package - FS.Utility.getFileExtension', function(test) {
 
-  function gfe(input, expected) {
+  function t(input, expected) {
     var ext = FS.Utility.getFileExtension(input);
     test.equal(ext, expected, 'Got incorrect extension');
   }
 
-  gfe('bar.png', 'png');
-  gfe('foo/bar.png', 'png');
-  gfe('/foo/foo/bar.png', 'png');
-  gfe('http://foobar.com/file.png', 'png');
-  gfe('http://foobar.com/file', '');
-  gfe('http://foobar.com/file.png?a=b', 'png');
-  gfe('http://foobar.com/file?a=b', '');
-  gfe('file', '');
-  gfe('.file', '');
-  gfe('foo/.file', '');
-  gfe('/foo/foo/.file', '');
+  t('bar.png', 'png');
+  t('foo/bar.png', 'png');
+  t('/foo/foo/bar.png', 'png');
+  t('http://foobar.com/file.png', 'png');
+  t('http://foobar.com/file', '');
+  t('http://foobar.com/file.png?a=b', 'png');
+  t('http://foobar.com/file?a=b', '');
+  t('file', '');
+  t('.file', '');
+  t('foo/.file', '');
+  t('/foo/foo/.file', '');
+});
+
+Tinytest.add('cfs-base-package - FS.Utility.setFileExtension', function(test) {
+
+  function t(name, ext, expected) {
+    var newName = FS.Utility.setFileExtension(name, ext);
+    test.equal(newName, expected, 'Extension was not set correctly');
+  }
+
+  t('bar.png', 'jpeg', 'bar.jpeg');
+  t('bar', 'jpeg', 'bar.jpeg');
+  t('.bar', 'jpeg', '.bar.jpeg');
+  t('', 'jpeg', '');
+  t(null, 'jpeg', null);
 });
 
 //Test API:

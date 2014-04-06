@@ -178,7 +178,7 @@ FS.Utility.getFileName = function utilGetFileName(name) {
 
 /**
  * @method FS.Utility.getFileExtension
- * @private
+ * @public
  * @param {String} name - A filename, filepath, or URL that may or may not have an extension.
  * @returns {String} The extension or an empty string if no extension found.
  */
@@ -190,6 +190,26 @@ FS.Utility.getFileExtension = function utilGetFileExtension(name) {
   // If found is -1, we return '' because there is no extension
   // If found is 0, we return '' because it's a hidden file
   return (found > 0 ? name.slice(found + 1).toLowerCase() : '');
+};
+
+/**
+ * @method FS.Utility.setFileExtension
+ * @public
+ * @param {String} name - A filename that may or may not already have an extension.
+ * @param {String} ext - An extension without leading period, which you want to be the new extension on `name`.
+ * @returns {String} The filename with changed extension.
+ */
+FS.Utility.setFileExtension = function utilSetFileExtension(name, ext) {
+  if (!name || !name.length) {
+    return name;
+  }
+  var currentExt = FS.Utility.getFileExtension(name);
+  if (currentExt.length) {
+    name = name.slice(0, currentExt.length * -1) + ext;
+  } else {
+    name = name + '.' + ext;
+  }
+  return name;
 };
 
 /*
