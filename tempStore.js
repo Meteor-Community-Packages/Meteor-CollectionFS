@@ -73,7 +73,7 @@ if (FS.Store.GridFS && (FS.FileWorker || !FS.Store.FileSystem)) {
 
 
 if (FS.TempStore.Storage !== null) {
-  console.log('TempStore is mounted on', FS.TempStore.Storage.typeName);
+  FS.debug && console.log('TempStore is mounted on', FS.TempStore.Storage.typeName);
 }
 
 
@@ -236,17 +236,17 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   // number - if a chunk has been uploaded
   // string - if a storage adapter wants to sync its data to the other SA's
 
-
-  // If chunk is a number we use that otherwise we set it to 0
-  var chunk = (options === +options)?options: 0;
-
+  var writeStream;
   if (fileObj.isMounted()) {
+
+    // If chunk is a number we use that otherwise we set it to 0
+    var chunk = (options === +options)?options: 0;
 
     // Find a nice location for the chunk data
     var chunkReference = _fileReference(fileObj, chunk);
 
     // Create the stream as Meteor safe stream
-    var writeStream = FS.TempStore.Storage.adapter.createWriteStream( chunkReference );
+    writeStream = FS.TempStore.Storage.adapter.createWriteStream( chunkReference );
 
     // When the stream closes we update the chunkCount
     writeStream.safeOn('stored', function(result) {
@@ -259,6 +259,7 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
       self.emit('progress', fileObj, chunk, chunkCount);
 
       if (options === +options) {
+        console.log("SA writeStream saved chunk");
         // options is number - this is a chunked upload
 
 
@@ -269,11 +270,13 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
         }
 
       } else if (options === ''+options) {
+        console.log("SA writeStream synchronized");
         // options is a string - so we are passed the name of syncronizing SA
         self.emit('synchronized', fileObj, options);
         self.emit('ready', fileObj, options);
 
       } else if (typeof options === 'undefined') {
+        console.log("SA writeStream UPLOADED");
         // options is not defined - this is direct use of server api
 
         // We created a writestream without chunk defined meaning this was used
@@ -338,7 +341,7 @@ _TempstoreReadStream.prototype.nextChunkStream = function() {
   if (self.currentChunk < self.chunkSum) {
     var chunkReference = _fileReference(self.fileObj, self.currentChunk++);
 
-    console.log('READ CHUNK: ' + self.currentChunk);
+    FS.debug && console.log('READ CHUNK: ' + self.currentChunk);
     // create the chunk stream
     self.chunkReadStream = FS.TempStore.Storage.adapter.createReadStream(chunkReference);
 
