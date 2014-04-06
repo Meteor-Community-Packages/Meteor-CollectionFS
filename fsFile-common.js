@@ -42,10 +42,6 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   }
   options = options || {};
 
-  if (Meteor.isClient && !callback) {
-    callback = FS.Utility.defaultCallback;
-  }
-
   // Set any other properties we can determine from the source data
   // File
   if (typeof File !== "undefined" && data instanceof File) {
@@ -64,6 +60,9 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   // is required for filtering to work.
   else if (typeof data === "string" && (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:")) {
     if (!callback) {
+      if (Meteor.isClient) {
+        throw new Error('FS.File.attachData requires a callback when attaching a URL on the client');
+      }
       var result = Meteor.call('_cfs_getUrlInfo', data);
       FS.Utility.extend(self, result);
       setData(self.type);
@@ -91,12 +90,15 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
     // Update the type to match what the data is
     self.type = self.data.type();
 
-    // Update the size to match what the data is
+    // Update the size to match what the data is.
+    // It's always safe to call self.data.size() without supplying a callback
+    // because it requires a callback only for URLs on the client, and we
+    // already added size for URLs when we got the result from '_cfs_getUrlInfo' method.
     if (!self.size) {
       if (callback) {
         self.data.size(function (error, size) {
           if (error) {
-            callback && callback();
+            callback && callback(error);
           } else {
             self.size = size;
             setName();
