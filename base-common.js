@@ -34,6 +34,8 @@ _Utility.defaultZero = function(val) {
  * @method FS.Utility.cloneFileRecord
  * @public
  * @param {FS.File|FS.Collection filerecord} rec
+ * @param {Object} [options]
+ * @param {Boolean} [options.full=false] Set `true` to prevent certain properties from being omitted from the clone.
  * @returns {Object} Cloned filerecord
  *
  * Makes a shallow clone of `rec`, filtering out some properties that might be present if
@@ -53,9 +55,14 @@ _Utility.defaultZero = function(val) {
  * extending an FS.File instance.
  *
  */
-FS.Utility.cloneFileRecord = function(rec) {
+FS.Utility.cloneFileRecord = function(rec, options) {
+  options = options || {};
   var result = {};
-  var omit = ['collectionName', 'collection', 'data', 'createdByTransform'];
+  // We use this method for two purposes. If using it to clone one FS.File into another, then
+  // we want a full clone. But if using it to get a filerecord object for inserting into the
+  // internal collection, then there are certain properties we want to omit so that they aren't
+  // stored in the collection.
+  var omit = options.full ? [] : ['collectionName', 'collection', 'data', 'createdByTransform'];
   for (var prop in rec) {
     if (rec.hasOwnProperty(prop) && !_.contains(omit, prop)) {
       result[prop] = rec[prop];
