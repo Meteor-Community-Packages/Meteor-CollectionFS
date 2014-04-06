@@ -113,10 +113,14 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
 
   function setName() {
     // See if we can extract a file name from URL or filepath
-    if (!self.name && typeof data === "string" && data.slice(0, 5) !== "data:") {
-      var dataWithoutQueryString = data.split('?')[0]; //should have no effect on filepath
-      if (FS.Utility.getFileExtension(dataWithoutQueryString).length) {
-        self.name = dataWithoutQueryString.slice(dataWithoutQueryString.lastIndexOf('/') + 1);
+    if (!self.name && typeof data === "string") {
+      // name from URL (for URL we assume the end is a filename only if it has an extension)
+      if ((data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:") && FS.Utility.getFileExtension(data).length) {
+        self.name = FS.Utility.getFileName(data);
+      }
+      // name from filepath
+      else if (data.slice(0, 5) !== "data:") {
+        self.name = FS.Utility.getFileName(data);
       }
     }
 
