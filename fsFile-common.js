@@ -3,24 +3,18 @@
  * @namespace FS.File
  * @public
  * @constructor
- * @param {object|File|Blob} ref File reference
- * @todo Should we refactor the file record into `self.record`?
+ * @param {object|FS.File|data to attach} [ref] Another FS.File instance, a filerecord, or some data to pass to attachData
  */
 FS.File = function(ref, createdByTransform) {
   var self = this;
 
   self.createdByTransform = !!createdByTransform;
 
-  if ((typeof File !== "undefined" && ref instanceof File) ||
-    (typeof Blob !== "undefined" && ref instanceof Blob)){
-    self.attachData(ref);
-  } else {
-    if (typeof ref !== 'object') {
-      ref = {};
-    }
-
+  if (ref instanceof FS.File || isBasicObject(ref)) {
     // Extend self with filerecord related data
     FS.Utility.extend(self, FS.Utility.cloneFileRecord(ref, {full: true}));
+  } else {
+    self.attachData(ref);
   }
 };
 
@@ -430,3 +424,21 @@ FS.File.prototype.getCopyInfo = function(storeName) {
   self.getFileRecord();
   return (self.copies && self.copies[storeName]) || null;
 };
+
+function isBasicObject(obj) {
+  return (obj === Object(obj) && Object.getPrototypeOf(obj) === Object.prototype);
+}
+
+// getPrototypeOf polyfill
+if (typeof Object.getPrototypeOf !== "function") {
+  if (typeof "".__proto__ === "object") {
+    Object.getPrototypeOf = function(object) {
+      return object.__proto__;
+    };
+  } else {
+    Object.getPrototypeOf = function(object) {
+      // May break if the constructor has been tampered with
+      return object.constructor.prototype;
+    };
+  }
+}
