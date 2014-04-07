@@ -44,12 +44,6 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
 
     // Set collection name
     fileObj.collectionName = self.name;
-    // Set the chunkSize to match the current collection chunkSize
-    fileObj.chunkSize = self.options.chunkSize;
-    // Set counter for uploaded chunks
-    fileObj.chunkCount = 0;
-    // Calc the number of chunks
-    fileObj.chunkSum = Math.ceil(fileObj.size / fileObj.chunkSize);
 
     // Insert the file into db
     // We call cloneFileRecord as an easy way of extracting the properties
