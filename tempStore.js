@@ -116,6 +116,13 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
   fileObj.update(modifier);
 });
 
+// XXX: TODO
+// FS.TempStore.on('stored', function(fileObj, chunkCount, result) {
+//   // This should work if we pass on result from the SA on stored event...
+//   fileObj.update({ $set: { chunkSum: 1, chunkCount: chunkCount, size: result.size } });
+// });
+
+
   // FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
   //   console.log(fileObj.name + ' is uploaded!!');
   // });
