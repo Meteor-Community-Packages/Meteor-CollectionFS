@@ -10,6 +10,9 @@ FS.AccessPoint = {};
 // namespace for utillities
 FS.Utility = {};
 
+// A general place for any package to store global config settings
+FS.config = {};
+
 // An internal collection reference
 FS._collections = {};
 
