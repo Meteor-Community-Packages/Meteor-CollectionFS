@@ -93,7 +93,7 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
   var modifier;
 
   // Check if all chunks are uploaded
-  if (count === fileObj.chunkSum) {
+  if (count === (fileObj.chunkSum || 1) ) {
     // We no longer need the chunk info
     // TODO TempStore should have a collection for tracking the number of chunks per file so we don't need to rely on the fileObj.chunkSum
     // modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
