@@ -73,6 +73,31 @@ __Arguments__
 
 -
 
+#### <a name="UploadTransferQueue.isUploadingFile"></a>UploadTransferQueue.isUploadingFile(fileObj)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+-
+*This method __isUploadingFile__ is defined in `UploadTransferQueue`*
+
+__Arguments__
+
+* __fileObj__ *{[FS.File](#FS.File)}*  
+File to check if uploading
+
+-
+
+__Returns__  *{Boolean}*
+True if the file is uploading
+
+__TODO__
+```
+* Maybe have a similar function for accessing the file upload queue?
+```
+
+
+
+> ```self.isUploadingFile = function(fileObj) { ...``` [upload-http-client.js:88](upload-http-client.js#L88)
+
+-
+
 #### <a name="UploadTransferQueue.resumeUploadingFile"></a>UploadTransferQueue.resumeUploadingFile(File)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
 *This method __resumeUploadingFile__ is defined in `UploadTransferQueue`*
@@ -89,7 +114,7 @@ __TODO__
 * Not sure if this is the best way to handle resumes
 ```
 
-> ```self.resumeUploadingFile = function(fileObj) { ...``` [upload-http-client.js:90](upload-http-client.js#L90)
+> ```self.resumeUploadingFile = function(fileObj) { ...``` [upload-http-client.js:97](upload-http-client.js#L97)
 
 -
 
@@ -110,7 +135,7 @@ __TODO__
 * Have an initial request to the server getting uploaded chunks for resume
 ```
 
-> ```self.uploadFile = function(fileObj) { ...``` [upload-http-client.js:111](upload-http-client.js#L111)
+> ```self.uploadFile = function(fileObj) { ...``` [upload-http-client.js:118](upload-http-client.js#L118)
 
 -
 
@@ -121,7 +146,7 @@ __TODO__
 
 There is a single uploads transfer queue per client (not per CFS)
 
-> ```FS.HTTP.uploadQueue = new UploadTransferQueue();``` [upload-http-client.js:226](upload-http-client.js#L226)
+> ```FS.HTTP.uploadQueue = new UploadTransferQueue();``` [upload-http-client.js:233](upload-http-client.js#L233)
 
 -
 
@@ -143,6 +168,6 @@ __TODO__
 
 > This function is not yet implemented for server
 
-> ```FS.File.prototype.resume = function(ref) { ...``` [upload-http-client.js:240](upload-http-client.js#L240)
+> ```FS.File.prototype.resume = function(ref) { ...``` [upload-http-client.js:247](upload-http-client.js#L247)
 
 -

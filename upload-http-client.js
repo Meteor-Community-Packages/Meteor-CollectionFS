@@ -78,6 +78,13 @@ UploadTransferQueue = function(options) {
   // cancel maps onto queue reset
   self.cancel = self.reset;
 
+  /**
+    * @method UploadTransferQueue.isUploadingFile
+    * @param {FS.File} fileObj File to check if uploading
+    * @returns {Boolean} True if the file is uploading
+    *
+    * @todo Maybe have a similar function for accessing the file upload queue?
+    */
   self.isUploadingFile = function(fileObj) {
     // Check if file is already in queue
     return !!(fileObj && fileObj._id && fileObj.collectionName && (self.files[fileObj.collectionName] || {})[fileObj._id]);

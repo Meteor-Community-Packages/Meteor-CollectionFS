@@ -14,6 +14,6 @@ __Arguments__
 
 > This function is not yet implemented for server
 
-> ```FS.File.prototype.resume = function(ref) { ...``` [upload-http-client.js:240](upload-http-client.js#L240)
+> ```FS.File.prototype.resume = function(ref) { ...``` [upload-http-client.js:247](upload-http-client.js#L247)
 
 -
