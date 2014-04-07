@@ -1,15 +1,28 @@
-> File: ["upload-ddp-client.js"](upload-ddp-client.js)
+> File: ["http-call-client.js"](http-call-client.js)
 > Where: {client}
 
 -
-XXX: we dont have to use a subqueue - a task can do next(null) to be rerun later
-It could be an optimization if needed.
-XXX: we should make the queue connection aware - in case of failures and no
-connection it should pause the queue - and start again when online again.
-XXX: we should have a handle to pause or cancel the file upload
-XXX: we should have a handle to the file when uploading
-XXX: we should refactor this package into ddp transfer making the tranfer
-package the general mechanism for chunk uploading - dispite protocol.
+
+#### <a name="httpCall"></a>httpCall {any}&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+```
+We use this instead of HTTP.call from the http package for now. If/when
+PR 1670 is merged and released, we can probably remove this file and begin
+using HTTP.call directly.
+```
+-
+
+> ```httpCall = function(method, url, options, callback) { ...``` [http-call-client.js:7](http-call-client.js#L7)
+
+-
+
+
+---
+> File: ["upload-http-client.js"](upload-http-client.js)
+> Where: {client}
+
+-
+2MB default upload chunk size
+Can be overridden by user with FS.config.uploadChunkSize or per FS.Collection in collection options
 
 #### <a name="_taskHandler"></a>_taskHandler(task, next)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
@@ -25,7 +38,7 @@ __Arguments__
 __Returns__  *{undefined}*
 
 
-> ```var _taskHandler = function(task, next) { ...``` [upload-ddp-client.js:22](upload-ddp-client.js#L22)
+> ```var _taskHandler = function(task, next) { ...``` [upload-http-client.js:15](upload-http-client.js#L15)
 
 -
 
@@ -43,7 +56,7 @@ __Arguments__
 __Returns__  *{undefined}*
 
 
-> ```var _errorHandler = function(data, addTask) { ...``` [upload-ddp-client.js:59](upload-ddp-client.js#L59)
+> ```var _errorHandler = function(data, addTask) { ...``` [upload-http-client.js:49](upload-http-client.js#L49)
 
 -
 
@@ -53,12 +66,10 @@ __Returns__  *{undefined}*
 __Arguments__
 
 * __options__ *{Object}*    (Optional)
-    - __connection__ *{Object}*    (Default = a separate connection to the default Meteor DDP URL)
-The connection to use
 
 -
 
-> ```UploadTransferQueue = function(options) { ...``` [upload-ddp-client.js:71](upload-ddp-client.js#L71)
+> ```UploadTransferQueue = function(options) { ...``` [upload-http-client.js:58](upload-http-client.js#L58)
 
 -
 
@@ -78,7 +89,7 @@ __TODO__
 * Not sure if this is the best way to handle resumes
 ```
 
-> ```self.resumeUploadingFile = function (fileObj) { ...``` [upload-ddp-client.js:107](upload-ddp-client.js#L107)
+> ```self.resumeUploadingFile = function(fileObj) { ...``` [upload-http-client.js:90](upload-http-client.js#L90)
 
 -
 
@@ -96,19 +107,42 @@ to upload
 __TODO__
 ```
 * Check that a file can only be added once - maybe a visual helper on the FS.File?
+* Have an initial request to the server getting uploaded chunks for resume
 ```
 
-> ```self.uploadFile = function(fileObj) { ...``` [upload-ddp-client.js:127](upload-ddp-client.js#L127)
+> ```self.uploadFile = function(fileObj) { ...``` [upload-http-client.js:111](upload-http-client.js#L111)
 
 -
 
-#### <a name="FS.DDP.uploadQueue"></a>FS.DDP.uploadQueue UploadTransferQueue&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+#### <a name="FS.HTTP.uploadQueue"></a>FS.HTTP.uploadQueue UploadTransferQueue&nbsp;&nbsp;<sub><i>Client</i></sub> ####
 -
-*This property __uploadQueue__ is defined in `FS.DDP`*
+*This property __uploadQueue__ is defined in `FS.HTTP`*
 
 
 There is a single uploads transfer queue per client (not per CFS)
 
-> ```FS.DDP.uploadQueue = new UploadTransferQueue();``` [upload-ddp-client.js:213](upload-ddp-client.js#L213)
+> ```FS.HTTP.uploadQueue = new UploadTransferQueue();``` [upload-http-client.js:226](upload-http-client.js#L226)
+
+-
+
+#### <a name="FS.File.prototype.resume"></a>*fsFile*.resume(ref)&nbsp;&nbsp;<sub><i>Client</i></sub> ####
+-
+*This method __resume__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __ref__ *{[File](#File)|[Blob](#Blob)|Buffer}*  
+
+-
+
+__TODO__
+```
+* WIP, Not yet implemented for server
+```
+
+
+> This function is not yet implemented for server
+
+> ```FS.File.prototype.resume = function(ref) { ...``` [upload-http-client.js:240](upload-http-client.js#L240)
 
 -
