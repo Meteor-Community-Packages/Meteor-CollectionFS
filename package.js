@@ -5,10 +5,14 @@ Package.describe({
 
 Package.on_use(function(api) {
 
-  api.use(['cfs-base-package', 'cfs-tempstore', 'cfs-file', 'cfs-access-point']);
-
-  api.use(['deps', 'check', 'livedata', 'mongo-livedata',
-    'ejson', 'power-queue', 'reactive-list']);
+  api.use([
+    'cfs-base-package',
+    'cfs-tempstore',
+    'cfs-file',
+    'cfs-access-point',
+    'power-queue',
+    'reactive-list'
+  ]);
 
   api.add_files([
     'http-call-client.js',

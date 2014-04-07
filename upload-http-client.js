@@ -2,6 +2,10 @@
  * HTTP Upload Transfer Queue
  */
 
+// 2MB default upload chunk size
+// Can be overridden by user with FS.config.uploadChunkSize or per FS.Collection in collection options
+var defaultChunkSize = 2 * 1024 * 1024;
+
 /**
  * @private
  * @param {Object} task
@@ -71,6 +75,9 @@ UploadTransferQueue = function(options) {
   // Keep track of uploaded files via this queue
   self.files = {};
 
+  // cancel maps onto queue reset
+  self.cancel = self.reset;
+
   self.isUploadingFile = function(fileObj) {
     // Check if file is already in queue
     return !!(fileObj && fileObj._id && fileObj.collectionName && (self.files[fileObj.collectionName] || {})[fileObj._id]);
@@ -125,16 +132,19 @@ UploadTransferQueue = function(options) {
       var collectionName = fileObj.collectionName;
       var id = fileObj._id;
 
-      // Get the collection chunk size
-      //var chunkSize = fileObj.collection.options.chunkSize;
-      var chunkSize = fileObj.chunkSize;
+      // Set the chunkSize to match the collection options, or global config, or default
+      fileObj.chunkSize = fileObj.collection.options.chunkSize || FS.config.uploadChunkSize || defaultChunkSize;
+      // Set counter for uploaded chunks
+      fileObj.chunkCount = 0;
+      // Calc the number of chunks
+      fileObj.chunkSum = Math.ceil(fileObj.size / fileObj.chunkSize);
 
-      // Calculate the number of chunks to upload
-      //var chunks = Math.ceil(fileObj.size / chunkSize);
-      var chunks = fileObj.chunkSum;
-
-      if (chunks === 0)
+      if (fileObj.chunkSum === 0)
         return;
+
+      // Update the filerecord
+      // TODO eventually we should be able to do this without storing any chunk info in the filerecord
+      fileObj.update({$set: {chunkSize: fileObj.chunkSize, chunkCount: fileObj.chunkCount, chunkSum: fileObj.chunkSum}});
 
       // Create a sub queue
       var chunkQueue = new PowerQueue({
@@ -182,8 +192,8 @@ UploadTransferQueue = function(options) {
       }
 
       // Add chunk upload tasks
-      for (var chunk = 0, start; chunk < chunks; chunk++) {
-        start = chunk * chunkSize;
+      for (var chunk = 0, start; chunk < fileObj.chunkSum; chunk++) {
+        start = chunk * fileObj.chunkSize;
         // Create and add the task
         // XXX should we somehow make sure we haven't uploaded this chunk already, in
         // case we are resuming?
@@ -194,7 +204,7 @@ UploadTransferQueue = function(options) {
           urlParams: urlParams,
           fileObj: fileObj,
           start: start,
-          end: (chunk + 1) * chunkSize
+          end: (chunk + 1) * fileObj.chunkSize
         });
       }
 
@@ -229,6 +239,5 @@ FS.HTTP.uploadQueue = new UploadTransferQueue();
  */
 FS.File.prototype.resume = function(ref) {
   var self = this;
-  self._attachFile(ref);
   FS.uploadQueue.resumeUploadingFile(self);
 };
