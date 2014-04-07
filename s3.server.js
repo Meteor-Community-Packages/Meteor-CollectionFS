@@ -154,8 +154,7 @@ FS.Store.S3 = function(name, options) {
 
       S3.deleteObject({
         Bucket: bucket,
-        Key: folder + fileKey,
-        ACL: defaultAcl
+        Key: folder + fileKey
       }, function(error) {
         callback(error, !error);
       });
