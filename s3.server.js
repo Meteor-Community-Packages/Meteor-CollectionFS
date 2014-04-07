@@ -144,7 +144,8 @@ FS.Store.S3 = function(name, options) {
       var options = FS.Utility.extend({
         Bucket: bucket,
         Key: folder + fileKey,
-        fileKey: fileKey
+        fileKey: fileKey,
+        ACL: defaultAcl
       }, options);
 
       return S3.createWriteStream(options);
