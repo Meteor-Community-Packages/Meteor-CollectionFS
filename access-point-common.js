@@ -61,20 +61,24 @@ FS.File.prototype.url = function(options) {
     auth: null,
     download: false,
     metadata: false,
-    brokenIsFine: false
+    brokenIsFine: false,
+    uploading: null, // return this URL while uploading
+    storing: null // return this URL while storing
   }, options.hash || options); // check for "hash" prop if called as helper
+
+  // Primarily useful for displaying a temporary image while uploading an image
+  if (options.uploading && !self.isUploaded()) {
+    return options.uploading;
+  }
 
   if (self.isMounted()) {
     var filename = '';
-    var storeName = options.store;
-
-    if (!storeName) {
-      storeName = self.collection.options.stores[0].name;
-    }
-
+    var storeName = options.store || self.collection.primaryStore.name;
     var copyInfo = self.getCopyInfo(storeName);
     if (!copyInfo) {
-      if (options.brokenIsFine) {
+      if (options.storing) {
+        return options.storing;
+      } else if (options.brokenIsFine) {
         copyInfo = {};
       } else {
         // We want to return null if we know the URL will be a broken
@@ -82,13 +86,13 @@ FS.File.prototype.url = function(options) {
         // images, etc.
         return null;
       }
+    }
 
-      filename = copyInfo.name;
-      if (filename && filename.length) {
-        filename = '/' + filename;
-      } else {
-        filename = '';
-      }
+    filename = copyInfo.name;
+    if (filename && filename.length) {
+      filename = '/' + filename;
+    } else {
+      filename = '';
     }
 
     // TODO: Could we somehow figure out if the collection requires login?
