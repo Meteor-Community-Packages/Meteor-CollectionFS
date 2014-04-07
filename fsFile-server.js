@@ -46,55 +46,6 @@ FS.File.prototype.failedPermanently = function(storeName) {
           && self.failures.copies[storeName].doneTrying);
 };
 
-/**
- * @method FS.File.prototype.get
- * @public
- * @param {object} [options]
- * @param {string} [options.storeName] Name of the store to get from. If not
- * defined, the first store defined in `options.stores` for the
- * collection is used. So if there is only one store, you can generally omit
- * this, but if there are multiple, it's best to specify.
- * @param {number} [options.start] Start position
- * @param {number} [options.end] End position
- * @param {number} [options.format="binary"] Do you want "buffer" or "binary"?
- * @returns {Uint8Array|Buffer} The data
- * @todo can deprecate and use streams
- *
- * Returns the Buffer data from the requested store
- */
-FS.File.prototype.get = function(options) {
-  var self = this;
-  // Make sure options are set
-  options = options || {};
-  // If we have defined a part of the file
-  var partial = (typeof options.start === "number" && typeof options.end === "number");
-  // On server we contact the storage adapter
-  if (self.isMounted()) {
-
-    var store = FS.StorageAdapter(options.storeName || '');
-    if (!store) {
-      // first store is considered the master store by default
-      store = self.collection.options.stores[0];
-    }
-
-    var buffer;
-    if (partial) {
-      if (!(typeof store.getBytes === "function")) {
-        throw new Error('FS.File.get: storage adapter for "' + options.storeName + '" does not support partial retrieval');
-      }
-      buffer = store.getBytes(self, options.start, options.end);
-    } else {
-      buffer = store.getBuffer(self);
-    }
-
-    if (options.format === "buffer") {
-      return buffer;
-    } else {
-      return FS.Utility.bufferToBinary(buffer);
-    }
-  }
-};
-
 FS.File.prototype.createReadStream = function(storeName) {
   var self = this;
 
