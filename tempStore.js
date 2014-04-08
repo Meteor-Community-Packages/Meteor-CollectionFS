@@ -92,7 +92,7 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
   FS.debug && console.log('TempStore progress: Uploaded chunk ' + chunk + ' for ' + fileObj.name + '. Received ' + count + ' of ' + fileObj.chunkSum + ' total chunks.');
 
   // Check if all chunks are uploaded
-  if (count === fileObj.chunkSum) {
+  if (count === (fileObj.chunkSum || 1) ) {
     // We no longer need the chunk info
     modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
 
@@ -112,6 +112,13 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
   // Update the chunkCount on the fileObject
   fileObj.update(modifier);
 });
+
+// XXX: TODO
+// FS.TempStore.on('stored', function(fileObj, chunkCount, result) {
+//   // This should work if we pass on result from the SA on stored event...
+//   fileObj.update({ $set: { chunkSum: 1, chunkCount: chunkCount, size: result.size } });
+// });
+
 
   // FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
   //   console.log(fileObj.name + ' is uploaded!!');
@@ -304,21 +311,21 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     var done = chunkCount === (fileObj.chunkSum || 1);
 
     // Progress
-    self.emit('progress', fileObj, chunk, chunkCount);
+    self.emit('progress', fileObj, chunk, chunkCount, result);
 
     if (options === +options) {
       // options is number - this is a chunked upload
 
       // If upload is completed, fire events
       if (done) {
-        self.emit('stored', fileObj);
-        self.emit('ready', fileObj, chunkCount);
+        self.emit('stored', fileObj, result);
+        self.emit('ready', fileObj, chunkCount, result);
       }
 
     } else if (options === ''+options) {
       // options is a string - so we are passed the name of syncronizing SA
-      self.emit('synchronized', fileObj, options);
-      self.emit('ready', fileObj, options);
+      self.emit('synchronized', fileObj, options, result);
+      self.emit('ready', fileObj, options, result);
 
     } else if (typeof options === 'undefined') {
       // options is not defined - this is direct use of server api
@@ -332,8 +339,9 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
       // set true marking "one stream" since chunk number is not defined
       // we assume that we are accessed by others than the Access Point /
       // file upload - This could be server streaming or client direct uploads
-      self.emit('uploaded', fileObj);
-      self.emit('ready', fileObj);
+      // XXX: we should pass size?
+      self.emit('uploaded', fileObj /*, size */);
+      self.emit('ready', fileObj /*, size */);
 
     } else {
       throw new Error('FS.TempStore.createWriteStream got unexpected type in options');
