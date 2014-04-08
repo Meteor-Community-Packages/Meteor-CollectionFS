@@ -11,7 +11,9 @@ Npm.depends({
 });
 
 Package.on_use(function(api) {
-  api.use(['ejson', 'cfs-filesaver']);
+  api.use(['ejson']);
+
+  api.use(['cfs-filesaver'], {weak: true});
 
   api.export('DataMan');
 

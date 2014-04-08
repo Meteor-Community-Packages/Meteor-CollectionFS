@@ -164,6 +164,11 @@ DataMan.prototype.saveAs = function dataManSaveAs(filename) {
   if (typeof window === "undefined")
     throw new Error("window must be defined to use saveLocal");
 
+  if (!window.saveAs) {
+    console.warn('DataMan.saveAs: window.saveAs not supported by this browser - add cfs-filesaver package');
+    return;
+  }
+
   self.getBlob(function (error, blob) {
     if (error) {
       throw error;
