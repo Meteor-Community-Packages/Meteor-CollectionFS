@@ -255,3 +255,5 @@ FS.Utility.map = _.map;
 FS.Utility.once = _.once;
 
 FS.Utility.include = _.include;
+
+FS.Utility.size = _.size;
