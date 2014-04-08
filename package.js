@@ -5,7 +5,7 @@ Package.describe({
 
 Npm.depends({
   mime: "1.2.11",
-  'simple-bufferstream': "0.0.4",
+  'buffer-stream-reader': "0.1.1",
   request: "2.34.0",
   temp: "0.7.0" // for tests only
 });

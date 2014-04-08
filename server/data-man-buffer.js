@@ -1,4 +1,4 @@
-var sbs = Npm.require('simple-bufferstream');
+var bufferStreamReader = Npm.require('buffer-stream-reader');
 
 /**
  * @method DataMan.Buffer
@@ -49,7 +49,7 @@ DataMan.Buffer.prototype.getDataUri = function dataManBufferGetDataUri(callback)
  * Returns a read stream for the data.
  */
 DataMan.Buffer.prototype.createReadStream = function dataManBufferCreateReadStream() {
-  return sbs(this.buffer);
+  return new bufferStreamReader(this.buffer);
 };
 
 /**
