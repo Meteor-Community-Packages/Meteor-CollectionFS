@@ -36,6 +36,10 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   }
   options = options || {};
 
+  if (!data) {
+    throw new Error('FS.File.attachData requires a data argument with some data');
+  }
+
   // Set any other properties we can determine from the source data
   // File
   if (typeof File !== "undefined" && data instanceof File) {
