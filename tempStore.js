@@ -85,14 +85,14 @@ function mountFile(fileObj, name) {
 }
 
 // We update the fileObj on progress
-FS.TempStore.on('progress', function(fileObj, chunk, count) {
+FS.TempStore.on('progress', function(fileObj, chunkNum, count, total, result) {
   // Update the chunk counter
   var modifier;
 
-  FS.debug && console.log('TempStore progress: Uploaded chunk ' + chunk + ' for ' + fileObj.name + '. Received ' + count + ' of ' + fileObj.chunkSum + ' total chunks.');
+  FS.debug && console.log('TempStore progress: Received ' + count + ' of ' + total + ' chunks for ' + fileObj.name);
 
   // Check if all chunks are uploaded
-  if (count === (fileObj.chunkSum || 1) ) {
+  if (count === total) {
     // We no longer need the chunk info
     modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
 
@@ -118,11 +118,6 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
 //   // This should work if we pass on result from the SA on stored event...
 //   fileObj.update({ $set: { chunkSum: 1, chunkCount: chunkCount, size: result.size } });
 // });
-
-
-  // FS.TempStore.on('uploaded', function(fileObj, inOneStream) {
-  //   console.log(fileObj.name + ' is uploaded!!');
-  // });
 
 // Stream implementation
 
@@ -166,16 +161,11 @@ _fileReference = function(fileObj, chunk, existing) {
 /**
  * @method FS.TempStore.exists
  * @param {FS.File} File object
- * @todo This is not yet implemented, milestone 1.1.0
+ * @returns {Boolean} Is this file, or parts of it, currently stored in the TempStore
  */
 FS.TempStore.exists = function(fileObj) {
-  console.warn('This function is not correctly implemented using SA in TempStore');
-  // if (fileObj.isMounted()) {
-  //   return fs.existsSync(_filePath(fileObj));
-  // } else {
-  //   // It cant be
-  //   return false;
-  // }
+  var existing = tracker.findOne({fileId: fileObj._id, collectionName: fileObj.collectionName});
+  return !!existing;
 };
 
 /**
@@ -187,22 +177,7 @@ FS.TempStore.exists = function(fileObj) {
 FS.TempStore.listParts = function(fileObj) {
   var self = this;
   console.warn('This function is not correctly implemented using SA in TempStore');
-  // // List of missing chunks
-  // var partList = {};
-  // // File path
-  // var filePath = _filePath(fileObj);
-  // // We only start work if its found
-  // if (fs.existsSync( filePath )) {
-  //   // Read all the chunks in folder
-  //   chunkPaths = fs.readdirSync(filePath);
-  //   // Unlink each file
-  //   for (var i = 0; i < chunkPaths; i++) {
-  //     // add part number to list
-  //     partList[i] = i;
-  //   }
-  // }
-  // // return the part list
-  // return partList;
+  //XXX Not sure this function is useful or necessary?
 };
 
 /**
@@ -284,11 +259,11 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   // number - if a chunk has been uploaded
   // string - if a storage adapter wants to sync its data to the other SA's
 
-  // If chunk is a number we use that otherwise we set it to 0
-  var chunk = (options === +options)?options: 0;
+  // If options is a number we use that otherwise we set it to 0
+  var chunkNum = (options === +options)?options: 0;
 
   // Find a nice location for the chunk data
-  var fileKey = _fileReference(fileObj, chunk);
+  var fileKey = _fileReference(fileObj, chunkNum);
 
   // Create the stream as Meteor safe stream
   var writeStream = FS.TempStore.Storage.adapter.createWriteStream(fileKey);
@@ -297,54 +272,24 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   writeStream.safeOn('stored', function(result) {
     // Save key in tracker document
     var setObj = {};
-    setObj['keys.' + chunk] = result.fileKey;
+    setObj['keys.' + chunkNum] = result.fileKey;
     tracker.update({
       fileId: fileObj._id,
       collectionName: fileObj.collectionName
     }, {$set: setObj});
 
     var chunkCount = FS.Utility.size(tracker.findOne({ fileId: fileObj._id, collectionName: fileObj.collectionName }).keys);
-
-    // Are we done?
-    // Check this here since the 'progress' event handler will delete the chunkSum prop.
-    // If we inserted on server, we don't have chunkSum, but we use just 1 chunk.
+    var chunkSum = fileObj.chunkSum || 1; // TODO, should pass in chunkSum so we don't need to use FS.File for it
     var done = chunkCount === (fileObj.chunkSum || 1);
 
     // Progress
-    self.emit('progress', fileObj, chunk, chunkCount, result);
+    self.emit('progress', fileObj, chunkNum, chunkCount, chunkSum, result);
 
-    if (options === +options) {
-      // options is number - this is a chunked upload
-
-      // If upload is completed, fire events
-      if (done) {
-        self.emit('stored', fileObj, result);
-        self.emit('ready', fileObj, chunkCount, result);
-      }
-
-    } else if (options === ''+options) {
-      // options is a string - so we are passed the name of syncronizing SA
-      self.emit('synchronized', fileObj, options, result);
-      self.emit('ready', fileObj, options, result);
-
-    } else if (typeof options === 'undefined') {
-      // options is not defined - this is direct use of server api
-
-      // We created a writestream without chunk defined meaning this was used
-      // as a regular createWriteStream method so we only stream to one chunk
-      // file - 0.chunk - therefor setting the chunkCount and chunkSum to 1
-
-
-      // We know this upload is complete - this could be a server transport
-      // set true marking "one stream" since chunk number is not defined
-      // we assume that we are accessed by others than the Access Point /
-      // file upload - This could be server streaming or client direct uploads
-      // XXX: we should pass size?
-      self.emit('uploaded', fileObj /*, size */);
-      self.emit('ready', fileObj /*, size */);
-
-    } else {
-      throw new Error('FS.TempStore.createWriteStream got unexpected type in options');
+    // If upload is completed, fire events
+    if (done) {
+      var eventName = (options === ''+options) ? 'synchronized' : 'stored';
+      self.emit(eventName, fileObj, result);
+      self.emit('ready', fileObj, chunkCount, result);
     }
   });
 
