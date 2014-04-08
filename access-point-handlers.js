@@ -135,60 +135,32 @@ httpGetHandler = function httpGetHandler(ref) {
 httpPutInsertHandler = function httpPutInsertHandler(ref) {
   var self = this;
   var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
-  // Get filename if set
-  var filename = opts.filename;
-  // XXX: Get number of chunks?
-  var chunkSum = opts.chunks;
-
-  // Get chunk if set
-  var chunk = parseInt(opts.chunk, 10);
-  if (isNaN(chunk)) chunk = 0;
 
   FS.debug && console.log("HTTP PUT (insert) handler");
 
-  // Create file object
-  var fileDoc = {
-    collectionName: ref.collection.name,
-    // Get content type
-    type: (self.requestHeaders['content-type'] || 'application/octet-stream'),
-    // Set the filename if one was provided
-    name: ''+(filename || ''),
-    // Set chunkSize
-    chunkSize: ref.collection.chunkSize,
-    //
-    chunkCount: 0,
-    //
-    chunkSum: chunkSum
-  };
+  // Create the nice FS.File
+  var fileObj = new FS.File({name: opts.filename || null});
+
+  // Attach the readstream as the file's data
+  fileObj.attachData(self.createReadStream(), self.requestHeaders['content-type'] || 'application/octet-stream');
 
   // Validate with insert allow/deny
   FS.Utility.validateAction(ref.collection.files._validators['insert'], file, self.userId);
 
-  // Get the new id for the file
-  var id = ref.collection.files.insert(fileDoc);
-
-  // Set the id in the doc for a complete file reference
-  fileDoc._id = id;
-
-  // Create the nice FS.File
-  fileObj = new FS.File(fileDoc);
-
-  // Pipe the data to tempstore...
-  self.createReadStream().pipe( FS.TempStore.createWriteStream(fileObj, chunk) );
-
   // Insert file into collection, triggering readStream storage
-  file = ref.collection.insert(file);
+  ref.collection.insert(fileObj);
 
   // Send response
   self.setStatusCode(200);
 
   // Return the new file id
-  return {_id: file._id};
+  return {_id: fileObj._id};
 };
 
 httpPutUpdateHandler = function httpPutUpdateHandler(ref) {
   var self = this;
   var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
+
   var chunk = parseInt(opts.chunk, 10);
   if (isNaN(chunk)) chunk = 0;
 

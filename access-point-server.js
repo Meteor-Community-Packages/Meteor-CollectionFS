@@ -128,9 +128,8 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
 
       // Make sure we have a file reference
       if (ref.file === null) {
-        // No id supplied so we will return the published list of files ala
-        // http.publish in json format?
-        console.log('PUT without file id??');
+        // No id supplied so we will create a new FS.File instance and
+        // insert the supplied data.
         return httpPutInsertHandler.apply(this, [ref]);
       } else {
         if (ref.file) {
@@ -151,7 +150,7 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
       // Make sure we have a file reference
       if (ref.file === null) {
         // No id supplied so we will return the published list of files ala
-        // http.publish in json format?
+        // http.publish in json format
         return httpGetListHandler.apply(this, [ref]);
       } else {
         if (ref.file) {
@@ -192,7 +191,7 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
     FS.debug && console.log(mountPoint);
   });
 
-  // XXX: HTTP:methods should unmount existing mounts in case of overwriting?d
+  // XXX: HTTP:methods should unmount existing mounts in case of overwriting?
   HTTP.methods(accessPoints);
 
 };
