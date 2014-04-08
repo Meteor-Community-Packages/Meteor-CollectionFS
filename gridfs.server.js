@@ -47,25 +47,22 @@ FS.Store.GridFS = function(name, options) {
 
     typeName: 'storage.gridfs',
     fileKey: function(fileObj) {
-      // We could have this return an object with _id and name
-      // since the stream-lock only allows createStream from id
-      // The TempStore should track uploads by id too - at the moment
-      // TempStore only sets name, _id, collectionName for us to generate the
-      // id from.
-
-      // XXX: We should not have to mount the file here - We assume its taken
+      // We should not have to mount the file here - We assume its taken
       // care of - Otherwise we create new files instead of overwriting
-      var store = fileObj && fileObj.copies && fileObj.copies[name];
-
-      return {
-        // XXX: We currently allow the TempStore to pass in a mongoId directly
-        // Get the key or create a new
-        _id: fileObj.mongoId || store && store.key,
-        //_id: store && store.key,
-        // Pass on filename or create a filename
-        filename: fileObj.name || (fileObj.collectionName + '-' +fileObj._id),
+      var key = {
+        _id: null,
+        filename: null
       };
 
+      // If we're passed a fileObj, we retrieve the _id and filename from it.
+      if (fileObj) {
+        var store = fileObj.copies && fileObj.copies[name];
+        key._id = store && store.key || null;
+        key.filename = (store && store.name) || fileObj.name || (fileObj.collectionName + '-' + fileObj._id);
+      }
+
+      // If key._id is null at this point, createWriteStream will let GridFS generate a new ID
+      return key;
     },
     createReadStream: function(fileKey, options) {
       // Init GridFS
@@ -73,8 +70,7 @@ FS.Store.GridFS = function(name, options) {
 
       return gfs.createReadStream({
         _id: new ObjectID(fileKey._id),
-        //filename: fileKey.filename,
-        root: gridfsName,
+        root: gridfsName
       });
 
     },
@@ -84,8 +80,7 @@ FS.Store.GridFS = function(name, options) {
       // Init GridFS
       var gfs = new Grid(self.db, mongodb);
 
-      var writeStream = gfs.createWriteStream({
-        _id: new ObjectID(fileKey._id),
+      var opts = {
         filename: fileKey.filename,
         mode: 'w',
         root: gridfsName,
@@ -95,7 +90,13 @@ FS.Store.GridFS = function(name, options) {
         aliases: options.aliases || [],
         metadata: options.metadata || null,
         content_type: options.contentType || 'application/octet-stream'
-      });
+      };
+
+      if (fileKey._id) {
+        opts._id = new ObjectID(fileKey._id);
+      }
+
+      var writeStream = gfs.createWriteStream(opts);
 
       writeStream.on('close', function(file) {
         if (FS.debug) console.log('SA GridFS - DONE!');
