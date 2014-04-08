@@ -11,16 +11,26 @@ var Readable = Npm.require('stream').Readable;
 DataMan = function DataMan(data, type) {
   var self = this;
 
+  if (!data) {
+    throw new Error("DataMan constructor requires a data argument");
+  }
+
   // The end result of all this is that we will have this.source set to a correct
   // data type handler. We are simply detecting what the data arg is.
   //
   // Unless we already have in-memory data, we don't load anything into memory
   // and instead rely on obtaining a read stream when the time comes.
   if (typeof Buffer !== "undefined" && data instanceof Buffer) {
+    if (!type) {
+      throw new Error("DataMan constructor requires a type argument when passed a Buffer");
+    }
     self.source = new DataMan.Buffer(data, type);
   } else if (typeof ArrayBuffer !== "undefined" && data instanceof ArrayBuffer) {
     if (typeof Buffer === "undefined") {
       throw new Error("Buffer support required to handle an ArrayBuffer");
+    }
+    if (!type) {
+      throw new Error("DataMan constructor requires a type argument when passed an ArrayBuffer");
     }
     var buffer = new Buffer(new Uint8Array(data));
     self.source = new DataMan.Buffer(buffer, type);
@@ -28,14 +38,23 @@ DataMan = function DataMan(data, type) {
     if (typeof Buffer === "undefined") {
       throw new Error("Buffer support required to handle an ArrayBuffer");
     }
+    if (!type) {
+      throw new Error("DataMan constructor requires a type argument when passed a Uint8Array");
+    }
     var buffer = new Buffer(data);
     self.source = new DataMan.Buffer(buffer, type);
   } else if (typeof Readable !== "undefined" && data instanceof Readable) {
+    if (!type) {
+      throw new Error("DataMan constructor requires a type argument when passed a stream.Readable");
+    }
     self.source = new DataMan.ReadStream(data, type);
   } else if (typeof data === "string") {
     if (data.slice(0, 5) === "data:") {
       self.source = new DataMan.DataURI(data);
     } else if (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:") {
+      if (!type) {
+        throw new Error("DataMan constructor requires a type argument when passed a URL");
+      }
       self.source = new DataMan.URL(data, type);
     } else {
       // assume it's a filepath

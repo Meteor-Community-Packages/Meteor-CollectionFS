@@ -8,6 +8,10 @@
 DataMan = function DataMan(data, type) {
   var self = this;
 
+  if (!data) {
+    throw new Error("DataMan constructor requires a data argument");
+  }
+
   // The end result of all this is that we will have one of the following set:
   // - self.blob
   // - self.url
@@ -23,6 +27,9 @@ DataMan = function DataMan(data, type) {
     if (typeof Blob === "undefined") {
       throw new Error("Browser must support Blobs to handle an ArrayBuffer or Uint8Array");
     }
+    if (!type) {
+      throw new Error("DataMan constructor requires a type argument when passed an ArrayBuffer or Uint8Array");
+    }
     self.blob = new Blob([data], {type: type});
     self._type = type;
   } else if (typeof data === "string") {
@@ -30,6 +37,9 @@ DataMan = function DataMan(data, type) {
       self._type = data.slice(5, data.indexOf(';'));
       self.blob = dataURItoBlob(data, self._type);
     } else if (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:") {
+      if (!type) {
+        throw new Error("DataMan constructor requires a type argument when passed a URL");
+      }
       self.url = data;
       self._type = type;
     } else {
