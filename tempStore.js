@@ -30,6 +30,8 @@ var util = Npm.require('util');
 
 FS.TempStore = new EventEmitter();
 
+var tracker = FS.TempStore.Tracker = new Meteor.Collection('cfs._tempstore.chunks');
+
 /**
  * @property FS.TempStore.Storage
  * @type {StorageAdapter}
@@ -53,9 +55,6 @@ FS.TempStore = new EventEmitter();
  */
 FS.TempStore.Storage = null;
 
-// XXX: Temp fix
-var workaroundGridFS = false;
-
 // We will not mount a storage adapter until needed. This allows us to check for the
 // existance of FS.FileWorker, which is loaded after this package because it
 // depends on this package.
@@ -69,8 +68,6 @@ function mountStorage() {
 
     // Use the gridfs
     FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
-    // XXX: Temp fix
-    workaroundGridFS = true;
   } else if (FS.Store.FileSystem) {
     // use the Filesystem
     FS.TempStore.Storage = new FS.Store.FileSystem('_tempstore', { internal: true });
@@ -92,12 +89,12 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
   // Update the chunk counter
   var modifier;
 
+  FS.debug && console.log('TempStore progress: Uploaded chunk ' + chunk + ' for ' + fileObj.name + '. Received ' + count + ' of ' + fileObj.chunkSum + ' total chunks.');
+
   // Check if all chunks are uploaded
   if (count === fileObj.chunkSum) {
     // We no longer need the chunk info
-    // TODO TempStore should have a collection for tracking the number of chunks per file so we don't need to rely on the fileObj.chunkSum
-    // modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
-    modifier = { $set: {}, $unset: {chunkCount: 1, chunkSize: 1} };
+    modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
 
     // Check if the file has been uploaded before
     if (typeof fileObj.uploadedAt === 'undefined') {
@@ -122,39 +119,6 @@ FS.TempStore.on('progress', function(fileObj, chunk, count) {
 
 // Stream implementation
 
-// XXX: Would be nice if we could just use the meteor id directly in the mongodb
-// It should be possible?
-var UNMISTAKABLE_CHARS = "23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz";
-
-var UNMISTAKABLE_CHARS_LOOKUP = {};
-for (var a = 0; a < UNMISTAKABLE_CHARS.length; a++) {
-  UNMISTAKABLE_CHARS_LOOKUP[UNMISTAKABLE_CHARS[a]] = a;
-}
-
-var meteorToMongoId = function(meteorId, chunk) {
-  var unit = UNMISTAKABLE_CHARS.length;
-  var index = 1;
-  result = 0;
-  for (var i = 0; i < meteorId.length; i++) {
-    if (typeof UNMISTAKABLE_CHARS_LOOKUP[meteorId[i]] !== 'undefined') {
-      // Add the number at index
-      result += UNMISTAKABLE_CHARS_LOOKUP[meteorId[i]] * index;
-      // Inc index by ^unit
-      index *= unit;
-    } else {
-      throw new Error('Not a meteor ID');
-    }
-  }
-
-  // Inc by ^unit
-  result += chunk * index;
-
-  // convert to hex
-  result = result.toString(16).substring(0, 24);
-
-  return result;
-};
-
 /**
  * @method _chunkPath
  * @private
@@ -175,14 +139,20 @@ _chunkPath = function(n) {
  * Note: Calling function should call mountStorage() first, and
  * make sure that fileObj is mounted.
  */
-_fileReference = function(fileObj, chunk) {
+_fileReference = function(fileObj, chunk, existing) {
+  // Maybe it's a chunk we've already saved
+  existing = existing || tracker.findOne({fileId: fileObj._id, collectionName: fileObj.collectionName});
+
   // Return a fitting fileKey SA specific
   return FS.TempStore.Storage.adapter.fileKey({
     collectionName: fileObj.collectionName,
     _id: fileObj._id,
     name: _chunkPath(chunk),
-    // Temp workaround, we generate a unik id for the gridFS SA
-    mongoId: workaroundGridFS && meteorToMongoId(fileObj._id, chunk)
+    copies: {
+      _tempstore: {
+        key: existing && existing.keys[chunk]
+      }
+    }
   });
 };
 
@@ -247,12 +217,22 @@ FS.TempStore.removeFile = function(fileObj) {
   // Emit event
   self.emit('remove', fileObj);
 
+  var chunkInfo = tracker.findOne({
+    fileId: fileObj._id,
+    collectionName: fileObj.collectionName
+  });
+
   // Unlink each file
-  // TODO TempStore should have a collection for tracking the number of chunks per file so we don't need to rely on the fileObj.chunkSum
-  for (var i = 0; i < fileObj.chunkSum; i++) {
-    // Get the chunk path
-    FS.TempStore.Storage.adapter.remove( _fileReference(fileObj, i), FS.Utility.noop);
-  }
+  FS.Utility.each(chunkInfo.keys, function (key, chunk) {
+    var fileKey = _fileReference(fileObj, chunk, chunkInfo);
+    FS.TempStore.Storage.adapter.remove(fileKey, FS.Utility.noop);
+  });
+
+  // Remove fileObj from tracker collection, too
+  tracker.remove({
+    fileId: fileObj._id,
+    collectionName: fileObj.collectionName
+  });
 };
 
 /**
@@ -265,7 +245,7 @@ FS.TempStore.removeFile = function(fileObj) {
  * `options` of different types mean differnt things:
  * * `undefined` We store the file in one part
  * *(Normal server-side api usage)*
- * * `Number` the number is the part number total is `fileObj.chunkSum`
+ * * `Number` the number is the part number total
  * *(multipart uploads will use this api)*
  * * `String` the string is the name of the `store` that wants to store file data
  * *(stores that want to sync their data to the rest of the files stores will use this)*
@@ -281,6 +261,12 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   // If fileObj is not mounted or can't be, throw an error
   mountFile(fileObj, 'FS.TempStore.createWriteStream');
 
+  // Add fileObj to tracker collection
+  tracker.upsert({
+    fileId: fileObj._id,
+    collectionName: fileObj.collectionName
+  }, {$setOnInsert: {keys: {}}});
+
   // XXX: it should be possible for a store to sync by storing data into the
   // tempstore - this could be done nicely by setting the store name as string
   // in the chunk variable?
@@ -295,18 +281,27 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   var chunk = (options === +options)?options: 0;
 
   // Find a nice location for the chunk data
-  var chunkReference = _fileReference(fileObj, chunk);
+  var fileKey = _fileReference(fileObj, chunk);
 
   // Create the stream as Meteor safe stream
-  var writeStream = FS.TempStore.Storage.adapter.createWriteStream( chunkReference );
+  var writeStream = FS.TempStore.Storage.adapter.createWriteStream(fileKey);
 
   // When the stream closes we update the chunkCount
   writeStream.safeOn('stored', function(result) {
-    // var chunkCount = fs.readdirSync(filePath).length;
-    // XXX: We should track this in a collection to keep track of chunks
-    // This could fail if a chunk is uploaded twice...
-    var chunkCount = fileObj.chunkCount + 1;
-    var done = (chunkCount === fileObj.chunkSum); // check this here since the 'progress' event handler will delete the chunkSum prop
+    // Save key in tracker document
+    var setObj = {};
+    setObj['keys.' + chunk] = result.fileKey;
+    tracker.update({
+      fileId: fileObj._id,
+      collectionName: fileObj.collectionName
+    }, {$set: setObj});
+
+    var chunkCount = FS.Utility.size(tracker.findOne({ fileId: fileObj._id, collectionName: fileObj.collectionName }).keys);
+
+    // Are we done?
+    // Check this here since the 'progress' event handler will delete the chunkSum prop.
+    // If we inserted on server, we don't have chunkSum, but we use just 1 chunk.
+    var done = chunkCount === (fileObj.chunkSum || 1);
 
     // Progress
     self.emit('progress', fileObj, chunk, chunkCount);
@@ -367,9 +362,13 @@ _TempstoreReadStream = function(fileObj, options) {
   // Init current chunk pointer
   self.currentChunk = 0;
 
+  var chunkInfo = tracker.findOne({
+    fileId: fileObj._id,
+    collectionName: fileObj.collectionName
+  }) || {};
+
   // Init the sum of chunk
-  // TODO TempStore should have a collection for tracking the number of chunks per file so we don't need to rely on the fileObj.chunkSum
-  self.chunkSum = fileObj.chunkSum;
+  self.chunkSum = FS.Utility.size(chunkInfo.keys);
 
   // Fire up the chunk read stream
   self.nextChunkStream();
@@ -385,24 +384,26 @@ _TempstoreReadStream.prototype.nextChunkStream = function() {
   var self = this;
 
   if (self.currentChunk < self.chunkSum) {
-    var chunkReference = _fileReference(self.fileObj, self.currentChunk++);
+    var fileKey = _fileReference(self.fileObj, self.currentChunk++);
 
     FS.debug && console.log('READ CHUNK: ' + self.currentChunk);
+
     // create the chunk stream
-    self.chunkReadStream = FS.TempStore.Storage.adapter.createReadStream(chunkReference);
+    self.chunkReadStream = FS.TempStore.Storage.adapter.createReadStream(fileKey);
 
     self.chunkReadStream.on('end', function() {
       // This chunk has ended so we get the next chunk stream
       self.nextChunkStream();
     });
 
-    self.chunkReadStream.on('error', function() {
+    self.chunkReadStream.on('error', function(error) {
       // XXX: we could emit the org error too
-      self.emit('error', 'FS.TempStore could not read chunk ' + self.currentChunk);
+      self.emit('error', new Error('FS.TempStore could not read chunk ' + self.currentChunk));
     });
 
     self.chunkReadStream.on('data', function(chunkData) {
       if (!self.push(chunkData)) {
+        FS.debug && console.warn('FS.TempStore failed to push chunk', self.currentChunk);
         // We should pause the stream the chunk stream...
         self.chunkReadStream.pause();
       }
@@ -434,6 +435,8 @@ FS.TempStore.createReadStream = function(fileObj) {
 
   // If fileObj is not mounted or can't be, throw an error
   mountFile(fileObj, 'FS.TempStore.createReadStream');
+
+  FS.debug && console.log('FS.TempStore creating read stream...');
 
   return new _TempstoreReadStream(fileObj);
 };
