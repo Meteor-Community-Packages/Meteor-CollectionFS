@@ -8,8 +8,8 @@
 	"packages": {
 		"cfs-base-package": {},
 		"cfs-file": {},
-		"cfs-ejson-file": {},
 		"cfs-collection": {},
+		"cfs-collection-filters": {},
 		"cfs-access-point": {},
 		"cfs-worker": {},
 		"cfs-upload-http": {}
