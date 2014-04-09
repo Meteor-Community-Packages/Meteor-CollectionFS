@@ -3,7 +3,7 @@
 	"description": "Meteor file management system with uploads, downloads, file manipulation and copying, and multiple storage adaptors",
 	"homepage": "https://github.com/CollectionFS/Meteor-CollectionFS",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.4.7",
+	"version": "0.4.8",
 	"git": "https://github.com/CollectionFS/Meteor-CollectionFS.git",
 	"packages": {
 		"cfs-base-package": {},
