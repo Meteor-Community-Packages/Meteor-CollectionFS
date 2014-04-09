@@ -46,6 +46,11 @@ FS.Utility.safeStream = function(nodestream, name) {
     return nodestream.on(name, FS.Utility.safeCallback(callback));
   };
 
+  // Create Meteor safe events
+  nodestream.safeOnce = function(name, callback) {
+    return nodestream.once(name, FS.Utility.safeCallback(callback));
+  };
+
   // Return the modified stream - modified anyway
   return nodestream;
 };
