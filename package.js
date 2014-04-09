@@ -4,7 +4,7 @@ Package.describe({
 });
 
 Package.on_use(function(api) {
-  api.use(['cfs-base-package, cfs-collection']);
+  api.use(['cfs-base-package', 'cfs-collection']);
 
   api.add_files([
     'filters.js'
