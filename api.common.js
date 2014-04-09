@@ -45,15 +45,6 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // Set collection name
     fileObj.collectionName = self.name;
 
-    // On the server, we set chunk info now because there is no uploader.
-    // TODO eventually we can track chunks solely in the tempstore and we
-    // will no longer need this code.
-    if (Meteor.isServer) {
-      fileObj.chunkSum = 1;
-      fileObj.chunkSize = fileObj.size;
-      fileObj.chunkCount = 0;
-    }
-
     // Insert the file into db
     // We call cloneFileRecord as an easy way of extracting the properties
     // that need saving.
