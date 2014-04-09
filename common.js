@@ -1,9 +1,3 @@
-// #############################################################################
-//
-// COLLECTION FS
-//
-// #############################################################################
-
 /**
  *
  * @constructor
@@ -84,92 +78,11 @@ FS.Collection = function(name, options) {
     download: {allow: [], deny: []}
   };
 
-  /*
-   * FILTER INSERTS
-   */
-
-  // Normalize filter option values for quicker checking later
-  // TODO I think we have to throw an error if security options dont comply with
-  // the api - in case of mismatch the user should correct this, if not the
-  // result will be less secure?
-  if (self.options.filter) {
-    if (!self.options.filter.allow || !Match.test(self.options.filter.allow, Object)) {
-      self.options.filter.allow = {};
-    }
-    if (!self.options.filter.deny || !Match.test(self.options.filter.deny, Object)) {
-      self.options.filter.deny = {};
-    }
-    if (!self.options.filter.maxSize || typeof self.options.filter.maxSize !== "number") {
-      self.options.filter.maxSize = null;
-    }
-    if (!self.options.filter.allow.extensions || !FS.Utility.isArray(self.options.filter.allow.extensions)) {
-      self.options.filter.allow.extensions = [];
-    } else {
-      //convert all to lowercase
-      for (var i = 0, ln = self.options.filter.allow.extensions.length; i < ln; i++) {
-        self.options.filter.allow.extensions[i] = self.options.filter.allow.extensions[i].toLowerCase();
-      }
-    }
-    if (!self.options.filter.allow.contentTypes || !FS.Utility.isArray(self.options.filter.allow.contentTypes)) {
-      self.options.filter.allow.contentTypes = [];
-    }
-    if (!self.options.filter.deny.extensions || !FS.Utility.isArray(self.options.filter.deny.extensions)) {
-      self.options.filter.deny.extensions = [];
-    } else {
-      //convert all to lowercase
-      for (var i = 0, ln = self.options.filter.deny.extensions.length; i < ln; i++) {
-        self.options.filter.deny.extensions[i] = self.options.filter.deny.extensions[i].toLowerCase();
-      }
-    }
-    if (!self.options.filter.deny.contentTypes || !FS.Utility.isArray(self.options.filter.deny.contentTypes)) {
-      self.options.filter.deny.contentTypes = [];
-    }
+  // Set up filters
+  // XXX Should we deprecate the filter option now that this is done with a separate pkg, or just keep it?
+  if (self.filters) {
+    self.filters(self.options.filter);
   }
-
-  // Define deny functions to enforce file filters on the server
-  // for inserts and updates that initiate from untrusted code.
-  self.files.deny({
-    insert: function(userId, fsFile) {
-      return !self.allowsFile(fsFile);
-    },
-    update: function(userId, fsFile, fields, modifier) {
-      // TODO will need some kind of additional security here:
-      // Don't allow them to change the type, size, name, and
-      // anything else that would be security or data integrity issue.
-      return !self.allowsFile(fsFile);
-    },
-    fetch: []
-  });
-
-  // If insecure package is in use, we need to add allow rules that return
-  // true. Otherwise, it would seemingly turn off insecure mode.
-  if (Package && Package.insecure) {
-    self.allow({
-      insert: function() {
-        return true;
-      },
-      update: function() {
-        return true;
-      },
-      remove: function() {
-        return true;
-      },
-      download: function() {
-        return true;
-      },
-      fetch: [],
-      transform: null
-    });
-  }
-  // If insecure package is NOT in use, then adding the deny function
-  // does not have any effect on the main app's security paradigm. The
-  // user will still be required to add at least one allow function of her
-  // own for each operation for this collection. And the user may still add
-  // additional deny functions, but does not have to.
-
-  /*
-   * EO FILTER INSERTS
-   */
 
   // Save the collection reference (we want it without the 'cfs.' prefix and '.filerecord' suffix)
   FS._collections[name] = this;
