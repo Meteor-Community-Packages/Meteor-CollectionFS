@@ -5,6 +5,7 @@
  * @returns {undefined}
  */
 FS.Collection.prototype.filters = function fsColFilters(filters) {
+  var self = this;
 
   // Check filter option values and normalize them for quicker checking later
   if (filters) {
