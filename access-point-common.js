@@ -102,7 +102,17 @@ FS.File.prototype.url = function(options) {
         // Add reactive deps on the user
         Meteor.userId();
         // Set the authToken
-        authToken = Accounts._storedLoginToken() || '';
+        var authString = JSON.stringify({
+          authToken: Accounts._storedLoginToken() || '',
+          expiration: Date.now() + 60000 // We actually need the server time
+        });
+        if (typeof btoa === 'function') {
+          // Client side
+          authToken = btoa(authString);
+        } else {
+          // Server side as atob() is not available
+          authToken = Buffer(authString).toString('base64');
+        }
       }
     } else if (typeof options.auth === "string") {
       // If the user supplies auth token the user will be responsible for
