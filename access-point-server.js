@@ -328,6 +328,16 @@ var expirationAuth = function() {
   return false;  
 };
 
+Meteor.methods({
+  'getServerTime': function() {
+    return Date.now();
+  }
+});
+
+// Unify client / server api
+FS.HTTP.now = function() {
+  return Date.now();
+};
 
 // Start up the basic mount points
 Meteor.startup(function () {

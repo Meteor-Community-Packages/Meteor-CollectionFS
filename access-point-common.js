@@ -104,7 +104,7 @@ FS.File.prototype.url = function(options) {
         // Set the authToken
         var authString = JSON.stringify({
           authToken: Accounts._storedLoginToken() || '',
-          expiration: Date.now() + 60000 // We actually need the server time
+          expiration: FS.HTTP.now() + 60000 // We actually need the server time
         });
         if (typeof btoa === 'function') {
           // Client side
@@ -149,3 +149,5 @@ FS.File.prototype.url = function(options) {
   }
 
 };
+
+
