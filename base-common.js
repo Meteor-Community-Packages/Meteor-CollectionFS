@@ -2,7 +2,17 @@
 FS = {};
 
 // namespace for adapters; XXX should this be added by cfs-storage-adapter pkg instead?
-FS.Store = {};
+FS.Store = {
+  GridFS: function () {
+    throw new Error('To use FS.Store.GridFS, you must add the "cfs-gridfs" package.');
+  },
+  FileSystem: function () {
+    throw new Error('To use FS.Store.FileSystem, you must add the "cfs-filesystem" package.');
+  },
+  S3: function () {
+    throw new Error('To use FS.Store.S3, you must add the "cfs-s3" package.');
+  }
+};
 
 // namespace for access points
 FS.AccessPoint = {};
