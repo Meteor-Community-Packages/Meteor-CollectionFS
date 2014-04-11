@@ -292,15 +292,17 @@ var expirationAuth = function() {
 
       console.log(tokenObject.expiration);
       console.log(Date.now());
-     // check if its too old
-     if (tokenObject.expiration < Date.now()) {
-      console.log('Expired token')
-       throw new Meteor.Error(500, 'Expired token');
-     }
+
+      // if we have an expiration token we should check that it's still valid
+      if (tokenObject.expiration != null) {
+        // check if its too old
+        if (tokenObject.expiration < Date.now()) {
+          console.log('Expired token')
+          throw new Meteor.Error(500, 'Expired token');
+        }
+      }
 
       // We are not on a secure line - so we have to look up the user...
-      //var user = Meteor.users.findOne({ 'services.resume.loginTokens.token': userToken });
-      //var user = Meteor.users.findOne({ '_id': tokenObject.userId });
       var user = Meteor.users.findOne({
         $or: [
           {'services.resume.loginTokens.hashedToken': Accounts._hashLoginToken(userToken)},

@@ -101,11 +101,18 @@ FS.File.prototype.url = function(options) {
       if (options.auth !== false) {
         // Add reactive deps on the user
         Meteor.userId();
-        // Set the authToken
-        var authString = JSON.stringify({
+
+        var authObject = {
           authToken: Accounts._storedLoginToken() || '',
-          expiration: FS.HTTP.now() + 60000 // We actually need the server time
-        });
+        }
+
+        // If it's a number, we use that as the expiration time (in seconds)
+        if (typeof options.auth == "number") {
+          authObject.expiration = FS.HTTP.now() + options.auth * 1000;
+        }
+
+        // Set the authToken
+        var authString = JSON.stringify(authObject);
         if (typeof btoa === 'function') {
           // Client side
           authToken = btoa(authString);
