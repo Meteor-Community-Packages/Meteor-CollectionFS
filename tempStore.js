@@ -204,17 +204,18 @@ FS.TempStore.removeFile = function(fileObj) {
     collectionName: fileObj.collectionName
   });
 
-  // Unlink each file
-  FS.Utility.each(chunkInfo.keys, function (key, chunk) {
-    var fileKey = _fileReference(fileObj, chunk, chunkInfo);
-    FS.TempStore.Storage.adapter.remove(fileKey, FS.Utility.noop);
-  });
+  if (chunkInfo) {
 
-  // Remove fileObj from tracker collection, too
-  tracker.remove({
-    fileId: fileObj._id,
-    collectionName: fileObj.collectionName
-  });
+    // Unlink each file
+    FS.Utility.each(chunkInfo.keys || {}, function (key, chunk) {
+      var fileKey = _fileReference(fileObj, chunk, chunkInfo);
+      FS.TempStore.Storage.adapter.remove(fileKey, FS.Utility.noop);
+    });
+
+    // Remove fileObj from tracker collection, too
+    tracker.remove({_id: chunkInfo._id});
+
+  }
 };
 
 /**
