@@ -177,7 +177,7 @@ FS.TempStore.exists = function(fileObj) {
 FS.TempStore.listParts = function(fileObj) {
   var self = this;
   console.warn('This function is not correctly implemented using SA in TempStore');
-  //XXX Not sure this function is useful or necessary?
+  //XXX This function might be necessary for resume. Not currently supported.
 };
 
 /**
@@ -344,7 +344,7 @@ _TempstoreReadStream.prototype.nextChunkStream = function() {
     // create the chunk stream
     self.chunkReadStream = FS.TempStore.Storage.adapter.createReadStream(fileKey);
 
-    self.chunkReadStream.on('end', function() {
+    self.chunkReadStream.safeOn('end', function() {
       // This chunk has ended so we get the next chunk stream
       self.nextChunkStream();
     });
