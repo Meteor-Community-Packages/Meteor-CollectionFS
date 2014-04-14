@@ -44,12 +44,15 @@ if (FS.HTTP.storage) {
   // client time - this includes lag and timezone
   Meteor.startup(function() {
     // Call the server method an get server time
-    Meteor.call('getServerTime', function(error, result) {
+    HTTP.get('/cfs/servertime', function(error, result) {
       if (!error) {
         // Update our server time diff
-        FS.HTTP._serverTimeDiff = result - Date.now();// - lag or/and timezone
+        var dateNew = new Date(+result.content);
+        FS.HTTP._serverTimeDiff = dateNew - Date.now();// - lag or/and timezone
         // Update the localstorage
         FS.HTTP.storage.setItem(FS.HTTP._prefix + 'timeDiff', FS.HTTP._serverTimeDiff);
+      } else {
+      	console.log(error.message);
       }
     }); // EO Server call
   });

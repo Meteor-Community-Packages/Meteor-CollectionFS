@@ -333,9 +333,13 @@ var expirationAuth = function() {
   return false;  
 };
 
-HTTP.methods({'/cfs/servertime': function() {
-    return Date.now();
-}});
+HTTP.methods(
+  {'/cfs/servertime': {
+    get: function(data) {
+      return Date.now().toString();
+    }
+  }
+});
 
 // Unify client / server api
 FS.HTTP.now = function() {
