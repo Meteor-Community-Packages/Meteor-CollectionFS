@@ -107,7 +107,7 @@ FS.File.prototype.url = function(options) {
         }
 
         // If it's a number, we use that as the expiration time (in seconds)
-        if (typeof options.auth == "number") {
+        if (options.auth === +options.auth) {
           authObject.expiration = FS.HTTP.now() + options.auth * 1000;
         }
 
@@ -116,9 +116,11 @@ FS.File.prototype.url = function(options) {
         if (typeof btoa === 'function') {
           // Client side
           authToken = btoa(authString);
-        } else {
+        } else if (typeof Buffer !== 'undefined') {
           // Server side as atob() is not available
           authToken = Buffer(authString).toString('base64');
+        } else {
+          throw new Error('FS.File.url Error: Cannot base64 encode on your system');
         }
       }
     } else if (typeof options.auth === "string") {

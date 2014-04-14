@@ -289,6 +289,9 @@ var expirationAuth = function() {
 
       // XXX: Do some check here of the object
       var userToken = tokenObject.authToken;
+      if (userToken !== ''+userToken) {
+        throw new Meteor.Error(400, 'Bad Request');
+      }
 
       console.log(tokenObject.expiration);
       console.log(Date.now());
@@ -321,7 +324,7 @@ var expirationAuth = function() {
        // Not formatted correctly
        console.log('Internal error or something...')
        console.log(err);
-       throw new Meteor.Error(500, 'Internal error or something...');
+       throw new Meteor.Error(400, 'Bad Request');
       }
 
     }
@@ -330,11 +333,9 @@ var expirationAuth = function() {
   return false;  
 };
 
-Meteor.methods({
-  'getServerTime': function() {
+HTTP.methods({'/cfs/servertime': function() {
     return Date.now();
-  }
-});
+}});
 
 // Unify client / server api
 FS.HTTP.now = function() {
