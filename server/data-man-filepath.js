@@ -85,14 +85,16 @@ DataMan.FilePath.prototype.size = function dataManFilePathSize(callback) {
   }
 
   // We can get the size without buffering
-  fs.stat(self.filepath, function (error, stats) {
+  fs.stat(self.filepath, Meteor.bindEnvironment(function (error, stats) {
     if (stats && typeof stats.size === "number") {
       self._size = stats.size;
       callback(null, self._size);
     } else {
       callback(error);
     }
-  });
+  }, function (error) {
+    callback(error);
+  }));
 };
 
 /**
