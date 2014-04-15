@@ -629,8 +629,7 @@ with a file input:
 Template.myForm.events({
   'change .myFileInput': function(event, template) {
     FS.Utility.eachFile(event, function(file) {
-      var newFile = new FS.File();
-      newFile.attachData(file);
+      var newFile = new FS.File(file);
       newFile.metadata = {foo: "bar"};
       Images.insert(newFile, function (err, fileObj) {
         //If !err, we have inserted new doc with ID fileObj._id, and
