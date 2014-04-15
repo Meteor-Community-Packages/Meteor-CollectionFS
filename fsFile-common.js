@@ -13,7 +13,7 @@ FS.File = function(ref, createdByTransform) {
   if (ref instanceof FS.File || isBasicObject(ref)) {
     // Extend self with filerecord related data
     FS.Utility.extend(self, FS.Utility.cloneFileRecord(ref, {full: true}));
-  } else {
+  } else if (ref) {
     self.attachData(ref);
   }
 };
