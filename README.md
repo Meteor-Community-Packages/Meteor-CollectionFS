@@ -1,6 +1,6 @@
 #CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-4-4). It has
+NOTE: This branch is under active development right now (2014-4-16). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -319,6 +319,8 @@ Images = new FS.Collection("images", {
 });
 ```
 
+Alternatively, you can pass your filters object to `myFSCollection.addFilters()`.
+
 To be secure, this must be added on the server; however, you should use the `filter`
 option on the client, too, to help catch many of the disallowed uploads there
 and allow you to display a helpful message with your `onInvalid` function.
@@ -371,6 +373,14 @@ use "insert" allow/deny functions.
 * To determine who can *remove* files, which removes all file data and file
 metadata, use "remove" allow/deny functions.
 
+The `download` allow/deny functions can be thought of essentially as allowing or
+denying "read" access to the file. For a normal Meteor collection, "read" access
+is defined through pub/sub, but we don't want to send large amounts of binary file
+data to each client just because they subscribe to the file record. Thus with CFS,
+pub/sub will get you the file's metadata on the client whereas an HTTP request to the
+GET URL is required to view or download the file itself. The `download` allow/deny
+determines whether this HTTP request will respond with "Access Denied" or not.
+
 ### Securing Based on User Information
 
 To secure a file based on a user "owner" or "role" or some other piece of custom
@@ -378,8 +388,7 @@ metadata, you must set this information on the file when originally inserting it
 You can then check it in your allow/deny functions.
 
 ```js
-var fsFile = new FS.File();
-fsFile.attachData(event.target.files[0]);
+var fsFile = new FS.File(event.target.files[0]);
 fsFile.owner = Meteor.userId();
 fsCollection.insert(fsFile, function (err) {
   if (err) throw err;
@@ -424,10 +433,12 @@ specify the store name, the URL will be for the copy in the first defined store.
 
 ```html
 {{#each images}}
-  URL: {{url}}
-  <img src="{{url store='thumbnail'}}" alt="thumbnail">
+  URL: {{this.url}}
+  <img src="{{this.url store='thumbnail'}}" alt="thumbnail">
 {{/each}}
 ```
+
+This is actually using the [url method](https://github.com/CollectionFS/Meteor-cfs-access-point/blob/master/api.md#fsfileurloptionsanywhere), which is added to the `FS.File` prototype by the `cfs-access-point` package. You can use any of the options mentioned in the API documentation, and you can call it from client and server code.
 
 ### isImage
 
