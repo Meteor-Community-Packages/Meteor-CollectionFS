@@ -11,6 +11,7 @@
 		"cfs-storage-adapter": {},
 		"cfs-collection": {},
 		"http-methods": {},
+		"numeral": {},
 		"data-man": {
 			"git": "https://github.com/CollectionFS/Meteor-data-man.git",
 			"branch": "master"

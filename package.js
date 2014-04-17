@@ -21,6 +21,9 @@ Package.on_use(function(api) {
     'data-man'
   ]);
 
+  // Weak dependency on numeral pkg, only if you want to use the formattedSize method
+  api.use(['numeral'], ['client', 'server'], {weak: true});
+
   api.add_files([
     'fsFile-common.js'
   ], 'client');

@@ -376,6 +376,36 @@ FS.File.prototype.isAudio = function(options) {
 };
 
 /**
+ * @method FS.File.prototype.formattedSize
+ * @public
+ * @param  {Object} options
+ * @param  {String} [options.store=none,display original file size] Which file do you want to get the size of?
+ * @param  {String} [options.formatString='0.00 b'] The `numeral` format string to use.
+ * @return {String} The file size formatted as a human readable string and reactively updated.
+ *
+ * * You must add the `numeral` package to your app before you can use this method.
+ * * If info is not found or a size can't be determined, it will show 0.
+ */
+FS.File.prototype.formattedSize = function fsFileFormattedSize(options) {
+  var self = this;
+
+  if (typeof numeral !== "function")
+    throw new Error("You must add the numeral package if you call FS.File.formattedSize");
+
+  options = options || {};
+  options = options.hash || options;
+
+  var info;
+  if (options.store) {
+    info = self.getCopyInfo(options.store) || {};
+  } else {
+    info = self;
+  }
+
+  return numeral(info.size || 0).format(options.formatString || '0.00 b');
+};
+
+/**
  * @method FS.File.prototype.isUploaded Is this file completely uploaded?
  * @public
  * @returns {boolean} True if the number of uploaded bytes is equal to the file size.
