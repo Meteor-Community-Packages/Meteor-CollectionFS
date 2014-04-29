@@ -4,7 +4,7 @@
 });
 
 Package.on_use(function(api) {
-  api.use(['cfs-base-package']);
+  api.use(['cfs-base-package', 'cfs-file']);
 
   api.use('cfs-filesystem', { weak: true });
 

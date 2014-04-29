@@ -145,17 +145,22 @@ _fileReference = function(fileObj, chunk, existing) {
   // Maybe it's a chunk we've already saved
   existing = existing || tracker.findOne({fileId: fileObj._id, collectionName: fileObj.collectionName});
 
-  // Return a fitting fileKey SA specific
-  return FS.TempStore.Storage.adapter.fileKey({
+  // Make a temporary fileObj just for fileKey generation
+  var tempFileObj = new FS.File({
     collectionName: fileObj.collectionName,
     _id: fileObj._id,
-    name: _chunkPath(chunk),
+    original: {
+      name: _chunkPath(chunk)
+    },
     copies: {
       _tempstore: {
         key: existing && existing.keys[chunk]
       }
     }
   });
+
+  // Return a fitting fileKey SA specific
+  return FS.TempStore.Storage.adapter.fileKey(tempFileObj);
 };
 
 /**
