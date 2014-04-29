@@ -44,8 +44,8 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
     // Not all SA's can set these options and cfs dont depend on setting these
     // but its nice if other systems are accessing the SA that some of the data
     // is also available to those
-    aliases: [fileObj.name],
-    contentType: fileObj.type,
+    aliases: [fileObj.name()],
+    contentType: fileObj.type(),
     metadata: fileObj.metadata
   });
 

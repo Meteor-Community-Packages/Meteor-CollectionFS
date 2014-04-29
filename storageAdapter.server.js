@@ -83,15 +83,11 @@ FS.StorageAdapter = function(name, options, api) {
       // The internal takes a fileKey - not fileObj
       writeStream = FS.Utility.safeStream( api.createWriteStream(fileObj, options) );
     } else {
-      if (typeof fileObj.copies == 'undefined' || fileObj.copies === null) {
-        fileObj.copies = {};
-      }
-      if (typeof fileObj.copies[self.name] === 'undefined') {
-        fileObj.copies[self.name] = {
-          name: fileObj.name,
-          type: fileObj.type,
-          size: fileObj.size
-        };
+      // If we haven't set name, type, and size for this version yet, set it to same values as original version
+      if (!fileObj.hasStored(self.name)) {
+        fileObj.name(fileObj.name(), {store: self.name});
+        fileObj.type(fileObj.type(), {store: self.name});
+        fileObj.size(fileObj.size(), {store: self.name});
       }
 
       writeStream = FS.Utility.safeStream( self._transform.createWriteStream(fileObj, options) );
