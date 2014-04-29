@@ -65,7 +65,7 @@ __Returns__  *{number}*
 The server confirmed upload progress
 
 
-> ```FS.File.prototype.uploadProgress = function() { ...``` [fsFile-common.js:134](fsFile-common.js#L134)
+> ```FS.File.prototype.uploadProgress = function() { ...``` [fsFile-common.js:138](fsFile-common.js#L138)
 
 
 -
@@ -83,7 +83,7 @@ Returns true if this FS.File is reactive
 > mean that our fileRecord is fully updated by Meteor and we are mounted on
 > a collection
 
-> ```FS.File.prototype.controlledByDeps = function() { ...``` [fsFile-common.js:159](fsFile-common.js#L159)
+> ```FS.File.prototype.controlledByDeps = function() { ...``` [fsFile-common.js:163](fsFile-common.js#L163)
 
 
 -
@@ -96,7 +96,7 @@ __Returns__  *{FS.Collection}*
 Returns attached collection or undefined if not mounted
 
 
-> ```FS.File.prototype.getCollection = function() { ...``` [fsFile-common.js:169](fsFile-common.js#L169)
+> ```FS.File.prototype.getCollection = function() { ...``` [fsFile-common.js:173](fsFile-common.js#L173)
 
 
 -
@@ -109,7 +109,7 @@ __Returns__  *{FS.Collection}*
 Returns attached collection or undefined if not mounted
 
 
-> ```FS.File.prototype.isMounted = FS.File.prototype.getCollection;``` [fsFile-common.js:197](fsFile-common.js#L197)
+> ```FS.File.prototype.isMounted = FS.File.prototype.getCollection;``` [fsFile-common.js:201](fsFile-common.js#L201)
 
 
 -
@@ -122,7 +122,7 @@ __Returns__  *{object}*
 The filerecord
 
 
-> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile-common.js:204](fsFile-common.js#L204)
+> ```FS.File.prototype.getFileRecord = function() { ...``` [fsFile-common.js:208](fsFile-common.js#L208)
 
 
 -
@@ -140,7 +140,7 @@ __Arguments__
 
 Updates the fileRecord.
 
-> ```FS.File.prototype.update = function(modifier, options, callback) { ...``` [fsFile-common.js:235](fsFile-common.js#L235)
+> ```FS.File.prototype.update = function(modifier, options, callback) { ...``` [fsFile-common.js:239](fsFile-common.js#L239)
 
 
 -
@@ -161,7 +161,7 @@ Count
 
 
 
-> ```FS.File.prototype.remove = function(callback) { ...``` [fsFile-common.js:271](fsFile-common.js#L271)
+> ```FS.File.prototype.remove = function(callback) { ...``` [fsFile-common.js:275](fsFile-common.js#L275)
 
 
 -
@@ -185,20 +185,28 @@ Move the file from current collection to another collection
 
 > Note: Not yet implemented
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:309](fsFile-common.js#L309)
+> ```FS.File.prototype.getExtension = function(options) { ...``` [fsFile-common.js:315](fsFile-common.js#L315)
 
 
 -
 
-### <a name="FS.File.prototype.getExtension"></a>*fsFile*.getExtension()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+### <a name="FS.File.prototype.getExtension"></a>*fsFile*.getExtension([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
 
 *This method __getExtension__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __options__ *{Object}*  (Optional)
+    * __store__ *{String}*  (Optional)
+
+     Store name. Default is the original extension.
+
 
 __Returns__  *{string}*
 The extension eg.: `jpg` or if not found then an empty string ''
 
 
-> ```FS.File.prototype.getExtension = function() { ...``` [fsFile-common.js:309](fsFile-common.js#L309)
+> ```FS.File.prototype.getExtension = function(options) { ...``` [fsFile-common.js:315](fsFile-common.js#L315)
 
 
 -
@@ -221,7 +229,7 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isImage = function(options) { ...``` [fsFile-common.js:340](fsFile-common.js#L340)
+> ```FS.File.prototype.isImage = function(options) { ...``` [fsFile-common.js:345](fsFile-common.js#L345)
 
 
 -
@@ -244,7 +252,7 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isVideo = function(options) { ...``` [fsFile-common.js:355](fsFile-common.js#L355)
+> ```FS.File.prototype.isVideo = function(options) { ...``` [fsFile-common.js:360](fsFile-common.js#L360)
 
 
 -
@@ -267,7 +275,38 @@ content type. If the file object is unmounted or doesn't have a copy for
 the specified store, or if you don't specify a store, this method checks
 the content type of the original file.
 
-> ```FS.File.prototype.isAudio = function(options) { ...``` [fsFile-common.js:370](fsFile-common.js#L370)
+> ```FS.File.prototype.isAudio = function(options) { ...``` [fsFile-common.js:375](fsFile-common.js#L375)
+
+
+-
+
+### <a name="FS.File.prototype.formattedSize"></a>*fsFile*.formattedSize({Object}, {String}, {String})&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __formattedSize__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __{Object}__ *{any}*  
+
+ options
+
+* __{String}__ *{any}*  
+
+ [options.store=none,display original file size] Which file do you want to get the size of?
+
+* __{String}__ *{any}*  
+
+ [options.formatString='0.00 b'] The `numeral` format string to use.
+
+
+__Returns__  *{String}*
+The file size formatted as a human readable string and reactively updated.
+
+
+You must add the `numeral` package to your app before you can use this method.
+If info is not found or a size can't be determined, it will show 0.
+
+> ```FS.File.prototype.formattedSize = function fsFileFormattedSize(options) { ...``` [fsFile-common.js:390](fsFile-common.js#L390)
 
 
 -
@@ -280,20 +319,20 @@ __Returns__  *{boolean}*
 True if the number of uploaded bytes is equal to the file size.
 
 
-> ```FS.File.prototype.isUploaded = function() { ...``` [fsFile-common.js:379](fsFile-common.js#L379)
+> ```FS.File.prototype.isUploaded = function() { ...``` [fsFile-common.js:408](fsFile-common.js#L408)
 
 
 -
 
-### <a name="FS.File.prototype.hasCopy"></a>*fsFile*.hasCopy(storeName, [optimistic])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+### <a name="FS.File.prototype.hasStored"></a>*fsFile*.hasStored(storeName, [optimistic])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
 
-*This method __hasCopy__ is defined in `prototype` of `FS.File`*
+*This method __hasStored__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
 
 * __storeName__ *{string}*  
 
- Name of the store to check for a copy of this file
+ Name of the store
 
 * __optimistic__ *{boolean}*  (Optional, Default = false)
 
@@ -301,7 +340,7 @@ __Arguments__
 
 
 __Returns__  *{boolean}*
-If the copy exists or not
+Is a version of this file stored in the given store?
 
 
 > Note: If the file is not published to the client or simply not found:
@@ -310,12 +349,16 @@ param is the boolean value to return. Are we `optimistic` that the copy
 could exist. This is the case in `FS.File.url` we are optimistic that the
 copy supplied by the user exists.
 
-> ```FS.File.prototype.hasCopy = function(storeName, optimistic) { ...``` [fsFile-common.js:401](fsFile-common.js#L401)
+> ```FS.File.prototype.hasStored = function(storeName, optimistic) { ...``` [fsFile-common.js:430](fsFile-common.js#L430)
 
 
 -
 
 ### <a name="FS.File.prototype.getCopyInfo"></a>*fsFile*.getCopyInfo(storeName)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+> __Warning!__
+> This method "FS.File.prototype.getCopyInfo" has deprecated from the API
+> Use individual methods with `store` option instead.
 
 *This method __getCopyInfo__ is defined in `prototype` of `FS.File`*
 
@@ -330,7 +373,177 @@ __Returns__  *{Object}*
 The file details, e.g., name, size, key, etc., specific to the copy saved in this store.
 
 
-> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:421](fsFile-common.js#L421)
+> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:454](fsFile-common.js#L454)
+
+
+-
+
+### <a name="FS.File.prototype._getInfo"></a>*fsFile*._getInfo([storeName], [options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method is private*
+*This method ___getInfo__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __storeName__ *{String}*  (Optional)
+
+ Name of the store for which to get file info. Omit for original file details.
+
+* __options__ *{Object}*  (Optional)
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+
+    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK.
+
+
+__Returns__  *{Object}*
+The file details, e.g., name, size, key, etc. If not found, returns an empty object.
+
+
+> ```FS.File.prototype._getInfo = function(storeName, options) { ...``` [fsFile-common.js:469](fsFile-common.js#L469)
+
+
+-
+
+### <a name="FS.File.prototype._setInfo"></a>*fsFile*._setInfo(storeName, property, value)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method is private*
+*This method ___setInfo__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __storeName__ *{String}*  
+
+ Name of the store for which to set file info. Non-string will set original file details.
+
+* __property__ *{String}*  
+
+ Property to set
+
+* __value__ *{String}*  
+
+ New value for property
+
+
+__Returns__  *{undefined}*
+
+
+> ```FS.File.prototype._setInfo = function(storeName, property, value) { ...``` [fsFile-common.js:493](fsFile-common.js#L493)
+
+
+-
+
+### <a name="FS.File.prototype.name"></a>*fsFile*.name([value], [options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __name__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __value__ *{String|null}*  (Optional)
+
+ If setting the name, specify the new name as the first argument. Otherwise the options argument should be first.
+
+* __options__ *{Object}*  (Optional)
+    * __store__ *{Object}*  (Optional, Default = none,original)
+
+     Get or set the name of the version of the file that was saved in this store. Default is the original file name.
+
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+
+    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+
+
+__Returns__  *{String|undefined}*
+If setting, returns `undefined`. If getting, returns the file name.
+
+
+> ```FS.File.prototype.name = function(value, options) { ...``` [fsFile-common.js:514](fsFile-common.js#L514)
+
+
+-
+
+### <a name="FS.File.prototype.size"></a>*fsFile*.size([value], [options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __size__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __value__ *{Number}*  (Optional)
+
+ If setting the size, specify the new size in bytes as the first argument. Otherwise the options argument should be first.
+
+* __options__ *{Object}*  (Optional)
+    * __store__ *{Object}*  (Optional, Default = none,original)
+
+     Get or set the size of the version of the file that was saved in this store. Default is the original file size.
+
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+
+    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+
+
+__Returns__  *{Number|undefined}*
+If setting, returns `undefined`. If getting, returns the file size.
+
+
+> ```FS.File.prototype.size = function(value, options) { ...``` [fsFile-common.js:537](fsFile-common.js#L537)
+
+
+-
+
+### <a name="FS.File.prototype.type"></a>*fsFile*.type([value], [options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __type__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __value__ *{String}*  (Optional)
+
+ If setting the type, specify the new type as the first argument. Otherwise the options argument should be first.
+
+* __options__ *{Object}*  (Optional)
+    * __store__ *{Object}*  (Optional, Default = none,original)
+
+     Get or set the type of the version of the file that was saved in this store. Default is the original file type.
+
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+
+    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+
+
+__Returns__  *{String|undefined}*
+If setting, returns `undefined`. If getting, returns the file type.
+
+
+> ```FS.File.prototype.type = function(value, options) { ...``` [fsFile-common.js:560](fsFile-common.js#L560)
+
+
+-
+
+### <a name="FS.File.prototype.updatedAt"></a>*fsFile*.updatedAt([value], [options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __updatedAt__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __value__ *{String}*  (Optional)
+
+ If setting updatedAt, specify the new date as the first argument. Otherwise the options argument should be first.
+
+* __options__ *{Object}*  (Optional)
+    * __store__ *{Object}*  (Optional, Default = none,original)
+
+     Get or set the last updated date for the version of the file that was saved in this store. Default is the original last updated date.
+
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+
+    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+
+
+__Returns__  *{String|undefined}*
+If setting, returns `undefined`. If getting, returns the file's last updated date.
+
+
+> ```FS.File.prototype.updatedAt = function(value, options) { ...``` [fsFile-common.js:583](fsFile-common.js#L583)
 
 
 ***
@@ -388,48 +601,5 @@ __TODO__
 
 
 > ```FS.File.prototype.failedPermanently = function(storeName) { ...``` [fsFile-server.js:41](fsFile-server.js#L41)
-
-
--
-
-### <a name="FS.File.prototype.get"></a>*fsFile*.get([options])&nbsp;&nbsp;<sub><i>Server</i></sub> ###
-
-*This method __get__ is defined in `prototype` of `FS.File`*
-
-__Arguments__
-
-* __options__ *{object}*  (Optional)
-    * __storeName__ *{string}*  (Optional)
-
-    Name of the store to get from. If not
-
-    * __start__ *{number}*  (Optional)
-
-    Start position
-
-    * __end__ *{number}*  (Optional)
-
-    End position
-
-    * __format__ *{number}*  (Optional, Default = "binary")
-
-    Do you want "buffer" or "binary"?
-
-
-__Returns__  *{Uint8Array|Buffer}*
-The data
-
-__TODO__
-```
-* can deprecate and use streams
-```
-
-defined, the first store defined in `options.stores` for the
-collection is used. So if there is only one store, you can generally omit
-this, but if there are multiple, it's best to specify.
-
-Returns the Buffer data from the requested store
-
-> ```FS.File.prototype.get = function(options) { ...``` [fsFile-server.js:65](fsFile-server.js#L65)
 
 
