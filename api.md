@@ -39,6 +39,6 @@ and also calls the filter `onInvalid` method defined for the
 collection, passing it an English error string that explains why it
 failed.
 
-> ```FS.Collection.prototype.allowsFile = function fsColAllowsFile(fileObj) { ...``` [filters.js:107](filters.js#L107)
+> ```FS.Collection.prototype.allowsFile = function fsColAllowsFile(fileObj) { ...``` [filters.js:108](filters.js#L108)
 
 

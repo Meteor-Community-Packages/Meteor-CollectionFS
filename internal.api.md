@@ -41,7 +41,7 @@ and also calls the filter `onInvalid` method defined for the
 collection, passing it an English error string that explains why it
 failed.
 
-> ```FS.Collection.prototype.allowsFile = function fsColAllowsFile(fileObj) { ...``` [filters.js:107](filters.js#L107)
+> ```FS.Collection.prototype.allowsFile = function fsColAllowsFile(fileObj) { ...``` [filters.js:108](filters.js#L108)
 
 
 -
@@ -67,6 +67,6 @@ __Returns__  *{Boolean}*
 Returns true if the content type is in the list, or if it matches
 one of the special types in the list, e.g., "image/*".
 
-> ```function contentTypeInList(list, contentType) { ...``` [filters.js:168](filters.js#L168)
+> ```function contentTypeInList(list, contentType) { ...``` [filters.js:169](filters.js#L169)
 
 
