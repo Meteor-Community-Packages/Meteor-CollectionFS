@@ -13,7 +13,7 @@ var defaultChunkSize = 2 * 1024 * 1024;
  * @return {undefined}
  */
 var _taskHandler = function(task, next) {
-  FS.debug && console.log("uploading chunk " + task.chunk + ", bytes " + task.start + " to " + Math.min(task.end, task.fileObj.size) + " of " + task.fileObj.size);
+  FS.debug && console.log("uploading chunk " + task.chunk + ", bytes " + task.start + " to " + Math.min(task.end, task.fileObj.size()) + " of " + task.fileObj.size());
   task.fileObj.data.getBinary(task.start, task.end, function gotBinaryCallback(err, data) {
     if (err) {
       next(new Meteor.Error(err.error, err.message));
@@ -25,7 +25,7 @@ var _taskHandler = function(task, next) {
         params: FS.Utility.extend({chunk: task.chunk}, task.urlParams),
         content: data,
         headers: {
-          'Content-Type': task.fileObj.type
+          'Content-Type': task.fileObj.type()
         }
       }, function(error, result) {
         task = null;
@@ -124,7 +124,7 @@ UploadTransferQueue = function(options) {
     }
 
     // Make sure that we have size as number
-    if (typeof fileObj.size !== 'number') {
+    if (typeof fileObj.size() !== 'number') {
       throw new Error('TransferQueue upload failed: fileObj size not set');
     }
 
@@ -144,7 +144,7 @@ UploadTransferQueue = function(options) {
       // Set counter for uploaded chunks
       fileObj.chunkCount = 0;
       // Calc the number of chunks
-      fileObj.chunkSum = Math.ceil(fileObj.size / fileObj.chunkSize);
+      fileObj.chunkSum = Math.ceil(fileObj.size() / fileObj.chunkSize);
 
       if (fileObj.chunkSum === 0)
         return;
@@ -192,7 +192,7 @@ UploadTransferQueue = function(options) {
 
       // Construct query string
       var urlParams = {
-        filename: fileObj.name
+        filename: fileObj.name()
       };
       if (authToken !== '') {
         urlParams.token = authToken;
@@ -206,7 +206,7 @@ UploadTransferQueue = function(options) {
         // case we are resuming?
         chunkQueue.add({
           chunk: chunk,
-          name: fileObj.name,
+          name: fileObj.name(),
           url: url,
           urlParams: urlParams,
           fileObj: fileObj,
