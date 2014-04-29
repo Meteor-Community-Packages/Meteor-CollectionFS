@@ -56,7 +56,7 @@ the requested store yet.
 Return the http url for getting the file - on server set auth if wanting to
 use authentication on client set auth to true or token
 
-> ```FS.File.prototype.url = function(options) { ...``` [access-point-common.js:52](access-point-common.js#L52)
+> ```FS.File.prototype.url = function(options) { ...``` [access-point-common.js:56](access-point-common.js#L56)
 
 
 -

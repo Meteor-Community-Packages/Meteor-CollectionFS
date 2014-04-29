@@ -139,7 +139,10 @@ httpPutInsertHandler = function httpPutInsertHandler(ref) {
   FS.debug && console.log("HTTP PUT (insert) handler");
 
   // Create the nice FS.File
-  var fileObj = new FS.File({name: opts.filename || null});
+  var fileObj = new FS.File();
+
+  // Set its name
+  fileObj.name(opts.filename || null);
 
   // Attach the readstream as the file's data
   fileObj.attachData(self.createReadStream(), self.requestHeaders['content-type'] || 'application/octet-stream');

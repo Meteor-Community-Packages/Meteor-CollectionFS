@@ -330,7 +330,7 @@ var expirationAuth = function() {
     }
 
   }
-  return false;  
+  return false;
 };
 
 HTTP.methods(
