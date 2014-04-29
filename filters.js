@@ -117,8 +117,8 @@ FS.Collection.prototype.allowsFile = function fsColAllowsFile(fileObj) {
   var saveAllContentTypes = (filter.allow.contentTypes.length === 0);
 
   // Get info about the file
-  var filename = fileObj.name;
-  var contentType = fileObj.type;
+  var filename = fileObj.name();
+  var contentType = fileObj.type();
   if (!contentType) {
     filter.onInvalid && filter.onInvalid(filename + " has an unknown content type");
     return false;
