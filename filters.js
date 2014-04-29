@@ -123,7 +123,7 @@ FS.Collection.prototype.allowsFile = function fsColAllowsFile(fileObj) {
     filter.onInvalid && filter.onInvalid(filename + " has an unknown content type");
     return false;
   }
-  var fileSize = fileObj.size;
+  var fileSize = fileObj.size();
   if (!fileSize || isNaN(fileSize)) {
     filter.onInvalid && filter.onInvalid(filename + " has an unknown file size");
     return false;
