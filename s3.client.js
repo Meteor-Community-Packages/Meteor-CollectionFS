@@ -19,5 +19,5 @@ FS.Store.S3 = function(name, options) {
 };
 
 FS.Store.S3.prototype.fileKey = function(fileObj) {
-  return fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name;
+  return fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name();
 };
