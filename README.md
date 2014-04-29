@@ -263,8 +263,8 @@ Images = new FS.Collection("images", {
           // Transform the image into a 10x10px PNG thumbnail.
           // We must change the name and type, but the new size
           // will be automatically detected and set.
-          fileObj.copies.thumbs.name = FS.Utility.setFileExtension(fileObj.copies.thumbs.name, 'png');
-          fileObj.copies.thumbs.type = 'image/png';
+          fileObj.extension('png', {store: "thumbs"});
+          fileObj.type('image/png', {store: "thumbs"});
           gm(readStream).resize(60).stream('PNG').pipe(writeStream);
         }
       )
@@ -328,27 +328,48 @@ But `name`, `size`, `type`, and `updatedAt` should be retrieved and set with the
 ```js
 // get original
 fileObj.name();
+fileObj.extension();
 fileObj.size();
+fileObj.formattedSize(); // must add the "numeral" package to your project to use this method
 fileObj.type();
 fileObj.updatedAt();
 
 // get for the version in a store
-fileObj.size({store: 'thumbs'});
-fileObj.type({store: 'thumbs'});
 fileObj.name({store: 'thumbs'});
+fileObj.extension({store: 'thumbs'});
+fileObj.size({store: 'thumbs'});
+fileObj.formattedSize({store: 'thumbs'}); // must add the "numeral" package to your project to use this method
+fileObj.type({store: 'thumbs'});
 fileObj.updatedAt({store: 'thumbs'});
 
 // set original
 fileObj.name('pic.png');
+fileObj.extension('png');
 fileObj.size(100);
 fileObj.type('image/png');
 fileObj.updatedAt(new Date);
 
 // set for the version in a store
 fileObj.name('pic.png', {store: 'thumbs'});
+fileObj.extension('png', {store: 'thumbs'});
 fileObj.size(100, {store: 'thumbs'});
 fileObj.type('image/png', {store: 'thumbs'});
 fileObj.updatedAt(new Date, {store: 'thumbs'});
+```
+
+These methods can all be used as UI helpers, too:
+
+```html
+{{#each myFiles}}
+  <p>Original name: {{this.name}}</p>
+  <p>Original extension: {{this.extension}}</p>
+  <p>Original type: {{this.type}}</p>
+  <p>Original size: {{this.size}}</p>
+  <p>Thumbnail name: {{this.name store="thumbs"}}</p>
+  <p>Thumbnail extension: {{this.extension store="thumbs"}}</p>
+  <p>Thumbnail type: {{this.type store="thumbs"}}</p>
+  <p>Thumbnail size: {{this.size store="thumbs"}}</p>
+{{/each}}
 ```
 
 Also, rather than setting the `data` property directly, you should use the `attachData` method.
