@@ -1,6 +1,6 @@
 #CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-4-16). It has
+NOTE: This branch is under active development right now (2014-4-29). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -236,7 +236,7 @@ Images = new FS.Collection("images", {
       new FS.Store.FileSystem("thumbs", {
         transformWrite: function(fileObj, readStream, writeStream) {
           // Transform the image into a 10x10px thumbnail
-          gm(readStream, fileObj.name).resize('10', '10').stream().pipe(writeStream);
+          gm(readStream, fileObj.name()).resize('10', '10').stream().pipe(writeStream);
         }
       )
     ],
@@ -290,6 +290,70 @@ Images.find().forEach(function (fileObj) {
 ```
 
 Note that you could also pipe the readStream from one store to the writeStream from another store to move files between stores, for example if you decide to use a different storage adapter and need to quickly and easily migrate the data. (We have not tested this, but it should be possible.)
+
+## An FS.File Instance
+
+An `FS.File` instance is an object with properties similar to this:
+
+```js
+{
+  _id: '',
+  collectionName: '', // this property not stored in DB
+  collection: collectionInstance, // this property not stored in DB
+  createdByTransform: true, // this property not stored in DB
+  data: data, // this property not stored in DB
+  original: {
+    name: '',
+    size: 0,
+    type: '',
+    updatedAt: date 
+  },
+  copies: {
+    storeName: {
+      key: '',
+      name: '',
+      size: 0,
+      type: '',
+      createdAt: date,
+      updatedAt: date 
+    }
+  },
+  uploadedAt: date,
+  anyUserDefinedProp: anything
+}
+```
+
+But `name`, `size`, `type`, and `updatedAt` should be retrieved and set with the methods rather than directly accessing the props:
+
+```js
+// get original
+fileObj.name();
+fileObj.size();
+fileObj.type();
+fileObj.updatedAt();
+
+// get for the version in a store
+fileObj.size({store: 'thumbs'});
+fileObj.type({store: 'thumbs'});
+fileObj.name({store: 'thumbs'});
+fileObj.updatedAt({store: 'thumbs'});
+
+// set original
+fileObj.name('pic.png');
+fileObj.size(100);
+fileObj.type('image/png');
+fileObj.updatedAt(new Date);
+
+// set for the version in a store
+fileObj.name('pic.png', {store: 'thumbs'});
+fileObj.size(100, {store: 'thumbs'});
+fileObj.type('image/png', {store: 'thumbs'});
+fileObj.updatedAt(new Date, {store: 'thumbs'});
+```
+
+Also, rather than setting the `data` property directly, you should use the `attachData` method.
+
+[Check out the full public API for `FS.File`](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/api.md).
 
 ## Filtering
 
@@ -621,7 +685,7 @@ explicitly attach the URL to a new FS.File instance and set the `name`:
 var newFile = new FS.File();
 newFile.attachData(url, function (error) {
   if (error) throw error;
-  newFile.name = "newImage.png";
+  newFile.name("newImage.png");
   Images.insert(newFile, function (error, fileObj) {
     //If !error, we have inserted new doc with ID fileObj._id, and
     //remote URL data will be downloaded and stored on the server. The
