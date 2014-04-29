@@ -43,15 +43,15 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   // Set any other properties we can determine from the source data
   // File
   if (typeof File !== "undefined" && data instanceof File) {
-    self.name = data.name;
+    self.name(data.name)
     self.updatedAt = data.lastModifiedDate;
-    self.size = data.size;
+    self.size(data.size);
     setData(data.type);
   }
   // Blob
   else if (typeof Blob !== "undefined" && data instanceof Blob) {
     self.updatedAt = new Date;
-    self.size = data.size;
+    self.size(data.size);
     setData(data.type);
   }
   // URL: we need to do a HEAD request to get the type because type
@@ -92,18 +92,18 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
     // It's always safe to call self.data.size() without supplying a callback
     // because it requires a callback only for URLs on the client, and we
     // already added size for URLs when we got the result from '_cfs_getUrlInfo' method.
-    if (!self.size) {
+    if (!self.size()) {
       if (callback) {
         self.data.size(function (error, size) {
           if (error) {
             callback && callback(error);
           } else {
-            self.size = size;
+            self.size(size);
             setName();
           }
         });
       } else {
-        self.size = self.data.size();
+        self.size(self.data.size());
         setName();
       }
     } else {
@@ -113,14 +113,14 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
 
   function setName() {
     // See if we can extract a file name from URL or filepath
-    if (!self.name && typeof data === "string") {
+    if (!self.name() && typeof data === "string") {
       // name from URL (for URL we assume the end is a filename only if it has an extension)
       if ((data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:") && FS.Utility.getFileExtension(data).length) {
-        self.name = FS.Utility.getFileName(data);
+        self.name(FS.Utility.getFileName(data));
       }
       // name from filepath
       else if (data.slice(0, 5) !== "data:") {
-        self.name = FS.Utility.getFileName(data);
+        self.name(FS.Utility.getFileName(data));
       }
     }
 
@@ -308,13 +308,14 @@ FS.File.prototype.remove = function(callback) {
 /**
  * @method FS.File.prototype.getExtension Returns the lowercase file extension
  * @public
+ * @param {Object} [options]
+ * @param {String} [options.store] - Store name. Default is the original extension.
  * @returns {string} The extension eg.: `jpg` or if not found then an empty string ''
  */
-FS.File.prototype.getExtension = function() {
+FS.File.prototype.getExtension = function(options) {
   var self = this;
-  // Make sure our file record is updated
-  self.getFileRecord();
-  return FS.Utility.getFileExtension(self.name);
+  // The call to self.name() will update from the file record
+  return FS.Utility.getFileExtension(self.name(options));
 };
 
 function checkContentType(fsFile, storeName, startOfType) {
@@ -395,14 +396,8 @@ FS.File.prototype.formattedSize = function fsFileFormattedSize(options) {
   options = options || {};
   options = options.hash || options;
 
-  var info;
-  if (options.store) {
-    info = self.getCopyInfo(options.store) || {};
-  } else {
-    info = self;
-  }
-
-  return numeral(info.size || 0).format(options.formatString || '0.00 b');
+  var size = self.size(options) || 0;
+  return numeral(size).format(options.formatString || '0.00 b');
 };
 
 /**
