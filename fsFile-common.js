@@ -462,12 +462,19 @@ FS.File.prototype.getCopyInfo = function(storeName) {
  * @method FS.File.prototype._getInfo
  * @private
  * @param {String} [storeName] Name of the store for which to get file info. Omit for original file details.
+ * @param {Object} [options]
+ * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK.
  * @returns {Object} The file details, e.g., name, size, key, etc. If not found, returns an empty object.
  */
-FS.File.prototype._getInfo = function(storeName) {
+FS.File.prototype._getInfo = function(storeName, options) {
   var self = this;
-  // Make sure we use the updated file record
-  self.getFileRecord();
+  options = options || {};
+
+  if (options.updateFileRecordFirst !== false) {
+    // Make sure we use the updated file record
+    self.getFileRecord();
+  }
+
   if (storeName) {
     return (self.copies && self.copies[storeName]) || {};
   } else {
@@ -501,6 +508,7 @@ FS.File.prototype._setInfo = function(storeName, property, value) {
  * @param {String|null} [value] - If setting the name, specify the new name as the first argument. Otherwise the options argument should be first.
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the name of the version of the file that was saved in this store. Default is the original file name.
+ * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file name.
  */
 FS.File.prototype.name = function(value, options) {
@@ -509,7 +517,7 @@ FS.File.prototype.name = function(value, options) {
   if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
     // GET
     options = value || {};
-    return self._getInfo(options.store).name;
+    return self._getInfo(options.store, options).name;
   } else {
     // SET
     options = options || {};
@@ -523,6 +531,7 @@ FS.File.prototype.name = function(value, options) {
  * @param {Number} [value] - If setting the size, specify the new size in bytes as the first argument. Otherwise the options argument should be first.
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the size of the version of the file that was saved in this store. Default is the original file size.
+ * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
  * @returns {Number|undefined} If setting, returns `undefined`. If getting, returns the file size.
  */
 FS.File.prototype.size = function(value, options) {
@@ -531,7 +540,7 @@ FS.File.prototype.size = function(value, options) {
   if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
     // GET
     options = value || {};
-    return self._getInfo(options.store).size;
+    return self._getInfo(options.store, options).size;
   } else {
     // SET
     options = options || {};
@@ -545,6 +554,7 @@ FS.File.prototype.size = function(value, options) {
  * @param {String} [value] - If setting the type, specify the new type as the first argument. Otherwise the options argument should be first.
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the type of the version of the file that was saved in this store. Default is the original file type.
+ * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file type.
  */
 FS.File.prototype.type = function(value, options) {
@@ -553,7 +563,7 @@ FS.File.prototype.type = function(value, options) {
   if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
     // GET
     options = value || {};
-    return self._getInfo(options.store).type;
+    return self._getInfo(options.store, options).type;
   } else {
     // SET
     options = options || {};
