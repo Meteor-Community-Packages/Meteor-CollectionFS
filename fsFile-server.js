@@ -8,8 +8,8 @@
 FS.File.prototype.logCopyFailure = function(storeName, maxTries) {
   var self = this;
 
-  // hasCopy will update from the fileRecord
-  if (self.hasCopy(storeName)) {
+  // hasStored will update from the fileRecord
+  if (self.hasStored(storeName)) {
     throw new Error("logCopyFailure: invalid storeName");
   }
 

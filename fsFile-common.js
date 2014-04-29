@@ -319,7 +319,7 @@ FS.File.prototype.getExtension = function() {
 
 function checkContentType(fsFile, storeName, startOfType) {
   var type;
-  if (storeName && fsFile.hasCopy(storeName)) {
+  if (storeName && fsFile.hasStored(storeName)) {
     type = fsFile.copies[storeName].type;
   } else {
     type = fsFile.type;
@@ -420,11 +420,11 @@ FS.File.prototype.isUploaded = function() {
 };
 
 /**
- * @method FS.File.prototype.hasCopy
+ * @method FS.File.prototype.hasStored
  * @public
- * @param {string} storeName Name of the store to check for a copy of this file
+ * @param {string} storeName Name of the store
  * @param {boolean} [optimistic=false] In case that the file record is not found, read below
- * @returns {boolean} If the copy exists or not
+ * @returns {boolean} Is a version of this file stored in the given store?
  *
  * > Note: If the file is not published to the client or simply not found:
  * this method cannot know for sure if it exists or not. The `optimistic`
@@ -432,7 +432,7 @@ FS.File.prototype.isUploaded = function() {
  * could exist. This is the case in `FS.File.url` we are optimistic that the
  * copy supplied by the user exists.
  */
-FS.File.prototype.hasCopy = function(storeName, optimistic) {
+FS.File.prototype.hasStored = function(storeName, optimistic) {
   var self = this;
   // Make sure we use the updated file record
   self.getFileRecord();
@@ -445,6 +445,9 @@ FS.File.prototype.hasCopy = function(storeName, optimistic) {
   }
   return false;
 };
+
+// Backwards compatibility
+FS.File.prototype.hasCopy = FS.File.prototype.hasStored;
 
 /**
  * @method FS.File.prototype.getCopyInfo
