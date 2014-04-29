@@ -56,9 +56,9 @@ FS.Store.GridFS = function(name, options) {
 
       // If we're passed a fileObj, we retrieve the _id and filename from it.
       if (fileObj) {
-        var store = fileObj.copies && fileObj.copies[name];
-        key._id = store && store.key || null;
-        key.filename = (store && store.name) || fileObj.name || (fileObj.collectionName + '-' + fileObj._id);
+        var info = fileObj._getInfo(name, {updateFileRecordFirst: false});
+        key._id = info.key || null;
+        key.filename = info.name || fileObj.name({updateFileRecordFirst: false}) || (fileObj.collectionName + '-' + fileObj._id);
       }
 
       // If key._id is null at this point, createWriteStream will let GridFS generate a new ID
