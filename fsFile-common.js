@@ -44,13 +44,13 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   // File
   if (typeof File !== "undefined" && data instanceof File) {
     self.name(data.name)
-    self.updatedAt = data.lastModifiedDate;
+    self.updatedAt(data.lastModifiedDate);
     self.size(data.size);
     setData(data.type);
   }
   // Blob
   else if (typeof Blob !== "undefined" && data instanceof Blob) {
-    self.updatedAt = new Date;
+    self.updatedAt(new Date);
     self.size(data.size);
     setData(data.type);
   }
@@ -568,6 +568,29 @@ FS.File.prototype.type = function(value, options) {
     // SET
     options = options || {};
     return self._setInfo(options.store, 'type', value);
+  }
+};
+
+/**
+ * @method FS.File.prototype.updatedAt
+ * @public
+ * @param {String} [value] - If setting updatedAt, specify the new date as the first argument. Otherwise the options argument should be first.
+ * @param {Object} [options]
+ * @param {Object} [options.store=none,original] - Get or set the last updated date for the version of the file that was saved in this store. Default is the original last updated date.
+ * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+ * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file's last updated date.
+ */
+FS.File.prototype.updatedAt = function(value, options) {
+  var self = this;
+
+  if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
+    // GET
+    options = value || {};
+    return self._getInfo(options.store, options).updatedAt;
+  } else {
+    // SET
+    options = options || {};
+    return self._setInfo(options.store, 'updatedAt', value);
   }
 };
 
