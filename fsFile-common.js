@@ -86,7 +86,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
     self.data = new DataMan(data, type);
 
     // Update the type to match what the data is
-    self.type = self.data.type();
+    self.type(self.data.type());
 
     // Update the size to match what the data is.
     // It's always safe to call self.data.size() without supplying a callback
@@ -320,9 +320,9 @@ FS.File.prototype.getExtension = function() {
 function checkContentType(fsFile, storeName, startOfType) {
   var type;
   if (storeName && fsFile.hasStored(storeName)) {
-    type = fsFile.copies[storeName].type;
+    type = fsFile.type({store: storeName});
   } else {
-    type = fsFile.type;
+    type = fsFile.type();
   }
   if (typeof type === "string") {
     return type.indexOf(startOfType) === 0;
@@ -452,6 +452,7 @@ FS.File.prototype.hasCopy = FS.File.prototype.hasStored;
 /**
  * @method FS.File.prototype.getCopyInfo
  * @public
+ * @deprecated Use individual methods with `store` option instead.
  * @param {string} storeName Name of the store for which to get copy info.
  * @returns {Object} The file details, e.g., name, size, key, etc., specific to the copy saved in this store.
  */
@@ -460,6 +461,109 @@ FS.File.prototype.getCopyInfo = function(storeName) {
   // Make sure we use the updated file record
   self.getFileRecord();
   return (self.copies && self.copies[storeName]) || null;
+};
+
+/**
+ * @method FS.File.prototype._getInfo
+ * @private
+ * @param {String} [storeName] Name of the store for which to get file info. Omit for original file details.
+ * @returns {Object} The file details, e.g., name, size, key, etc. If not found, returns an empty object.
+ */
+FS.File.prototype._getInfo = function(storeName) {
+  var self = this;
+  // Make sure we use the updated file record
+  self.getFileRecord();
+  if (storeName) {
+    return (self.copies && self.copies[storeName]) || {};
+  } else {
+    return self.original || {};
+  }
+};
+
+/**
+ * @method FS.File.prototype._setInfo
+ * @private
+ * @param {String} storeName - Name of the store for which to set file info. Non-string will set original file details.
+ * @param {String} property - Property to set
+ * @param {String} value - New value for property
+ * @returns {undefined}
+ */
+FS.File.prototype._setInfo = function(storeName, property, value) {
+  var self = this;
+  if (typeof storeName === "string") {
+    self.copies = self.copies || {};
+    self.copies[storeName] = self.copies[storeName] || {};
+    self.copies[storeName][property] = value;
+  } else {
+    self.original = self.original || {};
+    self.original[property] = value;
+  }
+};
+
+/**
+ * @method FS.File.prototype.name
+ * @public
+ * @param {String|null} [value] - If setting the name, specify the new name as the first argument. Otherwise the options argument should be first.
+ * @param {Object} [options]
+ * @param {Object} [options.store=none,original] - Get or set the name of the version of the file that was saved in this store. Default is the original file name.
+ * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file name.
+ */
+FS.File.prototype.name = function(value, options) {
+  var self = this;
+
+  if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
+    // GET
+    options = value || {};
+    return self._getInfo(options.store).name;
+  } else {
+    // SET
+    options = options || {};
+    return self._setInfo(options.store, 'name', value);
+  }
+};
+
+/**
+ * @method FS.File.prototype.size
+ * @public
+ * @param {Number} [value] - If setting the size, specify the new size in bytes as the first argument. Otherwise the options argument should be first.
+ * @param {Object} [options]
+ * @param {Object} [options.store=none,original] - Get or set the size of the version of the file that was saved in this store. Default is the original file size.
+ * @returns {Number|undefined} If setting, returns `undefined`. If getting, returns the file size.
+ */
+FS.File.prototype.size = function(value, options) {
+  var self = this;
+
+  if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
+    // GET
+    options = value || {};
+    return self._getInfo(options.store).size;
+  } else {
+    // SET
+    options = options || {};
+    return self._setInfo(options.store, 'size', value);
+  }
+};
+
+/**
+ * @method FS.File.prototype.type
+ * @public
+ * @param {String} [value] - If setting the type, specify the new type as the first argument. Otherwise the options argument should be first.
+ * @param {Object} [options]
+ * @param {Object} [options.store=none,original] - Get or set the type of the version of the file that was saved in this store. Default is the original file type.
+ * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file type.
+ */
+FS.File.prototype.type = function(value, options) {
+  var self = this;
+
+  if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
+    // GET
+    options = value || {};
+    return self._getInfo(options.store).type;
+  } else {
+    // SET
+    options = options || {};
+    return self._setInfo(options.store, 'type', value);
+  }
 };
 
 function isBasicObject(obj) {
