@@ -308,14 +308,14 @@ FS.File.prototype.remove = function(callback) {
 /**
  * @method FS.File.prototype.getExtension Returns the lowercase file extension
  * @public
+ * @deprecated Use the `extension` getter/setter method instead.
  * @param {Object} [options]
  * @param {String} [options.store] - Store name. Default is the original extension.
  * @returns {string} The extension eg.: `jpg` or if not found then an empty string ''
  */
 FS.File.prototype.getExtension = function(options) {
   var self = this;
-  // The call to self.name() will update from the file record
-  return FS.Utility.getFileExtension(self.name(options));
+  return self.extension(options);
 };
 
 function checkContentType(fsFile, storeName, startOfType) {
@@ -517,11 +517,36 @@ FS.File.prototype.name = function(value, options) {
   if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
     // GET
     options = value || {};
+    options = options.hash || options; // allow use as UI helper
     return self._getInfo(options.store, options).name;
   } else {
     // SET
     options = options || {};
     return self._setInfo(options.store, 'name', value);
+  }
+};
+
+/**
+ * @method FS.File.prototype.extension
+ * @public
+ * @param {String|null} [value] - If setting the extension, specify the new extension (without period) as the first argument. Otherwise the options argument should be first.
+ * @param {Object} [options]
+ * @param {Object} [options.store=none,original] - Get or set the extension of the version of the file that was saved in this store. Default is the original file extension.
+ * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+ * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file extension or an empty string if there isn't one.
+ */
+FS.File.prototype.extension = function(value, options) {
+  var self = this;
+
+  if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
+    // GET
+    options = value || {};
+    return FS.Utility.getFileExtension(self.name(options) || '');
+  } else {
+    // SET
+    options = options || {};
+    var newName = FS.Utility.setFileExtension(self.name(options) || '', value);
+    return self._setInfo(options.store, 'name', newName);
   }
 };
 
@@ -540,6 +565,7 @@ FS.File.prototype.size = function(value, options) {
   if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
     // GET
     options = value || {};
+    options = options.hash || options; // allow use as UI helper
     return self._getInfo(options.store, options).size;
   } else {
     // SET
@@ -563,6 +589,7 @@ FS.File.prototype.type = function(value, options) {
   if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
     // GET
     options = value || {};
+    options = options.hash || options; // allow use as UI helper
     return self._getInfo(options.store, options).type;
   } else {
     // SET
@@ -586,6 +613,7 @@ FS.File.prototype.updatedAt = function(value, options) {
   if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
     // GET
     options = value || {};
+    options = options.hash || options; // allow use as UI helper
     return self._getInfo(options.store, options).updatedAt;
   } else {
     // SET
