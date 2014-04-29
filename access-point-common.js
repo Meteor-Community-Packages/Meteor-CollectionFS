@@ -72,15 +72,12 @@ FS.File.prototype.url = function(options) {
   }
 
   if (self.isMounted()) {
-    var filename = '';
+    // See if we've stored in the requested store yet
     var storeName = options.store || self.collection.primaryStore.name;
-    var copyInfo = self.getCopyInfo(storeName);
-    if (!copyInfo) {
+    if (!self.hasStored(storeName)) {
       if (options.storing) {
         return options.storing;
-      } else if (options.brokenIsFine) {
-        copyInfo = {};
-      } else {
+      } else if (!options.brokenIsFine) {
         // We want to return null if we know the URL will be a broken
         // link because then we can avoid rendering broken links, broken
         // images, etc.
@@ -88,8 +85,9 @@ FS.File.prototype.url = function(options) {
       }
     }
 
-    filename = copyInfo.name;
-    if (filename && filename.length) {
+    // Add filename to end of URL if we can determine one
+    var filename = self.name({store: storeName});
+    if (typeof filename === "string" && filename.length) {
       filename = '/' + filename;
     } else {
       filename = '';
@@ -137,8 +135,13 @@ FS.File.prototype.url = function(options) {
     if (options.download) {
       params.download = true;
     }
-    if (storeName) {
-      params.store = storeName;
+    if (options.store) {
+      // We use options.store here instead of storeName because we want to omit the queryString
+      // whenever possible, allowing users to have "clean" URLs if they want. The server will
+      // assume the first store defined on the server, which means that we are assuming that
+      // the first on the client is also the first on the server. If that's not the case, the
+      // store option should be supplied.
+      params.store = options.store;
     }
     var queryString = FS.Utility.encodeParams(params);
     if (queryString.length) {
