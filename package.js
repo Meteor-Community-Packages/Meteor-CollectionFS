@@ -13,14 +13,12 @@ Package.on_use(function(api) {
 
   api.add_files([
     'common.js',
-    'api.common.js',
-    'api.client.js'
+    'api.common.js'
   ], 'client');
 
   api.add_files([
     'common.js',
-    'api.common.js',
-    'api.server.js'
+    'api.common.js'
   ], 'server');
 });
 
