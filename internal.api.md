@@ -56,7 +56,7 @@ FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
 
 > Note: This is considered as `advanced` use, its not a common pattern.
 
-> ```FS.TempStore.Storage = null;``` [tempStore.js:54](tempStore.js#L54)
+> ```FS.TempStore.Storage = null;``` [tempStore.js:56](tempStore.js#L56)
 
 
 
@@ -66,9 +66,12 @@ existance of FS.FileWorker, which is loaded after this package because it
 depends on this package.
 
 -
+XXX: TODO
+FS.TempStore.on('stored', function(fileObj, chunkCount, result) {
+This should work if we pass on result from the SA on stored event...
+fileObj.update({ $set: { chunkSum: 1, chunkCount: chunkCount, size: result.size } });
+});
 Stream implementation
-XXX: Would be nice if we could just use the meteor id directly in the mongodb
-It should be possible?
 -
 
 ### <a name="_chunkPath"></a>_chunkPath([n])&nbsp;&nbsp;<sub><i>Server</i></sub> ###
@@ -86,7 +89,7 @@ __Returns__  *{String}*
 Chunk naming convention
 
 
-> ```_chunkPath = function(n) { ...``` [tempStore.js:156](tempStore.js#L156)
+> ```_chunkPath = function(n) { ...``` [tempStore.js:130](tempStore.js#L130)
 
 
 -
@@ -107,7 +110,7 @@ Generated SA specific fileKey for the chunk
 Note: Calling function should call mountStorage() first, and
 make sure that fileObj is mounted.
 
-> ```_fileReference = function(fileObj, chunk) { ...``` [tempStore.js:170](tempStore.js#L170)
+> ```_fileReference = function(fileObj, chunk, existing) { ...``` [tempStore.js:144](tempStore.js#L144)
 
 
 -
@@ -123,13 +126,11 @@ __Arguments__
  object
 
 
-__TODO__
-```
-* This is not yet implemented, milestone 1.1.0
-```
+__Returns__  *{Boolean}*
+Is this file, or parts of it, currently stored in the TempStore
 
 
-> ```FS.TempStore.exists = function(fileObj) { ...``` [tempStore.js:186](tempStore.js#L186)
+> ```FS.TempStore.exists = function(fileObj) { ...``` [tempStore.js:171](tempStore.js#L171)
 
 
 -
@@ -151,7 +152,7 @@ __TODO__
 ```
 
 
-> ```FS.TempStore.listParts = function(fileObj) { ...``` [tempStore.js:202](tempStore.js#L202)
+> ```FS.TempStore.listParts = function(fileObj) { ...``` [tempStore.js:182](tempStore.js#L182)
 
 
 -
@@ -167,7 +168,7 @@ __Arguments__
 This function removes the file from tempstorage - it cares not if file is
 already removed or not found, goal is reached anyway.
 
-> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:230](tempStore.js#L230)
+> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:195](tempStore.js#L195)
 
 
 -
@@ -191,14 +192,14 @@ Writeable stream
 `options` of different types mean differnt things:
 `undefined` We store the file in one part
 (Normal server-side api usage)*
-`Number` the number is the part number total is `fileObj.chunkSum`
+`Number` the number is the part number total
 (multipart uploads will use this api)*
 `String` the string is the name of the `store` that wants to store file data
 (stores that want to sync their data to the rest of the files stores will use this)*
 
 > Note: fileObj must be mounted on a `FS.Collection`, it makes no sense to store otherwise
 
-> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:266](tempStore.js#L266)
+> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:243](tempStore.js#L243)
 
 
 -
@@ -221,7 +222,7 @@ Returns readable stream
 
 > Note: This is the true streaming object wrapped by the public api
 
-> ```_TempstoreReadStream = function(fileObj, options) { ...``` [tempStore.js:351](tempStore.js#L351)
+> ```_TempstoreReadStream = function(fileObj, options) { ...``` [tempStore.js:315](tempStore.js#L315)
 
 
 
@@ -246,6 +247,6 @@ Returns readable stream
 
 
 
-> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:420](tempStore.js#L420)
+> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:391](tempStore.js#L391)
 
 
