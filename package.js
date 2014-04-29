@@ -1,4 +1,4 @@
-Package.describe({
+ Package.describe({
   name: 'cfs-tempstore',
   summary: 'CollectionFS, temporary storage'
 });

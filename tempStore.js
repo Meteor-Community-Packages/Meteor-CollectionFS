@@ -89,7 +89,7 @@ FS.TempStore.on('progress', function(fileObj, chunkNum, count, total, result) {
   // Update the chunk counter
   var modifier;
 
-  FS.debug && console.log('TempStore progress: Received ' + count + ' of ' + total + ' chunks for ' + fileObj.name);
+  FS.debug && console.log('TempStore progress: Received ' + count + ' of ' + total + ' chunks for ' + fileObj.name());
 
   // Check if all chunks are uploaded
   if (count === total) {
