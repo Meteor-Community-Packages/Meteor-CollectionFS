@@ -324,11 +324,13 @@ FS.TempStore.createReadStream = function(fileObj) {
   var totalChunks = FS.Utility.size(chunkInfo.keys);
 
   function getNextStreamFunc(chunk) {
-    return function(next) {
+    return Meteor.bindEnvironment(function(next) {
       var fileKey = _fileReference(fileObj, chunk);
       var chunkReadStream = FS.TempStore.Storage.adapter.createReadStream(fileKey);
       next(chunkReadStream);
-    };
+    }, function (error) {
+      throw error;
+    });
   }
 
   // Make a combined stream
