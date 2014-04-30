@@ -95,13 +95,13 @@ FS.File.prototype.url = function(options) {
 
     // TODO: Could we somehow figure out if the collection requires login?
     var authToken = '';
-    if (typeof Accounts !== "undefined") {
+    if (Meteor.isClient && typeof Accounts !== "undefined" && typeof Accounts._storedLoginToken === "function") {
       if (options.auth !== false) {
         // Add reactive deps on the user
         Meteor.userId();
 
         var authObject = {
-          authToken: Accounts._storedLoginToken() || '',
+          authToken: Accounts._storedLoginToken() || ''
         };
 
         // If it's a number, we use that as the expiration time (in seconds)
