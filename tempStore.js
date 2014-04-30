@@ -17,9 +17,7 @@
 var EventEmitter = Npm.require('events').EventEmitter;
 
 // We have a special stream concating all chunk files into one readable stream
-var Readable = Npm.require('stream').Readable;
-var util = Npm.require('util');
-
+var CombinedStream = Npm.require('combined-stream');
 
 /** @namespace FS.TempStore
  * @property FS.TempStore
@@ -27,9 +25,9 @@ var util = Npm.require('util');
  * @public
  * *it's an event emitter*
  */
-
 FS.TempStore = new EventEmitter();
 
+// Create a tracker collection for keeping track of all chunks for any files that are currently in the temp store
 var tracker = FS.TempStore.Tracker = new Meteor.Collection('cfs._tempstore.chunks');
 
 /**
@@ -86,31 +84,7 @@ function mountFile(fileObj, name) {
 
 // We update the fileObj on progress
 FS.TempStore.on('progress', function(fileObj, chunkNum, count, total, result) {
-  // Update the chunk counter
-  var modifier;
-
   FS.debug && console.log('TempStore progress: Received ' + count + ' of ' + total + ' chunks for ' + fileObj.name());
-
-  // Check if all chunks are uploaded
-  if (count === total) {
-    // We no longer need the chunk info
-    modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
-
-    // Check if the file has been uploaded before
-    if (typeof fileObj.uploadedAt === 'undefined') {
-      // We set the uploadedAt date
-      modifier.$set.uploadedAt = new Date();
-    } else {
-      // We have been uploaded so an event were file data is updated is
-      // called synchronizing - so this must be a synchronizedAt?
-      modifier.$set.synchronizedAt = new Date();
-    }
-  } else {
-    modifier = { $set: {chunkCount: count} };
-  }
-
-  // Update the chunkCount on the fileObject
-  fileObj.update(modifier);
 });
 
 // XXX: TODO
@@ -249,11 +223,25 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   // If fileObj is not mounted or can't be, throw an error
   mountFile(fileObj, 'FS.TempStore.createWriteStream');
 
+  // Cache the selector for use multiple times below
+  var selector = {fileId: fileObj._id, collectionName: fileObj.collectionName};
+
+  // TODO, should pass in chunkSum so we don't need to use FS.File for it
+  var chunkSum = fileObj.chunkSum || 1;
+
   // Add fileObj to tracker collection
-  tracker.upsert({
-    fileId: fileObj._id,
-    collectionName: fileObj.collectionName
-  }, {$setOnInsert: {keys: {}}});
+  tracker.upsert(selector, {$setOnInsert: {keys: {}}});
+
+  // Determine how we're using the writeStream
+  var isOnePart = false, isMultiPart = false, isStoreSync = false, chunkNum = 0;
+  if (options === +options) {
+    isMultiPart = true;
+    chunkNum = options;
+  } else if (options === ''+options) {
+    isStoreSync = true;
+  } else {
+    isOnePart = true;
+  }
 
   // XXX: it should be possible for a store to sync by storing data into the
   // tempstore - this could be done nicely by setting the store name as string
@@ -264,9 +252,6 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
   // undefined - if data is stored into and should sync out to all storage adapters
   // number - if a chunk has been uploaded
   // string - if a storage adapter wants to sync its data to the other SA's
-
-  // If options is a number we use that otherwise we set it to 0
-  var chunkNum = (options === +options)?options: 0;
 
   // Find a nice location for the chunk data
   var fileKey = _fileReference(fileObj, chunkNum);
@@ -279,106 +264,43 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     // Save key in tracker document
     var setObj = {};
     setObj['keys.' + chunkNum] = result.fileKey;
-    tracker.update({
-      fileId: fileObj._id,
-      collectionName: fileObj.collectionName
-    }, {$set: setObj});
+    tracker.update(selector, {$set: setObj});
 
-    var chunkCount = FS.Utility.size(tracker.findOne({ fileId: fileObj._id, collectionName: fileObj.collectionName }).keys);
-    var chunkSum = fileObj.chunkSum || 1; // TODO, should pass in chunkSum so we don't need to use FS.File for it
-    var done = chunkCount === (fileObj.chunkSum || 1);
+    // Get updated chunkCount
+    var chunkCount = FS.Utility.size(tracker.findOne(selector).keys);
 
     // Progress
     self.emit('progress', fileObj, chunkNum, chunkCount, chunkSum, result);
 
-    // If upload is completed, fire events
-    if (done) {
-      var eventName = (options === ''+options) ? 'synchronized' : 'stored';
+    // If upload is completed
+    if (chunkCount === chunkSum) {
+      // We no longer need the chunk info
+      var modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
+
+      // Check if the file has been uploaded before
+      if (typeof fileObj.uploadedAt === 'undefined') {
+        // We set the uploadedAt date
+        modifier.$set.uploadedAt = new Date();
+      } else {
+        // We have been uploaded so an event were file data is updated is
+        // called synchronizing - so this must be a synchronizedAt?
+        modifier.$set.synchronizedAt = new Date();
+      }
+
+      // Update the fileObject
+      fileObj.update(modifier);
+
+      // Fire ending events
+      var eventName = isStoreSync ? 'synchronized' : 'stored';
       self.emit(eventName, fileObj, result);
       self.emit('ready', fileObj, chunkCount, result);
+    } else {
+      // Update the chunkCount on the fileObject
+      fileObj.update({ $set: {chunkCount: chunkCount} });
     }
   });
 
   return writeStream;
-};
-
-// READSTREAM
-
-/**
-  * @method FS.TempStore.createReadStream
-  * @param {FS.File} fileObj The file to read
-  * @private
-  * @return {Stream} Returns readable stream
-  *
-  * > Note: This is the true streaming object wrapped by the public api
-  */
-_TempstoreReadStream = function(fileObj, options) {
-  var self = this;
-  Readable.call(this, options);
-
-  self.fileObj = fileObj;
-
-  // Init current chunk pointer
-  self.currentChunk = 0;
-
-  var chunkInfo = tracker.findOne({
-    fileId: fileObj._id,
-    collectionName: fileObj.collectionName
-  }) || {};
-
-  // Init the sum of chunk
-  self.chunkSum = FS.Utility.size(chunkInfo.keys);
-
-  // Fire up the chunk read stream
-  self.nextChunkStream();
-
-};
-
-// Add readable stream methods
-util.inherits(_TempstoreReadStream, Readable);
-
-// This is the core funciton of this read stream - we read chunk data from all
-// chunks
-_TempstoreReadStream.prototype.nextChunkStream = function() {
-  var self = this;
-
-  if (self.currentChunk < self.chunkSum) {
-    var fileKey = _fileReference(self.fileObj, self.currentChunk++);
-
-    FS.debug && console.log('READ CHUNK: ' + self.currentChunk);
-
-    // create the chunk stream
-    self.chunkReadStream = FS.TempStore.Storage.adapter.createReadStream(fileKey);
-
-    self.chunkReadStream.safeOn('end', function() {
-      // This chunk has ended so we get the next chunk stream
-      self.nextChunkStream();
-    });
-
-    self.chunkReadStream.on('error', function(error) {
-      // XXX: we could emit the org error too
-      self.emit('error', new Error('FS.TempStore could not read chunk ' + self.currentChunk));
-    });
-
-    self.chunkReadStream.on('data', function(chunkData) {
-      if (!self.push(chunkData)) {
-        FS.debug && console.warn('FS.TempStore failed to push chunk', self.currentChunk);
-        // We should pause the stream the chunk stream...
-        self.chunkReadStream.pause();
-      }
-    });
-
-  } else {
-    // We end this stream we have completed reading the chunks
-    self.push(null);
-  };
-};
-
-_TempstoreReadStream.prototype._read = function() {
-  var self = this;
-
-  // I guess we will just make sure the readstream is not paused
-  self.chunkReadStream.resume();
 };
 
 /**
@@ -395,7 +317,29 @@ FS.TempStore.createReadStream = function(fileObj) {
   // If fileObj is not mounted or can't be, throw an error
   mountFile(fileObj, 'FS.TempStore.createReadStream');
 
-  FS.debug && console.log('FS.TempStore creating read stream...');
+  FS.debug && console.log('FS.TempStore creating read stream for ' + fileObj._id);
 
-  return new _TempstoreReadStream(fileObj);
+  // Determine how many total chunks there are from the tracker collection
+  var chunkInfo = tracker.findOne({fileId: fileObj._id, collectionName: fileObj.collectionName}) || {};
+  var totalChunks = FS.Utility.size(chunkInfo.keys);
+
+  function getNextStreamFunc(chunk) {
+    return function(next) {
+      var fileKey = _fileReference(fileObj, chunk);
+      var chunkReadStream = FS.TempStore.Storage.adapter.createReadStream(fileKey);
+      next(chunkReadStream);
+    };
+  }
+
+  // Make a combined stream
+  var combinedStream = CombinedStream.create();
+
+  // Add each chunk stream to the combined stream when the previous chunk stream ends
+  var currentChunk = 0;
+  for (var chunk = 0; chunk < totalChunks; chunk++) {
+    combinedStream.append(getNextStreamFunc(chunk));
+  }
+
+  // Return the combined stream
+  return combinedStream;
 };

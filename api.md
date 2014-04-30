@@ -26,7 +26,7 @@ The FS.TempStore emits events that others are able to listen to
 *This property __TempStore__ is defined in `FS`*
 it's an event emitter*
 
-> ```FS.TempStore = new EventEmitter();``` [tempStore.js:31](tempStore.js#L31)
+> ```FS.TempStore = new EventEmitter();``` [tempStore.js:28](tempStore.js#L28)
 
 
 
@@ -55,7 +55,7 @@ __Arguments__
 This function removes the file from tempstorage - it cares not if file is
 already removed or not found, goal is reached anyway.
 
-> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:195](tempStore.js#L195)
+> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:169](tempStore.js#L169)
 
 
 -
@@ -86,13 +86,9 @@ Writeable stream
 
 > Note: fileObj must be mounted on a `FS.Collection`, it makes no sense to store otherwise
 
-> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:243](tempStore.js#L243)
+> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:217](tempStore.js#L217)
 
 
-
--
-This is the core funciton of this read stream - we read chunk data from all
-chunks
 -
 
 ### <a name="FS.TempStore.createReadStream"></a>*fsTempstore*.createReadStream(fileObj)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
@@ -111,6 +107,6 @@ Returns readable stream
 
 
 
-> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:391](tempStore.js#L391)
+> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:313](tempStore.js#L313)
 
 

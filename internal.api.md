@@ -30,7 +30,7 @@ The FS.TempStore emits events that others are able to listen to
 *This property __TempStore__ is defined in `FS`*
 it's an event emitter*
 
-> ```FS.TempStore = new EventEmitter();``` [tempStore.js:31](tempStore.js#L31)
+> ```FS.TempStore = new EventEmitter();``` [tempStore.js:28](tempStore.js#L28)
 
 
 -
@@ -56,7 +56,7 @@ FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
 
 > Note: This is considered as `advanced` use, its not a common pattern.
 
-> ```FS.TempStore.Storage = null;``` [tempStore.js:56](tempStore.js#L56)
+> ```FS.TempStore.Storage = null;``` [tempStore.js:54](tempStore.js#L54)
 
 
 
@@ -89,7 +89,7 @@ __Returns__  *{String}*
 Chunk naming convention
 
 
-> ```_chunkPath = function(n) { ...``` [tempStore.js:130](tempStore.js#L130)
+> ```_chunkPath = function(n) { ...``` [tempStore.js:104](tempStore.js#L104)
 
 
 -
@@ -110,7 +110,7 @@ Generated SA specific fileKey for the chunk
 Note: Calling function should call mountStorage() first, and
 make sure that fileObj is mounted.
 
-> ```_fileReference = function(fileObj, chunk, existing) { ...``` [tempStore.js:144](tempStore.js#L144)
+> ```_fileReference = function(fileObj, chunk, existing) { ...``` [tempStore.js:118](tempStore.js#L118)
 
 
 -
@@ -130,7 +130,7 @@ __Returns__  *{Boolean}*
 Is this file, or parts of it, currently stored in the TempStore
 
 
-> ```FS.TempStore.exists = function(fileObj) { ...``` [tempStore.js:171](tempStore.js#L171)
+> ```FS.TempStore.exists = function(fileObj) { ...``` [tempStore.js:145](tempStore.js#L145)
 
 
 -
@@ -152,7 +152,7 @@ __TODO__
 ```
 
 
-> ```FS.TempStore.listParts = function(fileObj) { ...``` [tempStore.js:182](tempStore.js#L182)
+> ```FS.TempStore.listParts = function(fileObj) { ...``` [tempStore.js:156](tempStore.js#L156)
 
 
 -
@@ -168,7 +168,7 @@ __Arguments__
 This function removes the file from tempstorage - it cares not if file is
 already removed or not found, goal is reached anyway.
 
-> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:195](tempStore.js#L195)
+> ```FS.TempStore.removeFile = function(fileObj) { ...``` [tempStore.js:169](tempStore.js#L169)
 
 
 -
@@ -199,36 +199,9 @@ Writeable stream
 
 > Note: fileObj must be mounted on a `FS.Collection`, it makes no sense to store otherwise
 
-> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:243](tempStore.js#L243)
+> ```FS.TempStore.createWriteStream = function(fileObj, options) { ...``` [tempStore.js:217](tempStore.js#L217)
 
 
--
-
-### <a name="FS.TempStore.createReadStream"></a>*fsTempstore*.createReadStream(fileObj)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
-
-*This method is private*
-*This method __createReadStream__ is defined in `FS.TempStore`*
-
-__Arguments__
-
-* __fileObj__ *{[FS.File](#FS.File)}*  
-
- The file to read
-
-
-__Returns__  *{Stream}*
-Returns readable stream
-
-
-> Note: This is the true streaming object wrapped by the public api
-
-> ```_TempstoreReadStream = function(fileObj, options) { ...``` [tempStore.js:315](tempStore.js#L315)
-
-
-
--
-This is the core funciton of this read stream - we read chunk data from all
-chunks
 -
 
 ### <a name="FS.TempStore.createReadStream"></a>*fsTempstore*.createReadStream(fileObj)&nbsp;&nbsp;<sub><i>Server</i></sub> ###
@@ -247,6 +220,6 @@ Returns readable stream
 
 
 
-> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:391](tempStore.js#L391)
+> ```FS.TempStore.createReadStream = function(fileObj) { ...``` [tempStore.js:313](tempStore.js#L313)
 
 

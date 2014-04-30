@@ -3,6 +3,10 @@
   summary: 'CollectionFS, temporary storage'
 });
 
+Npm.depends({
+  'combined-stream': '0.0.4'
+});
+
 Package.on_use(function(api) {
   api.use(['cfs-base-package', 'cfs-file']);
 
