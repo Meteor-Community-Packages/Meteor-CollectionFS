@@ -187,7 +187,13 @@ UploadTransferQueue = function(options) {
       // TODO: Could we somehow figure out if the collection requires login?
       var authToken = '';
       if (typeof Accounts !== "undefined") {
-        authToken = Accounts._storedLoginToken() || '';
+        var authObject = {
+          authToken: Accounts._storedLoginToken() || '',
+        };
+
+        // Set the authToken
+        var authString = JSON.stringify(authObject);
+        authToken = FS.Utility.btoa(authString);
       }
 
       // Construct query string
