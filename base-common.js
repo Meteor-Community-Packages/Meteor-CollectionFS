@@ -249,6 +249,50 @@ FS.Utility.encodeString = function encodeString(str) {
   return encodeURIComponent(str).replace(/[!'()]/g, escape).replace(/\*/g, "%2A");
 };
 
+/*
+ * btoa and atob shims for client and server
+ */
+
+FS.Utility._btoa = function _fsUtility_btoa(str) {
+  var buffer;
+
+  if (str instanceof Buffer) {
+    buffer = str;
+  } else {
+    buffer = new Buffer(str.toString(), 'binary');
+  }
+
+  return buffer.toString('base64');
+};
+
+FS.Utility.btoa = function fsUtility_btoa(str) {
+  if (typeof btoa === 'function') {
+    // Client
+    return btoa(str);
+  } else if (typeof Buffer !== 'undefined') {
+    // Server
+    return FS.Utility._btoa(str);
+  } else {
+    throw new Error('FS.Utility.btoa: Cannot base64 encode on your system');
+  }
+};
+
+FS.Utility._atob = function _fsUtility_atob(str) {
+  return new Buffer(str, 'base64').toString('binary');
+};
+
+FS.Utility.atob = function fsUtility_atob(str) {
+  if (typeof atob === 'function') {
+    // Client
+    return atob(str);
+  } else if (typeof Buffer !== 'undefined') {
+    // Server
+    return FS.Utility._atob(str);
+  } else {
+    throw new Error('FS.Utility.atob: Cannot base64 encode on your system');
+  }
+};
+
 // Api wrap for 3party libs like underscore
 FS.Utility.extend = _.extend;
 

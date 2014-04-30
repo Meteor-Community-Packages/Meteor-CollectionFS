@@ -11,19 +11,41 @@ HELPERS
 #############################################################################
 -
 
-### <a name="FS.Utility.cloneFileRecord"></a>*fsUtility*.cloneFileRecord(rec)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+### <a name="FS.Utility.cloneFileRecord"></a>*fsUtility*.cloneFileRecord(rec, [options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
 
 *This method __cloneFileRecord__ is defined in `FS.Utility`*
 
 __Arguments__
 
 * __rec__ *{[FS.File](#FS.File)|[FS.Collection filerecord](#FS.Collection filerecord)}*  
+* __options__ *{Object}*  (Optional)
+    * __full__ *{Boolean}*  (Optional, Default = false)
+
+    Set `true` to prevent certain properties from being omitted from the clone.
+
 
 __Returns__  *{Object}*
 Cloned filerecord
 
 
-> ```FS.Utility.cloneFileRecord = function(rec) { ...``` [base-common.js:85](base-common.js#L85)
+Makes a shallow clone of `rec`, filtering out some properties that might be present if
+it's an FS.File instance, but which we never want to be part of the stored
+filerecord.
+
+This is a blacklist clone rather than a whitelist because we want the user to be able
+to specify whatever additional properties they wish.
+
+In general, we expect the following whitelist properties used by the internal and
+external APIs:
+
+_id, name, size, type, chunkCount, chunkSize, chunkSum, copies, createdAt, updatedAt, uploadedAt
+
+Those properties, and any additional properties added by the user, should be present
+in the returned object, which is suitable for inserting into the backing collection or
+extending an FS.File instance.
+
+
+> ```FS.Utility.cloneFileRecord = function(rec, options) { ...``` [base-common.js:71](base-common.js#L71)
 
 
 -
@@ -42,34 +64,90 @@ __Returns__  *{undefined}*
 Can be used as a default callback for client methods that need a callback.
 Simply throws the provided error if there is one.
 
-> ```FS.Utility.defaultCallback = function(err) { ...``` [base-common.js:127](base-common.js#L127)
+> ```FS.Utility.defaultCallback = function defaultCallback(err) { ...``` [base-common.js:96](base-common.js#L96)
 
 
 -
 
-### <a name="FS.Utility.handleError"></a>*fsUtility*.handleError(callback, err)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+### <a name="FS.Utility.defaultCallback"></a>*fsUtility*.defaultCallback([f], [err])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
 
-*This method __handleError__ is defined in `FS.Utility`*
+*This method __defaultCallback__ is defined in `FS.Utility`*
 
 __Arguments__
 
-* __callback__ *{Function}*  
+* __f__ *{Function}*  (Optional)
 
  A callback function, if you have one. Can be undefined or null.
 
-* __err__ *{String}*  
+* __err__ *{[Meteor.Error ](#Meteor.Error )|[ Error ](# Error )|[ String](# String)}*  (Optional)
 
- Error text
-
-
-__Returns__  *{undefined}*
+ Error or error message (string)
 
 
-Creates an Error instance with the given text. If callback is a function,
-passes the error to that function. Otherwise throws it. Useful for dealing
-with errors in methods that optionally accept a callback.
+__Returns__  *{Any}*
+the callback result if any
 
-> ```FS.Utility.handleError = function(callback, err) { ...``` [base-common.js:143](base-common.js#L143)
+
+Handle Error, creates an Error instance with the given text. If callback is
+a function, passes the error to that function. Otherwise throws it. Useful
+for dealing with errors in methods that optionally accept a callback.
+
+> ```FS.Utility.handleError = function(f, err, result) { ...``` [base-common.js:120](base-common.js#L120)
+
+
+-
+
+### <a name="FS.Utility.noop"></a>*fsUtility*.noop()&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __noop__ is defined in `FS.Utility`*
+
+Use this to hand a no operation / empty function
+
+> ```FS.Utility.noop = function() { ...``` [base-common.js:134](base-common.js#L134)
+
+
+-
+
+### <a name="FS.Utility.getFileExtension"></a>*fsUtility*.getFileExtension(name)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __getFileExtension__ is defined in `FS.Utility`*
+
+__Arguments__
+
+* __name__ *{String}*  
+
+ A filename, filepath, or URL that may or may not have an extension.
+
+
+__Returns__  *{String}*
+The extension or an empty string if no extension found.
+
+
+> ```FS.Utility.getFileExtension = function utilGetFileExtension(name) { ...``` [base-common.js:205](base-common.js#L205)
+
+
+-
+
+### <a name="FS.Utility.setFileExtension"></a>*fsUtility*.setFileExtension(name, ext)&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __setFileExtension__ is defined in `FS.Utility`*
+
+__Arguments__
+
+* __name__ *{String}*  
+
+ A filename that may or may not already have an extension.
+
+* __ext__ *{String}*  
+
+ An extension without leading period, which you want to be the new extension on `name`.
+
+
+__Returns__  *{String}*
+The filename with changed extension.
+
+
+> ```FS.Utility.setFileExtension = function utilSetFileExtension(name, ext) { ...``` [base-common.js:222](base-common.js#L222)
 
 
 -
