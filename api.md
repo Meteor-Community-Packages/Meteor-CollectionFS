@@ -166,6 +166,10 @@ Count
 
 ### <a name="FS.File.prototype.getExtension"></a>*fsFile*.getExtension([options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
 
+> __Warning!__
+> This method "FS.File.prototype.getExtension" has deprecated from the API
+> Use the `extension` getter/setter method instead.
+
 *This method __getExtension__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
@@ -180,7 +184,7 @@ __Returns__  *{string}*
 The extension eg.: `jpg` or if not found then an empty string ''
 
 
-> ```FS.File.prototype.getExtension = function(options) { ...``` [fsFile-common.js:315](fsFile-common.js#L315)
+> ```FS.File.prototype.getExtension = function(options) { ...``` [fsFile-common.js:316](fsFile-common.js#L316)
 
 
 -
@@ -347,7 +351,7 @@ __Returns__  *{Object}*
 The file details, e.g., name, size, key, etc., specific to the copy saved in this store.
 
 
-> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:454](fsFile-common.js#L454)
+> ```FS.File.prototype.getCopyInfo = function(storeName) { ...``` [fsFile-common.js:456](fsFile-common.js#L456)
 
 
 -
@@ -367,16 +371,45 @@ __Arguments__
 
      Get or set the name of the version of the file that was saved in this store. Default is the original file name.
 
-    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = false)
 
-    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+    Update this instance with data from the DB first? Applies to getter usage only.
 
 
 __Returns__  *{String|undefined}*
 If setting, returns `undefined`. If getting, returns the file name.
 
 
-> ```FS.File.prototype.name = function(value, options) { ...``` [fsFile-common.js:514](fsFile-common.js#L514)
+> ```FS.File.prototype.name = function(value, options) { ...``` [fsFile-common.js:516](fsFile-common.js#L516)
+
+
+-
+
+### <a name="FS.File.prototype.extension"></a>*fsFile*.extension([value], [options])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
+
+*This method __extension__ is defined in `prototype` of `FS.File`*
+
+__Arguments__
+
+* __value__ *{String|null}*  (Optional)
+
+ If setting the extension, specify the new extension (without period) as the first argument. Otherwise the options argument should be first.
+
+* __options__ *{Object}*  (Optional)
+    * __store__ *{Object}*  (Optional, Default = none,original)
+
+     Get or set the extension of the version of the file that was saved in this store. Default is the original file extension.
+
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = false)
+
+    Update this instance with data from the DB first? Applies to getter usage only.
+
+
+__Returns__  *{String|undefined}*
+If setting, returns `undefined`. If getting, returns the file extension or an empty string if there isn't one.
+
+
+> ```FS.File.prototype.extension = function(value, options) { ...``` [fsFile-common.js:540](fsFile-common.js#L540)
 
 
 -
@@ -396,16 +429,16 @@ __Arguments__
 
      Get or set the size of the version of the file that was saved in this store. Default is the original file size.
 
-    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = false)
 
-    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+    Update this instance with data from the DB first? Applies to getter usage only.
 
 
 __Returns__  *{Number|undefined}*
 If setting, returns `undefined`. If getting, returns the file size.
 
 
-> ```FS.File.prototype.size = function(value, options) { ...``` [fsFile-common.js:537](fsFile-common.js#L537)
+> ```FS.File.prototype.size = function(value, options) { ...``` [fsFile-common.js:564](fsFile-common.js#L564)
 
 
 -
@@ -425,16 +458,16 @@ __Arguments__
 
      Get or set the type of the version of the file that was saved in this store. Default is the original file type.
 
-    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = false)
 
-    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+    Update this instance with data from the DB first? Applies to getter usage only.
 
 
 __Returns__  *{String|undefined}*
 If setting, returns `undefined`. If getting, returns the file type.
 
 
-> ```FS.File.prototype.type = function(value, options) { ...``` [fsFile-common.js:560](fsFile-common.js#L560)
+> ```FS.File.prototype.type = function(value, options) { ...``` [fsFile-common.js:588](fsFile-common.js#L588)
 
 
 -
@@ -454,15 +487,15 @@ __Arguments__
 
      Get or set the last updated date for the version of the file that was saved in this store. Default is the original last updated date.
 
-    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = true)
+    * __updateFileRecordFirst__ *{Boolean}*  (Optional, Default = false)
 
-    Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+    Update this instance with data from the DB first? Applies to getter usage only.
 
 
 __Returns__  *{String|undefined}*
 If setting, returns `undefined`. If getting, returns the file's last updated date.
 
 
-> ```FS.File.prototype.updatedAt = function(value, options) { ...``` [fsFile-common.js:583](fsFile-common.js#L583)
+> ```FS.File.prototype.updatedAt = function(value, options) { ...``` [fsFile-common.js:612](fsFile-common.js#L612)
 
 

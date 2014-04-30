@@ -436,7 +436,9 @@ FS.File.prototype.hasStored = function(storeName, optimistic) {
     return !!optimistic;
   }
   if (typeof storeName === "string") {
-    return (self.copies && !FS.Utility.isEmpty(self.copies[storeName]));
+    // Return true only if the `key` property is present, which is not set until
+    // storage is complete.
+    return !!(self.copies && self.copies[storeName] && self.copies[storeName].key);
   }
   return false;
 };
@@ -463,14 +465,14 @@ FS.File.prototype.getCopyInfo = function(storeName) {
  * @private
  * @param {String} [storeName] Name of the store for which to get file info. Omit for original file details.
  * @param {Object} [options]
- * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK.
+ * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first?
  * @returns {Object} The file details, e.g., name, size, key, etc. If not found, returns an empty object.
  */
 FS.File.prototype._getInfo = function(storeName, options) {
   var self = this;
   options = options || {};
 
-  if (options.updateFileRecordFirst !== false) {
+  if (options.updateFileRecordFirst) {
     // Make sure we use the updated file record
     self.getFileRecord();
   }
@@ -508,7 +510,7 @@ FS.File.prototype._setInfo = function(storeName, property, value) {
  * @param {String|null} [value] - If setting the name, specify the new name as the first argument. Otherwise the options argument should be first.
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the name of the version of the file that was saved in this store. Default is the original file name.
- * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+ * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file name.
  */
 FS.File.prototype.name = function(value, options) {
@@ -532,7 +534,7 @@ FS.File.prototype.name = function(value, options) {
  * @param {String|null} [value] - If setting the extension, specify the new extension (without period) as the first argument. Otherwise the options argument should be first.
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the extension of the version of the file that was saved in this store. Default is the original file extension.
- * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+ * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file extension or an empty string if there isn't one.
  */
 FS.File.prototype.extension = function(value, options) {
@@ -556,7 +558,7 @@ FS.File.prototype.extension = function(value, options) {
  * @param {Number} [value] - If setting the size, specify the new size in bytes as the first argument. Otherwise the options argument should be first.
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the size of the version of the file that was saved in this store. Default is the original file size.
- * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+ * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
  * @returns {Number|undefined} If setting, returns `undefined`. If getting, returns the file size.
  */
 FS.File.prototype.size = function(value, options) {
@@ -580,7 +582,7 @@ FS.File.prototype.size = function(value, options) {
  * @param {String} [value] - If setting the type, specify the new type as the first argument. Otherwise the options argument should be first.
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the type of the version of the file that was saved in this store. Default is the original file type.
- * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+ * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file type.
  */
 FS.File.prototype.type = function(value, options) {
@@ -604,7 +606,7 @@ FS.File.prototype.type = function(value, options) {
  * @param {String} [value] - If setting updatedAt, specify the new date as the first argument. Otherwise the options argument should be first.
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the last updated date for the version of the file that was saved in this store. Default is the original last updated date.
- * @param {Boolean} [options.updateFileRecordFirst=true] Update this instance with data from the DB first? Pass `false` for efficiency when you know it's OK. Applies to getter usage only.
+ * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file's last updated date.
  */
 FS.File.prototype.updatedAt = function(value, options) {
