@@ -6,7 +6,6 @@ FS.HTTP.now = function() {
   return Date.now() + FS.HTTP._serverTimeDiff;
 };
 
-
 // Returns the localstorage if its found and working
 // TODO: check if this works in IE
 // could use Meteor._localStorage - just needs a rewrite
@@ -40,7 +39,7 @@ FS.HTTP._serverTimeDiff = 0; // Time difference in ms
 if (FS.HTTP.storage) {
   // Initialize the FS.HTTP._serverTimeDiff
   FS.HTTP._serverTimeDiff = (1*FS.HTTP.storage.getItem(FS.HTTP._prefix+'timeDiff')) || 0;
-  // At server startup we figure out the time difference between server and
+  // At client startup we figure out the time difference between server and
   // client time - this includes lag and timezone
   Meteor.startup(function() {
     // Call the server method an get server time

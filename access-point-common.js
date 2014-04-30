@@ -102,7 +102,7 @@ FS.File.prototype.url = function(options) {
 
         var authObject = {
           authToken: Accounts._storedLoginToken() || '',
-        }
+        };
 
         // If it's a number, we use that as the expiration time (in seconds)
         if (options.auth === +options.auth) {
@@ -111,15 +111,7 @@ FS.File.prototype.url = function(options) {
 
         // Set the authToken
         var authString = JSON.stringify(authObject);
-        if (typeof btoa === 'function') {
-          // Client side
-          authToken = btoa(authString);
-        } else if (typeof Buffer !== 'undefined') {
-          // Server side as atob() is not available
-          authToken = Buffer(authString).toString('base64');
-        } else {
-          throw new Error('FS.File.url Error: Cannot base64 encode on your system');
-        }
+        authToken = FS.Utility.btoa(authString);
       }
     } else if (typeof options.auth === "string") {
       // If the user supplies auth token the user will be responsible for

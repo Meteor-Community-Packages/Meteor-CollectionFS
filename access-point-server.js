@@ -270,67 +270,54 @@ mountUrls = function mountUrls() {
   ]);
 };
 
-// My auth will return the userId
-var expirationAuth = function() {
+// Returns the userId from URL token
+var expirationAuth = function expirationAuth() {
   var self = this;
-  console.log("token:"+self.query.token);
+
   // Read the token from '/hello?token=base64'
   var encodedToken = self.query.token;
+
+  FS.debug && console.log("token: "+encodedToken);
+
+  if (!encodedToken || !Meteor.users) return false;
+
   // Check the userToken before adding it to the db query
   // Set the this.userId
-  if (encodedToken) {
-    try {
-      //var tokenString = atob(encodedToken);
-      var tokenString = new Buffer(encodedToken, 'base64').toString('binary');
-      console.log("tokenString:"+tokenString);
+  var tokenString = FS.Utility.atob(encodedToken);
 
-      var tokenObject = JSON.parse(tokenString);
-      console.log(tokenObject);
-
-      // XXX: Do some check here of the object
-      var userToken = tokenObject.authToken;
-      if (userToken !== ''+userToken) {
-        throw new Meteor.Error(400, 'Bad Request');
-      }
-
-      console.log(tokenObject.expiration);
-      console.log(Date.now());
-
-      // if we have an expiration token we should check that it's still valid
-      if (tokenObject.expiration != null) {
-        // check if its too old
-        if (tokenObject.expiration < Date.now()) {
-          console.log('Expired token')
-          throw new Meteor.Error(500, 'Expired token');
-        }
-      }
-
-      // We are not on a secure line - so we have to look up the user...
-      var user = Meteor.users.findOne({
-        $or: [
-          {'services.resume.loginTokens.hashedToken': Accounts._hashLoginToken(userToken)},
-          {'services.resume.loginTokens.token': userToken}
-        ]
-      });
-
-      // Set the userId in the scope
-      return user && user._id;
-
-    } catch(err) {
-      if (err instanceof Meteor.Error) {
-        // Pass on error
-        throw err;
-      } else {
-       // Not formatted correctly
-       console.log('Internal error or something...')
-       console.log(err);
-       throw new Meteor.Error(400, 'Bad Request');
-      }
-
-    }
-
+  var tokenObject;
+  try {
+    tokenObject = JSON.parse(tokenString);
+  } catch(err) {
+    throw new Meteor.Error(400, 'Bad Request');
   }
-  return false;
+
+  // XXX: Do some check here of the object
+  var userToken = tokenObject.authToken;
+  if (userToken !== ''+userToken) {
+    throw new Meteor.Error(400, 'Bad Request');
+  }
+
+  // If we have an expiration token we should check that it's still valid
+  if (tokenObject.expiration != null) {
+    // check if its too old
+    var now = Date.now();
+    if (tokenObject.expiration < now) {
+      FS.debug && console.log('Expired token: ' + tokenObject.expiration + ' is less than ' + now);
+      throw new Meteor.Error(500, 'Expired token');
+    }
+  }
+
+  // We are not on a secure line - so we have to look up the user...
+  var user = Meteor.users.findOne({
+    $or: [
+      {'services.resume.loginTokens.hashedToken': Accounts._hashLoginToken(userToken)},
+      {'services.resume.loginTokens.token': userToken}
+    ]
+  });
+
+  // Set the userId in the scope
+  return user && user._id;
 };
 
 HTTP.methods(
