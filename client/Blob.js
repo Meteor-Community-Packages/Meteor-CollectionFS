@@ -1,21 +1,22 @@
 /* Blob.js
  * A Blob implementation.
- * 2013-06-20
- * 
+ * 2013-12-27
+ *
  * By Eli Grey, http://eligrey.com
  * By Devin Samarin, https://github.com/eboyjr
  * License: X11/MIT
  *   See LICENSE.md
  */
 
-/*global unescape */
+/*global self, unescape */
 /*jslint bitwise: true, regexp: true, confusion: true, es5: true, vars: true, white: true,
   plusplus: true */
 
 /*! @source http://purl.eligrey.com/github/Blob.js/blob/master/Blob.js */
 
-if ((typeof Blob !== "function" && typeof Blob !== "object") || (Blob && Blob.toString() === '[object BlobConstructor]'))
-this.Blob = (function(view) {
+if (!(typeof Blob === "function" || typeof Blob === "object") || typeof URL === "undefined")
+if ((typeof Blob === "function" || typeof Blob === "object") && typeof webkitURL !== "undefined") self.URL = webkitURL;
+else var Blob = (function (view) {
     "use strict";
 
     var BlobBuilder = view.BlobBuilder || view.WebKitBlobBuilder || view.MozBlobBuilder || view.MSBlobBuilder || (function(view) {
@@ -49,7 +50,7 @@ this.Blob = (function(view) {
             , URL = real_URL
             , btoa = view.btoa
             , atob = view.atob
-            
+
             , ArrayBuffer = view.ArrayBuffer
             , Uint8Array = view.Uint8Array
         ;
@@ -152,28 +153,14 @@ this.Blob = (function(view) {
         return FakeBlobBuilder;
     }(view));
 
-    var Blob = function(blobParts, options) {
+    return function Blob(blobParts, options) {
         var type = options ? (options.type || "") : "";
         var builder = new BlobBuilder();
         if (blobParts) {
             for (var i = 0, len = blobParts.length; i < len; i++) {
-                if (Uint8Array && blobParts[i] instanceof Uint8Array) {
-                    builder.append(blobParts[i].buffer);
-                }
-                else {
-                    builder.append(blobParts[i]);
-                }
+                builder.append(blobParts[i]);
             }
         }
-        var blob = builder.getBlob(type);
-        if (!blob.slice && blob.webkitSlice) {
-            blob.slice = blob.webkitSlice;
-        }
-        return blob;
+        return builder.getBlob(type);
     };
-    var getPrototypeOf = Object.getPrototypeOf || function(object) {
-        return object.__proto__;
-    };
-    Blob.prototype = getPrototypeOf(new Blob());
-    return Blob;
-}(this));
+}(typeof self !== "undefined" && self || typeof window !== "undefined" && window || this.content || this));
