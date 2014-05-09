@@ -141,9 +141,6 @@ FS.Store.GridFS = function(name, options) {
       mongodb.MongoClient.connect(options.mongoUrl, mongoOptions, function (err, db) {
         if (err) { return callback(err); }
         self.db = db;
-
-        console.log('GridFS init ' + name + ' on ' + options.mongoUrl);
-
         callback(null);
       });
     }
