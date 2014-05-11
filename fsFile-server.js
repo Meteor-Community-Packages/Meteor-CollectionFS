@@ -47,16 +47,17 @@ FS.File.prototype.failedPermanently = function(storeName) {
 };
 
 /**
+ * @method FS.File.prototype.createReadStream
+ * @public
+ * @param {String} [storeName]
+ * @returns {stream.Readable} Readable NodeJS stream
+ *
  * Returns a readable stream. Where the stream reads from depends on the FS.File instance and whether you pass a store name.
  *
  * * If you pass a `storeName`, a readable stream for the file data saved in that store is returned.
  * * If you don't pass a `storeName` and data is attached to the FS.File instance (on `data` property, which must be a DataMan instance), then a readable stream for the attached data is returned.
  * * If you don't pass a `storeName` and there is no data attached to the FS.File instance, a readable stream for the file data currently in the temporary store (`FS.TempStore`) is returned.
  *
- * @method FS.File.prototype.createReadStream
- * @public
- * @param {String} [storeName]
- * @returns {stream.Readable} Readable NodeJS stream
  */
 FS.File.prototype.createReadStream = function(storeName) {
   var self = this;
@@ -85,15 +86,16 @@ FS.File.prototype.createReadStream = function(storeName) {
 };
 
 /**
+ * @method FS.File.prototype.createWriteStream
+ * @public
+ * @param {String} [storeName]
+ * @returns {stream.Writeable} Writeable NodeJS stream
+ *
  * Returns a writeable stream. Where the stream writes to depends on whether you pass in a store name.
  *
  * * If you pass a `storeName`, a writeable stream for (over)writing the file data in that store is returned.
  * * If you don't pass a `storeName`, a writeable stream for writing to the temp store for this file is returned.
  *
- * @method FS.File.prototype.createWriteStream
- * @public
- * @param {String} [storeName]
- * @returns {stream.Writeable} Writeable NodeJS stream
  */
 FS.File.prototype.createWriteStream = function(storeName) {
   var self = this;

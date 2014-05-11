@@ -265,12 +265,12 @@ FS.File.prototype.update = function(modifier, options, callback) {
 };
 
 /**
- * Remove the current file from its FS.Collection
- *
  * @method FS.File.prototype.remove
  * @public
  * @param {Function} [callback]
  * @returns {number} Count
+ *
+ * Remove the current file from its FS.Collection
  */
 FS.File.prototype.remove = function(callback) {
   var self = this;

@@ -147,9 +147,6 @@ Updates the fileRecord.
 
 ### <a name="FS.File.prototype.remove"></a>*fsFile*.remove([callback])&nbsp;&nbsp;<sub><i>Anywhere</i></sub> ###
 
-```
-Remove the current file from its FS.Collection
-```
 *This method __remove__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
@@ -160,6 +157,7 @@ __Returns__  *{number}*
 Count
 
 
+Remove the current file from its FS.Collection
 
 > ```FS.File.prototype.remove = function(callback) { ...``` [fsFile-common.js:275](fsFile-common.js#L275)
 
@@ -640,12 +638,6 @@ __TODO__
 
 ### <a name="FS.File.prototype.createReadStream"></a>*fsFile*.createReadStream([storeName])&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
-```
-Returns a readable stream. Where the stream reads from depends on the FS.File instance and whether you pass a store name.
-If you pass a `storeName`, a readable stream for the file data saved in that store is returned.
-If you don't pass a `storeName` and data is attached to the FS.File instance (on `data` property, which must be a DataMan instance), then a readable stream for the attached data is returned.
-If you don't pass a `storeName` and there is no data attached to the FS.File instance, a readable stream for the file data currently in the temporary store (`FS.TempStore`) is returned.
-```
 *This method __createReadStream__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
@@ -656,20 +648,20 @@ __Returns__  *{stream.Readable}*
 Readable NodeJS stream
 
 
+Returns a readable stream. Where the stream reads from depends on the FS.File instance and whether you pass a store name.
+
+If you pass a `storeName`, a readable stream for the file data saved in that store is returned.
+If you don't pass a `storeName` and data is attached to the FS.File instance (on `data` property, which must be a DataMan instance), then a readable stream for the attached data is returned.
+If you don't pass a `storeName` and there is no data attached to the FS.File instance, a readable stream for the file data currently in the temporary store (`FS.TempStore`) is returned.
 
 
-> ```FS.File.prototype.createReadStream = function(storeName) { ...``` [fsFile-server.js:61](fsFile-server.js#L61)
+> ```FS.File.prototype.createReadStream = function(storeName) { ...``` [fsFile-server.js:62](fsFile-server.js#L62)
 
 
 -
 
 ### <a name="FS.File.prototype.createWriteStream"></a>*fsFile*.createWriteStream([storeName])&nbsp;&nbsp;<sub><i>Server</i></sub> ###
 
-```
-Returns a writeable stream. Where the stream writes to depends on whether you pass in a store name.
-If you pass a `storeName`, a writeable stream for (over)writing the file data in that store is returned.
-If you don't pass a `storeName`, a writeable stream for writing to the temp store for this file is returned.
-```
 *This method __createWriteStream__ is defined in `prototype` of `FS.File`*
 
 __Arguments__
@@ -680,8 +672,12 @@ __Returns__  *{stream.Writeable}*
 Writeable NodeJS stream
 
 
+Returns a writeable stream. Where the stream writes to depends on whether you pass in a store name.
+
+If you pass a `storeName`, a writeable stream for (over)writing the file data in that store is returned.
+If you don't pass a `storeName`, a writeable stream for writing to the temp store for this file is returned.
 
 
-> ```FS.File.prototype.createWriteStream = function(storeName) { ...``` [fsFile-server.js:98](fsFile-server.js#L98)
+> ```FS.File.prototype.createWriteStream = function(storeName) { ...``` [fsFile-server.js:100](fsFile-server.js#L100)
 
 
