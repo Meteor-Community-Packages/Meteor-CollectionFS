@@ -376,6 +376,35 @@ Also, rather than setting the `data` property directly, you should use the `atta
 
 [Check out the full public API for `FS.File`](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/api.md).
 
+### Storing FS.File references in your objects
+
+Often your files are part of another entity. You can store a reference to the file directly in the entity.
+You need to add `cfs-ejson-file` to your packages with `mrt add cfs-ejson-file`.
+Then you can do for example:
+
+```js
+// Add file reference of the event photo to the event
+var file = $('#file').get(0).files[0];
+var fileObj = eventPhotos.insert(file);
+events.insert({
+  name: 'My Event',
+  photo: fileObj
+});
+
+// Later: Retrieve the event with the photo
+var event = events.findOne({name: 'My Event'});
+// This loads the data of the photo into event.photo
+// You can include it in your collection transform function.
+event.photo.getFileRecord();
+```
+
+[Demo app](https://github.com/Sanjo/collectionFS_test/tree/ejson-file-reference)
+
+You need to ensure that the client is subscribed to the related photo document, too.
+There are packages on atmosphere, such as
+[publish-with-relations](https://atmospherejs.com/package/publish-with-relations) and
+[smart-publish](https://atmospherejs.com/package/smart-publish), that attempt to make this easy.
+
 ## Filtering
 
 You may specify filters to allow (or deny) only certain content types,
