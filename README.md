@@ -1,7 +1,7 @@
 cfs-s3
 =========================
 
-NOTE: This package is under active development right now (2014-4-4). It has
+NOTE: This package is under active development right now (2014-5-12). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -106,3 +106,11 @@ secure. For best security, you can omit the key and secret options and instead
 [For Users](https://github.com/CollectionFS/Meteor-cfs-s3/blob/master/api.md)
 
 [For Contributors](https://github.com/CollectionFS/Meteor-cfs-s3/blob/master/internal.api.md)
+
+## Contributors
+
+In addition to the core CollectionFS team, the following people have contributed:
+
+@Sanjo
+
+(Add yourself if you submit a PR.)
