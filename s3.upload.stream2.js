@@ -71,6 +71,23 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
     });
   };
 
+  writeStream.on('error', function () {
+    if (multipartUploadID) {
+      if (FS.debug) {
+        console.log('SA S3 - ERROR!!');
+      }
+      self.abortMultipartUpload({
+        Bucket: params.Bucket,
+        Key: params.Key,
+        UploadId: multipartUploadID
+      }, function (err) {
+        if(err) {
+          console.error('SA S3 - Could not abort multipart upload', err)
+        }
+      });
+    }
+  });
+
   var flushChunk = function (callback) {
     if (multipartUploadID === null) {
       throw new Error('Internal error multipartUploadID is null');
