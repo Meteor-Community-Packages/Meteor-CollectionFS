@@ -3,6 +3,10 @@ Package.describe({
   summary: 'CollectionFS, FS.File object'
 });
 
+Npm.depends({
+  temp: "0.7.0" // for tests only
+});
+
 Package.on_use(function(api) {
 
   // This imply is needed for tests, and is technically probably correct anyway.
@@ -35,26 +39,11 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-
   api.use([
-    'cfs-base-package',
-    'cfs-file',
-    'cfs-collection',
-    'http-methods',
-    'test-helpers',
-    'tinytest',
-    'underscore',
-    'ejson',
-    'ordered-dict',
-    'random',
-    'deps'
+    'collectionFS', 'cfs-gridfs', 'tinytest', 'http', 'test-helpers', 'http-methods'
   ]);
 
   api.add_files([
-    'tests/file-server-tests.js'
-  ], 'server');
-
-  api.add_files([
-    'tests/file-client-tests.js'
-  ], 'client');
+    'tests/file-tests.js'
+  ]);
 });
