@@ -615,7 +615,7 @@ FS.File.prototype.type = function(value, options) {
 FS.File.prototype.updatedAt = function(value, options) {
   var self = this;
 
-  if (!options && ((typeof value === "object" && value !== null) || typeof value === "undefined")) {
+  if (!options && ((typeof value === "object" && value !== null && !(value instanceof Date)) || typeof value === "undefined")) {
     // GET
     options = value || {};
     options = options.hash || options; // allow use as UI helper
