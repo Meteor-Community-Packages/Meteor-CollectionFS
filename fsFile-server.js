@@ -133,7 +133,7 @@ Meteor.methods({
     }
 
     if (headers['content-length']) {
-      result.size = headers['content-length'];
+      result.size = +headers['content-length'];
     }
 
     if (headers['last-modified']) {
