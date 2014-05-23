@@ -238,7 +238,7 @@ Images = new FS.Collection("images", {
           // Transform the image into a 10x10px thumbnail
           gm(readStream, fileObj.name()).resize('10', '10').stream().pipe(writeStream);
         }
-      )
+      })
     ],
     filter: {
       allow: {
