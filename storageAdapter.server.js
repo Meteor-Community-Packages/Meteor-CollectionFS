@@ -212,4 +212,4 @@ FS.StorageAdapter = function(name, options, api) {
 
 };
 
-FS.StorageAdapter.prototype = new EventEmitter();
+Npm.require('util').inherits(FS.StorageAdapter, EventEmitter);
