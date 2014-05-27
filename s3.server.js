@@ -111,12 +111,15 @@ FS.Store.S3 = function(name, options) {
     typeName: 'storage.s3',
     fileKey: function(fileObj) {
       // Lookup the copy
-      var info = fileObj && fileObj._getInfo(name, {updateFileRecordFirst: false});
+      var info = fileObj && fileObj._getInfo(name);
       // If the store and key is found return the key
       if (info && info.key) return info.key;
 
+      var filename = fileObj.name();
+      var filenameInStore = fileObj.name({store: name});
+
       // If no store key found we resolve / generate a key
-      return fileObj.collectionName + '/' + fileObj._id + '-' + fileObj.name({updateFileRecordFirst: false});
+      return fileObj.collectionName + '/' + fileObj._id + '-' + (filenameInStore || filename);
     },
     createReadStream: function(fileKey, options) {
 

@@ -15,7 +15,9 @@ FS.Store.S3 = function(name, options) {
   if (!(self instanceof FS.Store.S3))
     throw new Error('FS.Store.S3 missing keyword "new"');
 
-  FS.Utility.extend(this, { name: name, sync: false, maxTries: 5 }, options || {});
+  return new FS.StorageAdapter(name, options, {
+    typeName: 'storage.s3'
+  });
 };
 
 FS.Store.S3.prototype.fileKey = function(fileObj) {
