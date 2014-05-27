@@ -7,6 +7,7 @@
 	"git": "https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git",
 	"packages": {
 		"cfs-base-package": {},
-		"cfs-graphicsmagick": {}
+		"cfs-graphicsmagick": {},
+		"emitter": {}
 	}
 }

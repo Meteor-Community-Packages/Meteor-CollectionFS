@@ -8,18 +8,17 @@ _storageAdapters = {};
 FS.StorageAdapter = function(name, options, api) {
   var self = this;
 
-  // If name is the only argument, a string and the SA allready found
+  // If name is the only argument, a string and the SA already found
   // we will just return that SA
   if (arguments.length === 1 && name === '' + name &&
           typeof _storageAdapters[name] !== 'undefined')
     return _storageAdapters[name];
 
-  // Check the api
+  // Verify that the storage adapter defines all the necessary API methods
   if (typeof api === 'undefined') {
     throw new Error('FS.StorageAdapter please define an api');
   }
-
-  // Deprecate put & get maybe refactor del into remove
+  
   FS.Utility.each('fileKey,remove,typeName,createReadStream,createWriteStream'.split(','), function(name) {
     if (typeof api[name] === 'undefined') {
       throw new Error('FS.StorageAdapter please define an api. "' + name + '" ' + (api.typeName || ''));
@@ -74,9 +73,9 @@ FS.StorageAdapter = function(name, options, api) {
 
   };
 
-  // Return readable stream
+  // Return writeable stream
   self.adapter.createWriteStream = function(fileObj, options) {
-    FS.debug && console.log('createWriteStream ' + self.name + ', internal: ' + self.internal);
+    FS.debug && console.log('createWriteStream ' + self.name + ', internal: ' + !!self.internal);
     var writeStream;
 
     if (self.internal) {
@@ -84,9 +83,13 @@ FS.StorageAdapter = function(name, options, api) {
       writeStream = FS.Utility.safeStream( api.createWriteStream(fileObj, options) );
     } else {
       // If we haven't set name, type, and size for this version yet, set it to same values as original version
-      if (!fileObj.hasStored(self.name)) {
+      if (!fileObj.name({store: self.name})) {
         fileObj.name(fileObj.name(), {store: self.name});
+      }
+      if (!fileObj.type({store: self.name})) {
         fileObj.type(fileObj.type(), {store: self.name});
+      }
+      if (!fileObj.size({store: self.name})) {
         fileObj.size(fileObj.size(), {store: self.name});
       }
 
@@ -148,6 +151,21 @@ FS.StorageAdapter = function(name, options, api) {
         fileObj.update({$set: modifier});
 
       });
+
+      // Emit events from SA
+      writeStream.once('stored', function(result) {
+        // XXX Because of the way stores inherit from SA, this will emit on every store.
+        // Maybe need to rewrite the way we inherit from SA?
+        var emitted = self.emit('stored', self.name, fileObj);
+        if (FS.debug && !emitted) {
+          console.log(fileObj.name() + ' was successfully stored in the ' + self.name + ' store. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "stored" event on this store.');
+        }
+      });
+
+      writeStream.on('error', function(error) {
+        // XXX We could wrap and clarify error
+        self.emit('error', self.name, error);
+      });
     }
 
     return writeStream;
@@ -165,18 +183,12 @@ FS.StorageAdapter = function(name, options, api) {
    * @public
    * @param {FS.File} fsFile The FS.File instance to be stored.
    * @param {Function} [callback] If not provided, will block and return true or false
-   * @todo refactor into self.adapter.remove to make the adapter interface complete
    *
    * Attempts to remove a file from the store. Returns true if removed or not
    * found, or false if the file couldn't be removed.
    */
   self.adapter.remove = function(fileObj, callback) {
     FS.debug && console.log("---SA REMOVE");
-
-    // We throw an error if fileObj is not a FS.File instance
-    // Except: if this is used as an internal SA - we then expect fileKey
-    // if (!self.internal && !(fileObj instanceof FS.File))
-    //   throw new Error('Storage adapter "' + name + '" remove requires fileObj');
 
     // Get the fileKey
     var fileKey = (fileObj instanceof FS.File)? api.fileKey(fileObj) : fileObj;
@@ -199,3 +211,5 @@ FS.StorageAdapter = function(name, options, api) {
   }
 
 };
+
+FS.StorageAdapter.prototype = new EventEmitter();

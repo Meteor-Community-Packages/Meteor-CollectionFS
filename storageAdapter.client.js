@@ -31,3 +31,5 @@ FS.StorageAdapter = function(name, options, api) {
   // implement direct client to s3 upload
 
 };
+
+FS.StorageAdapter.prototype = new EventEmitter();

@@ -1,14 +1,21 @@
 Package.describe({
+  name: 'cfs-storage-adapter',
   summary: 'CollectionFS, Class for creating Storage adapters'
 });
 
 Package.on_use(function(api) {
   api.use([
-    'cfs-base-package'
+    // CFS
+    'cfs-base-package',
+    // Core
+    'deps',
+    'check',
+    'livedata',
+    'mongo-livedata',
+    'ejson',
+    // Other
+    'emitter'
   ]);
-
-  api.use(['deps', 'check', 'livedata', 'mongo-livedata',
-    'ejson']);
 
   // We want to make sure that its added to scope for now if installed.
   // We have set a deprecation warning on the transform scope
