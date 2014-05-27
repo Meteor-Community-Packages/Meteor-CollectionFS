@@ -8,6 +8,8 @@
 	"packages": {
 		"cfs-base-package": {},
 		"cfs-upload-ddp": {},
-		"cfs-upload-http": {}
+		"cfs-upload-http": {},
+		"cfs-tempstore": {},
+		"emitter": {}
 	}
 }

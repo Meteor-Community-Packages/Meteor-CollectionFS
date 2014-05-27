@@ -57,6 +57,24 @@ FS.Collection = function(name, options) {
 
     // Set the lookup
     self.storesLookup[store.name] = store;
+
+    // Emit events based on store events
+    store.on('stored', function (fileObj, result) {
+      // When a file is successfully stored into the store, we emit a "stored" event on the FS.Collection only if the file belongs to this collection
+      if (fileObj.collectionName === name) {
+        var emitted = self.emit('stored', fileObj, store.name);
+        if (FS.debug && !emitted) {
+          console.log(fileObj.name({store: store.name}) + ' was successfully saved to the ' + store.name + ' store. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "stored" event on the ' + name + ' collection.');
+        }
+      }
+    });
+
+    store.on('error', function (error, fileObj) {
+      // When a file has an error while being stored into the temp store, we emit an "error" event on the FS.Collection only if the file belongs to this collection
+      if (fileObj.collectionName === name) {
+        self.emit('error', new Error('Error storing file to the ' + store.name + ' store: ' + error.message), fileObj, store.name);
+      }
+    });
   });
 
   var _filesOptions = {
@@ -90,4 +108,29 @@ FS.Collection = function(name, options) {
   // Set up observers
   Meteor.isServer && FS.FileWorker && FS.FileWorker.observe(this);
 
+  // Emit events based on TempStore events
+  if (FS.TempStore) {
+    FS.TempStore.on('stored', function (fileObj, result) {
+      // When a file is successfully stored into the temp store, we emit an "uploaded" event on the FS.Collection only if the file belongs to this collection
+      if (fileObj.collectionName === name) {
+        var emitted = self.emit('uploaded', fileObj);
+        if (FS.debug && !emitted) {
+          console.log(fileObj.name() + ' was successfully uploaded. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "uploaded" event on the ' + name + ' collection.');
+        }
+      }
+    });
+
+    FS.TempStore.on('error', function (error, fileObj) {
+      // When a file has an error while being stored into the temp store, we emit an "error" event on the FS.Collection only if the file belongs to this collection
+      if (fileObj.collectionName === name) {
+        self.emit('error', new Error('Error storing uploaded file to TempStore: ' + error.message), fileObj);
+      }
+    });
+  } else if (Meteor.isServer) {
+    throw new Error("FS.Collection constructor: FS.TempStore must be defined before constructing any FS.Collections.")
+  }
+
 };
+
+// An FS.Collection can emit events
+FS.Collection.prototype = new EventEmitter();

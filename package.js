@@ -4,9 +4,18 @@ Package.describe({
 });
 
 Package.on_use(function(api) {
-  api.use(['cfs-base-package']);
-
-  api.use(['deps', 'check', 'livedata', 'mongo-livedata']);
+  api.use([
+    // CFS
+    'cfs-base-package',
+    'cfs-tempstore',
+    // Core
+    'deps',
+    'check',
+    'livedata',
+    'mongo-livedata',
+    // Other
+    'emitter'
+  ]);
 
   // Weak dependencies for uploaders
   api.use(['cfs-upload-http', 'cfs-upload-ddp'], { weak: true });
