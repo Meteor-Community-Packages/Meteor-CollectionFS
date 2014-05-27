@@ -41,12 +41,15 @@ FS.Store.FileSystem = function(name, options) {
     typeName: 'storage.filesystem',
     fileKey: function(fileObj) {
       // Lookup the copy
-      var store = fileObj && fileObj._getInfo(name, {updateFileRecordFirst: false});
+      var store = fileObj && fileObj._getInfo(name);
       // If the store and key is found return the key
       if (store && store.key) return store.key;
 
+      var filename = fileObj.name();
+      var filenameInStore = fileObj.name({store: name});
+
       // If no store key found we resolve / generate a key
-      return fileObj.collectionName + '-' + fileObj._id + '-' + fileObj.name({updateFileRecordFirst: false});
+      return fileObj.collectionName + '-' + fileObj._id + '-' + (filenameInStore || filename);
     },
     createReadStream: function(fileKey, options) {
       // this is the Storage adapter scope
