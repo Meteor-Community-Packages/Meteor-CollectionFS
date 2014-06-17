@@ -153,7 +153,7 @@ FS.TempStore.exists = function(fileObj) {
  * @returns {Object} of parts already stored
  * @todo This is not yet implemented, milestone 1.1.0
  */
-FS.TempStore.listParts = function(fileObj) {
+FS.TempStore.listParts = function fsTempStoreListParts(fileObj) {
   var self = this;
   console.warn('This function is not correctly implemented using SA in TempStore');
   //XXX This function might be necessary for resume. Not currently supported.
@@ -166,7 +166,7 @@ FS.TempStore.listParts = function(fileObj) {
  * This function removes the file from tempstorage - it cares not if file is
  * already removed or not found, goal is reached anyway.
  */
-FS.TempStore.removeFile = function(fileObj) {
+FS.TempStore.removeFile = function fsTempStoreRemoveFile(fileObj) {
   var self = this;
 
   // Ensure that we have a storage adapter mounted; if not, throw an error.
@@ -195,6 +195,30 @@ FS.TempStore.removeFile = function(fileObj) {
     tracker.remove({_id: chunkInfo._id});
 
   }
+};
+
+/**
+ * @method FS.TempStore.removeAll
+ * @public
+ * This function removes all files from tempstorage - it cares not if file is
+ * already removed or not found, goal is reached anyway.
+ */
+FS.TempStore.removeAll = function fsTempStoreRemoveAll() {
+  var self = this;
+
+  // Ensure that we have a storage adapter mounted; if not, throw an error.
+  mountStorage();
+
+  tracker.find().forEach(function (chunkInfo) {
+    // Unlink each file
+    FS.Utility.each(chunkInfo.keys || {}, function (key, chunk) {
+      var fileKey = _fileReference({_id: chunkInfo.fileId, collectionName: chunkInfo.collectionName}, chunk, chunkInfo);
+      FS.TempStore.Storage.adapter.remove(fileKey, FS.Utility.noop);
+    });
+
+    // Remove from tracker collection, too
+    tracker.remove({_id: chunkInfo._id});
+  });
 };
 
 /**
@@ -293,11 +317,18 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
       // Fire ending events
       var eventName = isStoreSync ? 'synchronized' : 'stored';
       self.emit(eventName, fileObj, result);
+
+      // XXX is emitting "ready" necessary?
       self.emit('ready', fileObj, chunkCount, result);
     } else {
       // Update the chunkCount on the fileObject
       fileObj.update({ $set: {chunkCount: chunkCount} });
     }
+  });
+
+  // Emit errors
+  writeStream.on('error', function (error) {
+    self.emit('error', error, fileObj);
   });
 
   return writeStream;

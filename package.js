@@ -11,7 +11,6 @@ Package.on_use(function(api) {
   api.use(['cfs-base-package', 'cfs-file']);
 
   api.use('cfs-filesystem', { weak: true });
-
   api.use('cfs-gridfs', { weak: true });
 
   api.add_files([
