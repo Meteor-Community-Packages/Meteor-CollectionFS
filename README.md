@@ -532,9 +532,16 @@ on the server.
 
 ## UI Helpers
 
-Some of the API methods are designed to be usable as UI helpers.
+There are two types of UI helpers available. First, some of the `FS.File`
+instance methods will work when called in templates, too. These are available
+to you automatically and are documented here. Second, some additional useful helpers are provided
+in the optional [cfs-ui](https://github.com/CollectionFS/Meteor-cfs-ui) package.
+These make it easy to render a delete button or an upload progress bar
+and more. Refer to the `cfs-ui` readme.
 
 ### FS.File Instance Helper Methods
+
+Some of the FS.File API methods are designed to be usable as UI helpers.
 
 ### url
 
