@@ -7,6 +7,7 @@ _storageAdapters = {};
 
 FS.StorageAdapter = function(name, options, api) {
   var self = this;
+  options = options || {};
 
   // If name is the only argument, a string and the SA already found
   // we will just return that SA
@@ -38,8 +39,15 @@ FS.StorageAdapter = function(name, options, api) {
     _storageAdapters[name] = self;
   }
 
+  // User can customize the file key generation function
+  if (typeof options.fileKeyMaker === "function") {
+    var fileKeyMaker = options.fileKeyMaker;
+  } else {
+    var fileKeyMaker = api.fileKey;
+  }
+
   // extend self with options and other info
-  FS.Utility.extend(this, options || {}, {
+  FS.Utility.extend(this, options, {
     name: name,
     typeName: api.typeName
   });
@@ -59,7 +67,7 @@ FS.StorageAdapter = function(name, options, api) {
   self.adapter = {};
 
   self.adapter.fileKey = function(fileObj) {
-    return api.fileKey(fileObj);
+    return fileKeyMaker(fileObj);
   };
 
   // Return readable stream
