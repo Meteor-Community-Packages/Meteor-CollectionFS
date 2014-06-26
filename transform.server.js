@@ -8,11 +8,10 @@ FS.Transform = function(options) {
   if (!(self instanceof FS.Transform))
     throw new Error('FS.Transform must be called with the "new" keyword');
 
-  if (!options.store)
-    throw new Error('Transform expects option.store to be a storage adapter');
+  if (!options.adapter)
+    throw new Error('Transform expects option.adapter to be a storage adapter');
 
-  // Support both Storage adapter and internal SA api
-  self.storage = (options.store.adapter)?options.store.adapter: options.store;
+  self.storage = options.adapter;
 
   // Fetch the transformation functions if any
   self.transformWrite = options.transformWrite;
@@ -40,7 +39,7 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
   var fileKey = self.storage.fileKey(fileObj);
 
   // Rig write stream
-  var destinationStream = self.storage.createWriteStream(fileKey, {
+  var destinationStream = self.storage.createWriteStreamForFileKey(fileKey, {
     // Not all SA's can set these options and cfs dont depend on setting these
     // but its nice if other systems are accessing the SA that some of the data
     // is also available to those
@@ -93,7 +92,7 @@ FS.Transform.prototype.createReadStream = function(fileObj, options) {
   var fileKey = self.storage.fileKey(fileObj);
 
   // Rig read stream
-  var sourceStream = self.storage.createReadStream(fileKey, options);
+  var sourceStream = self.storage.createReadStreamForFileKey(fileKey, options);
 
   if (typeof self.transformRead === 'function') {
     // Rig write stream
