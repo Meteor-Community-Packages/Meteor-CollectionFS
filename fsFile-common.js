@@ -62,8 +62,8 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   // URL: we need to do a HEAD request to get the type because type
   // is required for filtering to work.
   else if (typeof data === "string" && (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:")) {
-    urlOpts = _.clone(options);
-    if urlOpts.type {
+    urlOpts = FS.Utility.extend({}, options);
+    if (urlOpts.type) {
       delete urlOpts.type;
     }
 
