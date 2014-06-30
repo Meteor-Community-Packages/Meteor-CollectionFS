@@ -61,11 +61,11 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
       if (Meteor.isClient) {
         throw new Error('FS.File.attachData requires a callback when attaching a URL on the client');
       }
-      var result = Meteor.call('_cfs_getUrlInfo', data);
+      var result = Meteor.call('_cfs_getUrlInfo', data, options);
       FS.Utility.extend(self, {original: result});
       setData(result.type);
     } else {
-      Meteor.call('_cfs_getUrlInfo', data, function (error, result) {
+      Meteor.call('_cfs_getUrlInfo', data, options, function (error, result) {
         FS.debug && console.log("URL HEAD RESULT:", result);
         if (error) {
           callback(error);

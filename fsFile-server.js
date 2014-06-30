@@ -121,10 +121,10 @@ FS.File.prototype.createWriteStream = function(storeName) {
 Meteor.methods({
   // Does a HEAD request to URL to get the type, updatedAt, and size prior to actually downloading the data.
   // That way we can do filter checks without actually downloading.
-  '_cfs_getUrlInfo': function (url) {
+  '_cfs_getUrlInfo': function (url, options) {
     this.unblock();
 
-    var response = HTTP.call("HEAD", url);
+    var response = HTTP.call("HEAD", url, options);
     var headers = response.headers;
     var result = {};
 
