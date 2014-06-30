@@ -24,8 +24,11 @@ FS.File = function(ref, createdByTransform) {
  * @param {File|Blob|Buffer|ArrayBuffer|Uint8Array|String} data The data that you want to attach to the file.
  * @param {Object} [options] Options
  * @param {String} [options.type] The data content (MIME) type, if known.
+ * @param {String} [options.headers] When attaching a URL, headers to be used for the GET request (currently server only)
+ * @param {String} [options.auth] When attaching a URL, "username:password" to be used for the GET request (currently server only)
  * @param {Function} [callback] Callback function, callback(error). On the client, a callback is required if data is a URL.
  * @returns {FS.File} This FS.File instance.
+ *
  */
 FS.File.prototype.attachData = function fsFileAttachData(data, options, callback) {
   var self = this;
@@ -39,6 +42,8 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   if (!data) {
     throw new Error('FS.File.attachData requires a data argument with some data');
   }
+
+  var urlOpts;
 
   // Set any other properties we can determine from the source data
   // File
@@ -57,15 +62,20 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   // URL: we need to do a HEAD request to get the type because type
   // is required for filtering to work.
   else if (typeof data === "string" && (data.slice(0, 5) === "http:" || data.slice(0, 6) === "https:")) {
+    urlOpts = _.clone(options);
+    if urlOpts.type {
+      delete urlOpts.type;
+    }
+
     if (!callback) {
       if (Meteor.isClient) {
         throw new Error('FS.File.attachData requires a callback when attaching a URL on the client');
       }
-      var result = Meteor.call('_cfs_getUrlInfo', data, options);
+      var result = Meteor.call('_cfs_getUrlInfo', data, urlOpts);
       FS.Utility.extend(self, {original: result});
       setData(result.type);
     } else {
-      Meteor.call('_cfs_getUrlInfo', data, options, function (error, result) {
+      Meteor.call('_cfs_getUrlInfo', data, urlOpts, function (error, result) {
         FS.debug && console.log("URL HEAD RESULT:", result);
         if (error) {
           callback(error);
@@ -83,7 +93,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
 
   // Set the data
   function setData(type) {
-    self.data = new DataMan(data, type);
+    self.data = new DataMan(data, type, urlOpts);
 
     // Update the type to match what the data is
     self.type(self.data.type());
