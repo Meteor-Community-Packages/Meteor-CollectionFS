@@ -7,8 +7,9 @@ var Readable = Npm.require('stream').Readable;
  * @constructor
  * @param {Buffer|ArrayBuffer|Uint8Array|String} data The data that you want to manipulate.
  * @param {String} [type] The data content (MIME) type, if known. Required if the first argument is a Buffer, ArrayBuffer, Uint8Array, or URL
+ * @param {Object} [options] Currently used only to pass options for the GET request when `data` is a URL.
  */
-DataMan = function DataMan(data, type) {
+DataMan = function DataMan(data, type, options) {
   var self = this;
 
   if (!data) {
@@ -55,7 +56,7 @@ DataMan = function DataMan(data, type) {
       if (!type) {
         throw new Error("DataMan constructor requires a type argument when passed a URL");
       }
-      self.source = new DataMan.URL(data, type);
+      self.source = new DataMan.URL(data, type, options);
     } else {
       // assume it's a filepath
       self.source = new DataMan.FilePath(data, type);

@@ -7,10 +7,27 @@ var request = Npm.require("request");
  * @param {String} url
  * @param {String} type The data content (MIME) type.
  */
-DataMan.URL = function DataManURL(url, type) {
+DataMan.URL = function DataManURL(url, type, options) {
   var self = this;
+  options = options || {};
+
   self.url = url;
   self._type = type;
+
+  // This is some code borrowed from the http package. Hopefully
+  // we can eventually use HTTP pkg directly instead of 'request'
+  // once it supports streams and buffers and such. (`request` takes
+  // and `auth` option, too, but not of the same form as `HTTP`.)
+  if (options.auth) {
+    if (options.auth.indexOf(':') < 0)
+      throw new Error('auth option should be of the form "username:password"');
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = "Basic "+
+      (new Buffer(options.auth, "ascii")).toString("base64");
+    delete options.auth;
+  }
+
+  self.urlOpts = options;
 };
 
 /**
@@ -24,12 +41,12 @@ DataMan.URL = function DataManURL(url, type) {
 DataMan.URL.prototype.getBuffer = function dataManUrlGetBuffer(callback) {
   var self = this;
 
-  request({
+  request(_.extend({
     url: self.url,
     method: "GET",
     encoding: null,
     jar: false
-  }, Meteor.bindEnvironment(function(err, res, body) {
+  }, self.urlOpts), Meteor.bindEnvironment(function(err, res, body) {
     if (err) {
       callback(err);
     } else {
@@ -72,8 +89,12 @@ DataMan.URL.prototype.getDataUri = function dataManUrlGetDataUri(callback) {
  * Returns a read stream for the data.
  */
 DataMan.URL.prototype.createReadStream = function dataManUrlCreateReadStream() {
+  var self = this;
   // Stream from URL
-  return request(this.url);
+  return request(_.extend({
+    url: self.url,
+    method: "GET"
+  }, self.urlOpts));
 };
 
 /**
