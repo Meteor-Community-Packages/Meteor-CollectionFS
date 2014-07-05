@@ -267,7 +267,7 @@ Images = new FS.Collection("images", {
           fileObj.type('image/png', {store: "thumbs"});
           gm(readStream).resize(60).stream('PNG').pipe(writeStream);
         }
-      )
+      })
     ],
     filter: {
       allow: {
