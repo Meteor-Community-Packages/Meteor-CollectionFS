@@ -63,7 +63,8 @@ FS.File.prototype.url = function(options) {
     metadata: false,
     brokenIsFine: false,
     uploading: null, // return this URL while uploading
-    storing: null // return this URL while storing
+    storing: null, // return this URL while storing
+    filename: null // override the filename that is shown to the user
   }, options.hash || options); // check for "hash" prop if called as helper
 
   // Primarily useful for displaying a temporary image while uploading an image
@@ -86,7 +87,7 @@ FS.File.prototype.url = function(options) {
     }
 
     // Add filename to end of URL if we can determine one
-    var filename = self.name({store: storeName});
+    var filename = options.filename || self.name({store: storeName});
     if (typeof filename === "string" && filename.length) {
       filename = '/' + filename;
     } else {
