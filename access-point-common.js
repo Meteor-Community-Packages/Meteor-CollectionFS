@@ -41,17 +41,17 @@ FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
 /**
  * @method FS.File.prototype.url Construct the file url
  * @public
- * @param {object} [options]
- * @param {string} [options.store] Name of the store to get from. If not defined,
- * the first store defined in `options.stores` for the collection is used.
- * @param {boolean} [options.auth=null] Wether or not the authenticate
- * @param {boolean} [options.download=false] Should headers be set to force a download
- * @param {boolean} [options.brokenIsFine=false] Return the URL even if
- * we know it's currently a broken link because the file hasn't been saved in
- * the requested store yet.
+ * @param {Object} [options]
+ * @param {String} [options.store] Name of the store to get from. If not defined, the first store defined in `options.stores` for the collection on the client is used.
+ * @param {Boolean} [options.auth=null] Add authentication token to the URL query string? By default, a token for the current logged in user is added on the client. Set this to `false` to omit the token. Set this to a string to provide your own token. Set this to a number to specify an expiration time for the token in seconds.
+ * @param {Boolean} [options.download=false] Should headers be set to force a download? Typically this means that clicking the link with this URL will download the file to the user's Downloads folder instead of displaying the file in the browser.
+ * @param {Boolean} [options.brokenIsFine=false] Return the URL even if we know it's currently a broken link because the file hasn't been saved in the requested store yet.
+ * @param {Boolean} [options.metadata=false] Return the URL for the file metadata access point rather than the file itself.
+ * @param {String} [options.uploading=null] A URL to return while the file is being uploaded.
+ * @param {String} [options.storing=null] A URL to return while the file is being stored.
+ * @param {String} [options.filename=null] Override the filename that should appear at the end of the URL. By default it is the name of the file in the requested store.
  *
- * Return the http url for getting the file - on server set auth if wanting to
- * use authentication on client set auth to true or token
+ * Returns the HTTP URL for getting the file or its metadata.
  */
 FS.File.prototype.url = function(options) {
   var self = this;
