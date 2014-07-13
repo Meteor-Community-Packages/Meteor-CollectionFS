@@ -316,6 +316,35 @@ Tinytest.addAsync('cfs-data - server - saveToFile', function(test, onComplete) {
   testSaveSync(filePathData);
 });
 
+// Ensure that URL createReadStream can be piped after delay
+// https://github.com/mikeal/request/issues/887
+// Tinytest.addAsync('cfs-data - server - createReadStream delay', function(test, onComplete) {
+//   var readStream = urlData.createReadStream();
+
+//   // wait for 5 seconds, then pipe
+//   Meteor.setTimeout(function() {
+//     var tempName = temp.path({suffix: '.txt'});
+
+//     try {
+//       var writeStream = readStream.pipe(fs.createWriteStream(tempName));
+
+//       writeStream.on('finish', Meteor.bindEnvironment(function() {
+//         test.equal(fs.readFileSync(tempName, {encoding: 'utf8'}), 'Hello World', 'file was not saved with correct data');
+//         onComplete();
+//       }));
+      
+//       writeStream.on('error', Meteor.bindEnvironment(function(err) {
+//         test.isFalse(!!err);
+//       }));
+//     } catch (err) {
+//       test.isFalse(!!err);
+//       onComplete();
+//     }    
+    
+//   }, 5000);
+
+// });
+
 //Test API:
 //test.isFalse(v, msg)
 //test.isTrue(v, msg)
