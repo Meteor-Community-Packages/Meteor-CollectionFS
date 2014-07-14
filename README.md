@@ -1,6 +1,6 @@
 #CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-4-29). It has
+NOTE: This branch is under active development right now (2014-7-14). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -200,6 +200,8 @@ want to convert to another content type or change the filename or encrypt
 the file. You can do all of this by defining stream transformations on a
 store.
 
+### transformWrite/transformRead
+
 The most common type of transformation is a "write" transformation, that is,
 a function that changes the data as it is initially stored. You can define
 this function using the `transformWrite` option on any store constructor. If the
@@ -216,6 +218,34 @@ transformWrite: function(fileObj, readStream, writeStream) {
 ```
 
 The important thing is that you must pipe the `readStream` to the `writeStream` before returning from the function. Generally you will manipulate the stream in some way before piping it.
+
+### beforeWrite
+
+Sometimes you also need to change a file's metadata before it is saved to a particular store. For example, you might have a `transformWrite` function that changes the file type, so you need a `beforeWrite` function that changes the extension and content type to match.
+
+The simplest type of `beforeWrite` function will return an object with `extension`, `name`, or `type` properties. For example:
+
+```js
+beforeWrite: function (fileObj) {
+  return {
+    extension: 'jpg',
+    type: 'image/jpg'
+  };
+}
+```
+
+This would change the extension and type for that particular store.
+
+Since `beforeWrite` is passed the `fileObj`, you can optionally alter that directly. For example, the following would be the same as the previous example assuming the store name is "jpegs":
+
+```js
+beforeWrite: function (fileObj) {
+  fileObj.extension('jpg', {store: "jpegs", save: false});
+  fileObj.type('image/jpg', {store: "jpegs", save: false});
+}
+```
+
+(It's best to provide the `save: false` option to any of the setters you call in `beforeWrite`.) 
 
 ## Image Manipulation
 
@@ -252,20 +282,25 @@ Images = new FS.Collection("images", {
 
 ### Converting to a Different Image Format
 
-To convert every file to a specific image format, you can pass a [GraphicsMagick format string](http://www.graphicsmagick.org/formats.html) to the `stream` method, but you will also need to alter the `FS.File` instance as necessary before returning from the function.
+To convert every file to a specific image format, you can pass a [GraphicsMagick format string](http://www.graphicsmagick.org/formats.html) to the `stream` method, but you will also need to alter the `FS.File` instance as necessary in a `beforeWrite` function.
 
 ```js
 Images = new FS.Collection("images", {
     stores: [
       new FS.Store.FileSystem("images"),
       new FS.Store.FileSystem("thumbs", {
+        beforeWrite: function(fileObj) {
+          // We return an object, which will change the
+          // filename extension and type for this store only.
+          return {
+            extension: 'png',
+            type: 'image/png'
+          };
+        },
         transformWrite: function(fileObj, readStream, writeStream) {
-          // Transform the image into a 10x10px PNG thumbnail.
-          // We must change the name and type, but the new size
-          // will be automatically detected and set.
-          fileObj.extension('png', {store: "thumbs"});
-          fileObj.type('image/png', {store: "thumbs"});
+          // Transform the image into a 10x10px PNG thumbnail
           gm(readStream).resize(60).stream('PNG').pipe(writeStream);
+          // The new file size will be automatically detected and set for this store
         }
       })
     ],
@@ -276,6 +311,8 @@ Images = new FS.Collection("images", {
     }
 });
 ```
+
+*Note that this example requires the `cfs-filesystem` package.*
 
 ### Converting a File Already Stored
 
