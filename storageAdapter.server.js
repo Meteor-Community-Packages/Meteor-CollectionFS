@@ -46,6 +46,10 @@ FS.StorageAdapter = function(storeName, options, api) {
     var fileKeyMaker = api.fileKey;
   }
 
+  // User can provide a function to adjust the fileObj
+  // before it is written to the store.
+  var beforeWrite = options.beforeWrite;
+
   // extend self with options and other info
   FS.Utility.extend(this, options, {
     name: storeName,
@@ -118,15 +122,36 @@ FS.StorageAdapter = function(storeName, options, api) {
       return self.adapter.createWriteStreamForFileKey(fileObj, options);
     }
 
-    // If we haven't set name, type, and size for this version yet, set it to same values as original version
+    // If we haven't set name, type, or size for this version yet,
+    // set it to same values as original version. We don't save
+    // these to the DB right away because they might be changed
+    // in a transformWrite function.
     if (!fileObj.name({store: storeName})) {
-      fileObj.name(fileObj.name(), {store: storeName});
+      fileObj.name(fileObj.name(), {store: storeName, save: false});
     }
     if (!fileObj.type({store: storeName})) {
-      fileObj.type(fileObj.type(), {store: storeName});
+      fileObj.type(fileObj.type(), {store: storeName, save: false});
     }
     if (!fileObj.size({store: storeName})) {
-      fileObj.size(fileObj.size(), {store: storeName});
+      fileObj.size(fileObj.size(), {store: storeName, save: false});
+    }
+
+    // Call user function to adjust file metadata for this store.
+    // We support updating name, extension, and/or type based on
+    // info returned in an object. Or `fileObj` could be
+    // altered directly within the beforeWrite function.
+    if (beforeWrite) {
+      var fileChanges = beforeWrite(fileObj);
+      if (typeof fileChanges === "object") {
+        if (fileChanges.extension) {
+          fileObj.extension(fileChanges.extension, {store: storeName, save: false});
+        } else if (fileChanges.name) {
+          fileObj.name(fileChanges.name, {store: storeName, save: false});
+        }
+        if (fileChanges.type) {
+          fileObj.type(fileChanges.type, {store: storeName, save: false});
+        }
+      }
     }
 
     var writeStream = FS.Utility.safeStream( self._transform.createWriteStream(fileObj, options) );
@@ -158,11 +183,7 @@ FS.StorageAdapter = function(storeName, options, api) {
         fileObj.copies[storeName].createdAt = fileObj.copies[storeName].updatedAt;
       }
 
-      var modifier = {};
-      modifier["copies." + storeName] = fileObj.copies[storeName];
-      // Update the main file object with the modifier
-      fileObj.update({$set: modifier});
-
+      fileObj._saveChanges(storeName);
     });
 
     // Emit events from SA
