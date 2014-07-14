@@ -278,6 +278,38 @@ FS.File.prototype.update = function(modifier, options, callback) {
 };
 
 /**
+ * @method FS.File.prototype._saveChanges
+ * @private
+ * @param {String} [what] "_original" to save original info, or a store name to save info for that store, or saves everything
+ *
+ * Updates the fileRecord from values currently set on the FS.File instance.
+ */
+FS.File.prototype._saveChanges = function(what) {
+  var self = this;
+
+  if (!self.isMounted()) {
+    return;
+  }
+
+  FS.debug && console.log("FS.File._saveChanges:", what || "all")
+
+  var mod = {$set: {}};
+  if (what === "_original") {
+    mod.$set.original = self.original;
+  } else if (typeof what === "string") {
+    var info = self.copies[what];
+    if (info) {
+      mod.$set["copies." + what] = info;
+    }
+  } else {
+    mod.$set.original = self.original;
+    mod.$set.copies = self.copies;
+  }
+
+  self.update(mod);
+};
+
+/**
  * @method FS.File.prototype.remove
  * @public
  * @param {Function} [callback]
@@ -503,17 +535,20 @@ FS.File.prototype._getInfo = function(storeName, options) {
  * @param {String} storeName - Name of the store for which to set file info. Non-string will set original file details.
  * @param {String} property - Property to set
  * @param {String} value - New value for property
+ * @param {Boolean} save - Should the new value be saved to the DB, too, or just set in the FS.File properties?
  * @returns {undefined}
  */
-FS.File.prototype._setInfo = function(storeName, property, value) {
+FS.File.prototype._setInfo = function(storeName, property, value, save) {
   var self = this;
   if (typeof storeName === "string") {
     self.copies = self.copies || {};
     self.copies[storeName] = self.copies[storeName] || {};
     self.copies[storeName][property] = value;
+    save && self._saveChanges(storeName);
   } else {
     self.original = self.original || {};
     self.original[property] = value;
+    save && self._saveChanges("_original");
   }
 };
 
@@ -524,6 +559,7 @@ FS.File.prototype._setInfo = function(storeName, property, value) {
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the name of the version of the file that was saved in this store. Default is the original file name.
  * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
+ * @param {Boolean} [options.save=true] Save change to database? Applies to setter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file name.
  */
 FS.File.prototype.name = function(value, options) {
@@ -537,7 +573,7 @@ FS.File.prototype.name = function(value, options) {
   } else {
     // SET
     options = options || {};
-    return self._setInfo(options.store, 'name', value);
+    return self._setInfo(options.store, 'name', value, typeof options.save === "boolean" ? options.save : true);
   }
 };
 
@@ -548,6 +584,7 @@ FS.File.prototype.name = function(value, options) {
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the extension of the version of the file that was saved in this store. Default is the original file extension.
  * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
+ * @param {Boolean} [options.save=true] Save change to database? Applies to setter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file extension or an empty string if there isn't one.
  */
 FS.File.prototype.extension = function(value, options) {
@@ -561,7 +598,7 @@ FS.File.prototype.extension = function(value, options) {
     // SET
     options = options || {};
     var newName = FS.Utility.setFileExtension(self.name(options) || '', value);
-    return self._setInfo(options.store, 'name', newName);
+    return self._setInfo(options.store, 'name', newName, typeof options.save === "boolean" ? options.save : true);
   }
 };
 
@@ -572,6 +609,7 @@ FS.File.prototype.extension = function(value, options) {
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the size of the version of the file that was saved in this store. Default is the original file size.
  * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
+ * @param {Boolean} [options.save=true] Save change to database? Applies to setter usage only.
  * @returns {Number|undefined} If setting, returns `undefined`. If getting, returns the file size.
  */
 FS.File.prototype.size = function(value, options) {
@@ -585,7 +623,7 @@ FS.File.prototype.size = function(value, options) {
   } else {
     // SET
     options = options || {};
-    return self._setInfo(options.store, 'size', value);
+    return self._setInfo(options.store, 'size', value, typeof options.save === "boolean" ? options.save : true);
   }
 };
 
@@ -596,6 +634,7 @@ FS.File.prototype.size = function(value, options) {
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the type of the version of the file that was saved in this store. Default is the original file type.
  * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
+ * @param {Boolean} [options.save=true] Save change to database? Applies to setter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file type.
  */
 FS.File.prototype.type = function(value, options) {
@@ -609,7 +648,7 @@ FS.File.prototype.type = function(value, options) {
   } else {
     // SET
     options = options || {};
-    return self._setInfo(options.store, 'type', value);
+    return self._setInfo(options.store, 'type', value, typeof options.save === "boolean" ? options.save : true);
   }
 };
 
@@ -620,6 +659,7 @@ FS.File.prototype.type = function(value, options) {
  * @param {Object} [options]
  * @param {Object} [options.store=none,original] - Get or set the last updated date for the version of the file that was saved in this store. Default is the original last updated date.
  * @param {Boolean} [options.updateFileRecordFirst=false] Update this instance with data from the DB first? Applies to getter usage only.
+ * @param {Boolean} [options.save=true] Save change to database? Applies to setter usage only.
  * @returns {String|undefined} If setting, returns `undefined`. If getting, returns the file's last updated date.
  */
 FS.File.prototype.updatedAt = function(value, options) {
@@ -633,7 +673,7 @@ FS.File.prototype.updatedAt = function(value, options) {
   } else {
     // SET
     options = options || {};
-    return self._setInfo(options.store, 'updatedAt', value);
+    return self._setInfo(options.store, 'updatedAt', value, typeof options.save === "boolean" ? options.save : true);
   }
 };
 
