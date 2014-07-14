@@ -785,3 +785,29 @@ If you have the `FS.File` instance, you can call `update` on it:
 ```js
 myFsFile.update({$set: {'metadata.foo': 'bar'}});
 ```
+
+### Provide a Download Button
+
+Create a helper that returns your files:
+
+```js
+Template.fileList.helpers({
+  files: function () {
+    return Files.find();
+  }
+});
+```
+
+Use the `url` method with `download` option in your markup:
+
+```html
+<template name="fileList">
+  <div class="fileList">
+    {{#each files}}
+      <div class="file">
+        <strong>{{this.name}}</strong> <a href="{{this.url download=true}}" class="btn btn-primary">Download</a>
+      </div>
+    {{/each}}
+  </div>
+</template>
+```
