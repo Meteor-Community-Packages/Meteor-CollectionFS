@@ -1,7 +1,7 @@
 var fs = Npm.require('fs');
 var path = Npm.require('path');
 var mkdirp = Npm.require('mkdirp');
-var chokidar = Npm.require('chokidar');
+//var chokidar = Npm.require('chokidar');
 
 FS.Store.FileSystem = function(name, options) {
   var self = this;
@@ -116,41 +116,42 @@ FS.Store.FileSystem = function(name, options) {
       } else {
         return fs.statSync(filepath);
       }
-    },
-    watch: function(callback) {
-      function fileKey(filePath) {
-        return filePath.replace(absolutePath, "");
-      }
-
-      FS.debug && console.log('Watching ' + absolutePath);
-
-      // chokidar seems to be most widely used and production ready watcher
-      var watcher = chokidar.watch(absolutePath, {ignored: /\/\./, ignoreInitial: true});
-      watcher.on('add', Meteor.bindEnvironment(function(filePath, stats) {
-        callback("change", fileKey(filePath), {
-          name: path.basename(filePath),
-          type: null,
-          size: stats.size,
-          utime: stats.mtime
-        });
-      }, function(err) {
-        throw err;
-      }));
-      watcher.on('change', Meteor.bindEnvironment(function(filePath, stats) {
-        callback("change", fileKey(filePath), {
-          name: path.basename(filePath),
-          type: null,
-          size: stats.size,
-          utime: stats.mtime
-        });
-      }, function(err) {
-        throw err;
-      }));
-      watcher.on('unlink', Meteor.bindEnvironment(function(filePath) {
-        callback("remove", fileKey(filePath));
-      }, function(err) {
-        throw err;
-      }));
     }
+    // Add this back and add the chokidar dependency back when we make this work eventually
+    // watch: function(callback) {
+    //   function fileKey(filePath) {
+    //     return filePath.replace(absolutePath, "");
+    //   }
+
+    //   FS.debug && console.log('Watching ' + absolutePath);
+
+    //   // chokidar seems to be most widely used and production ready watcher
+    //   var watcher = chokidar.watch(absolutePath, {ignored: /\/\./, ignoreInitial: true});
+    //   watcher.on('add', Meteor.bindEnvironment(function(filePath, stats) {
+    //     callback("change", fileKey(filePath), {
+    //       name: path.basename(filePath),
+    //       type: null,
+    //       size: stats.size,
+    //       utime: stats.mtime
+    //     });
+    //   }, function(err) {
+    //     throw err;
+    //   }));
+    //   watcher.on('change', Meteor.bindEnvironment(function(filePath, stats) {
+    //     callback("change", fileKey(filePath), {
+    //       name: path.basename(filePath),
+    //       type: null,
+    //       size: stats.size,
+    //       utime: stats.mtime
+    //     });
+    //   }, function(err) {
+    //     throw err;
+    //   }));
+    //   watcher.on('unlink', Meteor.bindEnvironment(function(filePath) {
+    //     callback("remove", fileKey(filePath));
+    //   }, function(err) {
+    //     throw err;
+    //   }));
+    // }
   });
 };

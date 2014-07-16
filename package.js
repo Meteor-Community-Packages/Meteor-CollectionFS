@@ -3,7 +3,7 @@ Package.describe({
 });
 
 Npm.depends({
-  chokidar: "0.7.0",
+  //chokidar: "0.8.2",
   mkdirp: "0.3.5"
 });
 
