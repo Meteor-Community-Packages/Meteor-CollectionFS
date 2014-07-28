@@ -14,8 +14,24 @@ HTTP.publishFormats({
   }
 });
 
-FS.HTTP.setHeadersForGet = function setHeadersForGet(headers) {
-  getHeaders = headers;
+/**
+ * @method FS.HTTP.setHeadersForGet
+ * @public
+ * @param {Array} headers - List of headers, where each is a two-item array in which item 1 is the header name and item 2 is the header value.
+ * @param {Array|String} [collections] - Which collections the headers should be added for. Omit this argument to add the header for all collections.
+ * @returns {undefined}
+ */
+FS.HTTP.setHeadersForGet = function setHeadersForGet(headers, collections) {
+  if (typeof collections === "string") {
+    collections = [collections];
+  }
+  if (collections) {
+    FS.Utility.each(collections, function(collectionName) {
+      getHeadersByCollection[collectionName] = headers || [];
+    });
+  } else {
+    getHeaders = headers || [];
+  }
 };
 
 /**

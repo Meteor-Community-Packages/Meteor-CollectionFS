@@ -1,4 +1,5 @@
 getHeaders = [];
+getHeadersByCollection = {};
 
 /**
  * @method httpDelHandler
@@ -108,9 +109,8 @@ httpGetHandler = function httpGetHandler(ref) {
     self.setStatusCode(200);
   }
 
-  // Add any other custom headers
-  // TODO support customizing headers per collection
-  FS.Utility.each(getHeaders, function(header) {
+  // Add any other global custom headers and collection-specific custom headers
+  FS.Utility.each(getHeaders.concat(getHeadersByCollection[ref.collection.name] || []), function(header) {
     self.addHeader(header[0], header[1]);
   });
 
