@@ -24,7 +24,7 @@ or wants to make their own storage adapter.
 Various MongoDB collections are created by CollectionFS and related packages.
 Here's an explanation of what they are named and what their documents look like.
 
-### cfs.<collectionName>.filerecord (FS.Collection)
+### cfs.collectionName.filerecord (FS.Collection)
 
 ```js
 {
