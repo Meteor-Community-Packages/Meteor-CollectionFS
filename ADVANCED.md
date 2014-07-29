@@ -31,6 +31,7 @@ Here's an explanation of what they are named and what their documents look like.
   _id: "",
   copies: {
     storeName: {
+      key: String, // a string that the store generates, understands, and uses to uniquely identify the file in the backing store
       name: String, // as saved in this store, potentially changed by beforeWrite
       type: String, // as saved in this store, potentially changed by beforeWrite
       size: Number, // as saved in this store, in bytes, potentially changed by beforeWrite
