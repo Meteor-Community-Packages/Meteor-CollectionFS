@@ -12,9 +12,9 @@ or wants to make their own storage adapter.
 
 ## All Packages
 
-* collectionFS
+* collectionFS (has many component packages)
 * cfs-graphicsmagick
-* cfs-handlebars
+* cfs-ui
 * cfs-filesystem
 * cfs-gridfs
 * cfs-s3
@@ -24,25 +24,25 @@ or wants to make their own storage adapter.
 Various MongoDB collections are created by CollectionFS and related packages.
 Here's an explanation of what they are named and what their documents look like.
 
-### name + ".files" (FS.Collection)
+### cfs.<collectionName>.filerecord (FS.Collection)
 
 ```js
 {
   _id: "",
-  collectionName: "",
   copies: {
     storeName: {
-      _id: String, // the store ID
-      name: String, // as saved in this store, potentially changed by beforeSave
-      type: String, // as saved in this store, potentially changed by beforeSave
-      size: Number, // as saved in this store, potentially changed by beforeSave
-      utime: Date // when saved in this store
+      name: String, // as saved in this store, potentially changed by beforeWrite
+      type: String, // as saved in this store, potentially changed by beforeWrite
+      size: Number, // as saved in this store, in bytes, potentially changed by beforeWrite
+      utime: Date // when last saved in this store
     }
   },
-  name: String, // of the originally uploaded file
-  type: String, // of the originally uploaded file
-  size: Number, // of the originally uploaded file
-  utime: Date, // of the originally uploaded file
+  original: {
+    name: String, // of the originally uploaded file
+    type: String, // of the originally uploaded file
+    size: Number, // of the originally uploaded file, in bytes
+    utime: Date // of the originally uploaded file
+  },
   failures: {
     copies: {
       storeName: {
@@ -52,30 +52,17 @@ Here's an explanation of what they are named and what their documents look like.
         doneTrying: Boolean
       }
     }
-  },
-  chunks: [
-    {
-      start: Number, // the byte position at which this chunk starts in the complete file
-      tempFile: String // the file path for the temporary chunk file stored in the temp dir
-    }
-  ]
+  }
 }
 ```
 
-### "storage." + storageAdapterType + "." + storageAdapterName + "." + storeName + ".files" (per store)
+### cfs_gridfs...
 
-```js
-{
-  _id: "",
-  cfs: "", // the FS.Collection name
-  cfsId: "", // the _id in the CFS collection
-  filename: "" // actual filename that was stored
-}
-```
+Created by the GridFS storage adapter. The `cfs_gridfs.<storeName>.files` and `cfs_gridfs.<storeName>.chunks` collections match the MongoDB GridFS spec.
 
-### name + ".chunks"
+### _tempstore
 
-Created by the GridFS storage adapter. These collections match the GridFS spec.
+When files are first uploaded or inserted on the server, we save the original to a temporary store. This is a place where data can be stored until we have all the chunks we need and we are able to successfully save the file to all of the defined permanant stores. The temporary store may create one or more collections with `_tempstore` in the name. In general, it is relatively safe to clear these collections at any time. The worst you will do is cause a currently uploading or currently storing file to fail.
 
 ## Creating a Storage Adapter
 
