@@ -99,6 +99,13 @@ FS.Store.GridFS = function(name, options) {
       var writeStream = gfs.createWriteStream(opts);
 
       writeStream.on('close', function(file) {
+        if (!file) {
+          // gridfs-stream will emit "close" without passing a file
+          // if there is an error. We can simply exit here because
+          // the "error" listener will also be called in this case.
+          return;
+        }
+
         if (FS.debug) console.log('SA GridFS - DONE!');
 
         // Emit end and return the fileKey, size, and updated date
@@ -115,7 +122,7 @@ FS.Store.GridFS = function(name, options) {
       });
 
       writeStream.on('error', function(error) {
-        if (FS.debug) console.log('SA GridFS - ERROR!', error);
+        console.log('SA GridFS - ERROR!', error);
       });
 
       return writeStream;
