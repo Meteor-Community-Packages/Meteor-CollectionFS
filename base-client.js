@@ -40,7 +40,7 @@ FS.Utility.eachFile = function(e, f) {
   var files = evt.target.files;
 
   if (!files || files.length == 0)
-    files = evt.dataTransfer.files;
+    files = evt.dataTransfer ? evt.dataTransfer.files : [];
 
   for (var i = 0; i < files.length; i++) {
     f(files[i], i);
