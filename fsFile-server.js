@@ -118,6 +118,55 @@ FS.File.prototype.createWriteStream = function(storeName) {
   }
 };
 
+/**
+ * @method FS.File.prototype.copy Makes a copy of the file and underlying data in all stores.
+ * @public
+ * @returns {FS.File} The new FS.File instance
+ */
+FS.File.prototype.copy = function() {
+  var self = this;
+
+  if (!self.isMounted()) {
+    throw new Error("Cannot copy a file that is not associated with a collection");
+  }
+  
+  // Get the file record
+  var fileRecord = self.collection.files.findOne({_id: self._id}, {transform: null}) || {};
+
+  // Remove _id and copy keys from the file record
+  delete fileRecord._id;
+
+  // Insert directly; we don't have access to "original" in this case
+  var newId = self.collection.files.insert(fileRecord);
+
+  var newFile = self.collection.findOne(newId);
+
+  // Copy underlying files in the stores
+  var mod, oldKey;
+  for (name in newFile.copies) {
+    oldKey = newFile.copies[name].key;
+    if (oldKey) {
+      // We need to ask the adapter for the true oldKey because right now gridfs does some extra stuff.
+      // TODO GridFS should probably set the full key object (with _id and filename) into `copies.key`
+      // so that copies.key can be passed directly to createReadStreamForFileKey
+      var sourceFileStorage = self.collection.storesLookup[name];
+      if (!sourceFileStorage) {
+        throw new Error(name + " is not a valid store name");
+      }
+      oldKey = sourceFileStorage.adapter.fileKey(self);
+      delete newFile.copies[name].key; // delete so that new fileKey will be generated in copyStoreData
+      mod = mod || {};
+      mod["copies." + name + ".key"] = copyStoreData(newFile, name, oldKey);
+    }
+  }
+  // Update keys in the filerecord
+  if (mod) {
+    newFile.update({$set: mod});
+  }
+
+  return newFile;
+};
+
 Meteor.methods({
   // Does a HEAD request to URL to get the type, updatedAt, and size prior to actually downloading the data.
   // That way we can do filter checks without actually downloading.
@@ -143,3 +192,32 @@ Meteor.methods({
     return result;
   }
 });
+
+// TODO maybe this should be in cfs-storage-adapter
+function _copyStoreData(fileObj, storeName, sourceKey, callback) {
+  if (!fileObj.isMounted()) {
+    throw new Error("Cannot copy store data for a file that is not associated with a collection");
+  }
+
+  var storage = fileObj.collection.storesLookup[storeName];
+  if (!storage) {
+    throw new Error(storeName + " is not a valid store name");
+  }
+
+  // We want to prevent beforeWrite and transformWrite from running, so
+  // we interact directly with the store.
+  var destinationKey = storage.adapter.fileKey(fileObj);
+  var readStream = storage.adapter.createReadStreamForFileKey(sourceKey);
+  var writeStream = storage.adapter.createWriteStreamForFileKey(destinationKey);
+
+  writeStream.once('stored', function(result) {
+    callback(null, result.fileKey);
+  });
+
+  writeStream.once('error', function(error) {
+    callback(error);
+  });
+
+  readStream.pipe(writeStream);
+}
+var copyStoreData = Meteor._wrapAsync(_copyStoreData);
