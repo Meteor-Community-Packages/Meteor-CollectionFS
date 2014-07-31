@@ -46,8 +46,10 @@ var _taskHandler = function(task, next) {
  * @param {Function} addTask
  * @return {undefined}
  */
-var _errorHandler = function(data, addTask) {
-  // What to do if file upload fails?
+var _errorHandler = function(data, addTask, failures) {
+  // If file upload fails
+  // TODO We should retry a few times and then emit error?
+  // data.fileObj.emit("error", error);
 };
 
 /** @method UploadTransferQueue
@@ -69,7 +71,7 @@ UploadTransferQueue = function(options) {
     autostart: true,
     isPaused: false,
     filo: false,
-    debug: true
+    debug: FS.debug
   });
 
   // Keep track of uploaded files via this queue
@@ -158,6 +160,8 @@ UploadTransferQueue = function(options) {
         onEnded: function oneChunkQueueEnded() {
           // Remove from list of files being uploaded
           self.files[collectionName][id] = false;
+          // XXX It might be possible for this to be called even though there were errors uploading?
+          fileObj.emit("uploaded");
         },
         spinalQueue: ReactiveList,
         maxProcessing: 1,
