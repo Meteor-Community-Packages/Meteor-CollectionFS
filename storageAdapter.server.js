@@ -198,7 +198,12 @@ FS.StorageAdapter = function(storeName, options, api) {
 
     writeStream.on('error', function(error) {
       // XXX We could wrap and clarify error
-      self.emit('error', storeName, error);
+      // XXX Because of the way stores inherit from SA, this will emit on every store.
+      // Maybe need to rewrite the way we inherit from SA?
+      var emitted = self.emit('error', storeName, error, fileObj);
+      if (FS.debug && !emitted) {
+        console.log(error);
+      }
     });
 
     return writeStream;
