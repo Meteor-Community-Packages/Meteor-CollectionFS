@@ -73,8 +73,9 @@ httpGetHandler = function httpGetHandler(ref) {
   // Add 'Content-Disposition' header if requested a download/attachment URL
   var start, end;
   if (typeof ref.download !== "undefined") {
-    self.addHeader('Content-Disposition', 'attachment; filename="' + copyInfo.name + '"');
-
+    var filename = ref.filename || copyInfo.name;
+    self.addHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+    
     // If a chunk/range was requested instead of the whole file, serve that
     var unit, range = self.requestHeaders.range;
     if (range) {

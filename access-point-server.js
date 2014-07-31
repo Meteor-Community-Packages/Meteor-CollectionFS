@@ -110,7 +110,8 @@ var defaultSelectorFunction = function() {
     collection: collection,
     file: file,
     storeName: opts.store,
-    download: opts.download
+    download: opts.download,
+    filename: opts.filename
   };
 };
 
