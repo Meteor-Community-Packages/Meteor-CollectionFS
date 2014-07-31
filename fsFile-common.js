@@ -18,6 +18,9 @@ FS.File = function(ref, createdByTransform) {
   }
 };
 
+// An FS.File can emit events
+FS.File.prototype = new EventEmitter();
+
 /**
  * @method FS.File.prototype.attachData
  * @public

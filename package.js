@@ -22,7 +22,8 @@ Package.on_use(function(api) {
     'livedata',
     'mongo-livedata',
     'http',
-    'data-man'
+    'data-man',
+    'emitter'
   ]);
 
   // Weak dependency on numeral pkg, only if you want to use the formattedSize method

@@ -15,6 +15,7 @@
 		"data-man": {
 			"git": "https://github.com/CollectionFS/Meteor-data-man.git",
 			"branch": "master"
-		}
+		},
+		"emitter": {}
 	}
 }
