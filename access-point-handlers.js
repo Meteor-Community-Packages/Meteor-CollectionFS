@@ -115,6 +115,9 @@ httpGetHandler = function httpGetHandler(ref) {
     self.addHeader(header[0], header[1]);
   });
 
+  // Inform clients about content's length
+  self.addHeader('Content-Length', copyInfo.size);
+  
   // Inform clients that we accept ranges for resumable chunked downloads
   self.addHeader('Accept-Ranges', 'bytes');
 
