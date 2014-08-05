@@ -49,6 +49,9 @@ httpGetHandler = function httpGetHandler(ref) {
     // No store handed, we default to primary store
     storeName = ref.collection.primaryStore.name;
   }
+  
+  // Content length, defaults to file size
+  var contentLength = copyInfo.size;
 
   // Get the storage reference
   var storage = ref.collection.storesLookup[storeName];
@@ -102,6 +105,9 @@ httpGetHandler = function httpGetHandler(ref) {
       self.setStatusCode(206, 'Partial Content');
       self.addHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + copyInfo.size);
       end = end + 1; //HTTP end byte is inclusive and ours are not
+      
+      // Sets properly content length for range
+      contentLength = end - start;
     } else {
       self.setStatusCode(200);
     }
@@ -115,8 +121,11 @@ httpGetHandler = function httpGetHandler(ref) {
     self.addHeader(header[0], header[1]);
   });
 
-  // Inform clients about content's length
-  self.addHeader('Content-Length', copyInfo.size);
+  // Inform clients about length (or chunk length in case of ranges)
+  self.addHeader('Content-Length', contentLength);
+
+  // Last modified header (updatedAt from file info)
+  self.addHeader('Last-Modified', copyInfo.updatedAt.toUTCString());
   
   // Inform clients that we accept ranges for resumable chunked downloads
   self.addHeader('Accept-Ranges', 'bytes');
