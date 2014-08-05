@@ -49,9 +49,6 @@ httpGetHandler = function httpGetHandler(ref) {
     // No store handed, we default to primary store
     storeName = ref.collection.primaryStore.name;
   }
-  
-  // Content length, defaults to file size
-  var contentLength = copyInfo.size;
 
   // Get the storage reference
   var storage = ref.collection.storesLookup[storeName];
@@ -72,6 +69,9 @@ httpGetHandler = function httpGetHandler(ref) {
   } else {
     self.setContentType('application/octet-stream');
   }
+
+  // Content length, defaults to file size
+  var contentLength = copyInfo.size;
 
   // Add 'Content-Disposition' header if requested a download/attachment URL
   var start, end;
