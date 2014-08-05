@@ -158,7 +158,7 @@ httpPutInsertHandler = function httpPutInsertHandler(ref) {
   fileObj.name(opts.filename || null);
 
   // Attach the readstream as the file's data
-  fileObj.attachData(self.createReadStream(), self.requestHeaders['content-type'] || 'application/octet-stream');
+  fileObj.attachData(self.createReadStream(), {type: self.requestHeaders['content-type'] || 'application/octet-stream'});
 
   // Validate with insert allow/deny
   FS.Utility.validateAction(ref.collection.files._validators['insert'], file, self.userId);
