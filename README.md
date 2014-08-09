@@ -415,6 +415,12 @@ Also, rather than setting the `data` property directly, you should use the `atta
 
 ### Storing FS.File references in your objects
 
+**_NOTE:_**
+_At the moment storing FS.File - References in MongoDB on the server side doesn't work. See eg. (https://github.com/CollectionFS/Meteor-cfs-ejson-file/issues/1) (https://github.com/CollectionFS/Meteor-CollectionFS/issues/356)
+(https://github.com/meteor/meteor/issues/1890)._
+
+_Instead store the _id's of your file objects and then fetch the FS.File-Objects from your CollectionFS - Collection._
+
 Often your files are part of another entity. You can store a reference to the file directly in the entity.
 You need to add `cfs-ejson-file` to your packages with `mrt add cfs-ejson-file`.
 Then you can do for example:
