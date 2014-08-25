@@ -167,6 +167,43 @@ need to worry about CORS. In fact, we recommend doing all inserts on the
 client (managing security through allow/deny), unless you are generating
 the data on the server.
 
+## Inserting a File on the Server
+
+In certain circumstances, however, it might be necessary to perform inserts on
+the server.  The following example demonstrates the steps required to handle a
+`Buffer`:
+
+```javascript
+var request = Meteor.require('request');
+
+request.get({url: url, encoding: null}, Meteor.bindEnvironment(function(e, r, buffer){
+  var newFile = new FS.File();
+  newFile.attachData(buffer, {type: 'image/png'}, function(error){
+      if(error) throw error;
+      newFile.name('myGraphic.png');
+      
+      Images.insert(newFile);
+  });
+})).auth(null, null, true, accessToken);
+```
+
+When calling [attachData()](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/api.md#fsfileattachdatadata-options-callbackanywhere)
+with a `Buffer`, you must provide the MIME type of the file through the second argument as shown above.  Omitting this
+argument yields an exception:
+
+```
+Error: DataMan constructor requires a type argument when passed a Buffer
+```
+
+Further examples can be found [here](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/tests/file-tests.js#L123).
+
+Caveats:
+
+* Downloading large files into a `Buffer` could potentially lead to memory issues.
+* Use of external HTTP library to make authenticated requests will be unnecessary once [issue 350](https://github.com/CollectionFS/Meteor-CollectionFS/issues/350)
+is resolved.
+ 
+
 ## After the Upload
 
 After the server receives the `FS.File` and all the corresponding binary file
