@@ -12,7 +12,7 @@ or wants to make their own storage adapter.
 
 ## All Packages
 
-* collectionFS (has many component packages)
+* collectionfs (has many component packages)
 * cfs-graphicsmagick
 * cfs-ui
 * cfs-filesystem
