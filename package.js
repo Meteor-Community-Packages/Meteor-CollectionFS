@@ -41,7 +41,7 @@ Package.on_use(function(api) {
 
 Package.on_test(function (api) {
   api.use([
-    'collectionFS', 'cfs-gridfs', 'tinytest', 'http', 'test-helpers', 'http-methods'
+    'collectionfs', 'cfs-gridfs', 'tinytest', 'http', 'test-helpers', 'http-methods'
   ]);
 
   api.add_files([
