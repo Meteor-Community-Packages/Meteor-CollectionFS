@@ -1,6 +1,6 @@
 #CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-7-14). It has
+NOTE: This branch is under active development right now (2014-8-26). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -12,7 +12,33 @@ manipulation, and copying. It supports several storage adapters for saving to
 the local filesystem, GridFS, or S3, and additional storage adapters can be
 created.
 
-## Installation
+## Installation (Meteor 0.9.0 and later)
+
+We are waiting until organizations are supported before we migrate to the new packaging server. In the meantime, it is possible to get CFS working on a 0.9.0 app by continuing to use Meteorite, following these steps:
+
+1. Delete the `packages` folder or at least delete all of the CFS-related subfolders within `packages`.
+2. Remove all the CFS packages from both smart.json and the `./meteor/packages` list.
+3. Migrate/update your app to the `METEOR@0.9.0` release either manually or using `mrt migrate-app`.
+4. Make sure that your app is not using any of the automigrated CFS packages. If possible, get it running without CFS added first.
+5. Overwrite/add a `smart.json` file in your app folder with the CFS packages you need. For example:
+```js
+{
+  "packages": {
+    "collectionFS": {},
+    "cfs-gridfs": {},
+    "cfs-filesystem": {},
+    "cfs-s3": {},
+    "cfs-graphicsmagick": {},
+    "cfs-ui": {},
+    "ui-dropped-event": {}
+  }
+}
+```
+6. Run `mrt install`
+7. Rename the `collectionFS` folder that was added to `/packages` to make it all lowercase ("collectionfs").
+8. Enter `meteor` to run the app and pray.
+
+## Installation (Prior to Meteor 0.9.0)
 
 Install Meteorite, if you have not yet done so, and then:
 
