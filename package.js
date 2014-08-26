@@ -39,7 +39,7 @@ Package.on_test(function (api) {
   api.use([
     //CFS packages
     'cfs-access-point',
-    'collectionFS',
+    'collectionfs',
     'cfs-gridfs',
     //Core packages
     'test-helpers',
