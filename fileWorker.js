@@ -90,7 +90,7 @@ function getReadyQuery(storeName) {
 /**
  *  @method getDoneQuery
  *  @private
- *  @param {Object} stores - The stores object from the FS.Collection options
+ *  @param {Array} stores - The stores array from the FS.Collection options
  *
  *  Returns a selector that will be used to identify files where all
  *  stores have successfully save or have failed the
@@ -128,7 +128,7 @@ function getDoneQuery(stores) {
   };
 
   // Add conditions for all defined stores
-  for (var store in stores) {
+  FS.Utility.each(stores, function(store) {
     var storeName = store.name;
     var copyCond = {$or: [{$and: []}]};
     var tempCond = {};
@@ -141,7 +141,7 @@ function getDoneQuery(stores) {
     tempCond['failures.copies.' + storeName + '.doneTrying'] = true;
     copyCond.$or.push(tempCond);
     selector.$and.push(copyCond);
-  }
+  })
 
   return selector;
 }
