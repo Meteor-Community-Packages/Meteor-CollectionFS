@@ -8,6 +8,6 @@
 	"packages": {
 		"cfs-base-package": {},
 		"cfs-collection": {},
-		"collectionFS": {}
+		"collectionfs": {}
 	}
 }
