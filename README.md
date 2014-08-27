@@ -37,8 +37,9 @@ We are waiting until organizations are supported before we migrate to the new pa
       }
     }
 ```
-6. In your app directory, run the command: `mrt update`
-7. Enter `meteor` to run the app and pray.
+7. In your app directory, run the command `mrt update`
+8. In your app directory, run the command `meteor list`. Ensure that all the packages listed in your `smart.json` file are also listed here. If not, do `meteor add <packagename>` for each one. For example, `meteor add collectionfs`.
+9. Enter `meteor` to run the app and pray.
 
 ## Installation (Prior to Meteor 0.9.0)
 
