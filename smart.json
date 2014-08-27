@@ -10,7 +10,7 @@
 		"http-methods": {},
 		"http-publish": {},
 		"cfs-file": {},
-		"collectionFS": {},
+		"collectionfs": {},
 		"cfs-gridfs": {}
 	}
 }
