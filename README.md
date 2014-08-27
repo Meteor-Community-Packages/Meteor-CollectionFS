@@ -16,27 +16,29 @@ created.
 
 We are waiting until organizations are supported before we migrate to the new packaging server. In the meantime, it is possible to get CFS working on a 0.9.0 app by continuing to use Meteorite, following these steps:
 
+*EDIT: These steps were corrected on Aug 27*
+
 1. Delete the `packages` folder or at least delete all of the CFS-related subfolders within `packages`.
 2. Remove all the CFS packages from both smart.json and the `./meteor/packages` list.
 3. Migrate/update your app to the `METEOR@0.9.0` release either manually or using `mrt migrate-app`.
 4. Make sure that your app is not using any of the automigrated CFS packages. If possible, get it running without CFS added first.
-5. Overwrite/add a `smart.json` file in your app folder with the CFS packages you need. For example:
+5. Run `mrt uninstall --system`
+6. Overwrite/add a `smart.json` file in your app folder with the CFS packages you need. For example:
 ```js
-{
-  "packages": {
-    "collectionFS": {},
-    "cfs-gridfs": {},
-    "cfs-filesystem": {},
-    "cfs-s3": {},
-    "cfs-graphicsmagick": {},
-    "cfs-ui": {},
-    "ui-dropped-event": {}
-  }
-}
+    {
+      "packages": {
+        "collectionfs": {}, // note that this name has changed to all lowercase
+        "cfs-gridfs": {},
+        "cfs-filesystem": {},
+        "cfs-s3": {},
+        "cfs-graphicsmagick": {},
+        "cfs-ui": {},
+        "ui-dropped-event": {}
+      }
+    }
 ```
-6. Run `mrt install`
-7. Rename the `collectionFS` folder that was added to `/packages` to make it all lowercase ("collectionfs").
-8. Enter `meteor` to run the app and pray.
+6. In your app directory, run the command: `mrt update`
+7. Enter `meteor` to run the app and pray.
 
 ## Installation (Prior to Meteor 0.9.0)
 
