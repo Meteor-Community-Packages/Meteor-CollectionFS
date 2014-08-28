@@ -1,5 +1,5 @@
 Package.describe({
-  name: 'data-man',
+  version: '0.0.0',
   summary: 'A data manager, allowing you to attach various types of data and get it back in various other types'
 });
 
