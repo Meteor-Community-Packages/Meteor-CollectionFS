@@ -1,5 +1,5 @@
 Package.describe({
-  name: 'cfs-worker',
+  version: '0.0.0',
   summary: 'CollectionFS, file worker - handles file copies/versions'
 });
 
