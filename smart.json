@@ -3,7 +3,7 @@
 	"description": "Filesystem storage adapter for CollectionFS",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-filesystem",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.0.27",
+	"version": "0.0.28",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-filesystem.git",
 	"packages": {
 		"cfs-storage-adapter": {}
