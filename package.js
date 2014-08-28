@@ -1,5 +1,5 @@
 Package.describe({
-  name: 'cfs-storage-adapter',
+  version: '0.0.0',
   summary: 'CollectionFS, Class for creating Storage adapters'
 });
 
