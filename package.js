@@ -1,5 +1,5 @@
 Package.describe({
-  name: 'cfs-gridfs',
+  version: '0.0.0',
   summary: 'GridFS storage adapter for CollectionFS'
 });
 
