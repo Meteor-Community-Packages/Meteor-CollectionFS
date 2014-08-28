@@ -1,4 +1,5 @@
 Package.describe({
+  version: '0.0.0',
   summary: "Amazon Web Services S3 storage adapter for CollectionFS"
 });
 
