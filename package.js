@@ -1,5 +1,5 @@
 Package.describe({
-  name: "cfs-upload-http",
+  version: '0.0.0',
   summary: 'CollectionFS, HTTP File Upload'
 });
 
