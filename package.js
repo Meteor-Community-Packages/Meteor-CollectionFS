@@ -1,5 +1,5 @@
 Package.describe({
-  name: 'cfs-collection-filters',
+  version: '0.0.0',
   summary: 'CollectionFS, adds FS.Collection filters'
 });
 
