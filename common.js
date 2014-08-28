@@ -58,23 +58,43 @@ FS.Collection = function(name, options) {
     // Set the lookup
     self.storesLookup[store.name] = store;
 
-    // Emit events based on store events
-    store.on('stored', function (fileObj, result) {
-      // When a file is successfully stored into the store, we emit a "stored" event on the FS.Collection only if the file belongs to this collection
-      if (fileObj.collectionName === name) {
-        var emitted = self.emit('stored', fileObj, store.name);
-        if (FS.debug && !emitted) {
-          console.log(fileObj.name({store: store.name}) + ' was successfully saved to the ' + store.name + ' store. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "stored" event on the ' + name + ' collection.');
-        }
-      }
-    });
+    if (Meteor.isServer) {
 
-    store.on('error', function (error, fileObj) {
-      // When a file has an error while being stored into the temp store, we emit an "error" event on the FS.Collection only if the file belongs to this collection
-      if (fileObj.collectionName === name) {
-        self.emit('error', new Error('Error storing file to the ' + store.name + ' store: ' + error.message), fileObj, store.name);
-      }
-    });
+      // Emit events based on store events
+      store.on('stored', function (storeName, fileObj) {
+        // This is weird, but currently there is a bug where each store will emit the
+        // events for all other stores, too, so we need to make sure that this event
+        // is truly for this store.
+        if (storeName !== store.name)
+          return;
+        // When a file is successfully stored into the store, we emit a "stored" event on the FS.Collection only if the file belongs to this collection
+        if (fileObj.collectionName === name) {
+          var emitted = self.emit('stored', fileObj, store.name);
+          if (FS.debug && !emitted) {
+            console.log(fileObj.name({store: store.name}) + ' was successfully saved to the ' + store.name + ' store. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "stored" event on the ' + name + ' collection.');
+          }
+        }
+        fileObj.emit('stored', store.name);
+      });
+
+      store.on('error', function (storeName, error, fileObj) {
+        // This is weird, but currently there is a bug where each store will emit the
+        // events for all other stores, too, so we need to make sure that this event
+        // is truly for this store.
+        if (storeName !== store.name)
+          return;
+        // When a file has an error while being stored into the temp store, we emit an "error" event on the FS.Collection only if the file belongs to this collection
+        if (fileObj.collectionName === name) {
+          error = new Error('Error storing file to the ' + store.name + ' store: ' + error.message);
+          var emitted = self.emit('error', error, fileObj, store.name);
+          if (FS.debug && !emitted) {
+            console.log(error.message);
+          }
+        }
+        fileObj.emit('error', store.name);
+      });
+
+    }
   });
 
   var _filesOptions = {

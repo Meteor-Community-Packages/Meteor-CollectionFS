@@ -32,10 +32,11 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-  api.use('collectionfs');
-  api.use('test-helpers', 'server');
-  api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
-           'random', 'deps']);
+  // api.use('collectionfs');
+  // api.use('test-helpers', 'server');
+  // api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
+  //          'random', 'deps']);
+  api.use(['collectionfs', 'cfs-gridfs', 'tinytest', 'underscore', 'test-helpers']);
 
   api.add_files('tests/server-tests.js', 'server');
   api.add_files('tests/client-tests.js', 'client');
