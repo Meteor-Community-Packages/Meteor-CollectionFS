@@ -1,5 +1,5 @@
 Package.describe({
-  name: 'cfs-base-package',
+  version: '0.0.0',
   summary: 'CollectionFS, Base package'
 });
 
