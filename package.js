@@ -1,4 +1,5 @@
 Package.describe({
+  version: '0.0.0',
   summary: "Filesystem storage adapter for CollectionFS"
 });
 
