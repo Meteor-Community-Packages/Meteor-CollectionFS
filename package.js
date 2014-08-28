@@ -1,4 +1,5 @@
 Package.describe({
+  version: '0.0.0',
   summary: 'CollectionFS, FileSaver by Eli Grey, http://eligrey.com'
 });
 
