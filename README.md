@@ -5,6 +5,7 @@ File Managing System for Meteor
 # cfs:standard-packages (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
 NOTE: This branch is under active development right now (2014-09-05). It has
+
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -16,7 +17,36 @@ manipulation, and copying. It supports several storage adapters for saving to
 the local filesystem, GridFS, or S3, and additional storage adapters can be
 created.
 
-## Installation
+## Installation (Meteor 0.9.0 and later)
+
+We are waiting until organizations are supported before we migrate to the new packaging server. In the meantime, it is possible to get CFS working on a 0.9.0 app by continuing to use Meteorite, following these steps:
+
+*EDIT: These steps were corrected on Aug 27*
+
+1. Delete the `packages` folder or at least delete all of the CFS-related subfolders within `packages`.
+2. Remove all the CFS packages from both smart.json and the `./meteor/packages` list.
+3. Migrate/update your app to the `METEOR@0.9.0` release either manually or using `mrt migrate-app`.
+4. Make sure that your app is not using any of the automigrated CFS packages. If possible, get it running without CFS added first.
+5. Run `mrt uninstall --system`
+6. Overwrite/add a `smart.json` file in your app folder with the CFS packages you need. For example:
+```js
+    {
+      "packages": {
+        "collectionfs": {}, // note that this name has changed to all lowercase
+        "cfs-gridfs": {},
+        "cfs-filesystem": {},
+        "cfs-s3": {},
+        "cfs-graphicsmagick": {},
+        "cfs-ui": {},
+        "ui-dropped-event": {}
+      }
+    }
+```
+7. In your app directory, run the command `mrt update`
+8. In your app directory, run the command `meteor list`. Ensure that all the packages listed in your `smart.json` file are also listed here. If not, do `meteor add <packagename>` for each one. For example, `meteor add collectionfs`.
+9. Enter `meteor` to run the app and pray.
+
+## Installation (Prior to Meteor 0.9.0)
 
 We only support the Meteor Package System +0.9.1!!
 
@@ -175,6 +205,8 @@ want to convert to another content type or change the filename or encrypt
 the file. You can do all of this by defining stream transformations on a
 store.
 
+### transformWrite/transformRead
+
 The most common type of transformation is a "write" transformation, that is,
 a function that changes the data as it is initially stored. You can define
 this function using the `transformWrite` option on any store constructor. If the
@@ -192,13 +224,41 @@ transformWrite: function(fileObj, readStream, writeStream) {
 
 The important thing is that you must pipe the `readStream` to the `writeStream` before returning from the function. Generally you will manipulate the stream in some way before piping it.
 
+### beforeWrite
+
+Sometimes you also need to change a file's metadata before it is saved to a particular store. For example, you might have a `transformWrite` function that changes the file type, so you need a `beforeWrite` function that changes the extension and content type to match.
+
+The simplest type of `beforeWrite` function will return an object with `extension`, `name`, or `type` properties. For example:
+
+```js
+beforeWrite: function (fileObj) {
+  return {
+    extension: 'jpg',
+    type: 'image/jpg'
+  };
+}
+```
+
+This would change the extension and type for that particular store.
+
+Since `beforeWrite` is passed the `fileObj`, you can optionally alter that directly. For example, the following would be the same as the previous example assuming the store name is "jpegs":
+
+```js
+beforeWrite: function (fileObj) {
+  fileObj.extension('jpg', {store: "jpegs", save: false});
+  fileObj.type('image/jpg', {store: "jpegs", save: false});
+}
+```
+
+(It's best to provide the `save: false` option to any of the setters you call in `beforeWrite`.) 
+
 ## Image Manipulation
 
 A common use for `transformWrite` is to manipulate images before saving them.
 To get this set up:
 
 1. Install [GraphicsMagick](http://www.graphicsmagick.org/) or [ImageMagick](http://www.imagemagick.org/script/index.php) on your development machine and on any server that will host your app. (The free Meteor deployment servers do not have either of these, so you can't deploy to there.) These are normal operating system applications, so you have to install them using the correct method for your OS. For example, on Mac OSX you can use `brew install graphicsmagick` assuming you have Homebrew installed.
-2. Add the `graphicsmagick` Meteor package to your app: `mrt add graphicsmagick`
+2. Add the `cfs-graphicsmagick` Meteor package to your app: `mrt add cfs-graphicsmagick`
 
 The following are some examples.
 
@@ -227,22 +287,27 @@ Images = new FS.Collection("images", {
 
 ### Converting to a Different Image Format
 
-To convert every file to a specific image format, you can pass a [GraphicsMagick format string](http://www.graphicsmagick.org/formats.html) to the `stream` method, but you will also need to alter the `FS.File` instance as necessary before returning from the function.
+To convert every file to a specific image format, you can pass a [GraphicsMagick format string](http://www.graphicsmagick.org/formats.html) to the `stream` method, but you will also need to alter the `FS.File` instance as necessary in a `beforeWrite` function.
 
 ```js
 Images = new FS.Collection("images", {
     stores: [
       new FS.Store.FileSystem("images"),
       new FS.Store.FileSystem("thumbs", {
+        beforeWrite: function(fileObj) {
+          // We return an object, which will change the
+          // filename extension and type for this store only.
+          return {
+            extension: 'png',
+            type: 'image/png'
+          };
+        },
         transformWrite: function(fileObj, readStream, writeStream) {
-          // Transform the image into a 10x10px PNG thumbnail.
-          // We must change the name and type, but the new size
-          // will be automatically detected and set.
-          fileObj.extension('png', {store: "thumbs"});
-          fileObj.type('image/png', {store: "thumbs"});
+          // Transform the image into a 10x10px PNG thumbnail
           gm(readStream).resize(60).stream('PNG').pipe(writeStream);
+          // The new file size will be automatically detected and set for this store
         }
-      )
+      })
     ],
     filter: {
       allow: {
@@ -251,6 +316,8 @@ Images = new FS.Collection("images", {
     }
 });
 ```
+
+*Note that this example requires the `cfs-filesystem` package.*
 
 ### Converting a File Already Stored
 
@@ -352,6 +419,12 @@ Also, rather than setting the `data` property directly, you should use the `atta
 [Check out the full public API for `FS.File`](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/api.md).
 
 ### Storing FS.File references in your objects
+
+**_NOTE:_**
+_At the moment storing FS.File - References in MongoDB on the server side doesn't work. See eg. (https://github.com/CollectionFS/Meteor-cfs-ejson-file/issues/1) (https://github.com/CollectionFS/Meteor-CollectionFS/issues/356)
+(https://github.com/meteor/meteor/issues/1890)._
+
+_Instead store the _id's of your file objects and then fetch the FS.File-Objects from your CollectionFS - Collection._
 
 Often your files are part of another entity. You can store a reference to the file directly in the entity.
 You need to add `cfs:ejson-file` to your packages with `meteor add cfs:ejson-file`.
@@ -507,9 +580,16 @@ on the server.
 
 ## UI Helpers
 
-Some of the API methods are designed to be usable as UI helpers.
+There are two types of UI helpers available. First, some of the `FS.File`
+instance methods will work when called in templates, too. These are available
+to you automatically and are documented here. Second, some additional useful helpers are provided
+in the optional [cfs-ui](https://github.com/CollectionFS/Meteor-cfs-ui) package.
+These make it easy to render a delete button or an upload progress bar
+and more. Refer to the `cfs-ui` readme.
 
 ### FS.File Instance Helper Methods
+
+Some of the FS.File API methods are designed to be usable as UI helpers.
 
 ### url
 
@@ -752,4 +832,62 @@ If you have the `FS.File` instance, you can call `update` on it:
 
 ```js
 myFsFile.update({$set: {'metadata.foo': 'bar'}});
+```
+
+### Display an Uploaded Image
+
+Create a helper that returns your image files:
+
+```js
+Template.imageView.helpers({
+  images: function () {
+    return Images.find(); // Where Images is an FS.Collection instance
+  }
+});
+```
+
+Use the `url` method with an `img` element in your markup:
+
+```html
+<template name="imageView">
+  <div class="imageView">
+    {{#each images}}
+      <div>
+        <a href="{{this.url}}" target="_blank"><img src="{{this.url store='thumbs' uploading='/images/uploading.gif' storing='/images/storing.gif'}}" alt="" class="thumbnail" /></a>
+      </div>
+    {{/each}}
+  </div>
+</template>
+```
+
+Notes:
+* `{{this.url}}` will assume the first store in your `stores` array. In this example, we're displaying the image from the "thumbs" store but wrapping it in a link that will load the image from the primary store (for example, the original image or a large image).
+* The `uploading` and `storing` options allow you to specify a static image that will be shown in place of the real image while it is being uploaded and stored. You can alternatively use `if` blocks like `{{#if this.isUploaded}}` and `{{#if this.hasStored 'thumbs'}}` to display something different until upload and storage is complete.
+* These helpers are actually just instance methods on the `FS.File` instances, so there are others you can use, such as `this.isImage`. See [the API documentation](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/api.md). The `url` method is documented separately [here](https://github.com/CollectionFS/Meteor-cfs-access-point/blob/master/api.md#fsfileurloptionsanywhere).
+
+
+### Provide a Download Button
+
+Create a helper that returns your files:
+
+```js
+Template.fileList.helpers({
+  files: function () {
+    return Files.find();
+  }
+});
+```
+
+Use the `url` method with `download` option in your markup:
+
+```html
+<template name="fileList">
+  <div class="fileList">
+    {{#each files}}
+      <div class="file">
+        <strong>{{this.name}}</strong> <a href="{{this.url download=true}}" class="btn btn-primary">Download</a>
+      </div>
+    {{/each}}
+  </div>
+</template>
 ```
