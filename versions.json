@@ -13,23 +13,27 @@
       "1.0.0"
     ],
     [
-      "cfs-base-package",
+      "cfs:base-package",
       "0.0.0"
     ],
     [
-      "cfs-collection",
+      "cfs:collection",
       "0.0.0"
     ],
     [
-      "cfs-file",
+      "cfs:data-man",
       "0.0.0"
     ],
     [
-      "cfs-storage-adapter",
+      "cfs:file",
       "0.0.0"
     ],
     [
-      "cfs-tempstore",
+      "cfs:storage-adapter",
+      "0.0.0"
+    ],
+    [
+      "cfs:tempstore",
       "0.0.0"
     ],
     [
@@ -37,20 +41,16 @@
       "1.0.0"
     ],
     [
-      "data-man",
-      "0.0.0"
+      "ddp",
+      "1.0.8"
     ],
     [
       "deps",
-      "1.0.0"
+      "1.0.2"
     ],
     [
       "ejson",
-      "1.0.0"
-    ],
-    [
-      "emitter",
-      "0.0.0"
+      "1.0.1"
     ],
     [
       "follower-livedata",
@@ -62,7 +62,7 @@
     ],
     [
       "http",
-      "1.0.0"
+      "1.0.4"
     ],
     [
       "id-map",
@@ -74,7 +74,7 @@
     ],
     [
       "livedata",
-      "1.0.0"
+      "1.0.8"
     ],
     [
       "logging",
@@ -89,12 +89,20 @@
       "1.0.0"
     ],
     [
+      "mongo",
+      "1.0.4-rc0"
+    ],
+    [
       "mongo-livedata",
-      "1.0.0"
+      "1.0.4"
     ],
     [
       "ordered-dict",
       "1.0.0"
+    ],
+    [
+      "raix:eventemitter",
+      "0.0.1"
     ],
     [
       "random",
@@ -105,11 +113,15 @@
       "1.0.0"
     ],
     [
+      "tracker",
+      "1.0.2-rc1"
+    ],
+    [
       "underscore",
       "1.0.0"
     ]
   ],
   "pluginDependencies": [],
-  "toolVersion": "meteor-tool@1.0.0",
+  "toolVersion": "meteor-tool@1.0.27",
   "format": "1.0"
 }
