@@ -1,6 +1,10 @@
-#CollectionFS (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
+CollectionFS
+============
+File Managing System for Meteor
 
-NOTE: This branch is under active development right now (2014-4-29). It has
+# cfs:standard-packages (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
+
+NOTE: This branch is under active development right now (2014-09-05). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
@@ -14,52 +18,23 @@ created.
 
 ## Installation
 
-Install Meteorite, if you have not yet done so, and then:
+We only support the Meteor Package System +0.9.1!!
 
+Getting started:
 ```bash
 $ cd <app dir>
-$ mrt add collectionFS
-$ mrt add <storage adapter package>
-$ mrt add <CFS add-on packages>
+$ meteor add cfs:standard-packages
+$ meteor add cfs:filesystem # Storage Adapter / SA
+$ meteor add <CFS add-on packages>
 ``` 
 
-You must add `collectionFS`, which is the main package, and at least one storage
-adapter package. See the Storage Adapters section for a list of the available
-storage adapter packages. Depending on what you need to do, you may need to add
-additional add-on packages. These are explained in the documentation sections
+
+You must add `collectionFS`, which is the main package, and at least one storage adapter package.
+
+See the Storage Adapters section for a list of the available storage adapter packages.
+
+Depending on what you need to do, you may need to add additional add-on packages. These are explained in the documentation sections
 to which they apply.
-
-To pull down the most recent updates to every package,
-just run `mrt update` again at any time. If you're having trouble, you can
-alternatively try cloning [this repo](https://github.com/copleykj/CollectionFS-Demo).
-
-> Make sure your `smart.json` says `"collectionFS": {}` *pointing to the latest version*
-
-### Using the Old API
-
-Adding the `collectionFS` package currently gives you the 0.4.x release, which is
-the new API documented here and in development on the `devel` branch. This API is
-fairly stable and allows you to do much more than the old API, but it currently
-lacks complete tests and may change a bit prior to the `1.0` release. If you prefer
-to use the old API, edit your app's `smart.json` so that the `collectionFS` line
-looks like this:
-
-```js
- "packages": {
-   "collectionFS": "0.3.7"
- }
-```
-
-If you have tried the new API, you can remove any other CFS packages that might be
-in your `smart.json` file. Then run the following commands:
-
-```bash
-$ cd <app dir>
-$ mrt update
-$ meteor add collectionFS
-```
-
-You must call `meteor add` for all packages that you manually added to `smart.json`.
 
 ## Introduction
 
@@ -184,9 +159,9 @@ when creating your store. The default is 5.
 There are currently three available storage adapters, which are in separate
 packages. Refer to the package documentation for usage instructions.
 
-* [cfs-gridfs](https://github.com/CollectionFS/Meteor-cfs-gridfs): Allows you to save data to mongodb GridFS.
-* [cfs-filesystem](https://github.com/CollectionFS/Meteor-cfs-filesystem): Allows you to save to the server filesystem.
-* [cfs-s3](https://github.com/CollectionFS/Meteor-cfs-s3): Allows you to save to an Amazon S3 bucket.
+* [cfs:gridfs](https://github.com/CollectionFS/Meteor-cfs-gridfs): Allows you to save data to mongodb GridFS.
+* [cfs:filesystem](https://github.com/CollectionFS/Meteor-cfs-filesystem): Allows you to save to the server filesystem.
+* [cfs:s3](https://github.com/CollectionFS/Meteor-cfs-s3): Allows you to save to an Amazon S3 bucket.
 
 Storage adapters also handle retrieving the file data and removing the file data
 when you delete the file.
@@ -248,7 +223,7 @@ Images = new FS.Collection("images", {
 });
 ```
 
-*Note that this example requires the `cfs-filesystem` package.*
+*Note that this example requires the `cfs:filesystem` package.*
 
 ### Converting to a Different Image Format
 
@@ -379,7 +354,7 @@ Also, rather than setting the `data` property directly, you should use the `atta
 ### Storing FS.File references in your objects
 
 Often your files are part of another entity. You can store a reference to the file directly in the entity.
-You need to add `cfs-ejson-file` to your packages with `mrt add cfs-ejson-file`.
+You need to add `cfs:ejson-file` to your packages with `meteor add cfs:ejson-file`.
 Then you can do for example:
 
 ```js
@@ -552,7 +527,7 @@ specify the store name, the URL will be for the copy in the first defined store.
 {{/each}}
 ```
 
-This is actually using the [url method](https://github.com/CollectionFS/Meteor-cfs-access-point/blob/master/api.md#fsfileurloptionsanywhere), which is added to the `FS.File` prototype by the `cfs-access-point` package. You can use any of the options mentioned in the API documentation, and you can call it from client and server code.
+This is actually using the [url method](https://github.com/CollectionFS/Meteor-cfs-access-point/blob/master/api.md#fsfileurloptionsanywhere), which is added to the `FS.File` prototype by the `cfs:access-point` package. You can use any of the options mentioned in the API documentation, and you can call it from client and server code.
 
 ### isImage
 
