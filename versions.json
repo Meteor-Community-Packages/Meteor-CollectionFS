@@ -2,7 +2,7 @@
   "dependencies": [
     [
       "application-configuration",
-      "1.0.0"
+      "1.0.1-glasser1"
     ],
     [
       "binary-heap",
@@ -62,7 +62,7 @@
     ],
     [
       "cfs:tempstore",
-      "0.0.0"
+      "0.0.1"
     ],
     [
       "check",
@@ -82,7 +82,7 @@
     ],
     [
       "follower-livedata",
-      "1.0.0"
+      "1.0.1-rc0"
     ],
     [
       "geojson-utils",
@@ -118,7 +118,7 @@
     ],
     [
       "logging",
-      "1.0.0"
+      "1.0.2-cordova1"
     ],
     [
       "meteor",
@@ -126,11 +126,11 @@
     ],
     [
       "minifiers",
-      "1.0.0"
+      "1.0.2-glasser1"
     ],
     [
       "minimongo",
-      "1.0.0"
+      "1.0.2-glasser1"
     ],
     [
       "mongo",
@@ -142,7 +142,7 @@
     ],
     [
       "observe-sequence",
-      "1.0.0"
+      "1.0.2-rc0"
     ],
     [
       "ordered-dict",
@@ -170,7 +170,7 @@
     ],
     [
       "spacebars-compiler",
-      "1.0.0"
+      "1.0.2-rc0"
     ],
     [
       "templating",
