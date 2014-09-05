@@ -1,4 +1,4 @@
-cfs-storage-adapter
+cfs:storage-adapter
 =========================
 
 This is a Meteor package used by
