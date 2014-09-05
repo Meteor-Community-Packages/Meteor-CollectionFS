@@ -1,4 +1,5 @@
 Package.describe({
+  name: 'cfs:s3',
   version: '0.0.0',
   summary: "Amazon Web Services S3 storage adapter for CollectionFS"
 });
@@ -12,7 +13,9 @@ Npm.depends({
 });
 
 Package.on_use(function(api) {
-  api.use(['cfs-base-package', 'cfs-storage-adapter']);
+  api.versionsFrom('METEOR@0.9.1');
+
+  api.use(['cfs:base-package@0.0.0', 'cfs:storage-adapter@0.0.0']);
   api.add_files([
     's3.server.js',
     // 's3.indirect.streaming.js',
@@ -23,7 +26,7 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function(api) {
-  api.use(['cfs-s3', 'test-helpers', 'tinytest'], 'server');
+  api.use(['cfs:s3', 'test-helpers', 'tinytest'], 'server');
   api.add_files('tests/server-tests.js', 'server');
   api.add_files('tests/client-tests.js', 'client');
 });
