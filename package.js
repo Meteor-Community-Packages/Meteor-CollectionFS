@@ -1,5 +1,6 @@
 Package.describe({
   version: '0.0.0',
+  name: 'cfs:base-package',
   summary: 'CollectionFS, Base package'
 });
 
@@ -22,11 +23,11 @@ Package.on_use(function(api) {
   ], 'client');
 });
 
-Package.on_test(function (api) {
-  api.use(['cfs-base-package', 'cfs-file']);
-  api.use('test-helpers', 'server');
-  api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
-           'random', 'deps']);
+// Package.on_test(function (api) {
+//   api.use(['cfs:base-package', 'cfs-file']);
+//   api.use('test-helpers', 'server');
+//   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
+//            'random', 'deps']);
 
-  api.add_files('tests/common-tests.js', ['client', 'server']);
-});
+//   api.add_files('tests/common-tests.js', ['client', 'server']);
+// });
