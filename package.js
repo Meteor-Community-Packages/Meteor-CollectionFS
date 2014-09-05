@@ -1,4 +1,5 @@
 Package.describe({
+  name: 'cfs:data-man',
   version: '0.0.0',
   summary: 'A data manager, allowing you to attach various types of data and get it back in various other types'
 });
@@ -11,9 +12,11 @@ Npm.depends({
 });
 
 Package.on_use(function(api) {
+  api.versionsFrom('METEOR@0.9.1');
+
   api.use(['ejson']);
 
-  api.use(['cfs-filesaver'], {weak: true});
+  api.use(['cfs:filesaver@0.0.0'], {weak: true});
 
   api.export('DataMan');
 
@@ -34,7 +37,7 @@ Package.on_use(function(api) {
 });
 
 Package.on_test(function (api) {
-  api.use(['data-man', 'http', 'tinytest', 'test-helpers', 'http-methods']);
+  api.use(['cfs:data-man', 'http', 'tinytest', 'test-helpers', 'cfs:http-methods@0.0.24']);
 
   api.add_files(['tests/common.js', 'tests/client-tests.js'], 'client');
   api.add_files(['tests/common.js', 'tests/server-tests.js'], 'server');
