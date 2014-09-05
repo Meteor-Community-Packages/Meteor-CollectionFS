@@ -1,6 +1,6 @@
  Package.describe({
   name: 'cfs:tempstore',
-  version: '0.0.1',
+  version: '0.0.2',
   summary: 'CollectionFS, temporary storage'
 });
 
