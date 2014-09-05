@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:upload-http',
-  version: '0.0.0',
+  version: '0.0.2',
   summary: 'CollectionFS, HTTP File Upload'
 });
 
@@ -9,10 +9,10 @@ Package.on_use(function(api) {
 
   api.use([
     'cfs:base-package@0.0.0',
-    'cfs:tempstore@0.0.0',
+    'cfs:tempstore@0.0.2',
     'cfs:file@0.0.0',
     'cfs:access-point@0.0.0',
-    'cfs:power-queue@0.0.0',
+    'cfs:power-queue@0.0.1',
     'cfs:reactive-list@0.0.0'
   ]);
 
