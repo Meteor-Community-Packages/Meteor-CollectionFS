@@ -60,17 +60,17 @@ function mountStorage() {
 
   if (FS.TempStore.Storage) return;
 
-  if (Package["cfs-gridfs"] && (Package["cfs-worker"] || !Package["cfs-filesystem"])) {
+  if (Package["cfs:gridfs"] && (Package["cfs:worker"] || !Package["cfs:filesystem"])) {
     // If the file worker is installed we would prefer to use the gridfs sa
     // for scalability. We also default to gridfs if filesystem is not found
 
     // Use the gridfs
     FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
-  } else if (Package["cfs-filesystem"]) {
+  } else if (Package["cfs:filesystem"]) {
     // use the Filesystem
     FS.TempStore.Storage = new FS.Store.FileSystem('_tempstore', { internal: true });
   } else {
-    throw new Error('FS.TempStore.Storage is not set: Install cfs-filesystem or cfs-gridfs or set it manually');
+    throw new Error('FS.TempStore.Storage is not set: Install cfs:filesystem or cfs:gridfs or set it manually');
   }
 
   FS.debug && console.log('TempStore is mounted on', FS.TempStore.Storage.typeName);
