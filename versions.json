@@ -2,7 +2,7 @@
   "dependencies": [
     [
       "application-configuration",
-      "1.0.0"
+      "1.0.1"
     ],
     [
       "binary-heap",
@@ -10,7 +10,7 @@
     ],
     [
       "blaze",
-      "1.0.0"
+      "2.0.0"
     ],
     [
       "blaze-tools",
@@ -54,7 +54,7 @@
     ],
     [
       "cfs:power-queue",
-      "0.0.0"
+      "0.0.1"
     ],
     [
       "cfs:reactive-list",
@@ -70,11 +70,11 @@
     ],
     [
       "cfs:tempstore",
-      "0.0.0"
+      "0.0.2"
     ],
     [
       "cfs:upload-http",
-      "0.0.0"
+      "0.0.2"
     ],
     [
       "cfs:worker",
@@ -86,7 +86,7 @@
     ],
     [
       "ddp",
-      "1.0.8-rc0"
+      "1.0.8"
     ],
     [
       "deps",
@@ -98,7 +98,7 @@
     ],
     [
       "follower-livedata",
-      "1.0.0"
+      "1.0.1"
     ],
     [
       "geojson-utils",
@@ -110,7 +110,7 @@
     ],
     [
       "htmljs",
-      "1.0.0-cordova1"
+      "1.0.0"
     ],
     [
       "http",
@@ -134,7 +134,7 @@
     ],
     [
       "logging",
-      "1.0.0"
+      "1.0.2"
     ],
     [
       "meteor",
@@ -142,15 +142,15 @@
     ],
     [
       "minifiers",
-      "1.0.0"
+      "1.0.2"
     ],
     [
       "minimongo",
-      "1.0.0"
+      "1.0.2"
     ],
     [
       "mongo",
-      "1.0.4-rc0"
+      "1.0.4"
     ],
     [
       "mongo-livedata",
@@ -158,7 +158,7 @@
     ],
     [
       "observe-sequence",
-      "1.0.0"
+      "1.0.2"
     ],
     [
       "ordered-dict",
@@ -166,11 +166,15 @@
     ],
     [
       "raix:eventemitter",
-      "0.0.1"
+      "0.0.2"
     ],
     [
       "random",
       "1.0.0"
+    ],
+    [
+      "reactive-var",
+      "1.0.1"
     ],
     [
       "retry",
@@ -178,23 +182,23 @@
     ],
     [
       "routepolicy",
-      "1.0.0-cordova1"
-    ],
-    [
-      "spacebars",
-      "1.0.1-rc0"
-    ],
-    [
-      "spacebars-compiler",
       "1.0.0"
     ],
     [
+      "spacebars",
+      "1.0.1"
+    ],
+    [
+      "spacebars-compiler",
+      "1.0.2"
+    ],
+    [
       "templating",
-      "1.0.5-glasser1"
+      "1.0.5"
     ],
     [
       "tracker",
-      "1.0.2-rc0"
+      "1.0.2"
     ],
     [
       "underscore",

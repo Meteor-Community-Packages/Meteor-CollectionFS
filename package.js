@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:standard-packages',
-  version: '0.0.0',
+  version: '0.0.2',
   summary: 'Filesystem for Meteor, collectionFS'
 });
 
@@ -22,7 +22,7 @@ Package.on_use(function(api) {
     // We might also want to have the server create copies of our files?
     'cfs:worker@0.0.0',
     // By default we want to support uploads over HTTP
-    'cfs:upload-http@0.0.0',
+    'cfs:upload-http@0.0.2',
   ]);
 
 });
