@@ -2,11 +2,11 @@
   "dependencies": [
     [
       "deps",
-      "1.0.0"
+      "1.0.2"
     ],
     [
       "ejson",
-      "1.0.0"
+      "1.0.1"
     ],
     [
       "json",
@@ -17,11 +17,15 @@
       "1.0.0"
     ],
     [
+      "tracker",
+      "1.0.2-rc0"
+    ],
+    [
       "underscore",
       "1.0.0"
     ]
   ],
   "pluginDependencies": [],
-  "toolVersion": "meteor-tool@1.0.0",
+  "toolVersion": "meteor-tool@1.0.27",
   "format": "1.0"
 }
