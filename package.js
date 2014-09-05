@@ -1,25 +1,27 @@
 Package.describe({
+  name: 'cfs:access-point',
   version: '0.0.0',
   summary: 'CollectionFS, add ddp and http accesspoint capability'
 });
 
 Package.on_use(function(api) {
+  api.versionsFrom('METEOR@0.9.1');
 
   // This imply is needed for tests, and is technically probably correct anyway.
   api.imply([
-    'cfs-base-package'
+    'cfs:base-package@0.0.0'
   ]);
 
   api.use([
     //CFS packages
-    'cfs-base-package',
-    'cfs-file',
+    'cfs:base-package@0.0.0',
+    'cfs:file@0.0.0',
     //Core packages
     'check',
     'ejson',
     //Other packages
-    'http-methods',
-    'http-publish'
+    'cfs:http-methods@0.0.24',
+    'cfs:http-publish@0.0.0'
   ]);
 
   api.add_files([
@@ -34,24 +36,24 @@ Package.on_use(function(api) {
   ], 'client');
 });
 
-Package.on_test(function (api) {
+// Package.on_test(function (api) {
 
-  api.use([
-    //CFS packages
-    'cfs-access-point',
-    'collectionfs',
-    'cfs-gridfs',
-    //Core packages
-    'test-helpers',
-    'http',
-    'tinytest',
-    'underscore',
-    'ejson',
-    'ordered-dict',
-    'random',
-    'deps'
-  ]);
+//   api.use([
+//     //CFS packages
+//     'cfs:access-point@0.0.0',
+//     'collectionfs',
+//     'cfs:gridfs@0.0.0',
+//     //Core packages
+//     'test-helpers',
+//     'http',
+//     'tinytest',
+//     'underscore',
+//     'ejson',
+//     'ordered-dict',
+//     'random',
+//     'deps'
+//   ]);
 
-  api.add_files('tests/client-tests.js', 'client');
-  api.add_files('tests/server-tests.js', 'server');
-});
+//   api.add_files('tests/client-tests.js', 'client');
+//   api.add_files('tests/server-tests.js', 'server');
+// });
