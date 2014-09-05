@@ -60,6 +60,8 @@ function mountStorage() {
 
   if (FS.TempStore.Storage) return;
 
+  // XXX: We could replace this test, testing the FS scope for grifFS etc.
+  // This is on the todo later when we get "stable"
   if (Package["cfs:gridfs"] && (Package["cfs:worker"] || !Package["cfs:filesystem"])) {
     // If the file worker is installed we would prefer to use the gridfs sa
     // for scalability. We also default to gridfs if filesystem is not found
@@ -67,6 +69,7 @@ function mountStorage() {
     // Use the gridfs
     FS.TempStore.Storage = new FS.Store.GridFS('_tempstore', { internal: true });
   } else if (Package["cfs:filesystem"]) {
+
     // use the Filesystem
     FS.TempStore.Storage = new FS.Store.FileSystem('_tempstore', { internal: true });
   } else {
