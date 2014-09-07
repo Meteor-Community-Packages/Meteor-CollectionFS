@@ -4,7 +4,7 @@ File Managing System for Meteor
 
 # cfs:standard-packages (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-09-05). It has
+NOTE: This branch is under active development right now (2014-09-07). It has
 
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
@@ -17,40 +17,10 @@ manipulation, and copying. It supports several storage adapters for saving to
 the local filesystem, GridFS, or S3, and additional storage adapters can be
 created.
 
-## Installation (Meteor 0.9.0 and later)
+## Installation
 
-We are waiting until organizations are supported before we migrate to the new packaging server. In the meantime, it is possible to get CFS working on a 0.9.0 app by continuing to use Meteorite, following these steps:
+**Only Meteor 0.9.0 and later are currently supported**
 
-*EDIT: These steps were corrected on Aug 27*
-
-1. Delete the `packages` folder or at least delete all of the CFS-related subfolders within `packages`.
-2. Remove all the CFS packages from both smart.json and the `./meteor/packages` list.
-3. Migrate/update your app to the `METEOR@0.9.0` release either manually or using `mrt migrate-app`.
-4. Make sure that your app is not using any of the automigrated CFS packages. If possible, get it running without CFS added first.
-5. Run `mrt uninstall --system`
-6. Overwrite/add a `smart.json` file in your app folder with the CFS packages you need. For example:
-```js
-    {
-      "packages": {
-        "collectionfs": {}, // note that this name has changed to all lowercase
-        "cfs-gridfs": {},
-        "cfs-filesystem": {},
-        "cfs-s3": {},
-        "cfs-graphicsmagick": {},
-        "cfs-ui": {},
-        "ui-dropped-event": {}
-      }
-    }
-```
-7. In your app directory, run the command `mrt update`
-8. In your app directory, run the command `meteor list`. Ensure that all the packages listed in your `smart.json` file are also listed here. If not, do `meteor add <packagename>` for each one. For example, `meteor add collectionfs`.
-9. Enter `meteor` to run the app and pray.
-
-## Installation (Prior to Meteor 0.9.0)
-
-We only support the Meteor Package System +0.9.1!!
-
-Getting started:
 ```bash
 $ cd <app dir>
 $ meteor add cfs:standard-packages
@@ -58,13 +28,18 @@ $ meteor add cfs:filesystem # Storage Adapter / SA
 $ meteor add <CFS add-on packages>
 ``` 
 
+You must add `cfs:standard-packages`, which is the main package, and at least one storage adapter package. See the Storage Adapters section for a list of the available storage adapter packages. At least `cfs:gridfs` or `cfs:filesystem` must be added, too. The temporary store requires one of them.
 
-You must add `collectionFS`, which is the main package, and at least one storage adapter package.
+Depending on what you need to do, you may need to add additional add-on packages. These are explained in the documentation sections to which they apply.
 
-See the Storage Adapters section for a list of the available storage adapter packages.
+### Converting From Pre-0.9.0 Meteor
 
-Depending on what you need to do, you may need to add additional add-on packages. These are explained in the documentation sections
-to which they apply.
+1. Delete `packages` folder from your app, or at least remove all the CFS-related packages from it.
+2. Delete the `smart.json` that lists the CFS packages, or at least delete all CFS-related packages from it.
+3. `meteor remove <pkgname>` for any CFS packages shown when you do `meteor list`.
+4. Follow the installation instructions above.
+
+If it does not use v0.0.1+ of `cfs:tempstore` and `cfs:power-queue` (Meteor issue meteor/meteor#2526), then `meteor add` those package versions yourself, but you will eventually want to remove those from your app and let `cfs:standard-packages` manage them.
 
 ## Introduction
 
