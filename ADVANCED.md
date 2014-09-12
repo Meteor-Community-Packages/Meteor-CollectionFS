@@ -35,14 +35,14 @@ Here's an explanation of what they are named and what their documents look like.
       name: String, // as saved in this store, potentially changed by beforeWrite
       type: String, // as saved in this store, potentially changed by beforeWrite
       size: Number, // as saved in this store, in bytes, potentially changed by beforeWrite
-      utime: Date // when last saved in this store
+      updatedAt: Date // when last saved in this store
     }
   },
   original: {
     name: String, // of the originally uploaded file
     type: String, // of the originally uploaded file
     size: Number, // of the originally uploaded file, in bytes
-    utime: Date // of the originally uploaded file
+    updatedAt: Date // of the originally uploaded file
   },
   failures: {
     copies: {
