@@ -2,7 +2,7 @@
   "dependencies": [
     [
       "application-configuration",
-      "1.0.0"
+      "1.0.1"
     ],
     [
       "binary-heap",
@@ -30,7 +30,7 @@
     ],
     [
       "cfs:tempstore",
-      "0.0.0"
+      "0.0.2"
     ],
     [
       "check",
@@ -42,7 +42,7 @@
     ],
     [
       "deps",
-      "1.0.2"
+      "1.0.3"
     ],
     [
       "ejson",
@@ -50,7 +50,7 @@
     ],
     [
       "follower-livedata",
-      "1.0.0"
+      "1.0.1"
     ],
     [
       "geojson-utils",
@@ -70,23 +70,23 @@
     ],
     [
       "livedata",
-      "1.0.8"
+      "1.0.9"
     ],
     [
       "logging",
-      "1.0.0"
+      "1.0.2-cordova2"
     ],
     [
       "meteor",
-      "1.0.0"
+      "1.0.4-cordova6"
     ],
     [
       "minimongo",
-      "1.0.0"
+      "1.0.2"
     ],
     [
       "mongo",
-      "1.0.4-rc0"
+      "1.0.4"
     ],
     [
       "mongo-livedata",
@@ -110,14 +110,18 @@
     ],
     [
       "tracker",
-      "1.0.2-rc1"
+      "1.0.2"
     ],
     [
       "underscore",
       "1.0.0"
+    ],
+    [
+      "url",
+      "1.0.0"
     ]
   ],
   "pluginDependencies": [],
-  "toolVersion": "meteor-tool@1.0.27",
+  "toolVersion": "meteor-tool@CHECKOUT",
   "format": "1.0"
 }

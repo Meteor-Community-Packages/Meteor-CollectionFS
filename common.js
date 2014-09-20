@@ -128,6 +128,13 @@ FS.Collection = function(name, options) {
   // Set up observers
   Meteor.isServer && FS.FileWorker && FS.FileWorker.observe(this);
 
+  // Emit "removed" event on collection
+  self.files.find().observe({
+    removed: function(fileObj) {
+      self.emit('removed', fileObj);
+    }
+  });
+
   // Emit events based on TempStore events
   if (FS.TempStore) {
     FS.TempStore.on('stored', function (fileObj, result) {
