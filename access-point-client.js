@@ -43,7 +43,7 @@ if (FS.HTTP.storage) {
   // client time - this includes lag and timezone
   Meteor.startup(function() {
     // Call the server method an get server time
-    HTTP.get('/cfs/servertime', function(error, result) {
+    HTTP.get(rootUrlPathPrefix + '/cfs/servertime', function(error, result) {
       if (!error) {
         // Update our server time diff
         var dateNew = new Date(+result.content);

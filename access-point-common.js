@@ -1,8 +1,19 @@
+rootUrlPathPrefix = __meteor_runtime_config__.ROOT_URL_PATH_PREFIX || "";
+// Adjust the rootUrlPathPrefix if necessary
+if (rootUrlPathPrefix.length > 0) {
+  if (rootUrlPathPrefix.slice(0, 1) !== '/') {
+    rootUrlPathPrefix = '/' + rootUrlPathPrefix;
+  }
+  if (rootUrlPathPrefix.slice(-1) === '/') {
+    rootUrlPathPrefix = rootUrlPathPrefix.slice(0, -1);
+  }
+}
+
 baseUrl = '/cfs';
 FS.HTTP = FS.HTTP || {};
 
 // Note the upload URL so that client uploader packages know what it is
-FS.HTTP.uploadUrl = baseUrl + '/files';
+FS.HTTP.uploadUrl = rootUrlPathPrefix + baseUrl + '/files';
 
 /**
  * @method FS.HTTP.setBaseUrl
@@ -24,7 +35,7 @@ FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
   baseUrl = newBaseUrl;
 
   // Change the upload URL so that client uploader packages know what it is
-  FS.HTTP.uploadUrl = baseUrl + '/files';
+  FS.HTTP.uploadUrl = rootUrlPathPrefix + baseUrl + '/files';
 
   // Remount URLs with the new baseUrl, unmounting the old, on the server only.
   // If existingMountPoints is empty, then we haven't run the server startup
@@ -150,7 +161,7 @@ FS.File.prototype.url = function(options) {
     }
 
     // Construct and return the http method url
-    return baseUrl + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
+    return rootUrlPathPrefix + baseUrl + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
   }
 
 };
