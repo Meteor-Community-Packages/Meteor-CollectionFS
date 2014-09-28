@@ -36,24 +36,25 @@ Package.on_use(function(api) {
   ], 'client');
 });
 
-// Package.on_test(function (api) {
+Package.on_test(function (api) {
+  api.versionsFrom('METEOR@0.9.1');
 
-//   api.use([
-//     //CFS packages
-//     'cfs:access-point@0.0.0',
-//     'collectionfs',
-//     'cfs:gridfs@0.0.0',
-//     //Core packages
-//     'test-helpers',
-//     'http',
-//     'tinytest',
-//     'underscore',
-//     'ejson',
-//     'ordered-dict',
-//     'random',
-//     'deps'
-//   ]);
+  api.use([
+    //CFS packages
+    'cfs:access-point',
+    'cfs:standard-packages@0.0.2',
+    'cfs:gridfs@0.0.0',
+    //Core packages
+    'test-helpers',
+    'http',
+    'tinytest',
+    'underscore',
+    'ejson',
+    'ordered-dict',
+    'random',
+    'deps'
+  ]);
 
-//   api.add_files('tests/client-tests.js', 'client');
-//   api.add_files('tests/server-tests.js', 'server');
-// });
+  api.add_files('tests/client-tests.js', 'client');
+  api.add_files('tests/server-tests.js', 'server');
+});
