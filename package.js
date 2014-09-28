@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:access-point',
-  version: '0.0.0',
+  version: '0.1.0',
   summary: 'CollectionFS, add ddp and http accesspoint capability'
 });
 
