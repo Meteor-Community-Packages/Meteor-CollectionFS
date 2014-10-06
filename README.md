@@ -46,11 +46,11 @@ If it does not use v0.0.1+ of `cfs:tempstore` and `cfs:power-queue` (Meteor issu
 The CollectionFS package makes available two important global variables:
 `FS.File` and `FS.Collection`.
 
-* A `FS.File` wraps a file and its data
+* An `FS.File` instance wraps a file and its data
 on the client or server. It is similar to the browser `File` object (and can be
-created from a `File` object), but it has additional properties and methods.
-* A `FS.Collection` provides a collection in which information about 
-files can be stored.
+created from a `File` object), but it has additional properties and methods. Many of its methods are reactive when the instance is returned by a call to `find` or `findOne`.
+* An `FS.Collection` provides a collection in which information about 
+files can be stored. It is backed by an underlying normal `Mongo.Collection` instance. Most collection methods, such as `find` and `insert` are available on the `FS.Collection` instance. If you need to call other collection methods such as `_ensureIndex`, you can call them directly on the underlying `Mongo.Collection` instance available through `myFSCollection.files`.
 
 A document from a `FS.Collection` is represented as a `FS.File`.
 
