@@ -270,7 +270,7 @@ A common use for `transformWrite` is to manipulate images before saving them.
 To get this set up:
 
 1. Install [GraphicsMagick](http://www.graphicsmagick.org/) or [ImageMagick](http://www.imagemagick.org/script/index.php) on your development machine and on any server that will host your app. (The free Meteor deployment servers do not have either of these, so you can't deploy to there.) These are normal operating system applications, so you have to install them using the correct method for your OS. For example, on Mac OSX you can use `brew install graphicsmagick` assuming you have Homebrew installed.
-2. Add the `cfs-graphicsmagick` Meteor package to your app: `mrt add cfs-graphicsmagick`
+2. Add the `cfs:graphicsmagick` Meteor package to your app: `meteor add cfs:graphicsmagick`
 
 The following are some examples.
 
