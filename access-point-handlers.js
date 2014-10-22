@@ -64,56 +64,64 @@ httpGetHandler = function httpGetHandler(ref) {
     throw new Meteor.Error(404, "Not Found", 'This file was not stored in the ' + storeName + ' store');
   }
 
-  if (typeof copyInfo.type === "string") {
-    self.setContentType(copyInfo.type);
+  var fileType = copyInfo.type;
+  var fileSize = copyInfo.size;
+
+  if (typeof fileType === "string") {
+    self.setContentType(fileType);
   } else {
     self.setContentType('application/octet-stream');
   }
 
-  // Content length, defaults to file size
-  var contentLength = copyInfo.size;
-
   // Add 'Content-Disposition' header if requested a download/attachment URL
-  var start, end;
   if (typeof ref.download !== "undefined") {
     var filename = ref.filename || copyInfo.name;
     self.addHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
-    
-    // If a chunk/range was requested instead of the whole file, serve that
-    var unit, range = self.requestHeaders.range;
-    if (range) {
-      // Parse range header
-      range = range.split('=');
-
-      unit = range[0];
-      if (unit !== 'bytes')
-        throw new Meteor.Error(416, "Requested Range Not Satisfiable");
-
-      range = range[1];
-      // Spec allows multiple ranges, but we will serve only the first
-      range = range.split(',')[0];
-      // Get start and end byte positions
-      range = range.split('-');
-      start = range[0];
-      end = range[1] || '';
-      // Convert to numbers and adjust invalid values when possible
-      start = start.length ? Math.max(Number(start), 0) : 0;
-      end = end.length ? Math.min(Number(end), copyInfo.size - 1) : copyInfo.size - 1;
-      if (end < start)
-        throw new Meteor.Error(416, "Requested Range Not Satisfiable");
-
-      self.setStatusCode(206, 'Partial Content');
-      self.addHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + copyInfo.size);
-      end = end + 1; //HTTP end byte is inclusive and ours are not
-      
-      // Sets properly content length for range
-      contentLength = end - start;
-    } else {
-      self.setStatusCode(200);
-    }
   } else {
     self.addHeader('Content-Disposition', 'inline');
-    self.setStatusCode(200);
+  }
+
+  // If a chunk/range was requested instead of the whole file, serve that'
+  var start, end, unit, contentLength, readStreamOptions, range = self.requestHeaders.range;
+  if (range) {
+    // Parse range header
+    range = range.split('=');
+
+    unit = range[0];
+    if (unit !== 'bytes')
+      throw new Meteor.Error(416, "Requested Range Not Satisfiable");
+
+    range = range[1];
+    // Spec allows multiple ranges, but we will serve only the first
+    range = range.split(',')[0];
+    // Get start and end byte positions
+    range = range.split('-');
+    start = range[0];
+    end = range[1] || '';
+    // Convert to numbers and adjust invalid values when possible
+    start = start.length ? Math.max(Number(start), 0) : 0;
+    end = end.length ? Math.min(Number(end), fileSize - 1) : fileSize - 1;
+    if (end < start)
+      throw new Meteor.Error(416, "Requested Range Not Satisfiable");
+
+    self.addHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + copyInfo.size);
+    readStreamOptions = {start: start, end: end};
+    end = end + 1; //HTTP end byte is inclusive and ours are not
+
+    // Sets properly content length for range
+    contentLength = end - start;
+  } else {
+    // Content length, defaults to file size
+    contentLength = fileSize;
+    // Some browsers cope better if the content-range header is
+    // still included even for the full file being returned.
+    self.addHeader('Content-Range', 'bytes 0-' + (contentLength - 1) + '/' + contentLength);
+  }
+
+  if (contentLength < fileSize) {
+    self.setStatusCode(206, 'Partial Content');
+  } else {
+    self.setStatusCode(200, 'OK');
   }
 
   // Add any other global custom headers and collection-specific custom headers
@@ -126,12 +134,11 @@ httpGetHandler = function httpGetHandler(ref) {
 
   // Last modified header (updatedAt from file info)
   self.addHeader('Last-Modified', copyInfo.updatedAt.toUTCString());
-  
+
   // Inform clients that we accept ranges for resumable chunked downloads
   self.addHeader('Accept-Ranges', 'bytes');
 
-  //ref.file.createReadStream(storeName).pipe(self.createWriteStream());
-  var readStream = storage.adapter.createReadStream(ref.file);
+  var readStream = storage.adapter.createReadStream(ref.file, readStreamOptions);
 
   readStream.on('error', function(err) {
     // Send proper error message on get error
@@ -141,8 +148,8 @@ httpGetHandler = function httpGetHandler(ref) {
       self.Error(new Meteor.Error(503, 'Service unavailable'));
     }
   });
-  readStream.pipe(self.createWriteStream());
 
+  readStream.pipe(self.createWriteStream());
 };
 
 httpPutInsertHandler = function httpPutInsertHandler(ref) {
