@@ -136,6 +136,10 @@ FS.Store.S3 = function(name, options) {
     createWriteStream: function(fileKey, options) {
       options = options || {};
 
+      if (options.contentType) {
+        options.ContentType = options.contentType;
+      }
+
       // We dont support array of aliases
       delete options.aliases;
       // We dont support contentType
