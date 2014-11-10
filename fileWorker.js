@@ -159,11 +159,6 @@ function getDoneQuery(stores) {
  * `overwrite` option is `true`, will save to the store even if we already
  * have, potentially overwriting any previously saved data. Synchronous.
  */
-var makeSafeCallback = function (callback) {
-    // Make callback safe for Meteor code
-    return Meteor.bindEnvironment(callback, function(err) { throw err; });
-};
-
 function saveCopy(fsFile, storeName, options) {
   options = options || {};
 
