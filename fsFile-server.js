@@ -17,7 +17,7 @@ FS.File.prototype.logCopyFailure = function(storeName, maxTries) {
   // trying the save again.
   FS.TempStore.ensureForFile(self);
 
-  var now = new Date;
+  var now = new Date();
   var currentCount = (self.failures && self.failures.copies && self.failures.copies[storeName] && typeof self.failures.copies[storeName].count === "number") ? self.failures.copies[storeName].count : 0;
   maxTries = maxTries || 5;
 
@@ -40,10 +40,10 @@ FS.File.prototype.logCopyFailure = function(storeName, maxTries) {
  */
 FS.File.prototype.failedPermanently = function(storeName) {
   var self = this;
-  return !!(self.failures
-          && self.failures.copies
-          && self.failures.copies[storeName]
-          && self.failures.copies[storeName].doneTrying);
+  return !!(self.failures &&
+            self.failures.copies &&
+            self.failures.copies[storeName] &&
+            self.failures.copies[storeName].doneTrying);
 };
 
 /**
@@ -143,20 +143,26 @@ FS.File.prototype.copy = function() {
 
   // Copy underlying files in the stores
   var mod, oldKey;
-  for (name in newFile.copies) {
-    oldKey = newFile.copies[name].key;
-    if (oldKey) {
-      // We need to ask the adapter for the true oldKey because right now gridfs does some extra stuff.
-      // TODO GridFS should probably set the full key object (with _id and filename) into `copies.key`
-      // so that copies.key can be passed directly to createReadStreamForFileKey
-      var sourceFileStorage = self.collection.storesLookup[name];
-      if (!sourceFileStorage) {
-        throw new Error(name + " is not a valid store name");
+  for (var name in newFile.copies) {
+    if (newFile.copies.hasOwnProperty(name)) {
+      oldKey = newFile.copies[name].key;
+      if (oldKey) {
+        // We need to ask the adapter for the true oldKey because
+        // right now gridfs does some extra stuff.
+        // TODO GridFS should probably set the full key object
+        // (with _id and filename) into `copies.key`
+        // so that copies.key can be passed directly to
+        // createReadStreamForFileKey
+        var sourceFileStorage = self.collection.storesLookup[name];
+        if (!sourceFileStorage) {
+          throw new Error(name + " is not a valid store name");
+        }
+        oldKey = sourceFileStorage.adapter.fileKey(self);
+        // delete so that new fileKey will be generated in copyStoreData
+        delete newFile.copies[name].key;
+        mod = mod || {};
+        mod["copies." + name + ".key"] = copyStoreData(newFile, name, oldKey);
       }
-      oldKey = sourceFileStorage.adapter.fileKey(self);
-      delete newFile.copies[name].key; // delete so that new fileKey will be generated in copyStoreData
-      mod = mod || {};
-      mod["copies." + name + ".key"] = copyStoreData(newFile, name, oldKey);
     }
   }
   // Update keys in the filerecord
@@ -168,7 +174,8 @@ FS.File.prototype.copy = function() {
 };
 
 Meteor.methods({
-  // Does a HEAD request to URL to get the type, updatedAt, and size prior to actually downloading the data.
+  // Does a HEAD request to URL to get the type, updatedAt,
+  // and size prior to actually downloading the data.
   // That way we can do filter checks without actually downloading.
   '_cfs_getUrlInfo': function (url, options) {
     this.unblock();
@@ -220,4 +227,4 @@ function _copyStoreData(fileObj, storeName, sourceKey, callback) {
 
   readStream.pipe(writeStream);
 }
-var copyStoreData = Meteor._wrapAsync(_copyStoreData);
+var copyStoreData = Meteor.wrapAsync(_copyStoreData);
