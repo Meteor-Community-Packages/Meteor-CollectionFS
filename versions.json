@@ -38,7 +38,7 @@
     ],
     [
       "cfs:collection",
-      "0.0.0"
+      "0.0.1"
     ],
     [
       "cfs:collection-filters",
@@ -46,11 +46,11 @@
     ],
     [
       "cfs:data-man",
-      "0.0.1"
+      "0.0.2"
     ],
     [
       "cfs:file",
-      "0.0.0"
+      "0.0.1"
     ],
     [
       "cfs:http-methods",
@@ -94,7 +94,7 @@
     ],
     [
       "ddp",
-      "1.0.11"
+      "1.0.12"
     ],
     [
       "deps",
@@ -158,7 +158,7 @@
     ],
     [
       "mongo",
-      "1.0.8"
+      "1.0.9"
     ],
     [
       "mongo-livedata",
@@ -230,6 +230,6 @@
     ]
   ],
   "pluginDependencies": [],
-  "toolVersion": "meteor-tool@1.0.35",
+  "toolVersion": "meteor-tool@1.0.36",
   "format": "1.0"
 }

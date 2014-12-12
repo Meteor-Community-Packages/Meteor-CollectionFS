@@ -12,7 +12,14 @@ or wants to make their own storage adapter.
 
 ## All Packages
 
-* collectionfs (has many component packages)
+* cfs:standard-packages (implies some component packages)
+  * cfs:base-package
+  * cfs:file
+  * cfs:collection
+  * cfs:collection-filters
+  * cfs:access-point
+  * cfs:worker
+  * cfs:upload-http
 * cfs:graphicsmagick
 * cfs:ui
 * cfs:filesystem
