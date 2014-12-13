@@ -94,12 +94,70 @@ Images = new FS.Collection("images", {
 Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
 package documentation for more information.
 
-## Notes
 
-* Be sure to define your store in a server file that is not shipped to the
-client since it contains credentials. Wrapping in `Meteor.isServer` is not
-secure. For best security, you can omit the key and secret options and instead
-[set your credentials in environment variables](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Credentials_from_Environment_Variables).
+### Client, Server, and S3 credentials
+
+There are two approaches to safely storing your S3 credentials: 
+
+1. As system environment variables (Amazon's [recommended approach](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Credentials_from_Environment_Variables)). 
+2. As given in the above code but located in a directory named `server` (note: wrapping in `Meteor.isServer` is **NOT**
+secure).
+
+**For Step 2:**
+
+You need to define your store in two files: one located in a `server` director and one located in a `client` directory. In the client-side-only file, simply don't define any options when creating your FS.Store variable. Example:
+
+**Client** *(client/collections_client/avatars.js)*
+```
+var avatarStoreLarge = new FS.Store.S3("avatarsLarge");
+var avatarStoreSmall = new FS.Store.S3("avatarsSmall");
+
+Avatars = new FS.Collection("avatars", {
+  stores: [avatarStoreSmall, avatarStoreLarge],
+  filter: {
+    allow: {
+      contentTypes: ['image/*']
+    }
+  }
+})
+```
+
+**Server** *(server/collections_server/avatars.js)*
+```
+var avatarStoreLarge = new FS.Store.S3("avatarsLarge", {
+  accessKeyId: "ID-HERE", 
+  secretAccessKey: "ACCESS-KEY-HERE", 
+  bucket: "avatars.large",
+  transformWrite: function(fileObj, readStream, writeStream) {
+    gm(readStream, fileObj.name()).resize('250', '250').stream().pipe(writeStream)
+  }
+})
+
+var avatarStoreSmall = new FS.Store.S3("avatarsSmall", {
+  accessKeyId: "ID-HERE", 
+  secretAccessKey: "ACCESS-KEY-HERE", 
+  bucket: "avatars.small",
+  beforeWrite: function(fileObj) {
+    fileObj.size(20, {store: "avatarStoreSmall", save: false});
+  },
+  transformWrite: function(fileObj, readStream, writeStream) {
+    gm(readStream, fileObj.name()).resize('20', '20').stream().pipe(writeStream)
+  }
+})
+
+
+Avatars = new FS.Collection("avatars", {
+  stores: [avatarStoreSmall, avatarStoreLarge],
+  filter: {
+    allow: {
+      contentTypes: ['image/*']
+    }
+  }
+})
+```
+
+**Note:** Only the Stores are different between client and server (the collections should be identical). Perform all transforms and such client-side. 
+
 
 ## API
 
