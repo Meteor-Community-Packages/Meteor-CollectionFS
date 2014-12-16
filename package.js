@@ -1,7 +1,7 @@
 Package.describe({
   version: '0.0.9',
   name: 'cfs:base-package',
-  summary: 'CollectionFS, Base package v0.0.9',
+  summary: 'CollectionFS, Base package',
   git: 'https://github.com/CollectionFS/Meteor-cfs-base-package.git'
 });
 
