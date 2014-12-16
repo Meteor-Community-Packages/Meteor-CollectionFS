@@ -1,11 +1,12 @@
 Package.describe({
-  version: '0.0.0',
+  version: '0.0.10',
   name: 'cfs:base-package',
-  summary: 'CollectionFS, Base package'
+  summary: 'CollectionFS, Base package',
+  git: 'https://github.com/CollectionFS/Meteor-cfs-base-package.git'
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
 
   api.use(['deps', 'underscore', 'ejson']);
 
@@ -14,12 +15,12 @@ Package.on_use(function(api) {
     api.export('_Utility', { testOnly: true });
   }
 
-  api.add_files([
+  api.addFiles([
     'base-common.js',
     'base-server.js'
   ], 'server');
 
-  api.add_files([
+  api.addFiles([
     'base-common.js',
     'base-client.js'
   ], 'client');
