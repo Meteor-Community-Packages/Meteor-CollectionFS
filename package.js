@@ -16,13 +16,13 @@ Package.onUse(function(api) {
   api.use([
     //CFS packages
     'cfs:base-package@0.0.26',
-    'cfs:file@0.0.0',
+    'cfs:file@0.0.14',
     //Core packages
     'check',
     'ejson',
     //Other packages
     'cfs:http-methods@0.0.24',
-    'cfs:http-publish@0.0.0'
+    'cfs:http-publish@0.0.11'
   ]);
 
   api.addFiles([
