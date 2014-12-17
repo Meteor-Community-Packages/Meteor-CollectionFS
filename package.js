@@ -13,7 +13,7 @@ Package.onUse(function(api) {
     // Base util rigs the basis for the FS scope and some general helper mehtods
     'cfs:base-package@0.0.26',
     // Want to make use of the file object and its api, yes!
-    'cfs:file@0.0.14',
+    'cfs:file@0.0.15',
     // Add the FS.Collection to keep track of everything
     'cfs:collection@0.5.0',
     // Support filters for easy rules about what may be inserted
