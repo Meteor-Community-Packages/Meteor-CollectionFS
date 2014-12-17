@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git',
   name: 'cfs:storage-adapter',
-  version: '0.0.0',
+  version: '0.1.0',
   summary: 'CollectionFS, Class for creating Storage adapters'
 });
 
@@ -23,7 +23,7 @@ Package.onUse(function(api) {
 
   // We want to make sure that its added to scope for now if installed.
   // We have set a deprecation warning on the transform scope
-  api.use('cfs:graphicsmagick@0.0.0', 'server', { weak: true });
+  api.use('cfs:graphicsmagick@0.0.16', 'server', { weak: true });
 
   api.addFiles([
     'storageAdapter.client.js'
