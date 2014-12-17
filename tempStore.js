@@ -331,6 +331,7 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
 
   // Emit errors
   writeStream.on('error', function (error) {
+    FS.debug && console.log('TempStore writeStream error:', error);
     self.emit('error', error, fileObj);
   });
 
