@@ -10,9 +10,9 @@ Package.onUse(function(api) {
 
   api.use([
     'cfs:base-package@0.0.26',
-    'cfs:tempstore@0.1.0',
+    'cfs:tempstore@0.1.1',
     'cfs:file@0.0.15',
-    'cfs:access-point@0.1.40',
+    'cfs:access-point@0.1.41',
     'cfs:power-queue@0.9.10',
     'cfs:reactive-list@0.0.8'
   ]);
