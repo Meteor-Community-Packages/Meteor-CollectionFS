@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:data-man',
-  version: '0.0.3',
+  version: '0.0.4',
   summary: 'A data manager, allowing you to attach various types of data and get it back in various other types',
   git: 'https://github.com/CollectionFS/Meteor-data-man.git'
 });
