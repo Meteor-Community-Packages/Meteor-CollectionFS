@@ -10,7 +10,7 @@ Package.onUse(function(api) {
 
   api.use([
     // CFS
-    'cfs:base-package@0.0.26',
+    'cfs:base-package@0.0.27',
     'cfs:tempstore@0.1.1',
     // Core
     'deps',
@@ -18,11 +18,11 @@ Package.onUse(function(api) {
     'livedata',
     'mongo-livedata',
     // Other
-    'raix:eventemitter@0.1.0'
+    'raix:eventemitter@0.1.1'
   ]);
 
   // Weak dependencies for uploaders
-  api.use(['cfs:upload-http@0.0.16', 'cfs:upload-ddp@0.0.15'], { weak: true });
+  api.use(['cfs:upload-http@0.0.17', 'cfs:upload-ddp@0.0.15'], { weak: true });
 
   api.addFiles([
     'common.js',
