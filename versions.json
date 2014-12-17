@@ -30,63 +30,63 @@
     ],
     [
       "cfs:access-point",
-      "0.1.1"
+      "0.1.40"
     ],
     [
       "cfs:base-package",
-      "0.0.0"
+      "0.0.26"
     ],
     [
       "cfs:collection",
-      "0.0.1"
+      "0.5.0"
     ],
     [
       "cfs:collection-filters",
-      "0.0.0"
+      "0.2.0"
     ],
     [
       "cfs:data-man",
-      "0.0.2"
+      "0.0.3"
     ],
     [
       "cfs:file",
-      "0.0.1"
+      "0.0.14"
     ],
     [
       "cfs:http-methods",
-      "0.0.24"
+      "0.0.25"
     ],
     [
       "cfs:http-publish",
-      "0.0.0"
+      "0.0.11"
     ],
     [
       "cfs:power-queue",
-      "0.0.1"
+      "0.9.10"
     ],
     [
       "cfs:reactive-list",
-      "0.0.0"
+      "0.0.8"
     ],
     [
       "cfs:reactive-property",
-      "0.0.0"
+      "0.0.3"
     ],
     [
       "cfs:storage-adapter",
-      "0.0.0"
+      "0.1.0"
     ],
     [
       "cfs:tempstore",
-      "0.0.2"
+      "0.1.0"
     ],
     [
       "cfs:upload-http",
-      "0.0.2"
+      "0.0.16"
     ],
     [
       "cfs:worker",
-      "0.0.0"
+      "0.1.0"
     ],
     [
       "check",
@@ -174,7 +174,7 @@
     ],
     [
       "raix:eventemitter",
-      "0.0.2"
+      "0.1.0"
     ],
     [
       "random",
