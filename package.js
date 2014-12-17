@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:collection',
-  version: '0.0.1',
+  version: '0.5.0',
   summary: 'CollectionFS, FS.Collection object',
   git: 'https://github.com/CollectionFS/Meteor-cfs-collection.git'
 });
@@ -11,7 +11,7 @@ Package.onUse(function(api) {
   api.use([
     // CFS
     'cfs:base-package@0.0.26',
-    'cfs:tempstore@0.0.2',
+    'cfs:tempstore@0.1.0',
     // Core
     'deps',
     'check',
@@ -22,7 +22,7 @@ Package.onUse(function(api) {
   ]);
 
   // Weak dependencies for uploaders
-  api.use(['cfs:upload-http@0.0.16', 'cfs:upload-ddp@0.0.1'], { weak: true });
+  api.use(['cfs:upload-http@0.0.16', 'cfs:upload-ddp@0.0.13'], { weak: true });
 
   api.addFiles([
     'common.js',
