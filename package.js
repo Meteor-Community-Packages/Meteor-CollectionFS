@@ -14,7 +14,7 @@ Npm.depends({
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.26', 'cfs:storage-adapter@0.0.0']);
+  api.use(['cfs:base-package@0.0.26', 'cfs:storage-adapter@0.1.0']);
   api.addFiles('gridfs.server.js', 'server');
   api.addFiles('gridfs.client.js', 'client');
 });
