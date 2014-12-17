@@ -76,7 +76,7 @@ DataMan = function DataMan(data, type, options) {
  */
 DataMan.prototype.getBuffer = function dataManGetBuffer(callback) {
   var self = this;
-  return callback ? self.source.getBuffer(callback) : Meteor._wrapAsync(bind(self.source.getBuffer, self.source))();
+  return callback ? self.source.getBuffer(callback) : Meteor.wrapAsync(bind(self.source.getBuffer, self.source))();
 };
 
 function _saveToFile(readStream, filePath, callback) {
@@ -101,7 +101,7 @@ function _saveToFile(readStream, filePath, callback) {
  */
 DataMan.prototype.saveToFile = function dataManSaveToFile(filePath, callback) {
   var readStream = this.createReadStream();
-  return callback ? _saveToFile(readStream, filePath, callback) : Meteor._wrapAsync(_saveToFile)(readStream, filePath);
+  return callback ? _saveToFile(readStream, filePath, callback) : Meteor.wrapAsync(_saveToFile)(readStream, filePath);
 };
 
 /**
@@ -113,7 +113,7 @@ DataMan.prototype.saveToFile = function dataManSaveToFile(filePath, callback) {
  */
 DataMan.prototype.getDataUri = function dataManGetDataUri(callback) {
   var self = this;
-  return callback ? self.source.getDataUri(callback) : Meteor._wrapAsync(bind(self.source.getDataUri, self.source))();
+  return callback ? self.source.getDataUri(callback) : Meteor.wrapAsync(bind(self.source.getDataUri, self.source))();
 };
 
 /**
@@ -135,7 +135,7 @@ DataMan.prototype.createReadStream = function dataManCreateReadStream() {
  */
 DataMan.prototype.size = function dataManSize(callback) {
   var self = this;
-  return callback ? self.source.size(callback) : Meteor._wrapAsync(bind(self.source.size, self.source))();
+  return callback ? self.source.size(callback) : Meteor.wrapAsync(bind(self.source.size, self.source))();
 };
 
 /**
