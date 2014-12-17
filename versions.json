@@ -18,27 +18,27 @@
     ],
     [
       "cfs:base-package",
-      "0.0.0"
+      "0.0.26"
     ],
     [
       "cfs:collection",
-      "0.0.1"
+      "0.5.0"
     ],
     [
       "cfs:data-man",
-      "0.0.1"
+      "0.0.3"
     ],
     [
       "cfs:file",
-      "0.0.0"
+      "0.0.14"
     ],
     [
       "cfs:storage-adapter",
-      "0.0.0"
+      "0.1.0"
     ],
     [
       "cfs:tempstore",
-      "0.0.2"
+      "0.1.0"
     ],
     [
       "check",
@@ -46,7 +46,7 @@
     ],
     [
       "ddp",
-      "1.0.11"
+      "1.0.12"
     ],
     [
       "deps",
@@ -94,7 +94,7 @@
     ],
     [
       "mongo",
-      "1.0.8"
+      "1.0.9"
     ],
     [
       "mongo-livedata",
@@ -106,7 +106,7 @@
     ],
     [
       "raix:eventemitter",
-      "0.0.2"
+      "0.1.0"
     ],
     [
       "random",
@@ -130,6 +130,6 @@
     ]
   ],
   "pluginDependencies": [],
-  "toolVersion": "meteor-tool@1.0.35",
+  "toolVersion": "meteor-tool@1.0.36",
   "format": "1.0"
 }
