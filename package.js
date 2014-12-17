@@ -1,7 +1,8 @@
 Package.describe({
   name: 'cfs:gridfs',
-  version: '0.0.0',
-  summary: 'GridFS storage adapter for CollectionFS'
+  version: '0.0.26',
+  summary: 'GridFS storage adapter for CollectionFS',
+  git: 'https://github.com/CollectionFS/Meteor-cfs-gridfs.git'
 });
 
 Npm.depends({
@@ -10,16 +11,16 @@ Npm.depends({
   //'gridfs-locking-stream': '0.0.3'
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.0', 'cfs:storage-adapter@0.0.0']);
-  api.add_files('gridfs.server.js', 'server');
-  api.add_files('gridfs.client.js', 'client');
+  api.use(['cfs:base-package@0.0.26', 'cfs:storage-adapter@0.0.0']);
+  api.addFiles('gridfs.server.js', 'server');
+  api.addFiles('gridfs.client.js', 'client');
 });
 
-Package.on_test(function(api) {
+Package.onTest(function(api) {
   api.use(['cfs:gridfs', 'test-helpers', 'tinytest'], 'server');
-  api.add_files('tests/server-tests.js', 'server');
-  api.add_files('tests/client-tests.js', 'client');
+  api.addFiles('tests/server-tests.js', 'server');
+  api.addFiles('tests/client-tests.js', 'client');
 });
