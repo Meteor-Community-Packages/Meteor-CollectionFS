@@ -1,15 +1,16 @@
 Package.describe({
+  git: 'https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git',
   name: 'cfs:storage-adapter',
   version: '0.0.0',
   summary: 'CollectionFS, Class for creating Storage adapters'
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
 
   api.use([
     // CFS
-    'cfs:base-package@0.0.0',
+    'cfs:base-package@0.0.26',
     // Core
     'deps',
     'check',
@@ -17,29 +18,29 @@ Package.on_use(function(api) {
     'mongo-livedata',
     'ejson',
     // Other
-    'raix:eventemitter@0.0.1'
+    'raix:eventemitter@0.1.0'
   ]);
 
   // We want to make sure that its added to scope for now if installed.
   // We have set a deprecation warning on the transform scope
   api.use('cfs:graphicsmagick@0.0.0', 'server', { weak: true });
 
-  api.add_files([
+  api.addFiles([
     'storageAdapter.client.js'
   ], 'client');
 
-  api.add_files([
+  api.addFiles([
     'storageAdapter.server.js',
     'transform.server.js'
   ], 'server');
 });
 
-Package.on_test(function (api) {
+Package.onTest(function (api) {
   api.use('cfs:storage-adapter');
   api.use('test-helpers', 'server');
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
            'random', 'deps']);
 
-  api.add_files('tests/server-tests.js', 'server');
-  api.add_files('tests/client-tests.js', 'client');
+  api.addFiles('tests/server-tests.js', 'server');
+  api.addFiles('tests/client-tests.js', 'client');
 });
