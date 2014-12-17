@@ -15,13 +15,13 @@ Package.onUse(function(api) {
     // Want to make use of the file object and its api, yes!
     'cfs:file@0.1.14',
     // Add the FS.Collection to keep track of everything
-    'cfs:collection@0.5.1',
+    'cfs:collection@0.5.2',
     // Support filters for easy rules about what may be inserted
     'cfs:collection-filters@0.2.1',
     // Add the option to have ddp and http access point
     'cfs:access-point@0.1.42',
     // We might also want to have the server create copies of our files?
-    'cfs:worker@0.1.1',
+    'cfs:worker@0.1.2',
     // By default we want to support uploads over HTTP
     'cfs:upload-http@0.0.18',
   ]);
