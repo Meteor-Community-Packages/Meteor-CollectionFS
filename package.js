@@ -19,7 +19,7 @@ Package.onUse(function(api) {
     // Support filters for easy rules about what may be inserted
     'cfs:collection-filters@0.2.0',
     // Add the option to have ddp and http access point
-    'cfs:access-point@0.1.40',
+    'cfs:access-point@0.1.41',
     // We might also want to have the server create copies of our files?
     'cfs:worker@0.1.0',
     // By default we want to support uploads over HTTP
