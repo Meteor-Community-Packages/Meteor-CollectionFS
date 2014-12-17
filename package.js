@@ -15,14 +15,14 @@ Package.onUse(function(api) {
 
   api.use([
     //CFS packages
-    'cfs:base-package@0.0.26',
+    'cfs:base-package@0.0.27',
     'cfs:file@0.0.15',
     //Core packages
     'check',
     'ejson',
     //Other packages
-    'cfs:http-methods@0.0.25',
-    'cfs:http-publish@0.0.11'
+    'cfs:http-methods@0.0.26',
+    'cfs:http-publish@0.0.12'
   ]);
 
   api.addFiles([
