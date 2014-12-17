@@ -1,4 +1,5 @@
 Package.describe({
+  git: 'https://github.com/CollectionFS/Meteor-cfs-filesystem.git',
   name: 'cfs:filesystem',
   version: '0.0.0',
   summary: "Filesystem storage adapter for CollectionFS"
@@ -9,15 +10,15 @@ Npm.depends({
   mkdirp: "0.3.5"
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.0', 'cfs:storage-adapter@0.0.0']);
-  api.add_files('filesystem.server.js', 'server');
-  api.add_files('filesystem.client.js', 'client');
+  api.use(['cfs:base-package@0.0.26', 'cfs:storage-adapter@0.0.0']);
+  api.addFiles('filesystem.server.js', 'server');
+  api.addFiles('filesystem.client.js', 'client');
 });
 
-Package.on_test(function(api) {
+Package.onTest(function(api) {
   api.use(['cfs:filesystem', 'test-helpers', 'tinytest'], 'server');
-  api.add_files('tests.js', 'server');
+  api.addFiles('tests.js', 'server');
 });
