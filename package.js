@@ -21,7 +21,7 @@ Package.onUse(function(api) {
     'check',
     'ejson',
     //Other packages
-    'cfs:http-methods@0.0.24',
+    'cfs:http-methods@0.0.25',
     'cfs:http-publish@0.0.11'
   ]);
 
