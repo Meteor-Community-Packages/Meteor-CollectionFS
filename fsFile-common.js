@@ -51,14 +51,14 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   // Set any other properties we can determine from the source data
   // File
   if (typeof File !== "undefined" && data instanceof File) {
-    self.name(data.name)
+    self.name(data.name);
     self.updatedAt(data.lastModifiedDate);
     self.size(data.size);
     setData(data.type);
   }
   // Blob
   else if (typeof Blob !== "undefined" && data instanceof Blob) {
-    self.updatedAt(new Date);
+    self.updatedAt(new Date());
     self.size(data.size);
     setData(data.type);
   }
@@ -294,7 +294,7 @@ FS.File.prototype._saveChanges = function(what) {
     return;
   }
 
-  FS.debug && console.log("FS.File._saveChanges:", what || "all")
+  FS.debug && console.log("FS.File._saveChanges:", what || "all");
 
   var mod = {$set: {}};
   if (what === "_original") {

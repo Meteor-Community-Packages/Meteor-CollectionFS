@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-file.git',
   name: 'cfs:file',
-  version: '0.0.0',
+  version: '0.0.14',
   summary: 'CollectionFS, FS.File object'
 });
 
@@ -20,17 +20,14 @@ Package.onUse(function(api) {
   api.use([
     'cfs:base-package@0.0.26',
     'cfs:storage-adapter@0.0.0',
-    'deps',
+    'tracker',
     'check',
-    'livedata',
-    'mongo-livedata',
+    'ddp',
+    'mongo',
     'http',
     'cfs:data-man@0.0.1',
     'raix:eventemitter@0.1.0'
   ]);
-
-  // Weak dependency on numeral pkg, only if you want to use the formattedSize method
-  // api.use(['numeral'], ['client', 'server'], {weak: true});
 
   api.addFiles([
     'fsFile-common.js'
@@ -42,12 +39,17 @@ Package.onUse(function(api) {
   ], 'server');
 });
 
-// Package.on_test(function (api) {
-//   api.use([
-//     'collectionfs', 'cfs:gridfs', 'tinytest', 'http', 'test-helpers', 'http:methods'
-//   ]);
+Package.onTest(function (api) {
+  api.use([
+    'cfs:standard-packages@0.0.0',
+    'cfs:gridfs@0.0.0',
+    'tinytest@1.0.0',
+    'http@1.0.0',
+    'test-helpers@1.0.0',
+    'cfs:http-methods@0.0.24'
+  ]);
 
-//   api.addFiles([
-//     'tests/file-tests.js'
-//   ]);
-// });
+  api.addFiles([
+    'tests/file-tests.js'
+  ]);
+});

@@ -1,7 +1,3 @@
-function equals(a, b) {
-  return !!(EJSON.stringify(a) === EJSON.stringify(b));
-}
-
 function bin2str(bufView) {
   var length = bufView.length;
   var result = '';
@@ -24,9 +20,9 @@ function bin2str(bufView) {
   return result;
 }
 
-function ab2str(buffer) {
-  return bin2str(new Uint8Array(buffer));
-}
+//function ab2str(buffer) {
+//  return bin2str(new Uint8Array(buffer));
+//}
 
 function str2ab(str) {
   var buf = new ArrayBuffer(str.length);
@@ -76,7 +72,7 @@ if (Meteor.isServer) {
 	function openTempFile(name, callback) {
 	  return temp.open(name, callback);
 	}
-	var openTempFileSync = Meteor._wrapAsync(openTempFile);
+	var openTempFileSync = Meteor.wrapAsync(openTempFile);
 
 	var info = openTempFileSync({suffix: '.txt'});
 	var tempFilePath = info.path;
