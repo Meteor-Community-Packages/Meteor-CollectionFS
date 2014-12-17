@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-collection-filters.git',
   name: 'cfs:collection-filters',
-  version: '0.2.0',
+  version: '0.2.1',
   summary: 'CollectionFS, adds FS.Collection filters'
 });
 
