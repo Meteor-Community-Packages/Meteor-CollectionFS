@@ -10,7 +10,7 @@ Package.onUse(function(api) {
 
   api.use([
     'cfs:base-package@0.0.26',
-    'cfs:tempstore@0.1.0',
+    'cfs:tempstore@0.1.1',
     'cfs:storage-adapter@0.1.0'
   ]);
 
