@@ -4,7 +4,7 @@ File Managing System for Meteor
 
 # cfs:standard-packages (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-09-07). It has
+NOTE: This branch is under active development right now (2014-12-06). It has
 
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
@@ -216,6 +216,8 @@ compress it, etc. before allowing the storage adapter to save it. You may also
 want to convert to another content type or change the filename or encrypt
 the file. You can do all of this by defining stream transformations on a
 store.
+
+> Note: At the moment transform only work on the server-side code - this could change before released
 
 ### transformWrite/transformRead
 
