@@ -1,19 +1,20 @@
 Package.describe({
+  git: 'https://github.com/CollectionFS/Meteor-cfs-collection-filters.git',
   name: 'cfs:collection-filters',
   version: '0.0.0',
   summary: 'CollectionFS, adds FS.Collection filters'
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.0', 'cfs:collection@0.0.0']);
+  api.use(['cfs:base-package@0.0.26', 'cfs:collection@0.0.1']);
 
-  api.add_files([
+  api.addFiles([
     'filters.js'
   ], 'client');
 
-  api.add_files([
+  api.addFiles([
     'filters.js'
   ], 'server');
 });
@@ -23,6 +24,6 @@ Package.on_use(function(api) {
 //   api.use('test-helpers', 'server');
 //   api.use(['tinytest']);
 
-//   api.add_files('tests/server-tests.js', 'server');
-//   api.add_files('tests/client-tests.js', 'client');
+//   api.addFiles('tests/server-tests.js', 'server');
+//   api.addFiles('tests/client-tests.js', 'client');
 // });
