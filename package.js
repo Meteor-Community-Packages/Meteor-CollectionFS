@@ -1,7 +1,7 @@
  Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-tempstore.git',
   name: 'cfs:tempstore',
-  version: '0.1.0',
+  version: '0.1.1',
   summary: 'CollectionFS, temporary storage'
 });
 
