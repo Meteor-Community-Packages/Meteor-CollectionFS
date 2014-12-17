@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:data-man',
-  version: '0.0.1',
+  version: '0.0.2',
   summary: 'A data manager, allowing you to attach various types of data and get it back in various other types',
   git: 'https://github.com/CollectionFS/Meteor-data-man.git'
 });
@@ -11,7 +11,7 @@ Npm.depends({
   //request: "2.44.0",
   // We use a specific commit from a fork of "request" package for now; we need fix for
   // https://github.com/mikeal/request/issues/887 (https://github.com/CollectionFS/Meteor-CollectionFS/issues/347)
-  request: "https://github.com/aldeed/request/tarball/259bcd6206d0ad994972c5cd0c0803d6f6d2ca2f",
+  request: "https://github.com/aldeed/request/tarball/15f1a87cddb21050f5d79a2f4538150644cbc36e",
   temp: "0.7.0" // for tests only
 });
 
