@@ -14,19 +14,19 @@ Package.onUse(function(api) {
 
   // This imply is needed for tests, and is technically probably correct anyway.
   api.imply([
-    'cfs:base-package@0.0.26'
+    'cfs:base-package@0.0.27'
   ]);
 
   api.use([
-    'cfs:base-package@0.0.26',
-    'cfs:storage-adapter@0.1.0',
+    'cfs:base-package@0.0.27',
+    'cfs:storage-adapter@0.1.1',
     'tracker',
     'check',
     'ddp',
     'mongo',
     'http',
-    'cfs:data-man@0.0.3',
-    'raix:eventemitter@0.1.0'
+    'cfs:data-man@0.0.4',
+    'raix:eventemitter@0.1.1'
   ]);
 
   api.addFiles([
