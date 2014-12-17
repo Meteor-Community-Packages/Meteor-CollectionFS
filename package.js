@@ -11,19 +11,19 @@ Package.onUse(function(api) {
   // Rig the collectionFS package v2
   api.imply([
     // Base util rigs the basis for the FS scope and some general helper mehtods
-    'cfs:base-package@0.0.26',
+    'cfs:base-package@0.0.27',
     // Want to make use of the file object and its api, yes!
     'cfs:file@0.0.15',
     // Add the FS.Collection to keep track of everything
-    'cfs:collection@0.5.0',
+    'cfs:collection@0.5.1',
     // Support filters for easy rules about what may be inserted
-    'cfs:collection-filters@0.2.0',
+    'cfs:collection-filters@0.2.1',
     // Add the option to have ddp and http access point
     'cfs:access-point@0.1.41',
     // We might also want to have the server create copies of our files?
-    'cfs:worker@0.1.0',
+    'cfs:worker@0.1.1',
     // By default we want to support uploads over HTTP
-    'cfs:upload-http@0.0.16',
+    'cfs:upload-http@0.0.17',
   ]);
 
 });
