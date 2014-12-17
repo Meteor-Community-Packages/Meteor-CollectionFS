@@ -1,10 +1,4 @@
-if (Meteor.isCordova) {
-  rootUrlPathPrefix = __meteor_runtime_config__.ROOT_URL || "";
-} else {
-  rootUrlPathPrefix = "";
-}
-
-rootUrlPathPrefix += __meteor_runtime_config__.ROOT_URL_PATH_PREFIX || "";
+rootUrlPathPrefix = __meteor_runtime_config__.ROOT_URL_PATH_PREFIX || "";
 // Adjust the rootUrlPathPrefix if necessary
 if (rootUrlPathPrefix.length > 0) {
   if (rootUrlPathPrefix.slice(0, 1) !== '/') {
@@ -13,6 +7,11 @@ if (rootUrlPathPrefix.length > 0) {
   if (rootUrlPathPrefix.slice(-1) === '/') {
     rootUrlPathPrefix = rootUrlPathPrefix.slice(0, -1);
   }
+}
+
+// prepend ROOT_URL when isCordova
+if (Meteor.isCordova && __meteor_runtime_config__.ROOT_URL) {
+  rootUrlPathPrefix = __meteor_runtime_config__.ROOT_URL.replace(/\/+$/, '') + rootUrlPathPrefix;
 }
 
 baseUrl = '/cfs';
