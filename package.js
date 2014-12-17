@@ -9,15 +9,15 @@ Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
   api.use([
-    'cfs:base-package@0.0.26',
+    'cfs:base-package@0.0.27',
     'cfs:tempstore@0.1.1',
-    'cfs:storage-adapter@0.1.0'
+    'cfs:storage-adapter@0.1.1'
   ]);
 
   api.use([
     'livedata',
     'mongo-livedata',
-    'cfs:power-queue@0.9.10'
+    'cfs:power-queue@0.9.11'
   ]);
 
   api.addFiles([
