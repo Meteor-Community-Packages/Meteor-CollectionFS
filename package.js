@@ -20,7 +20,7 @@ Package.onUse(function(api) {
 
   api.use(['ejson']);
 
-  api.use(['cfs:filesaver@0.0.0'], {weak: true});
+  api.use(['cfs:filesaver@0.0.5'], {weak: true});
 
   api.export('DataMan');
 
