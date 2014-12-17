@@ -38,7 +38,7 @@
     ],
     [
       "cfs:file",
-      "0.0.14"
+      "0.0.15"
     ],
     [
       "cfs:http-methods",
