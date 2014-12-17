@@ -1,20 +1,21 @@
 Package.describe({
   name: 'cfs:access-point',
-  version: '0.1.1',
-  summary: 'CollectionFS, add ddp and http accesspoint capability'
+  version: '0.1.40',
+  summary: 'CollectionFS, add ddp and http accesspoint capability',
+  git: 'https://github.com/CollectionFS/Meteor-cfs-access-point.git'
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
 
   // This imply is needed for tests, and is technically probably correct anyway.
   api.imply([
-    'cfs:base-package@0.0.0'
+    'cfs:base-package'
   ]);
 
   api.use([
     //CFS packages
-    'cfs:base-package@0.0.0',
+    'cfs:base-package@0.0.26',
     'cfs:file@0.0.0',
     //Core packages
     'check',
@@ -24,20 +25,20 @@ Package.on_use(function(api) {
     'cfs:http-publish@0.0.0'
   ]);
 
-  api.add_files([
+  api.addFiles([
     'access-point-common.js',
     'access-point-handlers.js',
     'access-point-server.js'
   ], 'server');
 
-  api.add_files([
+  api.addFiles([
     'access-point-common.js',
     'access-point-client.js'
   ], 'client');
 });
 
-Package.on_test(function (api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onTest(function (api) {
+  api.versionsFrom('1.0');
 
   api.use([
     //CFS packages
@@ -55,6 +56,6 @@ Package.on_test(function (api) {
     'deps'
   ]);
 
-  api.add_files('tests/client-tests.js', 'client');
-  api.add_files('tests/server-tests.js', 'server');
+  api.addFiles('tests/client-tests.js', 'client');
+  api.addFiles('tests/server-tests.js', 'server');
 });
