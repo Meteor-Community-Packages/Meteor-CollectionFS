@@ -25,7 +25,7 @@ Package.onUse(function(api) {
     'ddp',
     'mongo',
     'http',
-    'cfs:data-man@0.0.2',
+    'cfs:data-man@0.0.3',
     'raix:eventemitter@0.1.0'
   ]);
 

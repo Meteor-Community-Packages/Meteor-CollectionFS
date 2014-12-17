@@ -18,15 +18,15 @@
     ],
     [
       "cfs:base-package",
-      "0.0.0"
+      "0.0.26"
     ],
     [
       "cfs:data-man",
-      "0.0.2"
+      "0.0.3"
     ],
     [
       "cfs:storage-adapter",
-      "0.0.0"
+      "0.1.0"
     ],
     [
       "check",
@@ -94,7 +94,7 @@
     ],
     [
       "raix:eventemitter",
-      "0.0.2"
+      "0.1.0"
     ],
     [
       "random",
