@@ -22,7 +22,7 @@ Package.onUse(function(api) {
   ]);
 
   // Weak dependencies for uploaders
-  api.use(['cfs:upload-http@0.0.16', 'cfs:upload-ddp@0.0.13'], { weak: true });
+  api.use(['cfs:upload-http@0.0.16', 'cfs:upload-ddp@0.0.14'], { weak: true });
 
   api.addFiles([
     'common.js',
