@@ -11,7 +11,7 @@ Package.onUse(function(api) {
   api.use([
     // CFS
     'cfs:base-package@0.0.26',
-    'cfs:tempstore@0.1.0',
+    'cfs:tempstore@0.1.1',
     // Core
     'deps',
     'check',
@@ -22,7 +22,7 @@ Package.onUse(function(api) {
   ]);
 
   // Weak dependencies for uploaders
-  api.use(['cfs:upload-http@0.0.16', 'cfs:upload-ddp@0.0.14'], { weak: true });
+  api.use(['cfs:upload-http@0.0.16', 'cfs:upload-ddp@0.0.15'], { weak: true });
 
   api.addFiles([
     'common.js',
