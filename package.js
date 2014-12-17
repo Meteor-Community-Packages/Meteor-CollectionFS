@@ -1,24 +1,25 @@
 Package.describe({
   name: 'cfs:filesaver',
   version: '0.0.0',
-  summary: 'CollectionFS, FileSaver by Eli Grey, http://eligrey.com'
+  summary: 'CollectionFS, FileSaver by Eli Grey, http://eligrey.com',
+  git: 'https://github.com/CollectionFS/Meteor-cfs-filesaver.git'
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
-  
-  api.add_files([
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
+
+  api.addFiles([
     'FileSaver.js'
   ], 'client');
 
 });
 
-Package.on_test(function (api) {
+Package.onTest(function (api) {
   api.use('cfs:filesaver');
   api.use('test-helpers', 'server');
   api.use(['tinytest', 'underscore', 'ejson', 'ordered-dict',
            'random', 'deps']);
 
-  api.add_files('tests/client-tests.js', 'server');
-  api.add_files('tests/server-tests.js', 'client');
+  api.addFiles('tests/client-tests.js', 'server');
+  api.addFiles('tests/server-tests.js', 'client');
 });
