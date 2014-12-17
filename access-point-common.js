@@ -1,4 +1,10 @@
-rootUrlPathPrefix = __meteor_runtime_config__.ROOT_URL_PATH_PREFIX || "";
+if (Meteor.isCordova) {
+  rootUrlPathPrefix = __meteor_runtime_config__.ROOT_URL || "";
+} else {
+  rootUrlPathPrefix = "";
+}
+
+rootUrlPathPrefix += __meteor_runtime_config__.ROOT_URL_PATH_PREFIX || "";
 // Adjust the rootUrlPathPrefix if necessary
 if (rootUrlPathPrefix.length > 0) {
   if (rootUrlPathPrefix.slice(0, 1) !== '/') {
