@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-filesystem.git',
   name: 'cfs:filesystem',
-  version: '0.1.0',
+  version: '0.1.1',
   summary: "Filesystem storage adapter for CollectionFS"
 });
 
