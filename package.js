@@ -15,8 +15,8 @@ Npm.depends({
   temp: "0.7.0" // for tests only
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
 
   api.use(['ejson']);
 
@@ -24,12 +24,12 @@ Package.on_use(function(api) {
 
   api.export('DataMan');
 
-  api.add_files([
+  api.addFiles([
     'client/Blob.js', //polyfill for browsers without Blob constructor; currently necessary for phantomjs support, too
     'client/data-man-api.js'
   ], 'client');
 
-  api.add_files([
+  api.addFiles([
     'server/data-man-api.js',
     'server/data-man-buffer.js',
     'server/data-man-datauri.js',
@@ -40,9 +40,9 @@ Package.on_use(function(api) {
 
 });
 
-Package.on_test(function (api) {
+Package.onTest(function (api) {
   api.use(['cfs:data-man', 'http', 'tinytest', 'test-helpers', 'cfs:http-methods@0.0.24']);
 
-  api.add_files(['tests/common.js', 'tests/client-tests.js'], 'client');
-  api.add_files(['tests/common.js', 'tests/server-tests.js'], 'server');
+  api.addFiles(['tests/common.js', 'tests/client-tests.js'], 'client');
+  api.addFiles(['tests/common.js', 'tests/server-tests.js'], 'server');
 });
