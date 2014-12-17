@@ -10,7 +10,7 @@ Package.onUse(function(api) {
 
   api.use([
     // CFS
-    'cfs:base-package@0.0.26',
+    'cfs:base-package@0.0.27',
     // Core
     'deps',
     'check',
@@ -18,12 +18,12 @@ Package.onUse(function(api) {
     'mongo-livedata',
     'ejson',
     // Other
-    'raix:eventemitter@0.1.0'
+    'raix:eventemitter@0.1.1'
   ]);
 
   // We want to make sure that its added to scope for now if installed.
   // We have set a deprecation warning on the transform scope
-  api.use('cfs:graphicsmagick@0.0.16', 'server', { weak: true });
+  api.use('cfs:graphicsmagick@0.0.17', 'server', { weak: true });
 
   api.addFiles([
     'storageAdapter.client.js'
