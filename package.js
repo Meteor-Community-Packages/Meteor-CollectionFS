@@ -17,7 +17,7 @@ Package.onUse(function(api) {
     // Add the FS.Collection to keep track of everything
     'cfs:collection@0.5.3',
     // Support filters for easy rules about what may be inserted
-    'cfs:collection-filters@0.2.2',
+    'cfs:collection-filters@0.2.3',
     // Add the option to have ddp and http access point
     'cfs:access-point@0.1.43',
     // We might also want to have the server create copies of our files?
