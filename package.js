@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-CollectionFS.git',
   name: 'cfs:standard-packages',
-  version: '0.5.2',
+  version: '0.5.3',
   summary: 'Filesystem for Meteor, collectionFS'
 });
 
