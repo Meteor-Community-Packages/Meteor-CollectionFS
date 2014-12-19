@@ -22,7 +22,7 @@ Package.onUse(function(api) {
     'ejson',
     //Other packages
     'cfs:http-methods@0.0.27',
-    'cfs:http-publish@0.0.12'
+    'cfs:http-publish@0.0.13'
   ]);
 
   api.addFiles([
