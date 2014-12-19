@@ -23,15 +23,11 @@
 
 - *Merged pull-request:* "mrt graphicsmagick instructions to meteor 0.9+" [#442](https://github.com/CollectionFS/Meteor-CollectionFS/issues/442) ([yogiben](https://github.com/yogiben))
 
-Patches by GitHub user [@yogiben](https://github.com/yogiben).
-
 - mrt graphicsmagick instructions to meteor 0.9+
 
 - mention underlying collection
 
 - *Merged pull-request:* "Added server-side Buffer example to README.md" [#405](https://github.com/CollectionFS/Meteor-CollectionFS/issues/405) ([abuddenb](https://github.com/abuddenb))
-
-Patches by GitHub user [@abuddenb](https://github.com/abuddenb).
 
 - change prop names
 
@@ -47,6 +43,8 @@ Patches by GitHub user [@abuddenb](https://github.com/abuddenb).
 
 - Added server-side Buffer example to README.md
 
+Patches by GitHub users [@yogiben](https://github.com/yogiben), [@abuddenb](https://github.com/abuddenb).
+
 ## [v0.4.9] (https://github.com/CollectionFS/Meteor-CollectionFS/tree/v0.4.9)
 #### 27/08/14 by Eric Dobbertin
 - add 0.9.0 instructions
@@ -56,8 +54,6 @@ Patches by GitHub user [@abuddenb](https://github.com/abuddenb).
 - Added server-side Buffer example to README.md
 
 - *Merged pull-request:* "Updated README.md to reflect that FS.File - Objects can't be stored in t..." [#395](https://github.com/CollectionFS/Meteor-CollectionFS/issues/395) ([DanielDornhardt](https://github.com/DanielDornhardt))
-
-Patches by GitHub user [@DanielDornhardt](https://github.com/DanielDornhardt).
 
 - Updated README.md to reflect that FS.File - Objects can't be stored in the Server MongoDB at the moment.
 
@@ -71,15 +67,11 @@ Patches by GitHub user [@DanielDornhardt](https://github.com/DanielDornhardt).
 
 - *Merged pull-request:* "Update README.md" [#354](https://github.com/CollectionFS/Meteor-CollectionFS/issues/354) ([karabijavad](https://github.com/karabijavad))
 
-Patches by GitHub user [@karabijavad](https://github.com/karabijavad).
-
 - should say to use cfs-graphicsmagick pkg
 
 - fix typo
 
 - *Merged pull-request:* "Added "Storing FS.File references in your objects" chapter to README" [#311](https://github.com/CollectionFS/Meteor-CollectionFS/issues/311) ([Sanjo](https://github.com/Sanjo))
-
-Patches by GitHub user [@Sanjo](https://github.com/Sanjo).
 
 - Added "Storing FS.File references in your objects" chapter to README
 
@@ -91,9 +83,9 @@ Patches by GitHub user [@Sanjo](https://github.com/Sanjo).
 
 - *Merged pull-request:* "Custom Metadata misleading example" [#282](https://github.com/CollectionFS/Meteor-CollectionFS/issues/282) ([czeslaaw](https://github.com/czeslaaw))
 
-Patches by GitHub user [@czeslaaw](https://github.com/czeslaaw).
-
 - Custom Metadata misleading example
+
+Patches by GitHub users [@DanielDornhardt](https://github.com/DanielDornhardt), [@karabijavad](https://github.com/karabijavad), [@Sanjo](https://github.com/Sanjo), [@czeslaaw](https://github.com/czeslaaw).
 
 ## [v0.4.8] (https://github.com/CollectionFS/Meteor-CollectionFS/tree/v0.4.8)
 #### 09/04/14 by Eric Dobbertin
@@ -125,13 +117,13 @@ Patches by GitHub user [@czeslaaw](https://github.com/czeslaaw).
 
 - *Merged pull-request:* "Removed redundant installation instructions." [#212](https://github.com/CollectionFS/Meteor-CollectionFS/issues/212) ([lleonard188](https://github.com/lleonard188))
 
-Patches by GitHub user [@lleonard188](https://github.com/lleonard188).
-
 - up to date
 
 - read me update
 
 - add test note
+
+Patches by GitHub user [@lleonard188](https://github.com/lleonard188).
 
 ## [v0.4.3] (https://github.com/CollectionFS/Meteor-CollectionFS/tree/v0.4.3)
 #### 23/03/14 by Morten Henriksen
@@ -351,8 +343,6 @@ Patches by GitHub user [@lleonard188](https://github.com/lleonard188).
 
 - *Merged pull-request:* "Updates the filter example area so that it works" [#109](https://github.com/CollectionFS/Meteor-CollectionFS/issues/109) ([cramhead](https://github.com/cramhead))
 
-Patches by GitHub user [@cramhead](https://github.com/cramhead).
-
 - add .npm to gitignore
 
 - Remove .npm folder
@@ -467,7 +457,7 @@ Patches by GitHub user [@cramhead](https://github.com/cramhead).
 
 - *Merged pull-request:* "Implemented max parallel transfers" [#62](https://github.com/CollectionFS/Meteor-CollectionFS/issues/62) ([floo51](https://github.com/floo51))
 
-Patches by GitHub user [@floo51](https://github.com/floo51).
+Patches by GitHub users [@cramhead](https://github.com/cramhead), [@floo51](https://github.com/floo51).
 
 ## [v0.3.6] (https://github.com/CollectionFS/Meteor-CollectionFS/tree/v0.3.6)
 #### 10/10/13 by Morten Henriksen
@@ -535,8 +525,6 @@ Patches by GitHub user [@floo51](https://github.com/floo51).
 
 - *Merged pull-request:* "Improvements and Fixes to built-in helpers, storeFiles, and acceptDropsOn" [#51](https://github.com/CollectionFS/Meteor-CollectionFS/issues/51) ([aldeed](https://github.com/aldeed))
 
-Patches by GitHub user [@aldeed](https://github.com/aldeed).
-
 - Add generic events system, switch to "enums" for invalid event types, and change "fileFilter" to "filter" throughout. Update README to reflect these changes.
 
 - Update readme to reflect storeFiles and acceptDropsOn changes, plus add documentation for all of the new built-in handlebars helpers
@@ -553,13 +541,9 @@ Patches by GitHub user [@aldeed](https://github.com/aldeed).
 
 - *Merged pull-request:* "Should fix issue #45" [#50](https://github.com/CollectionFS/Meteor-CollectionFS/issues/50) ([eprochasson](https://github.com/eprochasson))
 
-Patches by GitHub user [@eprochasson](https://github.com/eprochasson).
-
 - *Fixed bug:* "file handlers not showing up in local demo" [#45](https://github.com/CollectionFS/Meteor-CollectionFS/issues/45)
 
 - *Merged pull-request:* "Update README.md" [#49](https://github.com/CollectionFS/Meteor-CollectionFS/issues/49) ([eprochasson](https://github.com/eprochasson))
-
-Patches by GitHub user [@eprochasson](https://github.com/eprochasson).
 
 - Added meteor style guide for jshint
 
@@ -581,8 +565,6 @@ Patches by GitHub user [@eprochasson](https://github.com/eprochasson).
 
 - *Merged pull-request:* "Built-ins, fixes, etc." [#48](https://github.com/CollectionFS/Meteor-CollectionFS/issues/48) ([aldeed](https://github.com/aldeed))
 
-Patches by GitHub user [@aldeed](https://github.com/aldeed).
-
 - Add the new files to the package manifest
 
 - Add underscore as dependency. It seems that Meteor may soon remove underscore from the core.
@@ -601,13 +583,11 @@ Patches by GitHub user [@aldeed](https://github.com/aldeed).
 
 - *Merged pull-request:* "Minor doc correction" [#47](https://github.com/CollectionFS/Meteor-CollectionFS/issues/47) ([aldeed](https://github.com/aldeed))
 
-Patches by GitHub user [@aldeed](https://github.com/aldeed).
-
 - *Merged pull-request:* "Documentation Improvement" [#46](https://github.com/CollectionFS/Meteor-CollectionFS/issues/46) ([aldeed](https://github.com/aldeed))
 
-Patches by GitHub user [@aldeed](https://github.com/aldeed).
-
 - Extensively revised README
+
+Patches by GitHub users [@aldeed](https://github.com/aldeed), [@eprochasson](https://github.com/eprochasson).
 
 ## [v0.2.3] (https://github.com/CollectionFS/Meteor-CollectionFS/tree/v0.2.3)
 #### 04/05/13 by Morten Henriksen
@@ -627,8 +607,6 @@ Patches by GitHub user [@aldeed](https://github.com/aldeed).
 
 - *Merged pull-request:* "Option for file encoding" [#36](https://github.com/CollectionFS/Meteor-CollectionFS/issues/36) ([nhibner](https://github.com/nhibner))
 
-Patches by GitHub user [@nhibner](https://github.com/nhibner).
-
 - Typo fix.
 
 - Updated documentation (added encoding to the fileRecord structure).
@@ -639,9 +617,9 @@ Patches by GitHub user [@nhibner](https://github.com/nhibner).
 
 - *Merged pull-request:* "Fix backwards incompatibility" [#33](https://github.com/CollectionFS/Meteor-CollectionFS/issues/33) ([mitar](https://github.com/mitar))
 
-Patches by GitHub user [@mitar](https://github.com/mitar).
-
 - Fix backwards incompatibility.
+
+Patches by GitHub users [@nhibner](https://github.com/nhibner), [@mitar](https://github.com/mitar).
 
 ## [v0.2.1] (https://github.com/CollectionFS/Meteor-CollectionFS/tree/v0.2.1)
 #### 08/04/13 by Morten Henriksen
