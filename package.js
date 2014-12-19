@@ -13,13 +13,13 @@ Package.onUse(function(api) {
     // Base util rigs the basis for the FS scope and some general helper mehtods
     'cfs:base-package@0.0.27',
     // Want to make use of the file object and its api, yes!
-    'cfs:file@0.1.14',
+    'cfs:file@0.1.15',
     // Add the FS.Collection to keep track of everything
     'cfs:collection@0.5.2',
     // Support filters for easy rules about what may be inserted
     'cfs:collection-filters@0.2.2',
     // Add the option to have ddp and http access point
-    'cfs:access-point@0.1.42',
+    'cfs:access-point@0.1.43',
     // We might also want to have the server create copies of our files?
     'cfs:worker@0.1.2',
     // By default we want to support uploads over HTTP
