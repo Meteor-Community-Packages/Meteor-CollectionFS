@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-file.git',
   name: 'cfs:file',
-  version: '0.1.14',
+  version: '0.1.15',
   summary: 'CollectionFS, FS.File object'
 });
 
