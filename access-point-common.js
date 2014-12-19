@@ -9,6 +9,11 @@ if (rootUrlPathPrefix.length > 0) {
   }
 }
 
+// prepend ROOT_URL when isCordova
+if (Meteor.isCordova) {
+  rootUrlPathPrefix = Meteor.absoluteUrl(rootUrlPathPrefix.replace(/^\/+/, '')).replace(/\/+$/, '');
+}
+
 baseUrl = '/cfs';
 FS.HTTP = FS.HTTP || {};
 
