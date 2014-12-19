@@ -3,7 +3,7 @@ FS.HTTP.setHeadersForGet = function setHeadersForGet() {
 };
 
 FS.HTTP.now = function() {
-  return Date.now() + FS.HTTP._serverTimeDiff;
+  return new Date(new Date() + FS.HTTP._serverTimeDiff);
 };
 
 // Returns the localstorage if its found and working
@@ -47,7 +47,7 @@ if (FS.HTTP.storage) {
       if (!error) {
         // Update our server time diff
         var dateNew = new Date(+result.content);
-        FS.HTTP._serverTimeDiff = dateNew - Date.now();// - lag or/and timezone
+        FS.HTTP._serverTimeDiff = dateNew - new Date();// - lag or/and timezone
         // Update the localstorage
         FS.HTTP.storage.setItem(FS.HTTP._prefix + 'timeDiff', FS.HTTP._serverTimeDiff);
       } else {
