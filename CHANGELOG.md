@@ -35,7 +35,7 @@
 
 ## [v0.1.7] (https://github.com/CollectionFS/Meteor-cfs-file/tree/v0.1.7)
 #### 30/06/14 by Eric Dobbertin
-- *Fixed bug:* fsFile-common.js:66:8: Unexpected identifier [#3](https://github.com/CollectionFS/Meteor-cfs-file/issues/3)
+- *Fixed bug:* "fsFile-common.js:66:8: Unexpected identifier" [#3](https://github.com/CollectionFS/Meteor-cfs-file/issues/3)
 
 ## [v0.1.6] (https://github.com/CollectionFS/Meteor-cfs-file/tree/v0.1.6)
 #### 30/06/14 by Eric Dobbertin
