@@ -23,7 +23,7 @@ Package.onUse(function(api) {
     // We might also want to have the server create copies of our files?
     'cfs:worker@0.1.2',
     // By default we want to support uploads over HTTP
-    'cfs:upload-http@0.0.18',
+    'cfs:upload-http@0.0.19',
   ]);
 
 });
