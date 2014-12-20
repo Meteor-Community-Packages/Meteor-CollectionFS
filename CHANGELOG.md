@@ -23,6 +23,8 @@
 
 - 0.9.1 support
 
+Patches by GitHub user [@DouglasUrner](https://github.com/DouglasUrner).
+
 ## [v0.0.20] (https://github.com/CollectionFS/Meteor-cfs-worker/tree/v0.0.20)
 #### 28/08/14 by Morten Henriksen
 - Meteor Package System Update
@@ -40,6 +42,8 @@
 - *Merged pull-request:* "Fixed bug preventing temp chunks deletion" [#1](https://github.com/CollectionFS/Meteor-cfs-worker/issues/1) ([GuillaumeZuff](https://github.com/GuillaumeZuff))
 
 - Fixed bug preventing temp chunks deletion
+
+Patches by GitHub user [@GuillaumeZuff](https://github.com/GuillaumeZuff).
 
 ## [v0.0.16] (https://github.com/CollectionFS/Meteor-cfs-worker/tree/v0.0.16)
 #### 06/04/14 by Eric Dobbertin
