@@ -29,7 +29,19 @@ httpDelHandler = function httpDelHandler(ref) {
   };
 };
 
+/*
+  requestRange will parse the range set in request header - if not possible it
+  will throw fitting errors and autofill range for both partial and full ranges
 
+  throws error or returns the object:
+  {
+    start
+    end
+    length
+    unit
+    partial
+  }
+*/
 var requestRange = function(req, fileSize) {
   if (req) {
     if (req.headers) {
@@ -63,6 +75,7 @@ var requestRange = function(req, fileSize) {
               start: start,
               end: end,
               length: partSize,
+              size: fileSize,
               unit: unit,
               partial: (partSize < fileSize)
             };
@@ -91,6 +104,7 @@ var requestRange = function(req, fileSize) {
     start: 0,
     end: fileSize - 1,
     length: fileSize,
+    size: fileSize,
     unit: 'bytes',
     partial: false
   };
@@ -151,7 +165,7 @@ httpGetHandler = function httpGetHandler(ref) {
 
   // Some browsers cope better if the content-range header is
   // still included even for the full file being returned.
-  self.addHeader('Content-Range', range.unit + ' ' + range.start + '-' + range.end + '/' + range.length);
+  self.addHeader('Content-Range', range.unit + ' ' + range.start + '-' + range.end + '/' + range.size);
 
   // If a chunk/range was requested instead of the whole file, serve that'
   if (range.partial) {
@@ -172,9 +186,9 @@ httpGetHandler = function httpGetHandler(ref) {
   self.addHeader('Last-Modified', copyInfo.updatedAt.toUTCString());
 
   // Inform clients that we accept ranges for resumable chunked downloads
-  self.addHeader('Accept-Ranges', 'bytes');
+  self.addHeader('Accept-Ranges', range.unit);
 
-  if (FS.debug) console.log('Read file "' + (ref.filename || copyInfo.name) + '" ' + range.unit + ' ' + range.start + '-' + range.end + '/' + range.length);
+  if (FS.debug) console.log('Read file "' + (ref.filename || copyInfo.name) + '" ' + range.unit + ' ' + range.start + '-' + range.end + '/' + range.size);
 
   var readStream = storage.adapter.createReadStream(ref.file, {start: range.start, end: range.end});
 
