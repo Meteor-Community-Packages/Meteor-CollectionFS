@@ -50,8 +50,8 @@ var requestRange = function(req, fileSize) {
           var end = Number(range[1]);
 
           // Fix invalid ranges?
-          if (range[0] !== start) start = 0;
-          if (range[1] !== end) end = fileSize - 1;
+          if (range[0] != start) start = 0;
+          if (range[1] != end) end = fileSize - 1;
 
           // Make sure range consists of a start and end point of numbers and start is less than end
           if (start < end) {
@@ -173,6 +173,8 @@ httpGetHandler = function httpGetHandler(ref) {
 
   // Inform clients that we accept ranges for resumable chunked downloads
   self.addHeader('Accept-Ranges', 'bytes');
+
+  if (FS.debug) console.log('Read file "' + (ref.filename || copyInfo.name) + '" ' + range.unit + ' ' + range.start + '-' + range.end + '/' + range.length);
 
   var readStream = storage.adapter.createReadStream(ref.file, {start: range.start, end: range.end});
 
