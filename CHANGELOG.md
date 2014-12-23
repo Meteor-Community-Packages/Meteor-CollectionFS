@@ -1,11 +1,27 @@
 # Changelog
 
 ## vCurrent
+## [v0.1.43] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.1.43)
+#### 20/12/14 by Morten Henriksen
+- add changelog
+
+- Bump to version 0.1.43
+
+- *Fixed bug:* "Doesn't work in IE 8" [#10](https://github.com/CollectionFS/Meteor-cfs-access-point/issues/10)
+
+- *Merged pull-request:* "rootUrlPathPrefix fix for cordova" [#9](https://github.com/CollectionFS/Meteor-cfs-access-point/issues/9) ([dmitriyles](https://github.com/dmitriyles))
+
+- *Merged pull-request:* "Support for expiration token" [#1](https://github.com/CollectionFS/Meteor-cfs-access-point/issues/1) ([tanis2000](https://github.com/tanis2000))
+
+Patches by GitHub users [@dmitriyles](https://github.com/dmitriyles), [@tanis2000](https://github.com/tanis2000).
+
 ## [v0.1.42] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.1.42)
 #### 17/12/14 by Morten Henriksen
 ## [v0.1.41] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.1.41)
 #### 17/12/14 by Morten Henriksen
 - mbr update, remove versions.json
+
+- Cordova rootUrlPathPrefix fix
 
 - Bump to version 0.1.41
 
@@ -45,11 +61,15 @@
 
 - Content-Length and Last-Modified headers
 
+Patches by GitHub user [@maomorales](https://github.com/maomorales).
+
 ## [v0.0.33] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.0.33)
 #### 31/07/14 by Eric Dobbertin
 - *Merged pull-request:* "Force browser to download with filename passed in url" [#3](https://github.com/CollectionFS/Meteor-cfs-access-point/issues/3) ([elbowz](https://github.com/elbowz))
 
 - Force browser to download with filename passed in url
+
+Patches by GitHub user [@elbowz](https://github.com/elbowz).
 
 ## [v0.0.32] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.0.32)
 #### 28/07/14 by Eric Dobbertin
@@ -86,6 +106,8 @@
 - Added time sync with the server for token generation.
 
 - Added code to pass a token with a set expiration date from the client. Added token check on the server side.
+
+Patches by GitHub user [@tanis2000](https://github.com/tanis2000).
 
 ## [v0.0.27] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.0.27)
 #### 08/04/14 by Eric Dobbertin
