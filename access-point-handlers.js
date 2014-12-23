@@ -29,6 +29,73 @@ httpDelHandler = function httpDelHandler(ref) {
   };
 };
 
+
+var requestRange = function(req, fileSize) {
+  if (req) {
+    if (req.headers) {
+      var rangeString = req.headers.range;
+
+      // Make sure range is a string
+      if (rangeString === ''+rangeString) {
+
+        // range will be in the format "bytes=0-32767"
+        var parts = rangeString.split('=');
+        var unit = parts[0];
+
+        // Make sure parts consists of two strings and range is of type "byte"
+        if (parts.length == 2 && unit == 'bytes') {
+          // Parse the range
+          var range = parts[1].split('-');
+          var start = Number(range[0]);
+          var end = Number(range[1]);
+
+          // Fix invalid ranges?
+          if (range[0] !== start) start = 0;
+          if (range[1] !== end) end = fileSize - 1;
+
+          // Make sure range consists of a start and end point of numbers and start is less than end
+          if (start < end) {
+
+            var partSize = start + end + 1;
+
+            // Return the parsed range
+            return {
+              start: start,
+              end: end,
+              length: partSize,
+              unit: unit,
+              partial: (partSize < fileSize)
+            };
+
+          } else {
+            throw new Meteor.Error(416, "Requested Range Not Satisfiable");
+          }
+
+        } else {
+          // The first part should be bytes
+          throw new Meteor.Error(416, "Requested Range Unit Not Satisfiable");
+        }
+
+      } else {
+        // No range found
+      }
+
+    } else {
+      // throw new Error('No request headers set for _parseRange function');
+    }
+  } else {
+    throw new Error('No request object passed to _parseRange function');
+  }
+
+  return {
+    start: 0,
+    end: fileSize - 1,
+    length: fileSize,
+    unit: 'bytes',
+    partial: false
+  };
+};
+
 /**
  * @method httpGetHandler
  * @private
