@@ -131,10 +131,9 @@ httpGetHandler = function httpGetHandler(ref) {
     throw new Meteor.Error(404, "Not Found", 'This file was not stored in the ' + storeName + ' store');
   }
 
-  var fileType = copyInfo.type;
-
-  if (typeof fileType === "string") {
-    self.setContentType(fileType);
+  // Set the content type for file
+  if (typeof copyInfo.type === "string") {
+    self.setContentType(copyInfo.type);
   } else {
     self.setContentType('application/octet-stream');
   }
