@@ -132,7 +132,6 @@ httpGetHandler = function httpGetHandler(ref) {
   }
 
   var fileType = copyInfo.type;
-  var fileSize = copyInfo.size;
 
   if (typeof fileType === "string") {
     self.setContentType(fileType);
@@ -148,44 +147,15 @@ httpGetHandler = function httpGetHandler(ref) {
     self.addHeader('Content-Disposition', 'inline');
   }
 
+  // Get the contents range from request
+  var range = requestRange(self.request, copyInfo.size);
+
+  // Some browsers cope better if the content-range header is
+  // still included even for the full file being returned.
+  self.addHeader('Content-Range', range.unit + ' ' + range.start + '-' + range.end + '/' + range.length);
+
   // If a chunk/range was requested instead of the whole file, serve that'
-  var start, end, unit, contentLength, readStreamOptions, range = self.requestHeaders.range;
-  if (range) {
-    // Parse range header
-    range = range.split('=');
-
-    unit = range[0];
-    if (unit !== 'bytes')
-      throw new Meteor.Error(416, "Requested Range Not Satisfiable");
-
-    range = range[1];
-    // Spec allows multiple ranges, but we will serve only the first
-    range = range.split(',')[0];
-    // Get start and end byte positions
-    range = range.split('-');
-    start = range[0];
-    end = range[1] || '';
-    // Convert to numbers and adjust invalid values when possible
-    start = start.length ? Math.max(Number(start), 0) : 0;
-    end = end.length ? Math.min(Number(end), fileSize - 1) : fileSize - 1;
-    if (end < start)
-      throw new Meteor.Error(416, "Requested Range Not Satisfiable");
-
-    self.addHeader('Content-Range', 'bytes ' + start + '-' + end + '/' + copyInfo.size);
-    readStreamOptions = {start: start, end: end};
-    end = end + 1; //HTTP end byte is inclusive and ours are not
-
-    // Sets properly content length for range
-    contentLength = end - start;
-  } else {
-    // Content length, defaults to file size
-    contentLength = fileSize;
-    // Some browsers cope better if the content-range header is
-    // still included even for the full file being returned.
-    self.addHeader('Content-Range', 'bytes 0-' + (contentLength - 1) + '/' + contentLength);
-  }
-
-  if (contentLength < fileSize) {
+  if (range.partial) {
     self.setStatusCode(206, 'Partial Content');
   } else {
     self.setStatusCode(200, 'OK');
@@ -197,7 +167,7 @@ httpGetHandler = function httpGetHandler(ref) {
   });
 
   // Inform clients about length (or chunk length in case of ranges)
-  self.addHeader('Content-Length', contentLength);
+  self.addHeader('Content-Length', range.length);
 
   // Last modified header (updatedAt from file info)
   self.addHeader('Last-Modified', copyInfo.updatedAt.toUTCString());
@@ -205,7 +175,7 @@ httpGetHandler = function httpGetHandler(ref) {
   // Inform clients that we accept ranges for resumable chunked downloads
   self.addHeader('Accept-Ranges', 'bytes');
 
-  var readStream = storage.adapter.createReadStream(ref.file, readStreamOptions);
+  var readStream = storage.adapter.createReadStream(ref.file, {start: range.start, end: range.end});
 
   readStream.on('error', function(err) {
     // Send proper error message on get error
