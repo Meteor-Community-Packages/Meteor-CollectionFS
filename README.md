@@ -68,7 +68,8 @@ var imageStore = new FS.Store.S3("images", {
   accessKeyId: "account or IAM key", //required if environment variables are not set
   secretAccessKey: "account or IAM secret", //required if environment variables are not set
   bucket: "mybucket", //required
-  ACL: myValue //optional, default is 'private', but you can allow public or secure access routed through your app URL
+  ACL: "myValue", //optional, default is 'private', but you can allow public or secure access routed through your app URL
+  folder: "folder/in/bucket", //optional, which folder (key prefix) in the bucket to use 
   // The rest are generic store options supported by all storage adapters
   transformWrite: myTransformWriteFunction, //optional
   transformRead: myTransformReadFunction, //optional
