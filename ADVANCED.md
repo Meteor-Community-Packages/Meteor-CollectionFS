@@ -42,6 +42,7 @@ Here's an explanation of what they are named and what their documents look like.
       name: String, // as saved in this store, potentially changed by beforeWrite
       type: String, // as saved in this store, potentially changed by beforeWrite
       size: Number, // as saved in this store, in bytes, potentially changed by beforeWrite
+      createdAt: Date, // when first saved in this store
       updatedAt: Date // when last saved in this store
     }
   },
@@ -63,6 +64,14 @@ Here's an explanation of what they are named and what their documents look like.
   }
 }
 ```
+
+The `original` object represents the file that was uploaded. Each object under `copies`, represents the file that was stored, keyed by store name.
+
+The original file isn’t technically stored anywhere permanently, so the `original` object can be generally ignored. It’s there for reference in case you want to see any of that info.
+
+The objects under the `copies` object represent the copies of the original that were actually saved in the backing stores. The info here might be the same as the original file, or it might be different if your store has a `beforeWrite` or `transformWrite` function that changes the stored file's properties.
+
+You can change any of the info in the `copies` object using the setter methods on FS.File instances, like fileObj.name('NewName.gif', {store: 'blobs'}), which would change the name of the file stored in the blobs store. Of course you wouldn't want to change `type` or `size` unless you were also transforming the binary file data itself. The important thing is not to touch the `key` property since that's used by the store to retrieve the file data. The rest is metadata that you're free to change.
 
 ### cfs_gridfs...
 
