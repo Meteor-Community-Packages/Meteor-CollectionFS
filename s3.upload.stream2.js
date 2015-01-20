@@ -53,7 +53,7 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
     // upload API.
     if(currentChunk.length > maxChunkSize) {
       // Make sure we only run when the s3 upload is ready
-      runWhenReady(function() { flushChunk(next); });
+      runWhenReady(function() { flushChunk(next, false); });
     } else {
       // We dont have to contact s3 for this
       runWhenReady(next);
@@ -67,7 +67,7 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
     // Call the super
     _originalEnd.call(this, chunk, encoding, function () {
       // Make sure we only run when the s3 upload is ready
-      runWhenReady(function() { flushChunk(callback); });
+      runWhenReady(function() { flushChunk(callback, true); });
     });
   };
 
@@ -88,7 +88,7 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
     }
   });
 
-  var flushChunk = function (callback) {
+  var flushChunk = function (callback, lastChunk) {
     if (multipartUploadID === null) {
       throw new Error('Internal error multipartUploadID is null');
     }
@@ -138,7 +138,7 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
         // finished uploading all that data to S3. So tell S3 to assemble those
         // parts we uploaded into the final product.
         if(writeStream._writableState.ended === true &&
-                uploadedSize === receivedSize) {
+                uploadedSize === receivedSize && lastChunk) {
           // Complete the upload
           self.completeMultipartUpload({
             Bucket: params.Bucket,
