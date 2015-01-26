@@ -1,21 +1,65 @@
+[![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
+
 CollectionFS
 ============
-File Managing System for Meteor
 
-# cfs:standard-packages (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
-
-NOTE: This branch is under active development right now (2015-01-26). It has
-
-bugs and the API may continue to change. Please help test it and fix bugs,
-but don't use in production yet.
-
-If you have Documentation feedback/requests please post on [issue 206](https://github.com/CollectionFS/Meteor-CollectionFS/issues/206)
-
-CollectionFS is a smart package for Meteor that provides a complete file
+CollectionFS is a suite of Meteor packages that together provide a complete file
 management solution including uploading, downloading, storage, synchronization,
 manipulation, and copying. It supports several storage adapters for saving to
 the local filesystem, GridFS, or S3, and additional storage adapters can be
 created.
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Important Notes](#important-notes)
+- [Installation](#installation)
+  - [Converting From Pre-0.9.0 Meteor](#converting-from-pre-090-meteor)
+- [Introduction](#introduction)
+- [Getting Started](#getting-started)
+- [After the Upload](#after-the-upload)
+- [Storage Adapters](#storage-adapters)
+- [File Manipulation](#file-manipulation)
+  - [transformWrite/transformRead](#transformwritetransformread)
+  - [beforeWrite](#beforewrite)
+- [Image Manipulation](#image-manipulation)
+  - [Basic Example](#basic-example)
+  - [Converting to a Different Image Format](#converting-to-a-different-image-format)
+  - [Converting a File Already Stored](#converting-a-file-already-stored)
+- [An FS.File Instance](#an-fsfile-instance)
+  - [Storing FS.File references in your objects](#storing-fsfile-references-in-your-objects)
+- [Filtering](#filtering)
+- [Security](#security)
+  - [Securing Based on User Information](#securing-based-on-user-information)
+- [Using `insert` Properly](#using-insert-properly)
+- [UI Helpers](#ui-helpers)
+  - [FS.File Instance Helper Methods](#fsfile-instance-helper-methods)
+  - [url](#url)
+  - [isImage](#isimage)
+  - [isAudio](#isaudio)
+  - [isVideo](#isvideo)
+  - [isUploaded](#isuploaded)
+- [Customizing the HTTP URLs and Headers](#customizing-the-http-urls-and-headers)
+- [Optimizing](#optimizing)
+- [Example Code](#example-code)
+  - [Insert One or More Files From File Input](#insert-one-or-more-files-from-file-input)
+  - [Insert One Or More Files Dropped on an Element](#insert-one-or-more-files-dropped-on-an-element)
+  - [Insert One File From a Remote URL](#insert-one-file-from-a-remote-url)
+  - [Insert from a Buffer on the Server](#insert-from-a-buffer-on-the-server)
+  - [Insert from a Stream on the Server](#insert-from-a-stream-on-the-server)
+  - [Add Custom Metadata to a File Before Inserting](#add-custom-metadata-to-a-file-before-inserting)
+  - [Update Existing File's Metadata](#update-existing-files-metadata)
+  - [Display an Uploaded Image](#display-an-uploaded-image)
+  - [Provide a Download Button](#provide-a-download-button)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Important Notes
+
+This branch is under active development right now (2015-01-26). It has bugs and the API may continue to change. Please help test it and fix bugs, but don't use in production yet.
+
+If you have Documentation feedback/requests please post on [issue 206](https://github.com/CollectionFS/Meteor-CollectionFS/issues/206)
 
 ## Installation
 
@@ -796,7 +840,7 @@ newFile.attachData(url, function (error) {
 });
 ```
 
-## Insert from a Buffer on the Server
+### Insert from a Buffer on the Server
 
 In certain circumstances, it might be necessary to perform inserts on the server using data from a `Buffer` object. Here's an example:
 
