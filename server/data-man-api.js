@@ -1,3 +1,5 @@
+/* global DataMan:true, Buffer */
+
 var fs = Npm.require("fs");
 var Readable = Npm.require('stream').Readable;
 
@@ -10,7 +12,7 @@ var Readable = Npm.require('stream').Readable;
  * @param {Object} [options] Currently used only to pass options for the GET request when `data` is a URL.
  */
 DataMan = function DataMan(data, type, options) {
-  var self = this;
+  var self = this, buffer;
 
   if (!data) {
     throw new Error("DataMan constructor requires a data argument");
@@ -33,7 +35,7 @@ DataMan = function DataMan(data, type, options) {
     if (!type) {
       throw new Error("DataMan constructor requires a type argument when passed an ArrayBuffer");
     }
-    var buffer = new Buffer(new Uint8Array(data));
+    buffer = new Buffer(new Uint8Array(data));
     self.source = new DataMan.Buffer(buffer, type);
   } else if (EJSON.isBinary(data)) {
     if (typeof Buffer === "undefined") {
@@ -42,7 +44,7 @@ DataMan = function DataMan(data, type, options) {
     if (!type) {
       throw new Error("DataMan constructor requires a type argument when passed a Uint8Array");
     }
-    var buffer = new Buffer(data);
+    buffer = new Buffer(data);
     self.source = new DataMan.Buffer(buffer, type);
   } else if (typeof Readable !== "undefined" && data instanceof Readable) {
     if (!type) {
