@@ -1,3 +1,5 @@
+/* global FS, _storageAdapters:true, EventEmitter */
+
 // #############################################################################
 //
 // STORAGE ADAPTER
@@ -6,7 +8,7 @@
 _storageAdapters = {};
 
 FS.StorageAdapter = function(storeName, options, api) {
-  var self = this;
+  var self = this, fileKeyMaker;
   options = options || {};
 
   // If storeName is the only argument, a string and the SA already found
@@ -41,9 +43,9 @@ FS.StorageAdapter = function(storeName, options, api) {
 
   // User can customize the file key generation function
   if (typeof options.fileKeyMaker === "function") {
-    var fileKeyMaker = options.fileKeyMaker;
+    fileKeyMaker = options.fileKeyMaker;
   } else {
-    var fileKeyMaker = api.fileKey;
+    fileKeyMaker = api.fileKey;
   }
 
   // User can provide a function to adjust the fileObj
@@ -65,13 +67,13 @@ FS.StorageAdapter = function(storeName, options, api) {
 
   // Return readable stream for fileKey
   self.adapter.createReadStreamForFileKey = function(fileKey, options) {
-    FS.debug && console.log('createReadStreamForFileKey ' + storeName);
+    if (FS.debug) console.log('createReadStreamForFileKey ' + storeName);
     return FS.Utility.safeStream( api.createReadStream(fileKey, options) );
   };
 
   // Return readable stream for fileObj
   self.adapter.createReadStream = function(fileObj, options) {
-    FS.debug && console.log('createReadStream ' + storeName);
+    if (FS.debug) console.log('createReadStream ' + storeName);
     if (self.internal) {
       // Internal stores take a fileKey
       return self.adapter.createReadStreamForFileKey(fileObj, options);
@@ -105,7 +107,7 @@ FS.StorageAdapter = function(storeName, options, api) {
 
   // Return writeable stream for fileKey
   self.adapter.createWriteStreamForFileKey = function(fileKey, options) {
-    FS.debug && console.log('createWriteStreamForFileKey ' + storeName);
+    if (FS.debug) console.log('createWriteStreamForFileKey ' + storeName);
     var writeStream = FS.Utility.safeStream( api.createWriteStream(fileKey, options) );
 
     logEventsForStream(writeStream);
@@ -115,7 +117,7 @@ FS.StorageAdapter = function(storeName, options, api) {
 
   // Return writeable stream for fileObj
   self.adapter.createWriteStream = function(fileObj, options) {
-    FS.debug && console.log('createWriteStream ' + storeName + ', internal: ' + !!self.internal);
+    if (FS.debug) console.log('createWriteStream ' + storeName + ', internal: ' + !!self.internal);
     
     if (self.internal) {
       // Internal stores take a fileKey
@@ -166,7 +168,7 @@ FS.StorageAdapter = function(storeName, options, api) {
       if (typeof result.fileKey === 'undefined') {
         throw new Error('SA ' + storeName + ' type ' + api.typeName + ' did not return a fileKey');
       }
-      FS.debug && console.log('SA', storeName, 'stored', result.fileKey);
+      if (FS.debug) console.log('SA', storeName, 'stored', result.fileKey);
       // Set the fileKey
       fileObj.copies[storeName].key = result.fileKey;
 
@@ -184,10 +186,13 @@ FS.StorageAdapter = function(storeName, options, api) {
       }
 
       fileObj._saveChanges(storeName);
+
+      // There is code in transform that may have set the original file size, too.
+      fileObj._saveChanges('_original');
     });
 
     // Emit events from SA
-    writeStream.once('stored', function(result) {
+    writeStream.once('stored', function(/*result*/) {
       // XXX Because of the way stores inherit from SA, this will emit on every store.
       // Maybe need to rewrite the way we inherit from SA?
       var emitted = self.emit('stored', storeName, fileObj);
@@ -225,7 +230,7 @@ FS.StorageAdapter = function(storeName, options, api) {
    * found, or false if the file couldn't be removed.
    */
   self.adapter.remove = function(fileObj, callback) {
-    FS.debug && console.log("---SA REMOVE");
+    if (FS.debug) console.log("---SA REMOVE");
 
     // Get the fileKey
     var fileKey = (fileObj instanceof FS.File) ? self.adapter.fileKey(fileObj) : fileObj;

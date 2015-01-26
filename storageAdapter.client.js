@@ -1,3 +1,5 @@
+/* global FS, _storageAdapters:true, EventEmitter */
+
 // #############################################################################
 //
 // STORAGE ADAPTER
