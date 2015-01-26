@@ -4,7 +4,7 @@ File Managing System for Meteor
 
 # cfs:standard-packages (pre1) [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 
-NOTE: This branch is under active development right now (2014-12-06). It has
+NOTE: This branch is under active development right now (2015-01-26). It has
 
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
@@ -23,14 +23,33 @@ created.
 
 ```bash
 $ cd <app dir>
-$ meteor add cfs:standard-packages
-$ meteor add cfs:filesystem # Storage Adapter / SA
-$ meteor add <CFS add-on packages>
 ``` 
 
-You must add `cfs:standard-packages`, which is the main package, and at least one storage adapter package. See the Storage Adapters section for a list of the available storage adapter packages. At least `cfs:gridfs` or `cfs:filesystem` must be added, too. The temporary store requires one of them.
+You must add `cfs:standard-packages`, which is the main package:
+
+```bash
+$ meteor add cfs:standard-packages
+``` 
+
+You must add at least one storage adapter package. See the Storage Adapters section for a list of the available storage adapter packages. At least `cfs:gridfs` or `cfs:filesystem` must be added, too, even if you are not using them. The temporary store requires one of them.
+
+```bash
+$ meteor add cfs:gridfs
+
+# OR
+
+$ meteor add cfs:filesystem
+
+# OR
+
+$ meteor add cfs:s3
+``` 
 
 Depending on what you need to do, you may need to add additional add-on packages. These are explained in the documentation sections to which they apply.
+
+```bash
+$ meteor add <CFS add-on package name>
+``` 
 
 ### Converting From Pre-0.9.0 Meteor
 
@@ -146,43 +165,6 @@ the actual data download from that URL happens on the server, so you don't
 need to worry about CORS. In fact, we recommend doing all inserts on the
 client (managing security through allow/deny), unless you are generating
 the data on the server.
-
-## Inserting a File on the Server
-
-In certain circumstances, however, it might be necessary to perform inserts on
-the server.  The following example demonstrates the steps required to handle a
-`Buffer`:
-
-```javascript
-var request = Meteor.require('request');
-
-request.get({url: url, encoding: null}, Meteor.bindEnvironment(function(e, r, buffer){
-  var newFile = new FS.File();
-  newFile.attachData(buffer, {type: 'image/png'}, function(error){
-      if(error) throw error;
-      newFile.name('myGraphic.png');
-      
-      Images.insert(newFile);
-  });
-})).auth(null, null, true, accessToken);
-```
-
-When calling [attachData()](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/api.md#fsfileattachdatadata-options-callbackanywhere)
-with a `Buffer`, you must provide the MIME type of the file through the second argument as shown above.  Omitting this
-argument yields an exception:
-
-```
-Error: DataMan constructor requires a type argument when passed a Buffer
-```
-
-Further examples can be found [here](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/tests/file-tests.js#L123).
-
-Caveats:
-
-* Downloading large files into a `Buffer` could potentially lead to memory issues.
-* Use of external HTTP library to make authenticated requests will be unnecessary once [issue 350](https://github.com/CollectionFS/Meteor-CollectionFS/issues/350)
-is resolved.
- 
 
 ## After the Upload
 
@@ -812,6 +794,57 @@ newFile.attachData(url, function (error) {
     //content type, size, etc. for filtering inserts.
   });
 });
+```
+
+## Insert from a Buffer on the Server
+
+In certain circumstances, it might be necessary to perform inserts on the server using data from a `Buffer` object. Here's an example:
+
+```javascript
+var request = Meteor.require('request');
+
+request.get({url: url, encoding: null}, Meteor.bindEnvironment(function(e, r, buffer){
+  var newFile = new FS.File();
+  newFile.attachData(buffer, {type: 'image/png'}, function(error){
+    if(error) throw error;
+    newFile.name('myGraphic.png');
+    
+    Images.insert(newFile);
+  });
+})).auth(null, null, true, accessToken);
+```
+
+When calling [attachData](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/api.md#fsfileattachdatadata-options-callbackanywhere)
+with a `Buffer`, you must provide the MIME type of the file through the second argument as shown above. Omitting this argument yields an exception.
+
+Further examples can be found [here](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/tests/file-tests.js#L123).
+
+Caveats:
+
+* Downloading large files into a `Buffer` could potentially lead to memory issues. Use the method described in "Insert from a Stream on the Server" if possible.
+* Use of external HTTP library to make authenticated requests will be unnecessary once [issue 350](https://github.com/CollectionFS/Meteor-CollectionFS/issues/350)
+is resolved.
+
+### Insert from a Stream on the Server
+
+```js
+// You must have a ReadStream with some data; it can be any stream.
+// We're using the standard output from a command as an example.
+var readStream = spawn('ls', []).stdout;
+
+// Create the FS.File instance
+var newFile = new FS.File();
+
+// Attach the ReadStream data to it. You must tell it what the content type is.
+newFile.attachData(readStream, {type: 'text/plain'});
+
+// Optionally provide a file name
+newFile.name('ls_result.txt');
+
+// Insert the file, which will save the metadata and
+// store the stream data into all defined stores.
+// `Files` is an `FS.Collection` instance defined elsewhere.
+Files.insert(newFile);
 ```
 
 ### Add Custom Metadata to a File Before Inserting
