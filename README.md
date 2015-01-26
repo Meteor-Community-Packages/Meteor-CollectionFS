@@ -9,6 +9,8 @@ manipulation, and copying. It supports several storage adapters for saving to
 the local filesystem, GridFS, or S3, and additional storage adapters can be
 created.
 
+## Table of Contents
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
