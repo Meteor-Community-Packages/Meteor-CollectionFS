@@ -5,6 +5,10 @@ Package.describe({
   summary: 'CollectionFS, Class for creating Storage adapters'
 });
 
+Npm.depends({
+  'length-stream': '0.1.1'
+});
+
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 

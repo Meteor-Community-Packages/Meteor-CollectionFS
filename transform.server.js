@@ -1,4 +1,7 @@
+/* global FS, gm */
+
 var PassThrough = Npm.require('stream').PassThrough;
+var lengthStream = Npm.require('length-stream');
 
 FS.Transform = function(options) {
   var self = this;
@@ -32,7 +35,7 @@ FS.Transform.scope = {
 
 // The transformation stream triggers an "stored" event when data is stored into
 // the storage adapter
-FS.Transform.prototype.createWriteStream = function(fileObj, options) {
+FS.Transform.prototype.createWriteStream = function(fileObj) {
   var self = this;
 
   // Get the file key
@@ -48,45 +51,44 @@ FS.Transform.prototype.createWriteStream = function(fileObj, options) {
     metadata: fileObj.metadata
   });
 
+  // Pass through transformWrite function if provided
   if (typeof self.transformWrite === 'function') {
 
-    // Rig read stream for gm
-    var sourceStream = new PassThrough();
-
-    // We pass on the special "stored" event for those listening
-    destinationStream.on('stored', function(result) {
-      sourceStream.emit('stored', result);
+    destinationStream = addPassThrough(destinationStream, function (ptStream, originalStream) {
+      // Rig transform
+      try {
+        self.transformWrite.call(FS.Transform.scope, fileObj, ptStream, originalStream);
+        // XXX: If the transform function returns a buffer should we stream that?
+      } catch(err) {
+        // We emit an error - should we throw an error?
+        console.warn('FS.Transform.createWriteStream transform function failed, Error: ');
+        throw err;
+      }
     });
 
-    // Rig transform
-    try {
-      self.transformWrite.call(FS.Transform.scope, fileObj, sourceStream, destinationStream);
-      // XXX: If the transform function returns a buffer should we stream that?
-    } catch(err) {
-      // We emit an error - should we throw an error?
-      console.warn('FS.Transform.createWriteStream transform function failed, Error: ');
-      throw err;
-    }
-
-    // Return write stream
-    return sourceStream;
-  } else {
-
-    // We dont transform just normal SA interface
-    return destinationStream;
   }
 
+  // If original doesn't have size, add another PassThrough to get and set the size.
+  // This will run on size=0, too, which is OK.
+  // NOTE: This must come AFTER the transformWrite code block above. This might seem
+  // confusing, but by coming after it, this will actually be executed BEFORE the user's
+  // transform, which is what we need in order to be sure we get the original file
+  // size and not the transformed file size.
+  if (!fileObj.size()) {
+    destinationStream = addPassThrough(destinationStream, function (ptStream, originalStream) {
+      var lstream = lengthStream(function (fileSize) {
+        fileObj.size(fileSize, {save: false});
+      });
+
+      ptStream.pipe(lstream).pipe(originalStream);
+    });
+  }
+
+  return destinationStream;
 };
 
 FS.Transform.prototype.createReadStream = function(fileObj, options) {
   var self = this;
-
-  // XXX: We can check the copy info, but the readstream wil fail no matter what
-  // var fileInfo = fileObj.getCopyInfo(name);
-  // if (!fileInfo) {
-  //   return new Error('File not found on this store "' + name + '"');
-  // }
-  // var fileKey = folder + fileInfo.key;
 
   // Get the file key
   var fileKey = self.storage.fileKey(fileObj);
@@ -94,24 +96,33 @@ FS.Transform.prototype.createReadStream = function(fileObj, options) {
   // Rig read stream
   var sourceStream = self.storage.createReadStreamForFileKey(fileKey, options);
 
+  // Pass through transformRead function if provided
   if (typeof self.transformRead === 'function') {
-    // Rig write stream
-    var destinationStream = new PassThrough();
 
-    // Rig transform
-    try {
-      self.transformRead.call(FS.Transform.scope, fileObj, sourceStream, destinationStream);
-    } catch(err) {
-      //throw new Error(err);
-      // We emit an error - should we throw an error?
-      sourceStream.emit('error', 'FS.Transform.createReadStream transform function failed');
-    }
-
-    // Return write stream
-    return destinationStream;
+    sourceStream = addPassThrough(sourceStream, function (ptStream, originalStream) {
+      // Rig transform
+      try {
+        self.transformRead.call(FS.Transform.scope, fileObj, originalStream, ptStream);
+      } catch(err) {
+        //throw new Error(err);
+        // We emit an error - should we throw an error?
+        sourceStream.emit('error', 'FS.Transform.createReadStream transform function failed');
+      }
+    });
 
   }
 
   // We dont transform just normal SA interface
   return sourceStream;
 };
+
+// Utility function to simplify adding layers of passthrough
+function addPassThrough(stream, func) {
+  var pts = new PassThrough();
+  // We pass on the special "stored" event for those listening
+  stream.on('stored', function(result) {
+    pts.emit('stored', result);
+  });
+  func(pts, stream);
+  return pts;
+}
