@@ -467,6 +467,18 @@ There are packages on atmosphere, such as
 [publish-with-relations](https://atmospherejs.com/package/publish-with-relations) and
 [smart-publish](https://atmospherejs.com/package/smart-publish), that attempt to make this easy.
 
+UPD You can use [Meteor.publish](http://docs.meteor.com/#/full/meteor_publish):
+```javascript
+// publish dependent documents and simulate joins
+Meteor.publish("roomAndMessages", function (roomId) {
+  check(roomId, String);
+  return [
+    Rooms.find({_id: roomId}, {fields: {secretInfo: 0}}),
+    Messages.find({roomId: roomId})
+  ];
+});
+```
+
 ## Filtering
 
 You may specify filters to allow (or deny) only certain content types,
