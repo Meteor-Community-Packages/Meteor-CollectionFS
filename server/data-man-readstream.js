@@ -1,4 +1,6 @@
-var passThrough = Npm.require('stream').PassThrough;
+/* global DataMan */
+
+var PassThrough = Npm.require('stream').PassThrough;
 
 /**
  * @method DataMan.ReadStream
@@ -9,7 +11,17 @@ var passThrough = Npm.require('stream').PassThrough;
  */
 DataMan.ReadStream = function DataManBuffer(stream, type) {
   var self = this;
-  self.stream = stream;
+
+  // Create a bufferable / paused new stream...
+  var pt = new PassThrough();
+
+  // Pipe provided read stream into pass-through stream
+  stream.pipe(pt);
+
+  // Set pass-through stream reference
+  self.stream = pt;
+
+  // Set type as provided
   self._type = type;
 };
 
@@ -21,7 +33,7 @@ DataMan.ReadStream = function DataManBuffer(stream, type) {
  *
  * Passes a Buffer representing the data to a callback.
  */
-DataMan.ReadStream.prototype.getBuffer = function dataManReadStreamGetBuffer(callback) {
+DataMan.ReadStream.prototype.getBuffer = function dataManReadStreamGetBuffer(/*callback*/) {
   // TODO implement as passthrough stream?
 };
 
@@ -32,7 +44,7 @@ DataMan.ReadStream.prototype.getBuffer = function dataManReadStreamGetBuffer(cal
  *
  * Passes a data URI representing the data in the stream to a callback.
  */
-DataMan.ReadStream.prototype.getDataUri = function dataManReadStreamGetDataUri(callback) {
+DataMan.ReadStream.prototype.getDataUri = function dataManReadStreamGetDataUri(/*callback*/) {
   // TODO implement as passthrough stream?
 };
 
@@ -54,7 +66,7 @@ DataMan.ReadStream.prototype.createReadStream = function dataManReadStreamCreate
  * Passes the size in bytes of the data in the stream to a callback.
  */
 DataMan.ReadStream.prototype.size = function dataManReadStreamSize(callback) {
-  // TODO implement as passthrough stream?
+  callback(0); // will determine from stream later
 };
 
 /**
