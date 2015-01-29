@@ -523,7 +523,7 @@ Images = new FS.Collection("images", {
 });
 ```
 
-Alternatively, you can pass your filters object to `myFSCollection.addFilters()`.
+Alternatively, you can pass your filters object to `myFSCollection.filters()`.
 
 To be secure, this must be added on the server; however, you should use the `filter`
 option on the client, too, to help catch many of the disallowed uploads there
