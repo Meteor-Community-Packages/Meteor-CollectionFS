@@ -469,12 +469,14 @@ There are packages on atmosphere, such as
 
 UPD You can use [Meteor.publish](http://docs.meteor.com/#/full/meteor_publish):
 ```javascript
-// publish dependent documents and simulate joins
-Meteor.publish("roomAndMessages", function (roomId) {
-  check(roomId, String);
+Meteor.publish("memberAndPhotos", function (userId) {
+  check(userId, String);
   return [
-    Rooms.find({_id: roomId}, {fields: {secretInfo: 0}}),
-    Messages.find({roomId: roomId})
+    Collections.Members.find({userId: userId}, {fields: {secretInfo: 0}}),
+    Collections.Photos.find({
+      $query: {'metadata.owner': userId},
+      $orderby: {uploadedAt: -1}
+    });
   ];
 });
 ```
