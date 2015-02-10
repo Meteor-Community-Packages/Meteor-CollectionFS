@@ -497,6 +497,20 @@ There are packages on atmosphere, such as
 [publish-with-relations](https://atmospherejs.com/package/publish-with-relations) and
 [smart-publish](https://atmospherejs.com/package/smart-publish), that attempt to make this easy.
 
+UPD You can use [Meteor.publish](http://docs.meteor.com/#/full/meteor_publish):
+```javascript
+Meteor.publish("memberAndPhotos", function (userId) {
+  check(userId, String);
+  return [
+    Collections.Members.find({userId: userId}, {fields: {secretInfo: 0}}),
+    Collections.Photos.find({
+      $query: {'metadata.owner': userId},
+      $orderby: {uploadedAt: -1}
+    });
+  ];
+});
+```
+
 ## Filtering
 
 You may specify filters to allow (or deny) only certain content types,
