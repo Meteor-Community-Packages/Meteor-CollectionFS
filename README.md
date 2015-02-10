@@ -497,7 +497,8 @@ There are packages on atmosphere, such as
 [publish-with-relations](https://atmospherejs.com/package/publish-with-relations) and
 [smart-publish](https://atmospherejs.com/package/smart-publish), that attempt to make this easy.
 
-UPD You can use [Meteor.publish](http://docs.meteor.com/#/full/meteor_publish):
+In simple cases, you may also be able to return an array from [Meteor.publish](http://docs.meteor.com/#/full/meteor_publish):
+
 ```javascript
 Meteor.publish("memberAndPhotos", function (userId) {
   check(userId, String);
@@ -520,7 +521,7 @@ file extensions, or file sizes in a FS.Collection. Use the `filter` option.
 Images = new FS.Collection("images", {
   filter: {
     maxSize: 1048576, //in bytes
-    allow: {
+    allow: {m
       contentTypes: ['image/*'],
       extensions: ['png']
     },
