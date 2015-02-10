@@ -54,6 +54,8 @@ created.
   - [Update Existing File's Metadata](#update-existing-files-metadata)
   - [Display an Uploaded Image](#display-an-uploaded-image)
   - [Provide a Download Button](#provide-a-download-button)
+  - [Customize the File Key / Folders in the S3 Bucket](#customize-the-file-key-folders-in-the-s3-bucket)
+  - [Customize the Folders on the Filesystem](#customize-the-folders-on-the-filesystem)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -958,7 +960,6 @@ Notes:
 * The `uploading` and `storing` options allow you to specify a static image that will be shown in place of the real image while it is being uploaded and stored. You can alternatively use `if` blocks like `{{#if this.isUploaded}}` and `{{#if this.hasStored 'thumbs'}}` to display something different until upload and storage is complete.
 * These helpers are actually just instance methods on the `FS.File` instances, so there are others you can use, such as `this.isImage`. See [the API documentation](https://github.com/CollectionFS/Meteor-cfs-file/blob/master/api.md). The `url` method is documented separately [here](https://github.com/CollectionFS/Meteor-cfs-access-point/blob/master/api.md#fsfileurloptionsanywhere).
 
-
 ### Provide a Download Button
 
 Create a helper that returns your files:
@@ -984,3 +985,59 @@ Use the `url` method with `download` option in your markup:
   </div>
 </template>
 ```
+
+### Customize the File Key / Folders in the S3 Bucket
+
+You can add `fileKeyMaker` option on your S3 store, and set it to a function that returns the file key given a fileObj (FS.File instance). For now, you actually need to add some code to your function checking to see if a file key is already assigned. Hopefully we can handle that internally eventually.
+
+Here's an example that would generate the same fileKey as default:
+
+```js
+var imageStore = new FS.Store.S3("images", {
+  fileKeyMaker: function (fileObj) {
+    // Lookup the copy
+    var store = fileObj && fileObj._getInfo(name);
+    // If the store and key is found return the key
+    if (store && store.key) return store.key;
+
+    // TO CUSTOMIZE, REPLACE CODE AFTER THIS POINT
+
+    var filename = fileObj.name();
+    var filenameInStore = fileObj.name({store: name});
+
+    // If no store key found we resolve / generate a key
+    return fileObj.collectionName + '/' + fileObj._id + '-' + (filenameInStore || filename);
+  }
+});
+```
+
+The function receives only the `fileObj` so if you need the userId, you'll need to set it on every file when uploading in order to use it in your path.
+
+S3 automatically creates the necessary folders based on the slashes in the string you return.
+
+### Customize the Folders on the Filesystem
+
+You can add `fileKeyMaker` option on your FileSystem store, and set it to a function that returns the file key given a fileObj (FS.File instance). For now, you actually need to add some code to your function checking to see if a file key is already assigned. Hopefully we can handle that internally eventually.
+
+Here's an example that would generate the same fileKey (which for the FileSystem store is the path) as default:
+
+```js
+var imageStore = new FS.Store.FileSystem("images", {
+  fileKeyMaker: function (fileObj) {
+    // Lookup the copy
+    var store = fileObj && fileObj._getInfo(name);
+    // If the store and key is found return the key
+    if (store && store.key) return store.key;
+
+    // TO CUSTOMIZE, REPLACE CODE AFTER THIS POINT
+
+    var filename = fileObj.name();
+    var filenameInStore = fileObj.name({store: name});
+
+    // If no store key found we resolve / generate a key
+    return fileObj.collectionName + '-' + fileObj._id + '-' + (filenameInStore || filename);
+  }
+});
+```
+
+The function receives only the `fileObj` so if you need the userId, you'll need to set it on every file when uploading in order to use it in your path.
