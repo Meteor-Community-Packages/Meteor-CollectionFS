@@ -692,9 +692,9 @@ store, the content type of the original file is checked instead.
 Use with an `FS.File` instance as the current context.
 
 ```html
-{{#if isImage}}
+{{#if isAudio}}
 {{/if}}
-{{#if isImage store='thumbnail'}}
+{{#if isAudio store='thumbnail'}}
 {{/if}}
 ```
 
@@ -707,9 +707,9 @@ store, the content type of the original file is checked instead.
 Use with an `FS.File` instance as the current context.
 
 ```html
-{{#if isImage}}
+{{#if isVideo}}
 {{/if}}
-{{#if isImage store='thumbnail'}}
+{{#if isVideo store='thumbnail'}}
 {{/if}}
 ```
 
