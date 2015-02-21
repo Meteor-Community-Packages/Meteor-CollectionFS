@@ -1,7 +1,7 @@
-/versions.json
+/packages/filesystem/versions.json
 .build*
 .npm*
 /nbproject*
 /smart.lock
-/packages/
+/packages/filesystem/packages/
 *.DS_Store
