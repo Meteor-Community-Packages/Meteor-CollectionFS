@@ -68,10 +68,24 @@ FS.Store.GridFS = function(name, options) {
       // Init GridFS
       var gfs = new Grid(self.db, mongodb);
 
-      return gfs.createReadStream({
+      // Set the default streamning settings
+      var settings = {
         _id: new ObjectID(fileKey._id),
         root: gridfsName
-      });
+      };
+
+      // Check if this should be a partial read
+      if (typeof options.start !== 'undefined' && typeof options.end !== 'undefined' ) {
+        // Add partial info
+        settings.range = {
+          startPos: options.start,
+          endPos: options.end
+        };
+      }
+
+      console.log('GRIDFS', settings);
+
+      return gfs.createReadStream(settings);
 
     },
     createWriteStream: function(fileKey, options) {
