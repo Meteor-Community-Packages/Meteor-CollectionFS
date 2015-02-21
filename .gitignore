@@ -1,6 +1,6 @@
-/versions.json
+/packages/access-point/versions.json
 .build*
 .npm*
 /nbproject*
-/packages/
+/packages/access-point/packages/
 *.DS_Store
