@@ -129,7 +129,7 @@ FS.File.prototype.copy = function() {
   if (!self.isMounted()) {
     throw new Error("Cannot copy a file that is not associated with a collection");
   }
-  
+
   // Get the file record
   var fileRecord = self.collection.files.findOne({_id: self._id}, {transform: null}) || {};
 
@@ -228,3 +228,113 @@ function _copyStoreData(fileObj, storeName, sourceKey, callback) {
   readStream.pipe(writeStream);
 }
 var copyStoreData = Meteor.wrapAsync(_copyStoreData);
+
+/**
+ * @method FS.File.prototype.copyData Copies the content of a store directly into another store.
+ * @public
+ * @param {string} sourceStoreName
+ * @param {string} targetStoreName
+ * @param {boolean=} move
+ */
+FS.File.prototype.copyData = function(sourceStoreName, targetStoreName, move){
+
+  move = !!move;
+  /**
+   * @type {Object.<string,*>}
+   */
+  var sourceStoreValues = this.copies[sourceStoreName];
+  /**
+   * @type {string}
+   */
+  var copyKey = cloneDataToStore(this, sourceStoreName, targetStoreName, move);
+  /**
+   * @type {Object.<string,*>}
+   */
+  var targetStoreValues = {};
+  for (var v in sourceStoreValues) {
+    if (sourceStoreValues.hasOwnProperty(v)) {
+      targetStoreValues[v] = sourceStoreValues[v]
+    }
+  }
+  targetStoreValues.key = copyKey;
+  targetStoreValues.createdAt = new Date();
+  targetStoreValues.updatedAt = new Date();
+  /**
+   *
+   * @type {modifier}
+   */
+  var modifier = {};
+  modifier.$set = {};
+  modifier.$set["copies."+targetStoreName] = targetStoreValues;
+  if(move){
+    modifier.$unset = {};
+    modifier.$unset["copies."+sourceStoreName] = "";
+  }
+  this.update(modifier);
+};
+/**
+ * @method FS.File.prototype.moveData Moves the content of a store directly into another store.
+ * @public
+ * @param {string} sourceStoreName
+ * @param {string} targetStoreName
+ */
+FS.File.prototype.moveData = function(sourceStoreName, targetStoreName){
+  this.copyData(sourceStoreName, targetStoreName, true);
+};
+// TODO maybe this should be in cfs-storage-adapter
+/**
+ *
+ * @param {FS.File} fileObj
+ * @param {string} sourceStoreName
+ * @param {string} targetStoreName
+ * @param {boolean} move
+ * @param callback
+ * @private
+ */
+function _copyDataFromStoreToStore(fileObj, sourceStoreName, targetStoreName, move, callback) {
+  if (!fileObj.isMounted()) {
+    throw new Error("Cannot copy store data for a file that is not associated with a collection");
+  }
+  /**
+   * @type {FS.StorageAdapter}
+   */
+  var sourceStorage = fileObj.collection.storesLookup[sourceStoreName];
+  /**
+   * @type {FS.StorageAdapter}
+   */
+  var targetStorage = fileObj.collection.storesLookup[targetStoreName];
+
+  if (!sourceStorage) {
+    throw new Error(sourceStoreName + " is not a valid store name");
+  }
+  if (!targetStorage) {
+    throw new Error(targetStorage + " is not a valid store name");
+  }
+
+  // We want to prevent beforeWrite and transformWrite from running, so
+  // we interact directly with the store.
+  var sourceKey = sourceStorage.adapter.fileKey(fileObj);
+  var targetKey = targetStorage.adapter.fileKey(fileObj);
+  var readStream = sourceStorage.adapter.createReadStreamForFileKey(sourceKey);
+  var writeStream = targetStorage.adapter.createWriteStreamForFileKey(targetKey);
+
+
+  writeStream.safeOnce('stored', function(result) {
+    if(move && sourceStorage.adapter.remove(fileObj)===false){
+      callback("Copied to store:" + targetStoreName
+      + " with fileKey: "
+      + result.fileKey
+      + ", but could not delete from source store: "
+      + sourceStoreName);
+    }else{
+      callback(null, result.fileKey);
+    }
+  });
+
+  writeStream.once('error', function(error) {
+    callback(error);
+  });
+
+  readStream.pipe(writeStream);
+}
+var cloneDataToStore = Meteor.wrapAsync(_copyDataFromStoreToStore);
