@@ -224,6 +224,7 @@ function _copyStoreData(fileObj, storeName, sourceKey, callback) {
   writeStream.once('error', function(error) {
     callback(error);
   });
+
   readStream.pipe(writeStream);
 }
 var copyStoreData = Meteor.wrapAsync(_copyStoreData);
@@ -271,7 +272,15 @@ FS.File.prototype.copyData = function(sourceStoreName, targetStoreName, move){
   }
   this.update(modifier);
 };
-
+/**
+ * @method FS.File.prototype.moveData Moves the content of a store directly into another store.
+ * @public
+ * @param {string} sourceStoreName
+ * @param {string} targetStoreName
+ */
+FS.File.prototype.moveData = function(sourceStoreName, targetStoreName){
+  this.copyData(sourceStoreName, targetStoreName, true);
+};
 // TODO maybe this should be in cfs-storage-adapter
 /**
  *
