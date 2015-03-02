@@ -20,9 +20,7 @@ $ meteor add cfs:filesystem
 
 ## Important Note
 
-The free Meteor deployment servers on *.meteor.com remove all files stored to the filesystem on each redeploy.
-You may want to have a look at the [GridFS Storage Adapter](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs) for persistent file storage.
-
+Note that using this Storage Adapter on the free Meteor deployment servers on  `*.meteor.com` will cause a reset of files at every code deploy. You may want to have a look at the [GridFS Storage Adapter](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs) for persistent file storage.
 
 ## Usage
 
@@ -38,8 +36,6 @@ Images = new FS.Collection("images", {
   stores: [imageStore]
 });
 ```
-
-__Note!__ that using this Storage Adapter on `*.meteor.com` will cause a reset of files at every code deploy - Use `cfs:gridfs` instead.
 
 Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
 package documentation for more information.
