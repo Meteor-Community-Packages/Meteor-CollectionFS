@@ -101,9 +101,7 @@ A document from a `FS.Collection` is represented as a `FS.File`.
 
 CollectionFS also provides an HTTP upload package that has the necessary
 mechanisms to upload files, track upload progress reactively, and pause and
-resume uploads. This can be swapped for a DDP upload package, but we do
-not currently recommend using DDP for uploads due to known issues with
-the current DDP spec and large files.
+resume uploads. 
 
 ## Getting Started
 
