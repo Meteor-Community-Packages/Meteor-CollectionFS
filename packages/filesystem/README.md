@@ -33,5 +33,7 @@ Images = new FS.Collection("images", {
 });
 ```
 
+__Note!__ that using this Storage Adapter on `*.meteor.com` will cause a reset of files at every code deploy - Use `cfs:gridfs` instead.
+
 Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
 package documentation for more information.
