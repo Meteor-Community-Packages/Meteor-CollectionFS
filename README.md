@@ -10,6 +10,8 @@ created.
 [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 [![Join the chat at https://gitter.im/CollectionFS/Meteor-CollectionFS](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/CollectionFS/Meteor-CollectionFS?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+[Check out the Wiki](https://github.com/CollectionFS/Meteor-CollectionFS/wiki) for more information, code examples and how-tos.
+
 ## Table of Contents
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
