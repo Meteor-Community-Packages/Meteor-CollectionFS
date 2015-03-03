@@ -15,7 +15,7 @@ Package.onUse(function(api) {
   api.use(['cfs:base-package@0.0.27', 'cfs:file@0.1.15']);
 
   api.use('cfs:filesystem@0.1.1', { weak: true });
-  api.use('cfs:gridfs@0.0.27', { weak: true });
+  api.use('cfs:gridfs@0.0.29', { weak: true });
 
   api.addFiles([
     'tempStore.js'

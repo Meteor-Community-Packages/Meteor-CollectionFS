@@ -19,13 +19,13 @@ Package.onUse(function(api) {
 
   api.use([
     'cfs:base-package@0.0.27',
-    'cfs:storage-adapter@0.1.1',
+    'cfs:storage-adapter@0.2.0',
     'tracker',
     'check',
     'ddp',
     'mongo',
     'http',
-    'cfs:data-man@0.0.4',
+    'cfs:data-man@0.0.5',
     'raix:eventemitter@0.1.1'
   ]);
 

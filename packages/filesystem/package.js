@@ -13,7 +13,7 @@ Npm.depends({
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.27', 'cfs:storage-adapter@0.1.1']);
+  api.use(['cfs:base-package@0.0.27', 'cfs:storage-adapter@0.2.0']);
   api.addFiles('filesystem.server.js', 'server');
   api.addFiles('filesystem.client.js', 'client');
 });
