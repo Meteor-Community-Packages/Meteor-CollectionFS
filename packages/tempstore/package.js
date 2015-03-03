@@ -12,7 +12,7 @@ Npm.depends({
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.27', 'cfs:file@0.1.15']);
+  api.use(['cfs:base-package@0.0.27', 'cfs:file@0.1.16']);
 
   api.use('cfs:filesystem@0.1.1', { weak: true });
   api.use('cfs:gridfs@0.0.29', { weak: true });

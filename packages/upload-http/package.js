@@ -11,7 +11,7 @@ Package.onUse(function(api) {
   api.use([
     'cfs:base-package@0.0.27',
     'cfs:tempstore@0.1.3',
-    'cfs:file@0.1.15',
+    'cfs:file@0.1.16',
     'cfs:access-point@0.1.43',
     'cfs:power-queue@0.9.11',
     'cfs:reactive-list@0.0.9'

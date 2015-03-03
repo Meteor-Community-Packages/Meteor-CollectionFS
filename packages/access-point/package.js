@@ -16,7 +16,7 @@ Package.onUse(function(api) {
   api.use([
     //CFS packages
     'cfs:base-package@0.0.27',
-    'cfs:file@0.1.15',
+    'cfs:file@0.1.16',
     //Core packages
     'check',
     'ejson',
