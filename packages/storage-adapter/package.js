@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-storage-adapter.git',
   name: 'cfs:storage-adapter',
-  version: '0.2.0',
+  version: '0.2.1',
   summary: 'CollectionFS, Class for creating Storage adapters'
 });
 
@@ -14,7 +14,7 @@ Package.onUse(function(api) {
 
   api.use([
     // CFS
-    'cfs:base-package@0.0.27',
+    'cfs:base-package@0.0.28',
     // Core
     'deps',
     'check',

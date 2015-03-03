@@ -1,14 +1,14 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-collection-filters.git',
   name: 'cfs:collection-filters',
-  version: '0.2.3',
+  version: '0.2.4',
   summary: 'CollectionFS, adds FS.Collection filters'
 });
 
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.27', 'cfs:collection@0.5.4']);
+  api.use(['cfs:base-package@0.0.28', 'cfs:collection@0.5.4']);
 
   api.addFiles([
     'filters.js'

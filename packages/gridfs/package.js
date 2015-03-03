@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:gridfs',
-  version: '0.0.29',
+  version: '0.0.30',
   summary: 'GridFS storage adapter for CollectionFS',
   git: 'https://github.com/CollectionFS/Meteor-cfs-gridfs.git'
 });
@@ -14,7 +14,7 @@ Npm.depends({
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.27', 'cfs:storage-adapter@0.2.0']);
+  api.use(['cfs:base-package@0.0.28', 'cfs:storage-adapter@0.2.1']);
   api.addFiles('gridfs.server.js', 'server');
   api.addFiles('gridfs.client.js', 'client');
 });

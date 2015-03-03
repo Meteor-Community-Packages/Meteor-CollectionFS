@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:data-man',
-  version: '0.0.5',
+  version: '0.0.6',
   summary: 'A data manager, allowing you to attach various types of data and get it back in various other types',
   git: 'https://github.com/CollectionFS/Meteor-data-man.git'
 });
@@ -20,7 +20,7 @@ Package.onUse(function(api) {
 
   api.use(['ejson']);
 
-  api.use(['cfs:filesaver@0.0.5'], {weak: true});
+  api.use(['cfs:filesaver@0.0.6'], {weak: true});
 
   api.export('DataMan');
 

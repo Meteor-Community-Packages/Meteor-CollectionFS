@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:access-point',
-  version: '0.1.43',
+  version: '0.1.44',
   summary: 'CollectionFS, add ddp and http accesspoint capability',
   git: 'https://github.com/CollectionFS/Meteor-cfs-access-point.git'
 });
@@ -15,7 +15,7 @@ Package.onUse(function(api) {
 
   api.use([
     //CFS packages
-    'cfs:base-package@0.0.27',
+    'cfs:base-package@0.0.28',
     'cfs:file@0.1.16',
     //Core packages
     'check',

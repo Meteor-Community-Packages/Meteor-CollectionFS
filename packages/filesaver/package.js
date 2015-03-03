@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:filesaver',
-  version: '0.0.5',
+  version: '0.0.6',
   summary: 'CollectionFS, FileSaver by Eli Grey, http://eligrey.com',
   git: 'https://github.com/CollectionFS/Meteor-cfs-filesaver.git'
 });
