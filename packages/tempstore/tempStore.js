@@ -28,7 +28,7 @@ var CombinedStream = Npm.require('combined-stream');
 FS.TempStore = new EventEmitter();
 
 // Create a tracker collection for keeping track of all chunks for any files that are currently in the temp store
-var tracker = FS.TempStore.Tracker = new Meteor.Collection('cfs._tempstore.chunks');
+var tracker = FS.TempStore.Tracker = new Mongo.Collection('cfs._tempstore.chunks');
 
 /**
  * @property FS.TempStore.Storage

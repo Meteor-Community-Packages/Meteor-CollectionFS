@@ -109,7 +109,7 @@ FS.Collection = function(name, options) {
 
   // Create the 'cfs.' ++ ".filerecord" and use fsFile
   var collectionName = 'cfs.' + name + '.filerecord';
-  self.files = new Meteor.Collection(collectionName, _filesOptions);
+  self.files = new Mongo.Collection(collectionName, _filesOptions);
 
   // For storing custom allow/deny functions
   self._validators = {
