@@ -232,7 +232,7 @@ Storage adapters handle retrieving the file data and removing the file data
 when you delete the file. There are currently three available storage adapters, which are in separate
 packages. Refer to the package documentation for usage instructions.
 
-* [cfs:gridfs](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs): Allows you to save data to mongodb GridFS.
+* [cfs:gridfs](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs): Allows you to save data to mongodb GridFS. ([recommended](https://github.com/CollectionFS/Meteor-CollectionFS/issues/587#issuecomment-77386803))
 * [cfs:filesystem](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/filesystem): Allows you to save to the server filesystem.
 * [cfs:s3](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/s3): Allows you to save to an Amazon S3 bucket.
 
@@ -547,7 +547,14 @@ user to *download* the file data.
 * To determine who can *download* the actual file, use "download" allow/deny
 functions. This is a custom type of allow/deny function provided by CollectionFS.
 The first argument is the userId and the second argument is the FS.File being
-requested for download.
+requested for download. An example:
+```
+Images.allow({
+	download: function(userId, fileObj) {
+		return true
+	}
+})
+```
 * To determine who can *set* file metadata, insert files, and upload file data,
 use "insert" allow/deny functions.
 * To determine who can *update* file metadata, use "update" allow/deny functions.
