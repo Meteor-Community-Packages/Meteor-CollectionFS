@@ -65,6 +65,8 @@ FS.Store.GridFS = function(name, options) {
       return key;
     },
     createReadStream: function(fileKey, options) {
+      options = options || {};
+
       // Init GridFS
       var gfs = new Grid(self.db, mongodb);
 
