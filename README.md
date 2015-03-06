@@ -10,6 +10,8 @@ created.
 [![Build Status](https://travis-ci.org/CollectionFS/Meteor-CollectionFS.png?branch=master)](https://travis-ci.org/CollectionFS/Meteor-CollectionFS)
 [![Join the chat at https://gitter.im/CollectionFS/Meteor-CollectionFS](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/CollectionFS/Meteor-CollectionFS?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+Victor Leung wrote a great [quick start guide](https://medium.com/@victorleungtw/how-to-upload-files-with-meteor-js-7b8e811510fa) for the most basic image uploading and displaying task.
+
 [Check out the Wiki](https://github.com/CollectionFS/Meteor-CollectionFS/wiki) for more information, code examples and how-tos.
 
 ## Table of Contents
@@ -232,7 +234,7 @@ Storage adapters handle retrieving the file data and removing the file data
 when you delete the file. There are currently three available storage adapters, which are in separate
 packages. Refer to the package documentation for usage instructions.
 
-* [cfs:gridfs](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs): Allows you to save data to mongodb GridFS.
+* [cfs:gridfs](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs): Allows you to save data to mongodb GridFS. ([recommended](https://github.com/CollectionFS/Meteor-CollectionFS/issues/587#issuecomment-77386803))
 * [cfs:filesystem](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/filesystem): Allows you to save to the server filesystem.
 * [cfs:s3](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/s3): Allows you to save to an Amazon S3 bucket.
 
@@ -547,7 +549,14 @@ user to *download* the file data.
 * To determine who can *download* the actual file, use "download" allow/deny
 functions. This is a custom type of allow/deny function provided by CollectionFS.
 The first argument is the userId and the second argument is the FS.File being
-requested for download.
+requested for download. An example:
+```
+Images.allow({
+	download: function(userId, fileObj) {
+		return true
+	}
+})
+```
 * To determine who can *set* file metadata, insert files, and upload file data,
 use "insert" allow/deny functions.
 * To determine who can *update* file metadata, use "update" allow/deny functions.
