@@ -234,7 +234,7 @@ Storage adapters handle retrieving the file data and removing the file data
 when you delete the file. There are currently three available storage adapters, which are in separate
 packages. Refer to the package documentation for usage instructions.
 
-* [cfs:gridfs](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs): Allows you to save data to mongodb GridFS. ([recommended](https://github.com/CollectionFS/Meteor-CollectionFS/issues/587#issuecomment-77386803))
+* [cfs:gridfs](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs): Allows you to save data to mongodb GridFS.
 * [cfs:filesystem](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/filesystem): Allows you to save to the server filesystem.
 * [cfs:s3](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/s3): Allows you to save to an Amazon S3 bucket.
 
