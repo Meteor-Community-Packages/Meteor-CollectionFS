@@ -34,6 +34,10 @@ FS.StorageAdapter = function(storeName, options, api) {
     throw new Error('A storage adapter name may not begin with "_"');
   }
 
+  if (storeName.indexOf('.') !== -1) {
+    throw new Error('A storage adapter name may not contain a "."');
+  }
+
   // store reference for easy lookup by storeName
   if (typeof _storageAdapters[storeName] !== 'undefined') {
     throw new Error('Storage name already exists: "' + storeName + '"');
