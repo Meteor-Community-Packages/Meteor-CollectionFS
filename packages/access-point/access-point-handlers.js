@@ -61,9 +61,11 @@ var requestRange = function(req, fileSize) {
           var start = Number(range[0]);
           var end = Number(range[1]);
 
+          console.log('range end pos', end, range[1], (range[1] != end), partSize);
+
           // Fix invalid ranges?
           if (range[0] != start) start = 0;
-          if (range[1] != end) end = fileSize - 1;
+          if (range[1] != end || !end) end = fileSize - 1;
 
           // Make sure range consists of a start and end point of numbers and start is less than end
           if (start < end) {
