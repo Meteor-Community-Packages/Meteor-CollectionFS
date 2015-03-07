@@ -63,7 +63,7 @@ var requestRange = function(req, fileSize) {
 
           // Fix invalid ranges?
           if (range[0] != start) start = 0;
-          if (range[1] != end) end = fileSize - 1;
+          if (range[1] != end || !end) end = fileSize - 1;
 
           // Make sure range consists of a start and end point of numbers and start is less than end
           if (start < end) {
