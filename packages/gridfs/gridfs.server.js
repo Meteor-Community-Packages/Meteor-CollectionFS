@@ -85,7 +85,7 @@ FS.Store.GridFS = function(name, options) {
         };
       }
 
-      console.log('GRIDFS', settings);
+      FS.debug && console.log('GRIDFS', settings);
 
       return gfs.createReadStream(settings);
 
