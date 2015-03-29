@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-CollectionFS.git',
   name: 'cfs:standard-packages',
-  version: '0.5.5',
+  version: '0.5.6',
   summary: 'Filesystem for Meteor, collectionFS'
 });
 
@@ -13,7 +13,7 @@ Package.onUse(function(api) {
     // Base util rigs the basis for the FS scope and some general helper mehtods
     'cfs:base-package@0.0.28',
     // Want to make use of the file object and its api, yes!
-    'cfs:file@0.1.16',
+    'cfs:file@0.1.17',
     // Add the FS.Collection to keep track of everything
     'cfs:collection@0.5.5',
     // Support filters for easy rules about what may be inserted
