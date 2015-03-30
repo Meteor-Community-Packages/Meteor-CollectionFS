@@ -1,14 +1,16 @@
 getHeaders = [];
 getHeadersByCollection = {};
 
+FS.HTTP.Handlers = {};
+
 /**
- * @method httpDelHandler
- * @private
+ * @method FS.HTTP.Handlers.Del
+ * @public
  * @returns {any} response
  *
  * HTTP DEL request handler
  */
-httpDelHandler = function httpDelHandler(ref) {
+FS.HTTP.Handlers.Del = function httpDelHandler(ref) {
   var self = this;
   var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
 
@@ -27,6 +29,19 @@ httpDelHandler = function httpDelHandler(ref) {
   return {
     deleted: !!ref.file.remove()
   };
+};
+
+/**
+ * @method FS.HTTP.Handlers.GetList
+ * @public
+ * @returns {Object} response
+ *
+ * HTTP GET file list request handler
+ */
+FS.HTTP.Handlers.GetList = function httpGetListHandler() {
+  // Not Yet Implemented
+  // Need to check publications and return file list based on
+  // what user is allowed to see
 };
 
 /*
@@ -111,13 +126,13 @@ var requestRange = function(req, fileSize) {
 };
 
 /**
- * @method httpGetHandler
- * @private
+ * @method FS.HTTP.Handlers.Get
+ * @public
  * @returns {any} response
  *
  * HTTP GET request handler
  */
-httpGetHandler = function httpGetHandler(ref) {
+FS.HTTP.Handlers.Get = function httpGetHandler(ref) {
   var self = this;
   // Once we have the file, we can test allow/deny validators
   // XXX: pass on the "share" query eg. ?share=342hkjh23ggj for shared url access?
@@ -204,7 +219,14 @@ httpGetHandler = function httpGetHandler(ref) {
   readStream.pipe(self.createWriteStream());
 };
 
-httpPutInsertHandler = function httpPutInsertHandler(ref) {
+/**
+ * @method FS.HTTP.Handlers.PutInsert
+ * @public
+ * @returns {Object} response object with _id property
+ *
+ * HTTP PUT file insert request handler
+ */
+FS.HTTP.Handlers.PutInsert = function httpPutInsertHandler(ref) {
   var self = this;
   var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
 
@@ -232,7 +254,14 @@ httpPutInsertHandler = function httpPutInsertHandler(ref) {
   return {_id: fileObj._id};
 };
 
-httpPutUpdateHandler = function httpPutUpdateHandler(ref) {
+/**
+ * @method FS.HTTP.Handlers.PutUpdate
+ * @public
+ * @returns {Object} response object with _id and chunk properties
+ *
+ * HTTP PUT file update chunk request handler
+ */
+FS.HTTP.Handlers.PutUpdate = function httpPutUpdateHandler(ref) {
   var self = this;
   var opts = FS.Utility.extend({}, self.query || {}, self.params || {});
 
