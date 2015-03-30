@@ -1,6 +1,16 @@
 # Changelog
 
 ## vCurrent
+
+## [v0.1.46] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.1.46)
+#### 30/3/15 by Eric Dobbertin
+
+- Bump to version 0.1.46
+
+- Fixed [#611](https://github.com/CollectionFS/Meteor-CollectionFS/issues/611)
+
+- Exposed request handlers on `FS.HTTP.Handlers` object so that app can override
+
 ## [v0.1.43] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.1.43)
 #### 20/12/14 by Morten Henriksen
 - add changelog
