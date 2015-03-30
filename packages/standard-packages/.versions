@@ -4,8 +4,8 @@ blaze@2.1.0
 blaze-tools@1.0.3
 boilerplate-generator@1.0.3
 callback-hook@1.0.3
-cfs:access-point@0.1.45
-cfs:base-package@0.0.28
+cfs:access-point@0.1.46
+cfs:base-package@0.0.29
 cfs:collection@0.5.5
 cfs:collection-filters@0.2.4
 cfs:data-man@0.0.6
