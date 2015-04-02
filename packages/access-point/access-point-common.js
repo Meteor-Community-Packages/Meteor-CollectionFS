@@ -168,7 +168,7 @@ FS.File.prototype.urlRelative = function(options) {
     // Construct and return the http method url
     return baseUrl + area + '/' + self.collection.name + '/' + self._id + filename + queryString;
   }
-
+};
 
 /**
  * @method FS.File.prototype.url Construct the file url
@@ -189,5 +189,3 @@ FS.File.prototype.url = function(options) {
   self = this;
   return  rootUrlPathPrefix + self.urlRelative(options);
 };
-
-
