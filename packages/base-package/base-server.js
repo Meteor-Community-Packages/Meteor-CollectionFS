@@ -68,15 +68,12 @@ FS.Utility.safeStream = function(nodestream, name) {
 FS.Utility.eachFileFromPath = function(p, f) {
   var fs = Npm.require('fs');
   var path = Npm.require('path');
-  fs.readdir(p, Meteor.bindEnvironment(function (error, files) {
-    if (error)
-      throw new Meteor.Error('directory-read', error);
-    files.map(function (file) {
-      return path.join(p, file);
-    }).filter(function (filePath) {
-      return fs.statSync(filePath).isFile() && path.basename(filePath)[0] !== '.';
-    }).forEach(function (filePath) {
-      f(filePath);
-    });
-  }));
+  var files = fs.readdirSync(p);
+  files.map(function (file) {
+    return path.join(p, file);
+  }).filter(function (filePath) {
+    return fs.statSync(filePath).isFile() && path.basename(filePath)[0] !== '.';
+  }).forEach(function (filePath) {
+    f(filePath);
+  });
 };
