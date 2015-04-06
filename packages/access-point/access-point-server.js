@@ -148,10 +148,10 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
       if (ref.file === null) {
         // No id supplied so we will create a new FS.File instance and
         // insert the supplied data.
-        return httpPutInsertHandler.apply(this, [ref]);
+        return FS.HTTP.Handlers.PutInsert.apply(this, [ref]);
       } else {
         if (ref.file) {
-          return httpPutUpdateHandler.apply(this, [ref]);
+          return FS.HTTP.Handlers.PutUpdate.apply(this, [ref]);
         } else {
           throw new Meteor.Error(404, "Not Found", 'No file found');
         }
@@ -169,10 +169,10 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
       if (ref.file === null) {
         // No id supplied so we will return the published list of files ala
         // http.publish in json format
-        return httpGetListHandler.apply(this, [ref]);
+        return FS.HTTP.Handlers.GetList.apply(this, [ref]);
       } else {
         if (ref.file) {
-          return httpGetHandler.apply(this, [ref]);
+          return FS.HTTP.Handlers.Get.apply(this, [ref]);
         } else {
           throw new Meteor.Error(404, "Not Found", 'No file found');
         }
@@ -188,7 +188,7 @@ FS.HTTP.mount = function(mountPoints, selector_f) {
 
       // Make sure we have a file reference
       if (ref.file) {
-        return httpDelHandler.apply(this, [ref]);
+        return FS.HTTP.Handlers.Del.apply(this, [ref]);
       } else {
         throw new Meteor.Error(404, "Not Found", 'No file found');
       }

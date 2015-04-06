@@ -156,13 +156,11 @@ FS.Utility.validateAction = function validateAction(validators, fileObj, userId)
     return;
   }
 
-  // Validators should receive a fileObj that is mounted
-  if (!fileObj.isMounted()) {
-    throw new Meteor.Error(400, "Bad Request");
+  // If already mounted, validators should receive a fileObj
+  // that is fully populated
+  if (fileObj.isMounted()) {
+    fileObj.getFileRecord();
   }
-
-  // Validators should receive a fileObj that is fully populated
-  fileObj.getFileRecord();
 
   // Any deny returns true means denied.
   if (_.any(denyValidators, function(validator) {

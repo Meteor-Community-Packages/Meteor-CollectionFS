@@ -178,6 +178,9 @@ Meteor.methods({
   // and size prior to actually downloading the data.
   // That way we can do filter checks without actually downloading.
   '_cfs_getUrlInfo': function (url, options) {
+    check(url, String);
+    check(options, Object);
+
     this.unblock();
 
     var response = HTTP.call("HEAD", url, options);
