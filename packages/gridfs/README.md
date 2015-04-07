@@ -42,6 +42,7 @@ package documentation for more information.
 
 ## API
 
-[For Users](https://github.com/CollectionFS/Meteor-cfs-gridfs/blob/master/api.md)
+[For Users](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/packages/gridfs/api.md)
 
-[For Contributors](https://github.com/CollectionFS/Meteor-cfs-gridfs/blob/master/internal.api.md)
+[For Contributors](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/packages/gridfs/internal.api.md)
+
