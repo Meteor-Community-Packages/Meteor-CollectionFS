@@ -12,13 +12,15 @@ Package.onUse(function(api) {
     // CFS
     'cfs:base-package@0.0.28',
     'cfs:tempstore@0.1.4',
+    //'cfs:job-manager@0.1.0',
     // Core
     'deps',
     'check',
     'livedata',
     'mongo-livedata',
     // Other
-    'raix:eventemitter@0.1.1'
+    'raix:eventemitter@0.1.1',
+    'vsivsi:job-collection@1.0.0'
   ]);
 
   // Weak dependencies for uploaders

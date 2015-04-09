@@ -17,7 +17,8 @@ Package.onUse(function(api) {
   api.use([
     'livedata',
     'mongo-livedata',
-    'cfs:power-queue@0.9.11'
+    //'cfs:power-queue@0.9.11',
+    'vsivsi:job-collection@1.0.0'
   ]);
 
   api.addFiles([

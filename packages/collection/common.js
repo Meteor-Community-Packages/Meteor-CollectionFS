@@ -17,7 +17,7 @@ FS.Collection = function(name, options) {
   self.primaryStore = {};
 
   self.options = {
-    filter: null, //optional
+    //filter: null, //optional
     stores: [], //required
     chunkSize: null
   };
@@ -73,6 +73,8 @@ FS.Collection = function(name, options) {
           if (FS.debug && !emitted) {
             console.log(fileObj.name({store: store.name}) + ' was successfully saved to the ' + store.name + ' store. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "stored" event on the ' + name + ' collection.');
           }
+          // TODO: Check if all stores are complete?
+          // TODO: self.emit('allStoresComplete', fileObj);
         }
         fileObj.emit('stored', store.name);
       });
@@ -91,6 +93,7 @@ FS.Collection = function(name, options) {
             console.log(error.message);
           }
         }
+        // TODO: Check what the listener for this event does
         fileObj.emit('error', store.name);
       });
 
@@ -118,15 +121,15 @@ FS.Collection = function(name, options) {
 
   // Set up filters
   // XXX Should we deprecate the filter option now that this is done with a separate pkg, or just keep it?
-  if (self.filters) {
-    self.filters(self.options.filter);
-  }
+  //if (self.filters) {
+  //  self.filters(self.options.filter);
+  //}
 
   // Save the collection reference (we want it without the 'cfs.' prefix and '.filerecord' suffix)
   FS._collections[name] = this;
 
-  // Set up observers
-  Meteor.isServer && FS.FileWorker && FS.FileWorker.observe(this);
+  // Register with jobManager TODO: review if this needs to be scoped to server only
+  Meteor.isServer && FS.JobManager && FS.JobManager.listen(this);
 
   // Emit "removed" event on collection
   self.files.find().observe({
@@ -138,11 +141,11 @@ FS.Collection = function(name, options) {
   // Emit events based on TempStore events
   if (FS.TempStore) {
     FS.TempStore.on('stored', function (fileObj, result) {
-      // When a file is successfully stored into the temp store, we emit an "uploaded" event on the FS.Collection only if the file belongs to this collection
-      if (fileObj.collectionName === name) {
-        var emitted = self.emit('uploaded', fileObj);
-        if (FS.debug && !emitted) {
-          console.log(fileObj.name() + ' was successfully uploaded. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "uploaded" event on the ' + name + ' collection.');
+      // When a file is successfully stored into the temp store, we emit a "tempStoreTransferComplete" event on the FS.Collection only if the file belongs to this collection
+      if(fileObj.collectionName === name) {
+        var emitted = self.emit('tempStoreTransferComplete', fileObj);
+        if(FS.debug && !emitted) {
+          console.log(fileObj.name() + ' was successfully transferred to the Temp Store. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "tempStoreTransferComplete" event on the ' + name + ' collection.');
         }
       }
     });

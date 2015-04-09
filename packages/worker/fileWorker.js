@@ -1,7 +1,3 @@
-//// TODO: Use power queue to handle throttling etc.
-//// Use observe to monitor changes and have it create tasks for the power queue
-//// to perform.
-
 /**
  * @public
  * @type Object
@@ -17,74 +13,97 @@ FS.FileWorker = {};
  * Sets up observes on the fsCollection to store file copies and delete
  * temp files at the appropriate times.
  */
-FS.FileWorker.observe = function(fsCollection) {
 
-  // Initiate observe for finding newly uploaded/added files that need to be stored
-  // per store.
-  FS.Utility.each(fsCollection.options.stores, function(store) {
-    var storeName = store.name;
-    fsCollection.files.find(getReadyQuery(storeName), {
-      fields: {
-        copies: 0
-      }
-    }).observe({
-      added: function(fsFile) {
-        // added will catch fresh files
-        FS.debug && console.log("FileWorker ADDED - calling saveCopy", storeName, "for", fsFile._id);
-        saveCopy(fsFile, storeName);
-      },
-      changed: function(fsFile) {
-        // changed will catch failures and retry them
-        FS.debug && console.log("FileWorker CHANGED - calling saveCopy", storeName, "for", fsFile._id);
-        saveCopy(fsFile, storeName);
-      }
-    });
-  });
+FS.FileWorker.saveCopyQueue = FS.JobManager.jobCollection.processJobs(
+  'saveCopy',
+  {
+    //concurrency: 1,
+    //cargo: 1,
+    pollInterval: 1000000000, // Don't poll,
+    //prefetch: 1
+  },
+  saveCopy
+);
 
-  // Initiate observe for finding files that have been stored so we can delete
-  // any temp files
-  fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
-    added: function(fsFile) {
-      FS.debug && console.log("FileWorker ADDED - calling deleteChunks for", fsFile._id);
-      FS.TempStore.removeFile(fsFile);
-    }
-  });
+FS.JobManager.jobCollection.find({type: 'saveCopy', status: 'ready'}).observe({
+  added: function(doc) {
+    FS.debug && console.log("New saveCopy job", doc._id, "observed - calling worker");
+    FS.FileWorker.saveCopyQueue.trigger();
+  },
+  changed: function(doc) {
+    FS.debug && console.log("Existing saveCopy job", doc._id, "ready again - calling worker");
+    FS.FileWorker.saveCopyQueue.trigger();
+  }
+});
 
-  // Initiate observe for catching files that have been removed and
-  // removing the data from all stores as well
-  fsCollection.files.find().observe({
-    removed: function(fsFile) {
-      FS.debug && console.log('FileWorker REMOVED - removing all stored data for', fsFile._id);
-      //remove from temp store
-      FS.TempStore.removeFile(fsFile);
-      //delete from all stores
-      FS.Utility.each(fsCollection.options.stores, function(storage) {
-        storage.adapter.remove(fsFile);
-      });
-    }
-  });
-};
+FS.FileWorker.removeTempFileQueue = FS.JobManager.jobCollection.processJobs(
+  'removeTempFile',
+  {
+    //concurrency: 1,
+    //cargo: 1,
+    pollInterval: 1000000000, // Don't poll,
+    //prefetch: 1
+  },
+  function (job, callback) {
+    var fileObj = job.data.fileObj;
+    var fsCollection = FS._collections[fileObj.collectionName];
+    var fsFile = fsCollection.findOne(fileObj._id);
+    FS.TempStore.removeFile(fsFile);
+    job.done();
+    // TODO: Work out how to handle failed jobs since there's no return value
+    callback();
+  }
+);
+
+FS.JobManager.jobCollection.find({type: 'removeTempFile', status: 'ready'}).observe({
+  added: function(doc) {
+    FS.debug && console.log("New removeTempFile job", doc._id, "observed - calling worker");
+    FS.FileWorker.removeTempFileQueue.trigger();
+  },
+  changed: function(doc) {
+    FS.debug && console.log("Existing removeTempFile job", doc._id, "ready again - calling worker");
+    FS.FileWorker.removeTempFileQueue.trigger();
+  }
+});
 
 /**
- *  @method getReadyQuery
- *  @private
- *  @param {string} storeName - The name of the store to observe
+ * @method saveCopy
+ * @private
+ * @param {Job} job
+ * @param {Boolean} [job.data.options.overwrite=false] - Force save to the specified store?
+ * @param {Function} callback
+ * @returns {undefined}
  *
- *  Returns a selector that will be used to identify files that
- *  have been uploaded but have not yet been stored to the
- *  specified store.
- *
- *  {
- *    uploadedAt: {$exists: true},
- *    'copies.storeName`: null,
- *    'failures.copies.storeName.doneTrying': {$ne: true}
- *  }
+ * Saves to the specified store. If the
+ * `overwrite` option is `true`, will save to the store even if we already
+ * have, potentially overwriting any previously saved data. Synchronous.
  */
-function getReadyQuery(storeName) {
-  var selector = {uploadedAt: {$exists: true}};
-  selector['copies.' + storeName] = null;
-  selector['failures.copies.' + storeName + '.doneTrying'] = {$ne: true};
-  return selector;
+
+// TODO: Work out how to determine if the job is done or failed
+function saveCopy(job, callback) {
+
+  var fileObj = job.data.fileObj;
+  var storeName = job.data.storeName;
+  var options = job.data.options || {};
+  var fsCollection = FS._collections[fileObj.collectionName];
+  var fsFile = fsCollection.findOne(fileObj._id);
+
+  var storage = FS.StorageAdapter(storeName);
+  if (!storage) {
+    throw new Error('No store named "' + storeName + '" exists');
+    job.failed();
+    callback();
+  }
+
+  FS.debug && console.log('saving to store ' + storeName);
+
+  var writeStream = storage.adapter.createWriteStream(fsFile);
+  var readStream = FS.TempStore.createReadStream(fsFile);
+
+  // Pipe the temp data into the storage adapter
+  readStream.pipe(writeStream);
+  job.done();
+  callback();
 }
 
 /**
@@ -122,56 +141,26 @@ function getReadyQuery(storeName) {
  *  }
  *
  */
-function getDoneQuery(stores) {
-  var selector = {
-    $and: []
-  };
-
-  // Add conditions for all defined stores
-  FS.Utility.each(stores, function(store) {
-    var storeName = store.name;
-    var copyCond = {$or: [{$and: []}]};
-    var tempCond = {};
-    tempCond["copies." + storeName] = {$ne: null};
-    copyCond.$or[0].$and.push(tempCond);
-    tempCond = {};
-    tempCond["copies." + storeName] = {$ne: false};
-    copyCond.$or[0].$and.push(tempCond);
-    tempCond = {};
-    tempCond['failures.copies.' + storeName + '.doneTrying'] = true;
-    copyCond.$or.push(tempCond);
-    selector.$and.push(copyCond);
-  })
-
-  return selector;
-}
-
-/**
- * @method saveCopy
- * @private
- * @param {FS.File} fsFile
- * @param {string} storeName
- * @param {Object} options
- * @param {Boolean} [options.overwrite=false] - Force save to the specified store?
- * @returns {undefined}
- *
- * Saves to the specified store. If the
- * `overwrite` option is `true`, will save to the store even if we already
- * have, potentially overwriting any previously saved data. Synchronous.
- */
-function saveCopy(fsFile, storeName, options) {
-  options = options || {};
-
-  var storage = FS.StorageAdapter(storeName);
-  if (!storage) {
-    throw new Error('No store named "' + storeName + '" exists');
-  }
-
-  FS.debug && console.log('saving to store ' + storeName);
-
-  var writeStream = storage.adapter.createWriteStream(fsFile);
-  var readStream = FS.TempStore.createReadStream(fsFile);
-
-  // Pipe the temp data into the storage adapter
-  readStream.pipe(writeStream);
-}
+//function getDoneQuery(stores) {
+//  var selector = {
+//    $and: []
+//  };
+//
+//  // Add conditions for all defined stores
+//  FS.Utility.each(stores, function(store) {
+//    var storeName = store.name;
+//    var copyCond = {$or: [{$and: []}]};
+//    var tempCond = {};
+//    tempCond["copies." + storeName] = {$ne: null};
+//    copyCond.$or[0].$and.push(tempCond);
+//    tempCond = {};
+//    tempCond["copies." + storeName] = {$ne: false};
+//    copyCond.$or[0].$and.push(tempCond);
+//    tempCond = {};
+//    tempCond['failures.copies.' + storeName + '.doneTrying'] = true;
+//    copyCond.$or.push(tempCond);
+//    selector.$and.push(copyCond);
+//  })
+//
+//  return selector;
+//}
