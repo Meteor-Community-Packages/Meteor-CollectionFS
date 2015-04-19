@@ -83,7 +83,7 @@ var requestRange = function(req, fileSize) {
           // Make sure range consists of a start and end point of numbers and start is less than end
           if (start < end) {
 
-            var partSize = start + end + 1;
+            var partSize = 0 - start + end + 1;
 
             // Return the parsed range
             return {
