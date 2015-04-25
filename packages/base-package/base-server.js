@@ -32,14 +32,31 @@ FS.Utility.bufferToBinary = function(data) {
   return binary;
 };
 
+/**
+ * @method FS.Utility.safeCallback
+ * @public
+ * @param {Function} callback
+ * @returns {Function}
+ *
+ * Makes a callback safe for Meteor code
+ */
 FS.Utility.safeCallback = function (callback) {
-    // Make callback safe for Meteor code
-    return Meteor.bindEnvironment(callback, function(err) { throw err; });
+  return Meteor.bindEnvironment(callback, function(err) { throw err; });
 };
 
-FS.Utility.safeStream = function(nodestream, name) {
+/**
+ * @method FS.Utility.safeStream
+ * @public
+ * @param {Stream} nodestream
+ * @returns {Stream}
+ *
+ * Adds `safeOn` and `safeOnce` methods to a NodeJS Stream
+ * object. These are the same as `on` and `once`, except
+ * that the callback is wrapped for use in Meteor.
+ */
+FS.Utility.safeStream = function(nodestream) {
   if (!nodestream || typeof nodestream.on !== 'function')
-    throw new Error('Storage Adapter "' + name + '" did not return write stream');
+    throw new Error('FS.Utility.safeStream requires a NodeJS Stream');
 
   // Create Meteor safe events
   nodestream.safeOn = function(name, callback) {
@@ -53,4 +70,26 @@ FS.Utility.safeStream = function(nodestream, name) {
 
   // Return the modified stream - modified anyway
   return nodestream;
+};
+
+/**
+ * @method FS.Utility.eachFileFromPath
+ * @public
+ * @param {String} p - Server path
+ * @param {Function} f - Function to run for each file found in the path.
+ * @returns {undefined}
+ *
+ * Utility for iteration over files from path on server
+ */
+FS.Utility.eachFileFromPath = function(p, f) {
+  var fs = Npm.require('fs');
+  var path = Npm.require('path');
+  var files = fs.readdirSync(p);
+  files.map(function (file) {
+    return path.join(p, file);
+  }).filter(function (filePath) {
+    return fs.statSync(filePath).isFile() && path.basename(filePath)[0] !== '.';
+  }).forEach(function (filePath) {
+    f(filePath);
+  });
 };
