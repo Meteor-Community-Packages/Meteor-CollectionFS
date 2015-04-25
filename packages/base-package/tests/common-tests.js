@@ -1,15 +1,25 @@
 function equals(a, b) {
-  return !!(EJSON.stringify(a) === EJSON.stringify(b));
+  return EJSON.stringify(a) === EJSON.stringify(b);
 }
 
 Tinytest.add('cfs-base-package - test environment', function(test) {
-  test.isTrue(typeof FS !== 'undefined', 'FS scope not declared');
-  test.isTrue(typeof FS.Store !== 'undefined', 'FS scope "FS.Store" not declared');
-  test.isTrue(typeof FS.AccessPoint !== 'undefined', 'FS scope "FS.AccessPoint" not declared');
-  test.isTrue(typeof FS.Utility !== 'undefined', 'FS scope "FS.Utility" not declared');
-  test.isTrue(typeof FS._collections !== 'undefined', 'FS scope "FS._collections" not declared');
+  test.isTrue(typeof FS !== 'undefined',
+              'FS scope not declared');
 
-  test.isTrue(typeof _Utility !== 'undefined', '_Utility test scope not declared');
+  test.isTrue(typeof FS.Store !== 'undefined',
+              'FS scope "FS.Store" not declared');
+
+  test.isTrue(typeof FS.AccessPoint !== 'undefined',
+              'FS scope "FS.AccessPoint" not declared');
+
+  test.isTrue(typeof FS.Utility !== 'undefined',
+              'FS scope "FS.Utility" not declared');
+
+  test.isTrue(typeof FS._collections !== 'undefined',
+              'FS scope "FS._collections" not declared');
+
+  test.isTrue(typeof _Utility !== 'undefined',
+              '_Utility test scope not declared');
 });
 
 Tinytest.add('cfs-base-package - _Utility.defaultZero', function(test) {

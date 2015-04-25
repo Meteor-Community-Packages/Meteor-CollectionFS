@@ -6,13 +6,15 @@ FS.Utility.connectionLogin = function(connection) {
   if (typeof Accounts !== 'undefined') {
     // Monitor logout from main connection
     Meteor.startup(function() {
-      Deps.autorun(function() {
+      Tracker.autorun(function() {
         var userId = Meteor.userId();
         if (userId) {
           connection.onReconnect = function() {
             var token = Accounts._storedLoginToken();
             connection.apply('login', [{resume: token}], function(err, result) {
-              !err && result && connection.setUserId(result.id);
+              if (!err && result) {
+                connection.setUserId(result.id);
+              }
             });
           };
         } else {
@@ -39,8 +41,9 @@ FS.Utility.eachFile = function(e, f) {
 
   var files = evt.target.files;
 
-  if (!files || files.length == 0)
+  if (!files || files.length === 0) {
     files = evt.dataTransfer ? evt.dataTransfer.files : [];
+  }
 
   for (var i = 0; i < files.length; i++) {
     f(files[i], i);
