@@ -17,7 +17,7 @@ Npm.depends({
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.28', 'cfs:storage-adapter@0.2.1']);
+  api.use(['cfs:base-package@0.0.30', 'cfs:storage-adapter@0.2.1']);
   api.addFiles([
     's3.server.js',
     // 's3.indirect.streaming.js',

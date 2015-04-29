@@ -41,7 +41,7 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function (api) {
-  api.use(['cfs:data-man', 'http', 'tinytest', 'test-helpers', 'cfs:http-methods@0.0.24']);
+  api.use(['cfs:data-man', 'http', 'tinytest', 'test-helpers', 'cfs:http-methods@0.0.29']);
 
   api.addFiles(['tests/common.js', 'tests/client-tests.js'], 'client');
   api.addFiles(['tests/common.js', 'tests/server-tests.js'], 'server');

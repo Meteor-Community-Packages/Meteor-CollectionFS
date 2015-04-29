@@ -12,13 +12,13 @@ jquery@1.11.3_2
 json@1.0.3
 local-test:cfs:filesaver@0.0.6
 logging@1.0.7
-meteor@1.1.5
-minimongo@1.0.7
+meteor@1.1.6
+minimongo@1.0.8
 mongo@1.1.0
 ordered-dict@1.0.3
 random@1.0.3
 retry@1.0.3
 test-helpers@1.0.4
 tinytest@1.0.5
-tracker@1.0.6
+tracker@1.0.7
 underscore@1.0.3

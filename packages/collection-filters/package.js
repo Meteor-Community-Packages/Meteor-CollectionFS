@@ -8,7 +8,7 @@ Package.describe({
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use(['cfs:base-package@0.0.28', 'cfs:collection@0.5.4']);
+  api.use(['cfs:base-package@0.0.30', 'cfs:collection@0.5.4']);
 
   api.addFiles([
     'filters.js'

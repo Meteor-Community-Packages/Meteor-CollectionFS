@@ -10,7 +10,7 @@ Package.onUse(function(api) {
 
   api.use([
     // CFS
-    'cfs:base-package@0.0.28',
+    'cfs:base-package@0.0.30',
     'cfs:tempstore@0.1.4',
     // Core
     'deps',
