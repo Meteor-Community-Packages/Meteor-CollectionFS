@@ -127,7 +127,7 @@ FS.Store.S3 = function(name, options) {
         Key: folder + fileKey
       };
 
-      if (options && options.start && options.end)
+      if (options && "start" in options && "end" in options)
         params.Range = "bytes=" + options.start + "-" + options.end;
 
       return S3.createReadStream(params);
