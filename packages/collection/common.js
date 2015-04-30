@@ -125,15 +125,15 @@ FS.Collection = function(name, options) {
   // Save the collection reference (we want it without the 'cfs.' prefix and '.filerecord' suffix)
   FS._collections[name] = this;
 
-  // Set up observers
-  Meteor.isServer && FS.FileWorker && FS.FileWorker.observe(this);
+  // Register with jobManager
+  Meteor.isServer && FS.JobManager && FS.JobManager.listen(this);
 
-  // Emit "removed" event on collection
-  self.files.find().observe({
-    removed: function(fileObj) {
-      self.emit('removed', fileObj);
-    }
-  });
+  // Emit "removed" event on collection - Moved to collection-observers package
+  //self.files.find().observe({
+  //  removed: function(fileObj) {
+  //    self.emit('removed', fileObj);
+  //  }
+  //});
 
   // Emit events based on TempStore events
   if (FS.TempStore) {
