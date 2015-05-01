@@ -15,7 +15,7 @@ Package.onUse(function(api) {
     // Want to make use of the file object and its api, yes!
     'cfs:file@0.1.17',
     // Add the FS.Collection to keep track of everything
-    'cfs:collection@0.5.5',
+    'cfs:collection@0.5.6',
     // Support filters for easy rules about what may be inserted
     'cfs:collection-filters@0.2.4',
     // Add the option to have ddp and http access point
