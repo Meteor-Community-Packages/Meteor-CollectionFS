@@ -1,23 +1,24 @@
-Meteor.startup(function(){
-  _.each(FS._collections, function(fsCollection){
+FS.CollectionObservers = {};
 
-    // Emit "removed" event on collection
-    fsCollection.files.find().observe({
-      removed: function(fsFile) {
-        fsCollection.emit('removed', fsFile);
-      }
-    });
+FS.CollectionObservers.register = function(fsCollection){
 
-    // Observe files that have been stored so we can delete any temp files
-    fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
-      added: function(fsFile) {
-        console.log("Observer all stores complete for", fsFile._id);
-        fsCollection.emit('allStoresComplete', fsFile);
-      }
-    });
-
+  // Emit "removed" event on collection
+  fsCollection.files.find().observe({
+    removed: function(fsFile) {
+      console.log('Collection Observer:', fsFile._id, 'removed from collection', fsCollection.name);
+      fsCollection.emit('removed', fsFile);
+    }
   });
-});
+
+  // Observe files that have been stored so we can delete any temp files
+  fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
+    added: function(fsFile) {
+      console.log('Collection Observer: All stores complete for', fsFile._id, 'on collection', fsCollection.name);
+      fsCollection.emit('allStoresComplete', fsFile);
+    }
+  });
+
+}
 
 /**
  *  @method getDoneQuery

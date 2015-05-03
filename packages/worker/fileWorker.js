@@ -56,6 +56,42 @@ FS.JobManager.jobCollection.find({type: 'removeTempFile', status: 'ready'}).obse
   }
 });
 
+FS.FileWorker.removeStoredDataQueue = FS.JobManager.jobCollection.processJobs(
+  'removeStoredData',
+  {
+    //concurrency: 1,
+    //cargo: 1,
+    pollInterval: 1000000000, // Don't poll,
+    //prefetch: 1
+  },
+  function(job, callback){
+    var fileObj = EJSON.parse(job.data.fsFileString);
+    var fsCollection = FS._collections[fileObj.collectionName];
+    // Create an fsFile in memory from the serialised
+    var fsFile = new FS.File(fileObj);
+    //remove from temp store
+    FS.TempStore.removeFile(fsFile);
+    //delete from all stores
+    FS.Utility.each(fsCollection.options.stores, function(storage) {
+      storage.adapter.remove(fsFile);
+    });
+    // TODO: Handle success and failures properly
+    job.done();
+    callback();
+  }
+);
+
+FS.JobManager.jobCollection.find({type: 'removeStoredData', status: 'ready'}).observe({
+  added: function(doc) {
+    FS.debug && console.log("New removeStoredData job", doc._id, "observed - calling worker");
+    FS.FileWorker.removeStoredDataQueue.trigger();
+  },
+  changed: function(doc) {
+    FS.debug && console.log("Existing removeStoredData job", doc._id, "ready again - calling worker");
+    FS.FileWorker.removeStoredDataQueue.trigger();
+  }
+});
+
 /**
  * @method saveCopy
  * @private
@@ -95,62 +131,3 @@ function saveCopy(job, callback) {
   job.done();
   callback();
 }
-
-/**
- *  @method getDoneQuery
- *  @private
- *  @param {Array} stores - The stores array from the FS.Collection options
- *
- *  Returns a selector that will be used to identify files where all
- *  stores have successfully save or have failed the
- *  max number of times but still have chunks. The resulting selector
- *  should be something like this:
- *
- *  {
- *    $and: [
- *      {chunks: {$exists: true}},
- *      {
- *        $or: [
- *          {
- *            $and: [
- *              {
- *                'copies.storeName': {$ne: null}
- *              },
- *              {
- *                'copies.storeName': {$ne: false}
- *              }
- *            ]
- *          },
- *          {
- *            'failures.copies.storeName.doneTrying': true
- *          }
- *        ]
- *      },
- *      REPEATED FOR EACH STORE
- *    ]
- *  }
- *
- */
-//function getDoneQuery(stores) {
-//  var selector = {
-//    $and: []
-//  };
-//
-//  // Add conditions for all defined stores
-//  FS.Utility.each(stores, function(store) {
-//    var storeName = store.name;
-//    var copyCond = {$or: [{$and: []}]};
-//    var tempCond = {};
-//    tempCond["copies." + storeName] = {$ne: null};
-//    copyCond.$or[0].$and.push(tempCond);
-//    tempCond = {};
-//    tempCond["copies." + storeName] = {$ne: false};
-//    copyCond.$or[0].$and.push(tempCond);
-//    tempCond = {};
-//    tempCond['failures.copies.' + storeName + '.doneTrying'] = true;
-//    copyCond.$or.push(tempCond);
-//    selector.$and.push(copyCond);
-//  })
-//
-//  return selector;
-//}

@@ -16,3 +16,4 @@ Job Manager creates jobs by listening to events emitted in other cfs packages. T
 ## Job Task Reference:
 - saveCopy
 - removeTempFile
+- removeStoredData

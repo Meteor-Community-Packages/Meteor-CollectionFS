@@ -10,7 +10,7 @@ Package.onUse(function(api) {
   api.versionsFrom('1.1.0.2');
 
   api.use([
-    'cfs:base-package@0.0.29'
+    'cfs:base-package@0.0.30'
   ]);
 
   api.addFiles('collection-observers.js', 'server');
