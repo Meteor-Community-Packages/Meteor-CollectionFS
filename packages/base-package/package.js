@@ -21,6 +21,7 @@ Package.onUse(function(api) {
   ], 'server');
 
   api.addFiles([
+    'polyfill.base64.js',
     'base-common.js',
     'base-client.js'
   ], 'client');
