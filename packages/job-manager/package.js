@@ -11,12 +11,17 @@ Package.onUse(function(api) {
 
 
   api.use([
-    'cfs:base-package@0.0.29'
+    'cfs:base-package@0.0.29',
+    'cfs:tempstore@0.1.5'
   ]);
 
   api.use([
     'vsivsi:job-collection@1.1.0'
   ]);
+
+  api.use([
+    'random'
+  ], 'server');
 
   api.addFiles([
     'common.js'

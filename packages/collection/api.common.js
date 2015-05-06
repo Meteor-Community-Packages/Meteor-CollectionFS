@@ -29,7 +29,12 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     // so that it is available when FileWorker calls saveCopies.
     // This will also trigger file handling from collection observes.
     else if (Meteor.isServer) {
-      fileObj.createReadStream().pipe(FS.TempStore.createWriteStream(fileObj));
+      // XXX: Intermediate refactor. Wanted to minimise changes until client-side beginStorage is refactored
+
+      var emitted = self.emit('inserted', fileObj);
+      if (FS.debug && !emitted) {
+        console.log(fileObj.name() + ' was successfully inserted into the Mongo Collection. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "inserted" event on the ' + self.name + ' collection.');
+      }
     }
   }
 

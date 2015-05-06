@@ -1,6 +1,6 @@
 // ##Temporary Storage
 //
-// Temporary storage is used for chunked uploads until all chunks are received
+// Temporary storage is used for chunked uploads/transfers until all chunks are received
 // and all copies have been made or given up. In some cases, the original file
 // is stored only in temporary storage (for example, if all copies do some
 // manipulation in beforeSave). This is why we use the temporary file as the
@@ -178,7 +178,7 @@ FS.TempStore.removeFile = function fsTempStoreRemoveFile(fileObj) {
   // If fileObj is not mounted or can't be, throw an error
   mountFile(fileObj, 'FS.TempStore.removeFile');
 
-  // Emit event
+  // Emit event XXX: Too ambiguous. Is this a command or event?
   self.emit('remove', fileObj);
 
   var chunkInfo = tracker.findOne({
@@ -195,8 +195,11 @@ FS.TempStore.removeFile = function fsTempStoreRemoveFile(fileObj) {
     });
 
     // Remove fileObj from tracker collection, too
-    tracker.remove({_id: chunkInfo._id});
+    return tracker.remove({_id: chunkInfo._id});
 
+  } else {
+    FS.debug && console.log('FS.TempStore No Tracker Record for', fileObj._id);
+    return true
   }
 };
 
@@ -379,4 +382,126 @@ FS.TempStore.createReadStream = function(fileObj) {
 
   // Return the combined stream
   return combinedStream;
+};
+
+/**
+ * @method TempStoreTransferQueue
+ * @namespace TempStoreTransferQueue
+ * @constructor
+ * @param {Object} [options]
+ *
+ */
+FS.TempStore.transferQueue = function(options) {
+  var self = this;
+  // Rig options
+  options = options || {};
+
+  // Default to 1hr
+  options.timeoutDelay = options.timeoutDelay || 3600000;
+
+  // Init the power queue
+  self = new PowerQueue({
+    name: 'TempStoreTransferQueue',
+    maxProcessing: 1,
+    maxFailures: 5,
+    jumpOnFailure: true,
+    autostart: true,
+    isPaused: false,
+    filo: false,
+    debug: FS.debug
+  });
+
+  // Keep track of transferring files via this queue
+  self.files = {};
+
+  // cancel maps onto queue reset
+  self.cancel = self.reset;
+
+  /**
+   * @method FS.TempStore.transferQueue.isTransferringFile
+   * @param {FS.File} fileObj File to check if transferring
+   * @returns {Boolean} True if the file is transferring
+   *
+   */
+  self.isTransferringFile = function (fileObj) {
+    // Check if file is already in queue
+    return !!(fileObj && fileObj._id && fileObj.collectionName && (self.files[fileObj.collectionName] || {})[fileObj._id]);
+  };
+
+  /** @method FS.TempStore.transferQueue.resumeTransferringFile
+   * @param {FS.File} fsFile File to resume transferring
+   */
+  self.resumeTransferringFile = function (fileObj) {
+    // Make sure we are handed a FS.File
+    if(!(fileObj instanceof FS.File)) {
+      throw new Error('Transfer queue expects an FS.File');
+    }
+
+    if(fileObj.isMounted()) {
+      self.files[fileObj.collectionName] = self.files[fileObj.collectionName] || {};
+      self.files[fileObj.collectionName][fileObj._id] = false;
+      // Kick off normal transfer
+      self.transferFile(fileObj);
+    }
+  };
+
+  /** @method FS.TempStore.transferQueue.transferFile
+   * @param {FS.File} fsFile File to upload
+   */
+  self.transferFile = function (fileObj) {
+    FS.debug && console.log("TempStoreTransferQueue transferFile");
+
+    // Make sure we are handed a FS.File
+    if(!(fileObj instanceof FS.File)) {
+      throw new Error('TempStoreTransferQueue expects an FS.File');
+    }
+
+    // Make sure that we have size as number
+    if(typeof fileObj.size() !== 'number') {
+      throw new Error('TempStoreTransferQueue failed: fileObj size not set');
+    }
+
+    // We don't add the file if it's already in transfer or if already completed
+    if(self.isTransferringFile(fileObj) || fileObj.hasStored('_tempstore')) {
+      return;
+    }
+
+    // Make sure the file object is mounted on a collection
+    if(fileObj.isMounted()) {
+
+      var collectionName = fileObj.collectionName;
+      var id = fileObj._id;
+
+      // Set flag that this file is being transferred
+      self.files[collectionName] = self.files[collectionName] || {};
+      self.files[collectionName][id] = true;
+
+      self.add(function(done){
+        console.log('files:', self.files);
+        var writeStream = FS.TempStore.createWriteStream(fileObj)
+
+        fileObj.createReadStream().pipe(writeStream);
+
+        // Timeout to fail
+        Meteor.setTimeout(function() {
+          console.log(fileObj._id, 'tempStore stream timed out');
+          done(Meteor.Error);
+        }, options.timeoutDelay);
+
+        writeStream.safeOn('error', function(err) {
+          console.log(fileObj._id, 'tempStore stream failed', err);
+          done(Meteor.Error);
+        });
+
+        writeStream.safeOn('stored', function(){
+          console.log(fileObj._id, 'tempStore stream completed');
+          done();
+          // Remove from list of files being transferred
+          self.files[collectionName][id] = false;
+        });
+
+      });
+    };
+  }
+  return self;
 };

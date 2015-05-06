@@ -29,19 +29,27 @@ FS.JobManager.jobCollection.find({type: 'saveCopy', status: 'ready'}).observe({
 FS.FileWorker.removeTempFileQueue = FS.JobManager.jobCollection.processJobs(
   'removeTempFile',
   {
-    //concurrency: 1,
-    //cargo: 1,
+    concurrency: 2,
+    cargo: 2,
     pollInterval: 1000000000, // Don't poll,
-    //prefetch: 1
+    //prefetch: 2
   },
   function (job, callback) {
-    var fileObj = job.data.fileObj;
-    var fsCollection = FS._collections[fileObj.collectionName];
-    var fsFile = fsCollection.findOne(fileObj._id);
-    FS.TempStore.removeFile(fsFile);
-    job.done();
-    // TODO: Work out how to handle failed jobs since there's no return value
-    callback();
+    var fsCollection = FS._collections[job.data.fileObj.collectionName];
+    var fileObj = fsCollection.findOne(job.data.fileObj._id);
+
+    if(FS.TempStore.removeFile(fileObj)){
+      job.done();
+      callback();
+    } else {
+      job.fail();
+      callback();
+    };
+
+    Meteor.setTimeout(function(){
+      job.fail();
+      callback();
+    }, 3600000);
   }
 );
 
@@ -65,17 +73,41 @@ FS.FileWorker.removeStoredDataQueue = FS.JobManager.jobCollection.processJobs(
     //prefetch: 1
   },
   function(job, callback){
-    var fileObj = EJSON.parse(job.data.fsFileString);
     var fsCollection = FS._collections[fileObj.collectionName];
-    // Create an fsFile in memory from the serialised
-    var fsFile = new FS.File(fileObj);
-    //remove from temp store
-    FS.TempStore.removeFile(fsFile);
-    //delete from all stores
+    // To track progress
+    var subTaskCounter = 1;
+    var subTaskTotal = 1 + fsCollection.options.stores.length;
+
+    // Create an fsFile in memory from the de-serialised data
+    var fileObj = new FS.File(EJSON.parse(job.data.fsFileString));
+
+    Meteor.setTimeout(function(){
+      job.fail();
+      callback();
+    }, 3600000);
+
+    // 1. Remove from temp store
+    if(FS.TempStore.removeFile(fileObj)){
+      job.progress(subTaskCounter, subTaskTotal);
+    } else {
+      job.fail();
+      callback();
+    };
+
+    subTaskCounter++;
+
+    // 2. Delete from all stores
     FS.Utility.each(fsCollection.options.stores, function(storage) {
-      storage.adapter.remove(fsFile);
+      if(storage.adapter.remove(fileObj)){
+        job.progress(subTaskCounter, subTaskTotal)
+      } else {
+        job.fail();
+        callback();
+        throw new Error('File ' + fileObj._id + ' in ' + storage.storeName + ' could not be removed');
+      };
+      subTaskCounter++;
     });
-    // TODO: Handle success and failures properly
+
     job.done();
     callback();
   }
@@ -105,29 +137,41 @@ FS.JobManager.jobCollection.find({type: 'removeStoredData', status: 'ready'}).ob
  * have, potentially overwriting any previously saved data. Synchronous.
  */
 
-// TODO: Work out how to determine if the job is done or failed
 function saveCopy(job, callback) {
 
-  var fileObj = job.data.fileObj;
   var storeName = job.data.storeName;
   var options = job.data.options || {};
-  var fsCollection = FS._collections[fileObj.collectionName];
-  var fsFile = fsCollection.findOne(fileObj._id);
+  var fsCollection = FS._collections[job.data.fileObj.collectionName];
+  var fileObj = fsCollection.findOne(job.data.fileObj._id);
 
   var storage = FS.StorageAdapter(storeName);
   if (!storage) {
-    throw new Error('No store named "' + storeName + '" exists');
     job.failed();
     callback();
+    throw new Error('No store named "' + storeName + '" exists');
   }
 
   FS.debug && console.log('saving to store ' + storeName);
 
-  var writeStream = storage.adapter.createWriteStream(fsFile);
-  var readStream = FS.TempStore.createReadStream(fsFile);
+  var writeStream = storage.adapter.createWriteStream(fileObj);
+  var readStream = FS.TempStore.createReadStream(fileObj);
 
   // Pipe the temp data into the storage adapter
   readStream.pipe(writeStream);
-  job.done();
-  callback();
+
+  Meteor.setTimeout(function() {
+    FS.debug && console.log(fileObj._id, 'store stream timed out');
+    job.fail();
+    callback();
+  }, 3600000);
+
+  writeStream.safeOn('error', function(err) {
+    job.fail();
+    callback();
+  });
+
+  writeStream.safeOn('stored', function(){
+    job.done();
+    callback();
+  });
 }
