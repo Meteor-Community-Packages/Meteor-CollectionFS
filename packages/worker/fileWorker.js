@@ -73,7 +73,7 @@ FS.FileWorker.removeStoredDataQueue = FS.JobManager.jobCollection.processJobs(
     //prefetch: 1
   },
   function(job, callback){
-    var fsCollection = FS._collections[fileObj.collectionName];
+    var fsCollection = FS._collections[job.data.fileObj.collectionName];
     // To track progress
     var subTaskCounter = 1;
     var subTaskTotal = 1 + fsCollection.options.stores.length;
