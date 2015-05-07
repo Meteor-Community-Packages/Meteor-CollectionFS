@@ -11,6 +11,9 @@ FS.Store = {
   },
   S3: function () {
     throw new Error('To use FS.Store.S3, you must add the "cfs-s3" package.');
+  },
+  Dropbox: function () {
+    throw new Error('To use FS.Store.Dropbox, you must add the "cfs-dropbox" package.');
   }
 };
 
