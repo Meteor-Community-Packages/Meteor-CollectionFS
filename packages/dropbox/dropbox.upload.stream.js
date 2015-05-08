@@ -6,12 +6,18 @@ Dropbox.Client.prototype.createReadStream = function (params, options) {
   var key = params.Key;
   var wrappedReadFile = Meteor.wrapAsync(this.readFile, this);
   var readableStreamBuffer = new streamBuffers.ReadableStreamBuffer();
+  var buffer;
 
   // Ask Dropbox to return Buffer instance
   params.buffer = true;
-
+  try {
+    buffer = wrappedReadFile(key, params);
+  } catch (e) {
+    if (FS.debug) console.log('readFile error: ', e);
+  }
+  
   // Put buffer into the stream
-  readableStreamBuffer.put(wrappedReadFile(key, params));
+  readableStreamBuffer.put(buffer);
   return readableStreamBuffer;
 };
 
