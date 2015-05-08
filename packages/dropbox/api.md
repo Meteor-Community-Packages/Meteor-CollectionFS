@@ -16,6 +16,8 @@ __Arguments__
  Dropbox key; required if not set in environment variables
     - __secret__ *{String}*    (Optional)
  Dropbox secret; required if not set in environment variables
+	- __token__ *{String}*    (Optional)
+ Dropbox token; required if not set in environment variables
     - __folder__ *{String}*    (Default = '/')
  Which folder (key prefix) in the bucket to use
     - __beforeSave__ *{Function}*    (Optional)

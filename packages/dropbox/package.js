@@ -1,8 +1,8 @@
 Package.describe({
   name: 'cfs:dropbox',
-  version: '0.0.2',
+  version: '0.0.3',
   summary: 'Dropbox storage adapter for CollectionFS',
-  git: 'https://github.com/CollectionFS/Meteor-cfs-dropbox.git',
+  git: 'https://github.com/CollectionFS/Meteor-CollectionFS/tree/master/packages/dropbox',
   documentation: 'README.md'
 });
 
