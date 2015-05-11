@@ -13,6 +13,7 @@
 /packages/filesystem/versions.json
 /packages/filesaver/versions.json
 /packages/s3/versions.json
+/packages/dropbox/versions.json
 
 /packages/standard-packages/packages/
 /packages/base-package/packages/
@@ -29,6 +30,7 @@
 /packages/filesystem/packages/
 /packages/filesaver/packages/
 /packages/s3/packages/
+/packages/dropbox/packages/
 
 .build*
 .npm*

@@ -20,6 +20,7 @@ var packageList = [
   'file',
   'filesystem',
   's3',
+  'dropbox',
   'storage-adapter',
   'upload-http'
 ];
