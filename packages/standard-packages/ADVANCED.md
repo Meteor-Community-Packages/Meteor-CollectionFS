@@ -25,6 +25,7 @@ or wants to make their own storage adapter.
 * cfs:filesystem
 * cfs:gridfs
 * cfs:s3
+* cfs:dropbox
 
 ## Collections
 
