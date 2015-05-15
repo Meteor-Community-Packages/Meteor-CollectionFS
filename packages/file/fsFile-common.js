@@ -88,7 +88,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
             throw new Error('FS.File.attachData got a URL for which it could not determine the MIME type and none was provided using options.type');
           }
           FS.Utility.extend(self, {original: result});
-          setData(result.type);
+          setData(type);
         }
       });
     }
