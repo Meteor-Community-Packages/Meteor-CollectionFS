@@ -12,17 +12,14 @@ __Arguments__
 * __name__ *{String}*  
  The store name
 * __options__ *{Object}*  
-    - __key__ *{String}*    (Optional)
- Dropbox key; required if not set in environment variables
-    - __secret__ *{String}*    (Optional)
- Dropbox secret; required if not set in environment variables
-	- __token__ *{String}*    (Optional)
- Dropbox token; required if not set in environment variables
-    - __folder__ *{String}*    (Default = '/')
+  - __key__ *{String}*    (Required)
+  - __secret__ *{String}*    (Required)
+  - __token__ *{String}*    (Required)
+  - __folder__ *{String}*    (Default = '/')
  Which folder (key prefix) in the bucket to use
-    - __beforeSave__ *{Function}*    (Optional)
+  - __beforeSave__ *{Function}*    (Optional)
  Function to run before saving a file from the server. The context of the function will be the `FS.File` instance we're saving. The function may alter its properties.
-    - __maxTries__ *{Number}*    (Default = 5)
+  - __maxTries__ *{Number}*    (Default = 5)
  Max times to attempt saving a file
 
 -
@@ -54,9 +51,9 @@ __Arguments__
 * __name__ *{String}*  
  The store name
 * __options__ *{Object}*  
-    - __beforeSave__ *{Function}*    (Optional)
+  - __beforeSave__ *{Function}*    (Optional)
  Function to run before saving a file from the client. The context of the function will be the `FS.File` instance we're saving. The function may alter its properties.
-    - __maxTries__ *{Number}*    (Default = 5)
+  - __maxTries__ *{Number}*    (Default = 5)
  Max times to attempt saving a file
 
 -
