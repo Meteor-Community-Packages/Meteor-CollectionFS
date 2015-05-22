@@ -25,6 +25,18 @@ var packageList = [
   'upload-http'
 ];
 
+// List of binary packages
+var binaryPackages = [
+  'gridfs'
+];
+
+// Archs we want to build for
+var buildForArchs = [
+  'os.osx.x86_64',
+  'os.linux.x86_64',
+  'os.linux.x86_32',
+];
+
 // We may not publish from within a Meteor app - so we workaround this by
 // moving the .meteor folder to a temp location while publishing.
 var tempfolder = 'packages/.tempQA';
@@ -90,6 +102,19 @@ queue.push(function() {
     next();
   });
 });
+
+
+// XXX: https://www.meteor.com/services/build We need to build binary packages
+// for each arch - binaryPackages
+// 
+// # OS X
+// meteor admin get-machine os.osx.x86_64
+
+// # Linux on 64-bit Intel
+// meteor admin get-machine os.linux.x86_64
+
+// # Linux on 32-bit Intel
+// meteor admin get-machine os.linux.x86_32
 
 // Report done
 queue.push(function() {
