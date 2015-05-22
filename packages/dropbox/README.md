@@ -10,17 +10,16 @@ A Meteor package that adds Dropbox storage for
 
 ## Installation
 
-Install using Meteorite. When in a Meteor app directory, enter:
-
 ```
 $ meteor add cfs:dropbox
 ```
 
 ## Dropbox Setup
 
-1. [Create an App](https://www.dropbox.com/developers/apps)
-2. Select the app. 
-3. Generate access token.
+1. [Create an API app](https://www.dropbox.com/developers/apps)
+ - _Can your app be limited to its own folder?_ - Yes
+2. Optionally modify the _App folder name_
+3. Generate _OAuth 2_ access token
 
 ## Usage
 
@@ -29,10 +28,10 @@ dropboxStore options, like so:
 
 ```js
 var dropboxStore = new FS.Store.Dropbox("files", {
-  key: "dropboxAppSecret",
-	secret: "dropboxAppSecret",
-	token: "dropboxAccessToken", // Don’t share your access token with anyone.
-	folder: "folder", //optional, which folder (key prefix) to use 
+  key: "dropboxAppKey",
+  secret: "dropboxAppSecret",
+  token: "dropboxAccessToken", // Don’t share your access token with anyone.
+  folder: "folder", //optional, which folder (key prefix) to use 
   // The rest are generic store options supported by all storage adapters
   transformWrite: myTransformWriteFunction, //optional
   transformRead: myTransformReadFunction, //optional
@@ -44,8 +43,7 @@ Files = new FS.Collection("files", {
 });
 ```
 
-Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
-package documentation for more information.
+Refer to the CollectionFS project [README](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/README.md) for more information.
 
 
 **For Step 2:**
