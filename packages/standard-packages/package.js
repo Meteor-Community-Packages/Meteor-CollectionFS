@@ -22,12 +22,12 @@ Package.onUse(function(api) {
     'cfs:access-point@0.1.49',
     // The server queues jobs for local or remote workers to make copies of our files
     'cfs:job-manager@0.1.0',
-    // Add workers to this app, picking up jobs out of the Mongo backed queue
+    // Add file workers to this app, picking up jobs out of the Mongo backed queue
     'cfs:worker@0.2.0',
     // By default we want to support uploads over HTTP
     'cfs:upload-http@0.0.20',
     // Observers for FSCollections
-    'cfs:collection-observers@0.1.0',
+    'cfs:collection-observers@0.1.0'
   ]);
 
 });

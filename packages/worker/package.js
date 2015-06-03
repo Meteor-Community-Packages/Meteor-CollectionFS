@@ -11,6 +11,7 @@ Package.onUse(function(api) {
   api.use([
     'cfs:base-package@0.0.30',
     'cfs:tempstore@0.1.4',
+    'cfs:job-manager@0.1.0',
     'cfs:storage-adapter@0.2.1'
   ]);
 

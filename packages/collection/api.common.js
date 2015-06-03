@@ -31,7 +31,7 @@ FS.Collection.prototype.insert = function(fileRef, callback) {
     else if (Meteor.isServer) {
       // XXX: Intermediate refactor. Wanted to minimise changes until client-side beginStorage is refactored
 
-      var emitted = self.emit('inserted', fileObj);
+      var emitted = self.emit('inserted', fileObj, 'server', new Date());
       if (FS.debug && !emitted) {
         console.log(fileObj.name() + ' was successfully inserted into the Mongo Collection. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "inserted" event on the ' + self.name + ' collection.');
       }

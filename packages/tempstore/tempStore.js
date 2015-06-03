@@ -391,17 +391,17 @@ FS.TempStore.createReadStream = function(fileObj) {
  * @param {Object} [options]
  *
  */
-FS.TempStore.transferQueue = function(options) {
+FS.TempStore.serverTransferQueue = function(options) {
   var self = this;
   // Rig options
   options = options || {};
 
-  // Default to 1hr
-  options.timeoutDelay = options.timeoutDelay || 3600000;
+  // Default to 3hr
+  options.timeoutDelay = options.timeoutDelay || 10800000;
 
   // Init the power queue
   self = new PowerQueue({
-    name: 'TempStoreTransferQueue',
+    name: 'TempStoreServerTransferQueue',
     maxProcessing: 1,
     maxFailures: 5,
     jumpOnFailure: true,
@@ -418,7 +418,7 @@ FS.TempStore.transferQueue = function(options) {
   self.cancel = self.reset;
 
   /**
-   * @method FS.TempStore.transferQueue.isTransferringFile
+   * @method FS.TempStore.serverTransferQueue.isTransferringFile
    * @param {FS.File} fileObj File to check if transferring
    * @returns {Boolean} True if the file is transferring
    *
@@ -428,13 +428,13 @@ FS.TempStore.transferQueue = function(options) {
     return !!(fileObj && fileObj._id && fileObj.collectionName && (self.files[fileObj.collectionName] || {})[fileObj._id]);
   };
 
-  /** @method FS.TempStore.transferQueue.resumeTransferringFile
+  /** @method FS.TempStore.serverTransferQueue.resumeTransferringFile
    * @param {FS.File} fsFile File to resume transferring
    */
   self.resumeTransferringFile = function (fileObj) {
     // Make sure we are handed a FS.File
     if(!(fileObj instanceof FS.File)) {
-      throw new Error('Transfer queue expects an FS.File');
+      throw new Error('TempStoreServerTransferQueue expects an FS.File');
     }
 
     if(fileObj.isMounted()) {
@@ -445,20 +445,20 @@ FS.TempStore.transferQueue = function(options) {
     }
   };
 
-  /** @method FS.TempStore.transferQueue.transferFile
+  /** @method FS.TempStore.serverTransferQueue.transferFile
    * @param {FS.File} fsFile File to upload
    */
   self.transferFile = function (fileObj) {
-    FS.debug && console.log("TempStoreTransferQueue transferFile");
+    FS.debug && console.log("TempStoreServerTransferQueue transferFile");
 
     // Make sure we are handed a FS.File
     if(!(fileObj instanceof FS.File)) {
-      throw new Error('TempStoreTransferQueue expects an FS.File');
+      throw new Error('TempStoreServerTransferQueue expects an FS.File');
     }
 
     // Make sure that we have size as number
     if(typeof fileObj.size() !== 'number') {
-      throw new Error('TempStoreTransferQueue failed: fileObj size not set');
+      throw new Error('TempStoreServerTransferQueue failed: fileObj size not set');
     }
 
     // We don't add the file if it's already in transfer or if already completed
@@ -477,31 +477,32 @@ FS.TempStore.transferQueue = function(options) {
       self.files[collectionName][id] = true;
 
       self.add(function(done){
-        console.log('files:', self.files);
+        console.log('TempstoreServerTransferQueue.transferFile Worker Function:', fileObj._id);
         var writeStream = FS.TempStore.createWriteStream(fileObj)
 
         fileObj.createReadStream().pipe(writeStream);
 
-        // Timeout to fail
-        Meteor.setTimeout(function() {
-          console.log(fileObj._id, 'tempStore stream timed out');
-          done(Meteor.Error);
-        }, options.timeoutDelay);
+        //var jobTimeout = Meteor.setTimeout(function(){
+        //  FS.debug && console.log('TempstoreServerTransferQueue.transferFile timed out processing', fsFile._id);
+        //  done(Meteor.Error);
+        //}, options.timeoutDelay);
 
         writeStream.safeOn('error', function(err) {
-          console.log(fileObj._id, 'tempStore stream failed', err);
+          FS.debug && console.log(fileObj._id, 'TempStore stream failed', err);
+          //Meteor.clearTimeout(jobTimeout);
           done(Meteor.Error);
         });
 
         writeStream.safeOn('stored', function(){
-          console.log(fileObj._id, 'tempStore stream completed');
+          FS.debug && console.log(fileObj._id, 'TempStore stream completed');
           done();
+          //Meteor.clearTimeout(jobTimeout);
           // Remove from list of files being transferred
           self.files[collectionName][id] = false;
         });
 
       });
-    };
-  }
+    }
+  };
   return self;
 };
