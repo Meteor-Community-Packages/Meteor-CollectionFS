@@ -5,7 +5,7 @@ FS.CollectionObservers.register = function(fsCollection){
   // Emit "removed" event on collection
   fsCollection.files.find().observe({
     removed: function(fsFile) {
-      console.log('Collection Observer:', fsFile._id, 'removed from collection', fsCollection.name);
+      FS.debug && console.log('Collection Observer:', fsFile._id, 'removed from collection', fsCollection.name);
       fsCollection.emit('removed', fsFile);
     }
   });
@@ -13,8 +13,10 @@ FS.CollectionObservers.register = function(fsCollection){
   // Observe files that have been stored so we can delete any temp files
   fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
     added: function(fsFile) {
-      console.log('Collection Observer: All stores complete for', fsFile._id, 'on collection', fsCollection.name);
-      fsCollection.emit('allStoresComplete', fsFile);
+      if(FS.TempStore.exists(fsFile)){
+        FS.debug && console.log('Collection Observer: All stores complete for', fsFile._id, 'on collection', fsCollection.name, 'and temp data exists');
+        fsCollection.emit('allStoresComplete', fsFile);
+      }
     }
   });
 
@@ -27,12 +29,11 @@ FS.CollectionObservers.register = function(fsCollection){
  *
  *  Returns a selector that will be used to identify files where all
  *  stores have successfully save or have failed the
- *  max number of times but still have chunks. The resulting selector
+ *  max number of times. The resulting selector
  *  should be something like this:
  *
  *  {
  *    $and: [
- *      {chunks: {$exists: true}},
  *      {
  *        $or: [
  *          {
