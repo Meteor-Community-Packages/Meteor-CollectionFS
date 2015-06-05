@@ -17,23 +17,23 @@ FS.FileWorker = {};
  * Sets up observes on the fsCollection to store file copies and delete
  * temp files at the appropriate times.
  */
-FS.FileWorker.observe = function(fsCollection) {
+FS.FileWorker.observe = function (fsCollection) {
 
   // Initiate observe for finding newly uploaded/added files that need to be stored
   // per store.
-  FS.Utility.each(fsCollection.options.stores, function(store) {
+  FS.Utility.each(fsCollection.options.stores, function (store) {
     var storeName = store.name;
     fsCollection.files.find(getReadyQuery(storeName), {
       fields: {
         copies: 0
       }
     }).observe({
-      added: function(fsFile) {
+      added: function (fsFile) {
         // added will catch fresh files
         FS.debug && console.log("FileWorker ADDED - calling saveCopy", storeName, "for", fsFile._id);
         saveCopy(fsFile, storeName);
       },
-      changed: function(fsFile) {
+      changed: function (fsFile) {
         // changed will catch failures and retry them
         FS.debug && console.log("FileWorker CHANGED - calling saveCopy", storeName, "for", fsFile._id);
         saveCopy(fsFile, storeName);
@@ -44,21 +44,26 @@ FS.FileWorker.observe = function(fsCollection) {
   // Initiate observe for finding files that have been stored so we can delete
   // any temp files
   fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
-    added: function(fsFile) {
+    added: function (fsFile) {
       FS.debug && console.log("FileWorker ADDED - calling deleteChunks for", fsFile._id);
       FS.TempStore.removeFile(fsFile);
+      fsFile.update({
+        $set: {
+          "tempstoreDeleted": true
+        }
+      })
     }
   });
 
   // Initiate observe for catching files that have been removed and
   // removing the data from all stores as well
   fsCollection.files.find().observe({
-    removed: function(fsFile) {
+    removed: function (fsFile) {
       FS.debug && console.log('FileWorker REMOVED - removing all stored data for', fsFile._id);
       //remove from temp store
       FS.TempStore.removeFile(fsFile);
       //delete from all stores
-      FS.Utility.each(fsCollection.options.stores, function(storage) {
+      FS.Utility.each(fsCollection.options.stores, function (storage) {
         storage.adapter.remove(fsFile);
       });
     }
@@ -124,11 +129,11 @@ function getReadyQuery(storeName) {
  */
 function getDoneQuery(stores) {
   var selector = {
-    $and: []
+    $and: [{"tempstoreDeleted": {$ne: true}}]
   };
 
   // Add conditions for all defined stores
-  FS.Utility.each(stores, function(store) {
+  FS.Utility.each(stores, function (store) {
     var storeName = store.name;
     var copyCond = {$or: [{$and: []}]};
     var tempCond = {};
