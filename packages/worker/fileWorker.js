@@ -49,9 +49,9 @@ FS.FileWorker.observe = function (fsCollection) {
       FS.TempStore.removeFile(fsFile);
       fsFile.update({
         $set: {
-          "tempstoreDeleted": true
+          "tempstoreDeleted" : true
         }
-      })
+      });
     }
   });
 
