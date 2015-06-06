@@ -132,24 +132,24 @@ function removeStoredData(fsFile, fsCollection, job) {
   var subTaskCounter = 1;
   var subTaskTotal = 1 + fsCollection.options.stores.length;
 
-  // 1. Remove from temp store
-  if(FS.TempStore.removeFile(fsFile)) {
-    job.progress(subTaskCounter, subTaskTotal);
-  } else {
+  // 1. Remove from temp store if it exists
+  if(FS.TempStore.exists(fsFile) && !FS.TempStore.removeFile(fsFile)) {
     job.fail();
+    return;
   }
 
+  job.progress(subTaskCounter, subTaskTotal);
   subTaskCounter++;
 
   // 2. Delete from all stores
   FS.Utility.each(fsCollection.storesLookup, function (storage) {
     if(storage.adapter.remove(fsFile)) {
-      job.progress(subTaskCounter, subTaskTotal)
+      job.progress(subTaskCounter, subTaskTotal);
     } else {
       job.fail();
+      return
       //throw new Error('File ' + fileObj._id + ' in ' + storage.storeName + ' could not be removed');
-    }
-    ;
+    };
     subTaskCounter++;
   });
 

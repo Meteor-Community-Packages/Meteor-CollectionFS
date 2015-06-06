@@ -13,10 +13,8 @@ FS.CollectionObservers.register = function(fsCollection){
   // Observe files that have been stored so we can delete any temp files
   fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
     added: function(fsFile) {
-      if(FS.TempStore.exists(fsFile)){
-        FS.debug && console.log('Collection Observer: All stores complete for', fsFile._id, 'on collection', fsCollection.name, 'and temp data exists');
-        fsCollection.emit('allStoresComplete', fsFile);
-      }
+      FS.debug && console.log('Collection Observer: All stores complete for', fsFile._id, 'on collection', fsCollection.name, 'and temp data exists');
+      fsCollection.emit('allStoresComplete', fsFile);
     }
   });
 
@@ -58,7 +56,7 @@ FS.CollectionObservers.register = function(fsCollection){
  */
 function getDoneQuery(stores) {
   var selector = {
-    $and: []
+    $and: [{"tempFileAvailable": true}]
   };
 
   // Add conditions for all defined stores

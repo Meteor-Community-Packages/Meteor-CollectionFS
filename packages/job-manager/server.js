@@ -49,7 +49,7 @@ FS.JobManager.register = function(fsCollection){
         sourceId: self.Config.nodeId,
         processStartDate: processStartDate
       });
-      job.priority('high').retry({wait: 0}).save();
+      job.priority('high').retry({retries: 20, wait: 0}).save();
     }
   });
 
@@ -67,7 +67,7 @@ FS.JobManager.register = function(fsCollection){
         storeName: storeName,
         sourceId: self.Config.nodeId
       });
-      job.priority('medium').retry({wait: 0}).save();
+      job.priority('medium').retry({retries: 10, wait: 10, backoff: 'exponential'}).save();
     });
   });
 
@@ -80,7 +80,7 @@ FS.JobManager.register = function(fsCollection){
       fileId: fsFile._id,
       sourceId: self.Config.nodeId
     });
-    job.priority('low').retry({wait: 0}).save();
+    job.priority('low').retry({retries: 10, wait: 5000, backoff: 'constant'}).save();
   });
 
   fsCollection.on('removed', function(fsFile) {
@@ -93,7 +93,7 @@ FS.JobManager.register = function(fsCollection){
       fsFileString: EJSON.stringify(fsFile),
       sourceId: self.Config.nodeId
     });
-    job.priority('low').retry({wait: 0}).save();
+    job.priority('low').retry({retries: 10, wait: 5000, backoff: 'exponential'}).save();
   });
 }
 
