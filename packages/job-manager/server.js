@@ -21,14 +21,15 @@ FS.JobManager.Config = {
   // Remove jobs from collection after this period of time once completed
   //removeCompletedJobsAfter: msDay,
 
-  // A task will faile after 3 hour
+  // A task will fail after 3 hours (Waiting for internal support https://github.com/vsivsi/meteor-job-collection/issues/86)
   autoFail: 10800000,
 
-  // Limit the number of workers that may be processing simultaneously
+  // Number of workers that may be processing simultaneously
   concurrency: 2,
-  // Specify the number of jobs each worker pulls at one time
-  cargo: 2,
-  prefetch: 1
+  // Number of jobs each worker is provided at one time. If > 1, job will be array
+  payload: 1,
+  // Used to reduce work request latency across slower networks
+  prefetch: 0
 };
 
 FS.JobManager.register = function(fsCollection){
@@ -113,7 +114,7 @@ FS.JobManager.Queue = FS.JobManager.jobCollection.processJobs(
   FS.JobManager._registeredJobTypes,
   {
     concurrency: FS.JobManager.Config.concurrency,
-    cargo: FS.JobManager.Config.cargo,
+    payload: FS.JobManager.Config.payload,
     pollInterval: 1000000000, // Don't poll,
     prefetch: FS.JobManager.Config.prefetch
   },
@@ -131,14 +132,8 @@ FS.JobManager.Queue = FS.JobManager.jobCollection.processJobs(
           fsFile = fsCollection.findOne(data.fileId);
         }
 
-        //var jobTimeout = Meteor.setTimeout(function(){
-        //  FS.debug && console.log('JobManager.Queue job timed out processing', fsFile._id);
-        //  job.fail();
-        //}, FS.JobManager.Config.autoFail);
-
         registeredJobWorker.workerFunction.apply(this, [fsFile, fsCollection, job]);
 
-        //Meteor.clearTimeout(jobTimeout);
         callback();
       }
     });

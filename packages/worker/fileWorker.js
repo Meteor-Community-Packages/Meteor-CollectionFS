@@ -4,66 +4,6 @@
  */
 FS.FileWorker = {};
 
-//FS.FileWorker.Queue = FS.JobManager.jobCollection.processJobs(
-//  [
-//    'saveCopy',
-//    'removeTempFile',
-//    'removeStoredData'
-//  ],
-//  {
-//    concurrency: 2,
-//    cargo: 2,
-//    pollInterval: 1000000000 // Don't poll,
-//    //prefetch: 2
-//  },
-//  function (job, callback) {
-//    var data = job.data;
-//    var fsCollection = FS._collections[data.collectionName];
-//
-//    if(data.fsFileString) {
-//      // Create an fsFile in memory from the de-serialised data
-//      var fsFile = new FS.File(EJSON.parse(data.fsFileString));
-//    } else {
-//      var fsFile = fsCollection.findOne(data.fileId);
-//    }
-//    //var jobTimeout = Meteor.setTimeout(function(){
-//    //  job.fail();
-//    //  callback();
-//    //}, 3600000);
-//
-//    switch (job.type) {
-//      case 'saveCopy':
-//        saveCopy(fsFile, fsCollection, job);
-//        break;
-//      case 'removeTempFile':
-//        //if(FS.TempStore.removeFile(fsFile)){
-//        //  job.done();
-//        //} else {
-//        //  job.fail();
-//        //};
-//        removeTempFile(fsFile, fsCollection, job)
-//        break;
-//      case 'removeStoredData':
-//        removeStoredData(fsFile, fsCollection.storesLookup, job);
-//        break;
-//    }
-//
-//    //Meteor.clearTimeout(jobTimeout);
-//    callback();
-//  }
-//);
-
-//FS.JobManager.jobCollection.find({type: { $in: ['saveCopy','removeTempFile','removeStoredData']}, status: 'ready'}).observe({
-//  added: function(doc) {
-//    FS.debug && console.log("New " + doc.type + " job", doc._id, "observed - calling worker");
-//    FS.FileWorker.Queue.trigger();
-//  },
-//  changed: function(doc) {
-//    FS.debug && console.log("Existing saveCopy job", doc._id, "ready again - calling worker");
-//    FS.FileWorker.Queue.trigger();
-//  }
-//});
-
 /**
  * @method saveCopy
  * @private
@@ -80,36 +20,54 @@ FS.FileWorker = {};
 function saveCopy(fsFile, fsCollection, job) {
 
   var storeName = job.data.storeName;
-
   var storage = FS.StorageAdapter(storeName);
+
   if (!storage) {
-    job.failed();
+    job.fail({ reason: 'No store named ' + storeName + ' exists', code: 1 }, function (error, result) {
+      if (error) {
+        throw new Error('Could not fail FS.JobManager.jobCollection job: ' + job._doc._id);
+      }
+    });
     return
-    //throw new Error('No store named "' + storeName + '" exists');
+  } else {
+    job.log('Storage Adaptor rigged', { level: 'info', echo: FS.debug }, function (error, result) {
+      if(error)
+       throw new Error('Could not add log to FS.JobManager.jobCollection job: ' + job._doc._id);
+    });
   }
 
-  FS.debug && console.log('saving to store ' + storeName);
+  var tempStore = FS.TempStore.createReadStream(fsFile);
+  var destination = storage.adapter.createWriteStream(fsFile);
 
-  var writeStream = storage.adapter.createWriteStream(fsFile);
-  var readStream = FS.TempStore.createReadStream(fsFile);
+  tempStore.pipe(destination);
 
-  // Pipe the temp data into the storage adapter
-  readStream.pipe(writeStream);
-
-  writeStream.safeOn('error', function(err) {
-    job.fail();
+  job.log('Stream piping started', { level: 'info', echo: FS.debug }, function (error, result) {
+    if(error)
+      throw new Error('Could not add log to FS.JobManager.jobCollection job: ' + job._doc._id);
   });
 
-  writeStream.safeOn('stored', function(){
-    job.done();
+  destination.on('error', function(error) {
+    job.fail({ reason: 'Error piping ' + fsFile._id + ' from TempStore to ' + storeName , readStream: tempStore, writeStream: destination, code: 2}, function (error, result) {
+      if (error) {
+        throw new Error('Could not fail FS.JobManager.jobCollection job: ' + job._doc._id);
+      }
+    });
+  });
+
+  destination.safeOn('stored', function(){
+    job.done(fsFile._id + ' stored in ' + storeName);
   });
 }
 
 function removeTempFile(fsFile, fsCollection, job){
   if(FS.TempStore.removeFile(fsFile)){
-    job.done();
+    job.done(fsFile._id + ' removed from TempStore');
   } else {
-    job.fail();
+    job.fail({ reason: 'File ' + fsFile._id + ' could not be removed from TempStore', code: 2}, function (error, result) {
+      if (error) {
+        throw new Error('Could not fail FS.JobManager.jobCollection job: ' + job._doc._id);
+      }
+    });
   };
 }
 
@@ -134,26 +92,30 @@ function removeStoredData(fsFile, fsCollection, job) {
 
   // 1. Remove from temp store if it exists
   if(FS.TempStore.exists(fsFile) && !FS.TempStore.removeFile(fsFile)) {
-    job.fail();
-    return;
-  }
-
-  job.progress(subTaskCounter, subTaskTotal);
-  subTaskCounter++;
-
-  // 2. Delete from all stores
-  FS.Utility.each(fsCollection.storesLookup, function (storage) {
-    if(storage.adapter.remove(fsFile)) {
-      job.progress(subTaskCounter, subTaskTotal);
-    } else {
-      job.fail();
-      return
-      //throw new Error('File ' + fileObj._id + ' in ' + storage.storeName + ' could not be removed');
-    };
+    job.fail({ reason: 'File ' + fsFile._id + ' could not be removed from TempStore', code: 2}, function (error, result) {
+      if (error) {
+        throw new Error('Could not fail FS.JobManager.jobCollection job: ' + job._doc._id);
+      }
+    });
+  } else {
+    job.progress(subTaskCounter, subTaskTotal, { echo: FS.debug });
     subTaskCounter++;
-  });
 
-  job.done();
+    // 2. Delete from all stores
+    FS.Utility.each(fsCollection.storesLookup, function (storage) {
+      if(storage.adapter.remove(fsFile)) {
+        job.progress(subTaskCounter, subTaskTotal, { echo: FS.debug });
+      } else {
+        job.fail({ reason: 'File ' + fsFile._id + ' in ' + storage.storeName + ' could not be removed', code: 3}, function (error, result) {
+          if (error) {
+            throw new Error('Could not fail FS.JobManager.jobCollection job: ' + job._doc._id);
+          }
+        });
+      }
+      subTaskCounter++;
+    });
+    job.done('All data removed for ' + fsFile._id);
+  }
 }
 
 FS.JobManager && FS.JobManager.registerJob('saveCopy',saveCopy);
