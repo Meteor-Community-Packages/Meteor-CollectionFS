@@ -30,9 +30,9 @@ function saveCopy(fsFile, fsCollection, job) {
     });
     return
   } else {
-    job.log('Storage Adaptor rigged', { level: 'info', echo: FS.debug }, function (error, result) {
+    job.log('Storage Adaptor rigged', { level: 'info', echo: FS.debug || false }, function (error, result) {
       if(error)
-       throw new Error('Could not add log to FS.JobManager.jobCollection job: ' + job._doc._id);
+        throw new Error('Could not add log to FS.JobManager.jobCollection job: ' + job._doc._id);
     });
   }
 
@@ -41,7 +41,7 @@ function saveCopy(fsFile, fsCollection, job) {
 
   tempStore.pipe(destination);
 
-  job.log('Stream piping started', { level: 'info', echo: FS.debug }, function (error, result) {
+  job.log('Stream piping started', { level: 'info', echo: FS.debug || false }, function (error, result) {
     if(error)
       throw new Error('Could not add log to FS.JobManager.jobCollection job: ' + job._doc._id);
   });
@@ -98,13 +98,21 @@ function removeStoredData(fsFile, fsCollection, job) {
       }
     });
   } else {
-    job.progress(subTaskCounter, subTaskTotal, { echo: FS.debug });
+    job.progress(subTaskCounter, subTaskTotal, { echo: FS.debug || false }, function (error, result) {
+      if (error) {
+        throw new Error('Could not update progress of FS.JobManager.jobCollection job: ' + job._doc._id);
+      }
+    });
     subTaskCounter++;
 
     // 2. Delete from all stores
     FS.Utility.each(fsCollection.storesLookup, function (storage) {
       if(storage.adapter.remove(fsFile)) {
-        job.progress(subTaskCounter, subTaskTotal, { echo: FS.debug });
+        job.progress(subTaskCounter, subTaskTotal, { echo: FS.debug || false }, function (error, result) {
+          if (error) {
+            throw new Error('Could not update progress of FS.JobManager.jobCollection job: ' + job._doc._id);
+          }
+        });
       } else {
         job.fail({ reason: 'File ' + fsFile._id + ' in ' + storage.storeName + ' could not be removed', code: 3}, function (error, result) {
           if (error) {
