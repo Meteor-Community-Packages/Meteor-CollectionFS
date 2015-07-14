@@ -196,6 +196,7 @@ FS.TempStore.removeFile = function fsTempStoreRemoveFile(fileObj) {
 
     // Remove fileObj from tracker collection, too
     tracker.remove({_id: chunkInfo._id});
+    fileObj.update({ $set: { "tempFileAvailable": false } });
 
   }
 };
@@ -303,6 +304,7 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     if (chunkCount === chunkSum) {
       // We no longer need the chunk info
       var modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
+      modifier.$set.tempFileAvailable = true;
 
       // Check if the file has been uploaded before
       if (typeof fileObj.uploadedAt === 'undefined') {
