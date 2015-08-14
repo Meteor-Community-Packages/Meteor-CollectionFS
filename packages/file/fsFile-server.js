@@ -200,6 +200,24 @@ Meteor.methods({
     }
 
     return result;
+  },
+  // Helper function that checks whether given fileId from collectionName
+  //  Is fully uploaded to specify storeName.
+  '_cfs_returnWhenStored' : function (collectionName, fileId, storeName) {
+    check(collectionName, String);
+    check(fileId, String);
+    check(storeName, String);
+
+    var collection = FS._collections[collectionName];
+    if (!collection) {
+      return Meteor.Error('_cfs_returnWhenStored: FSCollection name not exists');
+    }
+
+    var file = collection.findOne({_id: fileId});
+    if (!file) {
+      return Meteor.Error('_cfs_returnWhenStored: FSFile not exists');
+    }
+    return file.hasStored(storeName);
   }
 });
 
