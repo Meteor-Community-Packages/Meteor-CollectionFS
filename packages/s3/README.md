@@ -162,9 +162,9 @@ Avatars = new FS.Collection("avatars", {
 
 ## API
 
-[For Users](https://github.com/CollectionFS/Meteor-cfs-s3/blob/master/api.md)
+[For Users](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/packages/s3/api.md)
 
-[For Contributors](https://github.com/CollectionFS/Meteor-cfs-s3/blob/master/internal.api.md)
+[For Contributors](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/packages/s3/internal.api.md)
 
 ## Contributors
 
