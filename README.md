@@ -119,7 +119,7 @@ The first step in using this package is to define a `FS.Collection`.
 *common.js:*
 
 ```js
-var Images = new FS.Collection("images", {
+Images = new FS.Collection("images", {
   stores: [new FS.Store.FileSystem("images", {path: "~/uploads"})]
 });
 ```
