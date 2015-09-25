@@ -52,7 +52,15 @@ Victor Leung wrote a great [quick start guide](https://medium.com/@victorleungtw
 
 ## Important Notes
 
-This branch is under active development right now (2015-03-01). It has bugs and the API may continue to change. Please help test it and fix bugs, but don't use in production yet.
+### Cordova Android Bug with Meteor 1.2+
+
+Due to a [bug in the Cordova Android version that is used with Meteor 1.2](https://issues.apache.org/jira/browse/CB-8608?jql=project%20%3D%20CB%20AND%20text%20~%20%22FileReader%22), you will need to add the following to your mobile-config.js or you will have problems with this package on Android devices:
+
+```js
+App.accessRule("blob:*");
+```
+
+### Documentation Feedback
 
 If you have Documentation feedback/requests please post on [issue 206](https://github.com/CollectionFS/Meteor-CollectionFS/issues/206)
 
