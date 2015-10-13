@@ -52,7 +52,15 @@ Victor Leung wrote a great [quick start guide](https://medium.com/@victorleungtw
 
 ## Important Notes
 
-This branch is under active development right now (2015-03-01). It has bugs and the API may continue to change. Please help test it and fix bugs, but don't use in production yet.
+### Cordova Android Bug with Meteor 1.2+
+
+Due to a [bug in the Cordova Android version that is used with Meteor 1.2](https://issues.apache.org/jira/browse/CB-8608?jql=project%20%3D%20CB%20AND%20text%20~%20%22FileReader%22), you will need to add the following to your mobile-config.js or you will have problems with this package on Android devices:
+
+```js
+App.accessRule("blob:*");
+```
+
+### Documentation Feedback
 
 If you have Documentation feedback/requests please post on [issue 206](https://github.com/CollectionFS/Meteor-CollectionFS/issues/206)
 
@@ -115,10 +123,11 @@ resume uploads.
 
 The first step in using this package is to define a `FS.Collection`.
 
+### Creat the FS Collection and Filestore
 *common.js:*
 
 ```js
-var Images = new FS.Collection("images", {
+Images = new FS.Collection("images", {
   stores: [new FS.Store.FileSystem("images", {path: "~/uploads"})]
 });
 ```
@@ -133,11 +142,19 @@ Your FS.Collection and FS.Store variables do not necessarily have to be
 global on the client or the server, but be sure to give them the same name
 (the first argument in each constructor) on both the client and the server.
 
-_If you're using a storage adapter that requires sensitive information such as
-access keys, we recommend supplying that information using environment variables.
-If you instead decide to pass options to the storage adapter constructor,
-then be sure that you do that only in the server code (and not simply within a
-`Meteor.isServer` block)._
+### Adding upload permissions (insert)
+To allow users to submit files to the FS Collection, you must create an `allow` rule in Server code:
+
+**server.js** or within **Meteor.isServer** block:
+
+```javascript
+Images.allow({
+  'insert': function () {
+    // add custom authentication code here
+    return true;
+  }
+});
+```
 
 ### Initiate the upload
 
@@ -242,6 +259,13 @@ packages. Refer to the package documentation for usage instructions.
 * [cfs:filesystem](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/filesystem): Allows you to save to the server filesystem.
 * [cfs:s3](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/s3): Allows you to save to an Amazon S3 bucket.
 * [cfs:dropbox](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/dropbox): Allows you to save to a Dropbox account.
+ 
+### Securing sensetive information
+_If you're using a storage adapter that requires sensitive information such as
+access keys, we recommend supplying that information using environment variables.
+If you instead decide to pass options to the storage adapter constructor,
+then be sure that you do that only in the server code (and not simply within a
+`Meteor.isServer` block)._
 
 ## File Manipulation
  
