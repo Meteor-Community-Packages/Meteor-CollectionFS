@@ -94,6 +94,10 @@ $ meteor add cfs:s3
 # OR
 
 $ meteor add cfs:dropbox
+
+# OR
+
+$ meteor add iyyang:cfs-aliyun
 ``` 
 
 Depending on what you need to do, you may need to add additional add-on packages. These are explained in the documentation sections to which they apply.
@@ -259,6 +263,7 @@ packages. Refer to the package documentation for usage instructions.
 * [cfs:filesystem](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/filesystem): Allows you to save to the server filesystem.
 * [cfs:s3](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/s3): Allows you to save to an Amazon S3 bucket.
 * [cfs:dropbox](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/dropbox): Allows you to save to a Dropbox account.
+* [iyyang:cfs-aliyun](https://github.com/yyang/cfs-aliyun): Allows you to save to Aliyun OSS Storage.
  
 ### Securing sensetive information
 _If you're using a storage adapter that requires sensitive information such as
