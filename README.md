@@ -252,7 +252,7 @@ when creating your store. The default is 5.
 ## Storage Adapters
 
 Storage adapters handle retrieving the file data and removing the file data
-when you delete the file. There are currently three available storage adapters, which are in separate
+when you delete the file. There are currently four available storage adapters, which are in separate
 packages. Refer to the package documentation for usage instructions.
 
 * [cfs:gridfs](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/gridfs): Allows you to save data to mongodb GridFS.
