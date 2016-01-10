@@ -1,65 +1,20 @@
 // We use the official wabs sdk
 WABS = Npm.require('azure-storage');
 
-var validS3ServiceParamKeys = [
-  'endpoint',
-  'accessKeyId',
-  'secretAccessKey',
-  'sessionToken',
-  'credentials',
-  'credentialProvider',
-  'region',
-  'maxRetries',
-  'maxRedirects',
-  'sslEnabled',
-  'paramValidation',
-  'computeChecksums',
-  's3ForcePathStyle',
-  'httpOptions',
-  'apiVersion',
-  'apiVersions',
-  'logger',
-  'signatureVersion'
-];
-var validS3PutParamKeys = [
-  'ACL',
-  'Body',
-  'Bucket',
-  'CacheControl',
-  'ContentDisposition',
-  'ContentEncoding',
-  'ContentLanguage',
-  'ContentLength',
-  'ContentMD5',
-  'ContentType',
-  'Expires',
-  'GrantFullControl',
-  'GrantRead',
-  'GrantReadACP',
-  'GrantWriteACP',
-  'Key',
-  'Metadata',
-  'ServerSideEncryption',
-  'StorageClass',
-  'WebsiteRedirectLocation'
-];
-
 /**
  * @public
  * @constructor
  * @param {String} name - The store name
  * @param {Object} options
- * @param {String} options.region - Bucket region
- * @param {String} options.bucket - Bucket name
- * @param {String} [options.accessKeyId] - AWS IAM key; required if not set in environment variables
- * @param {String} [options.secretAccessKey] - AWS IAM secret; required if not set in environment variables
- * @param {String} [options.ACL='private'] - ACL for objects when putting
+ * @param {String} options.container - Container name
+ * @param {String} [options.storageAccountOrConnectionString] - WABS storage account or connection string; required if not set in environment variables
+ * @param {String} [options.storageAccessKey] - WABS storage access key; required if using a storage account and not set in environment variables
  * @param {String} [options.folder='/'] - Which folder (key prefix) in the bucket to use
  * @param {Function} [options.beforeSave] - Function to run before saving a file from the server. The context of the function will be the `FS.File` instance we're saving. The function may alter its properties.
  * @param {Number} [options.maxTries=5] - Max times to attempt saving a file
  * @returns {FS.StorageAdapter} An instance of FS.StorageAdapter.
  *
- * Creates an S3 store instance on the server. Inherits from FS.StorageAdapter
+ * Creates a WABS store instance on the server. Inherits from FS.StorageAdapter
  * type.
  */
 FS.Store.WABS = function(name, options) {
@@ -82,30 +37,15 @@ FS.Store.WABS = function(name, options) {
     folder = "";
   }
 
-  var bucket = options.bucket;
-  if (!bucket)
-    throw new Error('FS.Store.S3 you must specify the "bucket" option');
+  var container = options.container;
+  if (!container)
+    throw new Error('FS.Store.WABS you must specify the "container" option');
 
-  var defaultAcl = options.ACL || 'private';
+  // Create WABS service
+  var WABSBlobService = WABS.createBlobService(options.storageAccountOrConnectionString,options.storageAccessKey);
 
-  // Remove serviceParams from SA options
- // options = _.omit(options, validS3ServiceParamKeys);
-
-  var serviceParams = FS.Utility.extend({
-    Bucket: bucket,
-    region: null, //required
-    accessKeyId: null, //required
-    secretAccessKey: null, //required
-    ACL: defaultAcl
-  }, options);
-
-  // Whitelist serviceParams, else aws-sdk throws an error
-  // XXX: I've commented this at the moment... It stopped things from working
-  // we have to check up on this
-  // serviceParams = _.pick(serviceParams, validS3ServiceParamKeys);
-
-  // Create S3 service
-  var S3 = new AWS.S3(serviceParams);
+  //XXX: Is this necessary?
+  WABSBlobService.createContainerIfNotExists(container,function(){});
 
   return new FS.StorageAdapter(name, options, {
     typeName: 'storage.wabs',
@@ -122,47 +62,44 @@ FS.Store.WABS = function(name, options) {
       return fileObj.collectionName + '/' + fileObj._id + '-' + (filenameInStore || filename);
     },
     createReadStream: function(fileKey, options) {
+      return WABSBlobService.createReadStream(container,folder + fileKey,options);
+    },
+    createWriteStream: function(fileKey, options) {
 
-      return S3.createReadStream({
-        Bucket: bucket,
-        Key: folder + fileKey
+      var writeStream = WABSBlobService.createWriteStreamToBlockBlob(container, folder + fileKey, options);
+
+      // The filesystem does not emit the "end" event only close - so we
+      // manually send the end event
+      writeStream.on('close', function() {
+        if (FS.debug) console.log('SA WABS - DONE!! fileKey: "' + fileKey + '"');
+
+        WABSBlobService.getBlobProperties(container, folder + fileKey, function (error, properties) {
+          if (error) {
+            writeStream.emit('error', error);
+          } else {
+            var size;
+            if (options.rangeStart) {
+              var endOffset = properties.contentLength - 1;
+              var end = options.rangeEnd ? Math.min(options.rangeEnd, endOffset) : endOffset;
+              size = end - options.rangeStart + 1;
+            } else {
+              size = properties.contentLength;
+            }
+            // Emit end and return the fileKey, size, and updated date
+            writeStream.emit('stored', {
+              fileKey: fileKey,
+              size: size,
+              storedAt: new Date()
+            });
+          }
+        });
       });
 
-    },
-    // Comment to documentation: Set options.ContentLength otherwise the
-    // indirect stream will be used creating extra overhead on the filesystem.
-    // An easy way if the data is not transformed is to set the
-    // options.ContentLength = fileObj.size ...
-    createWriteStream: function(fileKey, options) {
-      options = options || {};
+      return writeStream;
 
-      if (options.contentType) {
-        options.ContentType = options.contentType;
-      }
-
-      // We dont support array of aliases
-      delete options.aliases;
-      // We dont support contentType
-      delete options.contentType;
-      // We dont support metadata use Metadata?
-      delete options.metadata;
-
-      // Set options
-      var options = FS.Utility.extend({
-        Bucket: bucket,
-        Key: folder + fileKey,
-        fileKey: fileKey,
-        ACL: defaultAcl
-      }, options);
-
-      return S3.createWriteStream(options);
     },
     remove: function(fileKey, callback) {
-
-      S3.deleteObject({
-        Bucket: bucket,
-        Key: folder + fileKey
-      }, function(error) {
+      WABSBlobService.deleteBlob(container, folder + fileKey, function(error) {
         callback(error, !error);
       });
     },

@@ -1,16 +1,12 @@
 Package.describe({
-  name: 'seba:cfs-wabs',
+  name: 'cfs:wabs',
   version: '0.1.0',
   summary: "Windows Azure Blob Storage (WABS) adapter for CollectionFS",
-  git: "https://github.com/CollectionFS/Meteor-CollectionFS/tree/master/packages/s3"
+  git: "https://github.com/CollectionFS/Meteor-CollectionFS/tree/master/packages/wabs"
 });
 
 Npm.depends({
-  'azure-storage': "0.6.0",
-  // 'temp': '0.7.0', // used by the wabs.indirect.streaming.js
-  // 'through2': '0.4.1', // used by the wabs.upload.stream.js
-  // 'backoff': '2.3.0', // used by the wabs.upload.stream.js
-  // 'bl': '0.7.0' // used by the wabs.upload.stream.js
+  'azure-storage': "0.7.0"
 });
 
 Package.onUse(function(api) {
@@ -19,9 +15,6 @@ Package.onUse(function(api) {
   api.use(['cfs:base-package@0.0.30', 'cfs:storage-adapter@0.2.1']);
   api.addFiles([
     'wabs.server.js',
-    // 'wabs.indirect.streaming.js',
-    // 'wabs.upload.stream.js',
-    'wabs.upload.stream2.js',
     ], 'server');
   api.addFiles('wabs.client.js', 'client');
 });
