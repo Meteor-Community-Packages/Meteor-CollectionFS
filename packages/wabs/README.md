@@ -1,75 +1,31 @@
-seba:cfs-wabs
+cfs:wabs
 =========================
 
-NOTE: This package is under active development right now (2014-5-12). It has
+NOTE: This package is under active development right now (2016-01-10). It has
 bugs and the API may continue to change. Please help test it and fix bugs,
 but don't use in production yet.
 
-A Meteor package that adds Amazon S3 storage for
+A Meteor package that adds Windows Azure Blob Storage (WABS) for
 [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS).
 
 ## Installation
 
-Install using Meteorite. When in a Meteor app directory, enter:
+Install using Meteor. When in a Meteor app directory, enter:
 
 ```
-$ meteor add cfs:s3
+$ meteor add cfs:wabs
 ```
-
-## S3 Setup
-
-1. In AWS S3, create a new bucket for your CFS store. Enter the name of the bucket for the `bucket` option in your S3 store options.
-2. Select the bucket, and then select Properties. Note the region, and enter the correct region in your S3 store options in your project. S3 displays the region *name* rather than the actual region, so you need to [check out this table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region) and use the corresponding value from the "Region" column for your store `region` value. Alternatively, you can specify the `endpoint` option, using the value from that same table.
-3. In AWS IAM, create a new user. Copy the generated key and secret and paste into the S3 store options in your project.
-4. Select your newly created user. In the bottom area, select Permissions > Attach User Policy.
-5. Select Custom Policy.
-6. To create the custom policy, give it any name you want, and then copy and paste the example policy below. Replace "mybucketname" with your actual bucket name.
-
-```json
-{
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListAllMyBuckets",
-        "s3:ListBucket"
-      ],
-      "Resource": "arn:aws:s3:::*"
-    },
-    {
-      "Action": [
-        "s3:PutObject",
-        "s3:PutObjectAcl",
-        "s3:GetObject",
-        "s3:GetObjectAcl",
-        "s3:DeleteObject",
-        "s3:DeleteObjectAcl"
-      ],
-      "Effect": "Allow",
-      "Resource": [
-        "arn:aws:s3:::mybucketname/*"
-      ]
-    }
-  ]
-}
-```
-
-You may have to wait for an unknown number of minutes for the new security to
-take effect.
 
 ## Usage
 
-Perform the steps in the "S3 Setup" section, putting the necessary information into your
-S3Store options, like so:
+Put the necessary information into your WABSStore options, like so:
 
 ```js
-var imageStore = new FS.Store.S3("images", {
-  region: "my-s3-region", //optional in most cases
-  accessKeyId: "account or IAM key", //required if environment variables are not set
-  secretAccessKey: "account or IAM secret", //required if environment variables are not set
-  bucket: "mybucket", //required
-  ACL: "myValue", //optional, default is 'private', but you can allow public or secure access routed through your app URL
-  folder: "folder/in/bucket", //optional, which folder (key prefix) in the bucket to use
+var imageStore = new FS.Store.WABS("images", {
+  container: "myContainer", //required
+  storageAccountOrConnectionString: "account or connection string", // WABS storage account or connection string; required if not set in environment variables
+  storageAccessKey: "secret", //WABS storage access key; required if using a storage account and not set in environment variables
+  folder: "folder/in/bucket", //optional, which folder (key prefix) in the container to use
   // The rest are generic store options supported by all storage adapters
   transformWrite: myTransformWriteFunction, //optional
   transformRead: myTransformReadFunction, //optional
@@ -82,25 +38,15 @@ Images = new FS.Collection("images", {
 ```
 
 ### Tips
-
-* Initially try specifying only the `accessKeyId`, `secretAccessKey`, and `bucket` options. Then, if it doesn't work, try adding the `region` option. The `region` option is not usually necessary, but for some S3 regions and setups, you might need it.
-* Once you have things working, you can add any other [global configuration options supported by the `aws-sdk`](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Service-Specific_Configuration). The most common will be `ACL`, for which the allowed values are:
-    * "private"
-    * "public-read"
-    * "public-read-write"
-    * "authenticated-read"
-    * "bucket-owner-read"
-    * "bucket-owner-full-control"
-
 Refer to the [CollectionFS](https://github.com/CollectionFS/Meteor-CollectionFS)
 package documentation for more information.
 
 
-### Client, Server, and S3 credentials
+### Client, Server, and WABS credentials
 
-There are two approaches to safely storing your S3 credentials:
+There are two approaches to safely storing your WABS credentials:
 
-1. As system environment variables (Amazon's [recommended approach](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Credentials_from_Environment_Variables)).
+1. As system environment variables (Amazon's [recommended approach].
 2. As given in the above code but located in a directory named `server` (note: wrapping in `Meteor.isServer` is **NOT**
 secure).
 
@@ -110,11 +56,10 @@ You need to define your store in two files: one located in a `server` director a
 
 **Client** *(client/collections_client/avatars.js)*
 ```
-var avatarStoreLarge = new FS.Store.S3("avatarsLarge");
-var avatarStoreSmall = new FS.Store.S3("avatarsSmall");
+var avatarStore = new FS.Store.WABS("avatars");
 
 Avatars = new FS.Collection("avatars", {
-  stores: [avatarStoreSmall, avatarStoreLarge],
+  stores: [avatarStore],
   filter: {
     allow: {
       contentTypes: ['image/*']
@@ -125,30 +70,19 @@ Avatars = new FS.Collection("avatars", {
 
 **Server** *(server/collections_server/avatars.js)*
 ```
-var avatarStoreLarge = new FS.Store.S3("avatarsLarge", {
-  accessKeyId: "ID-HERE",
-  secretAccessKey: "ACCESS-KEY-HERE",
-  bucket: "avatars.large",
+var avatarStoreLarge = new FS.Store.WABS("avatarsLarge", {
+  storageAccountOrConnectionString: "ID-HERE",
+  storageAccessKey: "ACCESS-KEY-HERE",
+  container: "avatars",
   transformWrite: function(fileObj, readStream, writeStream) {
     gm(readStream, fileObj.name()).resize('250', '250').stream().pipe(writeStream)
   }
 })
 
-var avatarStoreSmall = new FS.Store.S3("avatarsSmall", {
-  accessKeyId: "ID-HERE",
-  secretAccessKey: "ACCESS-KEY-HERE",
-  bucket: "avatars.small",
-  beforeWrite: function(fileObj) {
-    fileObj.size(20, {store: "avatarStoreSmall", save: false});
-  },
-  transformWrite: function(fileObj, readStream, writeStream) {
-    gm(readStream, fileObj.name()).resize('20', '20').stream().pipe(writeStream)
-  }
-})
 
 
 Avatars = new FS.Collection("avatars", {
-  stores: [avatarStoreSmall, avatarStoreLarge],
+  stores: [avatarStore],
   filter: {
     allow: {
       contentTypes: ['image/*']
@@ -162,14 +96,12 @@ Avatars = new FS.Collection("avatars", {
 
 ## API
 
-[For Users](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/packages/s3/api.md)
+[For Users](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/packages/wabs/api.md)
 
-[For Contributors](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/packages/s3/internal.api.md)
+[For Contributors](https://github.com/CollectionFS/Meteor-CollectionFS/blob/master/packages/wabs/internal.api.md)
 
 ## Contributors
 
-In addition to the core CollectionFS team, the following people have contributed:
-
-@Sanjo
+In addition to sebakerckhof, The following people have contributed:
 
 (Add yourself if you submit a PR.)

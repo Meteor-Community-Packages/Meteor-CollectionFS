@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2013-2015 [@raix](https://github.com/raix) and [@aldeed](https://github.com/aldeed), aka Morten N.O. Nørgaard Henriksen, mh@gi-software.com
+Copyright (c) 2013-2015 [@sebakerckhof](https://github.com/sebakerckhof)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
