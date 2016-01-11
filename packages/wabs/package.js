@@ -20,7 +20,7 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function(api) {
-  api.use(['cfs:standard-packages', 'seba:cfs-wabs', 'test-helpers', 'tinytest'], 'server');
+  api.use(['cfs:standard-packages', 'cfs:wabs', 'test-helpers', 'tinytest'], 'server');
   api.addFiles('tests/server-tests.js', 'server');
   api.addFiles('tests/client-tests.js', 'client');
 });
