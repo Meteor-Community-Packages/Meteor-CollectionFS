@@ -84,6 +84,7 @@ function getReadyQuery(storeName) {
   var selector = {uploadedAt: {$exists: true}};
   selector['copies.' + storeName] = null;
   selector['failures.copies.' + storeName + '.doneTrying'] = {$ne: true};
+  selector['node_id'] = process.env.METEOR_PARENT_PID;
   return selector;
 }
 

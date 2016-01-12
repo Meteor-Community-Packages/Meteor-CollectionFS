@@ -299,6 +299,8 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     // Progress
     self.emit('progress', fileObj, chunkNum, chunkCount, chunkSum, result);
 
+    fileObj.update({ $set: {node_id: process.env.METEOR_PARENT_PID} });
+
     // If upload is completed
     if (chunkCount === chunkSum) {
       // We no longer need the chunk info
