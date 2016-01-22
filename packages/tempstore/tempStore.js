@@ -293,18 +293,27 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     setObj['keys.' + chunkNum] = result.fileKey;
     tracker.update(selector, {$set: setObj});
 
+
+    var temp = tracker.findOne(selector);
+
+    if(!temp){
+      FS.debug && console.log('NOT FOUND FROM TEMPSTORE => EXIT (REMOVED)');
+      return;
+    }
+
     // Get updated chunkCount
     var chunkCount = FS.Utility.size(tracker.findOne(selector).keys);
 
     // Progress
     self.emit('progress', fileObj, chunkNum, chunkCount, chunkSum, result);
 
-    fileObj.update({ $set: {node_id: process.env.METEOR_PARENT_PID} });
-
     // If upload is completed
     if (chunkCount === chunkSum) {
       // We no longer need the chunk info
       var modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
+
+      if(!fileObj.instance_id)
+        modifier.$set.instance_id = process.env.COLLECTIONFS_ENV_NAME_UNIQUE_ID ? process.env[process.env.COLLECTIONFS_ENV_NAME_UNIQUE_ID] : process.env.METEOR_PARENT_PID;
 
       // Check if the file has been uploaded before
       if (typeof fileObj.uploadedAt === 'undefined') {
@@ -326,8 +335,14 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
       // XXX is emitting "ready" necessary?
       self.emit('ready', fileObj, chunkCount, result);
     } else {
-      // Update the chunkCount on the fileObject
-      fileObj.update({ $set: {chunkCount: chunkCount} });
+
+      var modifier = { $set: {}};
+      if(!fileObj.instance_id)
+        modifier.$set.instance_id = process.env.COLLECTIONFS_ENV_NAME_UNIQUE_ID ? process.env[process.env.COLLECTIONFS_ENV_NAME_UNIQUE_ID] : process.env.METEOR_PARENT_PID;
+
+      modifier.$set.chunkCount = chunkCount;
+
+      fileObj.update(modifier);
     }
   });
 

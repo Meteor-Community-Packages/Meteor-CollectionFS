@@ -43,12 +43,14 @@ FS.FileWorker.observe = function(fsCollection) {
 
   // Initiate observe for finding files that have been stored so we can delete
   // any temp files
+  /*
   fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
     added: function(fsFile) {
       FS.debug && console.log("FileWorker ADDED - calling deleteChunks for", fsFile._id);
       FS.TempStore.removeFile(fsFile);
     }
   });
+  */
 
   // Initiate observe for catching files that have been removed and
   // removing the data from all stores as well
@@ -84,7 +86,7 @@ function getReadyQuery(storeName) {
   var selector = {uploadedAt: {$exists: true}};
   selector['copies.' + storeName] = null;
   selector['failures.copies.' + storeName + '.doneTrying'] = {$ne: true};
-  selector['node_id'] = process.env.METEOR_PARENT_PID;
+  selector['instance_id'] = process.env.COLLECTIONFS_ENV_NAME_UNIQUE_ID ? process.env[process.env.COLLECTIONFS_ENV_NAME_UNIQUE_ID] : process.env.METEOR_PARENT_PID;
   return selector;
 }
 
@@ -142,7 +144,7 @@ function getDoneQuery(stores) {
     tempCond['failures.copies.' + storeName + '.doneTrying'] = true;
     copyCond.$or.push(tempCond);
     selector.$and.push(copyCond);
-  })
+  });
 
   return selector;
 }
@@ -172,6 +174,11 @@ function saveCopy(fsFile, storeName, options) {
 
   var writeStream = storage.adapter.createWriteStream(fsFile);
   var readStream = FS.TempStore.createReadStream(fsFile);
+
+  writeStream.on('finish',Meteor.bindEnvironment(function(){
+    FS.debug && console.log('finish', fsFile._id);
+    FS.TempStore.removeFile(fsFile);
+  }));
 
   // Pipe the temp data into the storage adapter
   readStream.pipe(writeStream);
