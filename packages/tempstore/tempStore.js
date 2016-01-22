@@ -302,7 +302,7 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     }
 
     // Get updated chunkCount
-    var chunkCount = FS.Utility.size(tracker.findOne(selector).keys);
+    var chunkCount = FS.Utility.size(temp.keys);
 
     // Progress
     self.emit('progress', fileObj, chunkNum, chunkCount, chunkSum, result);
