@@ -115,6 +115,22 @@ FS.Store.S3 = function(name, options) {
       // If the store and key is found return the key
       if (info && info.key) return info.key;
 
+      // Support explicit fileKey function in options
+      //   eg: set to save as just this filename
+      //   fileKey: function(fileObj) { return { fileKey: fileObj.name() }; }
+      //   eg: set to save as just the fileObj._id
+      //   fileKey: function(fileObj) { return { fileKey: fileObj._id }; }
+      //   eg: set to save as a path: <_id>/<name>
+      //   fileKey: function(fileObj) { return { fileKey: fileObj._id + '/' + fileObj.name() }; }
+      if (options && options.fileKey && typeof options.fileKey === 'function') {
+        return options.fileKey(fileObj);
+      }
+      // Support for an extension on the fileObj itself
+      if (fileObj && fileObj.fileKey) {
+        if (typeof fileObj.fileKey === 'string') return fileObj.fileKey;
+        if (typeof fileObj.fileKey === 'function') return fileObj.fileKey();
+      }
+
       var filename = fileObj.name();
       var filenameInStore = fileObj.name({store: name});
 
