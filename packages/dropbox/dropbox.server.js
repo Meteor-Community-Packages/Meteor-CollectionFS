@@ -97,7 +97,7 @@ FS.Store.Dropbox = function(name, options) {
       return dropbox.createWriteStream(options);
     },
     remove: function(fileKey, callback) {
-      dropbox.remove(fileKey, function(err, res) {
+      dropbox.remove(folder + fileKey, function(err, res) {
         callback(err, !err);
       });
     },
