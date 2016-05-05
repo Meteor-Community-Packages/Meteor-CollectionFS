@@ -127,7 +127,7 @@ resume uploads.
 
 The first step in using this package is to define a `FS.Collection`.
 
-### Creat the FS Collection and Filestore
+### Create the FS Collection and Filestore
 *common.js:*
 
 ```js
