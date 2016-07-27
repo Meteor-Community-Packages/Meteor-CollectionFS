@@ -1,3 +1,5 @@
+* Updated cfs:grid mongodb dependency to 2.2.4 (Meteor 1.4)
+
 CollectionFS - DEPRECATED
 ============
 
