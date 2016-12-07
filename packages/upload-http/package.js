@@ -13,8 +13,7 @@ Package.onUse(function(api) {
     'cfs:file@0.1.16',
     'cfs:access-point@0.1.49',
     'cfs:power-queue@0.9.11',
-    'cfs:reactive-list@0.0.9',
-    'aldeed:http'
+    'cfs:reactive-list@0.0.9'
   ]);
 
   api.addFiles([
