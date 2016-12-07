@@ -58,6 +58,7 @@ FS.File.prototype.attachData = function fsFileAttachData(data, options, callback
   }
   // Blob
   else if (typeof Blob !== "undefined" && data instanceof Blob) {
+    self.name(data.name);
     self.updatedAt(new Date());
     self.size(data.size);
     setData(data.type);
