@@ -5,6 +5,10 @@ Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-access-point.git'
 });
 
+Npm.depends({
+  "content-disposition": "0.5.0"
+});
+
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 

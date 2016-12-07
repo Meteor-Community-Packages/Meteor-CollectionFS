@@ -1,6 +1,8 @@
 getHeaders = [];
 getHeadersByCollection = {};
 
+var contentDisposition = Npm.require('content-disposition');
+
 FS.HTTP.Handlers = {};
 
 /**
@@ -170,7 +172,7 @@ FS.HTTP.Handlers.Get = function httpGetHandler(ref) {
   // Add 'Content-Disposition' header if requested a download/attachment URL
   if (typeof ref.download !== "undefined") {
     var filename = ref.filename || copyInfo.name;
-    self.addHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+    self.addHeader('Content-Disposition', contentDisposition(filename));
   } else {
     self.addHeader('Content-Disposition', 'inline');
   }
