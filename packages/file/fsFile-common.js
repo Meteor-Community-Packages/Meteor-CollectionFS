@@ -684,6 +684,65 @@ FS.File.prototype.updatedAt = function(value, options) {
   }
 };
 
+/**
+ * @method FS.File.onStoredCallback
+ * @summary Calls callback when the file is fully stored to the specify storeName
+ * @public
+ * @param {String} [storeName] - The name of the file store we want to get called when stored.
+ * @param {function} [callback]
+ */
+FS.File.prototype.onStoredCallback = function (storeName, callback) {
+  // Check file is not already stored
+  if (this.hasStored(storeName)) {
+    callback();
+    return;
+  }
+  if (Meteor.isServer) {
+    // Listen to file stored events
+    // TODO Require thinking whether it is better to use observer for case of using multiple application instances, Ask for same image url while upload is being done.
+    this.on('stored', function (newStoreName) {
+      // If stored is completed to the specified store call callback
+      if (storeName === newStoreName) {
+        // Remove the specified file stored listener
+        this.removeListener('stored', arguments.callee);
+        callback();
+      }
+    }.bind(this)
+    );
+  } else {
+    var fileId = this._id,
+        collectionName = this.collectionName;
+    // Wait for file to be fully uploaded
+    Tracker.autorun(function (c) {
+      Meteor.call('_cfs_returnWhenStored', collectionName, fileId, storeName, function (error, result) {
+        if (result && result === true) {
+          c.stop();
+          callback();
+        } else {
+          Meteor.setTimeout(function () {
+            c.invalidate();
+          }, 100);
+        }
+      });
+    });
+  }
+};
+
+/**
+ * @method FS.File.onStored
+ * @summary Function that returns when the file is fully stored to the specify storeName
+ * @public
+ * @param {String} storeName - The name of the file store we want to get called when stored.
+ *
+ * Function that returns when the file is fully stored to the specify storeName.
+ *
+ * For example needed if wanted to save the direct link to a file on s3 when fully uploaded.
+ */
+FS.File.prototype.onStored = function (arguments) {
+  var onStoredSync = Meteor.wrapAsync(this.onStoredCallback);
+  return onStoredSync.call(this, arguments);
+};
+
 function isBasicObject(obj) {
   return (obj === Object(obj) && Object.getPrototypeOf(obj) === Object.prototype);
 }
@@ -701,3 +760,5 @@ if (typeof Object.getPrototypeOf !== "function") {
     };
   }
 }
+
+

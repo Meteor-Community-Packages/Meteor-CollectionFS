@@ -62,6 +62,7 @@ FS.HTTP.setBaseUrl = function setBaseUrl(newBaseUrl) {
  * @param {Boolean} [options.auth=null] Add authentication token to the URL query string? By default, a token for the current logged in user is added on the client. Set this to `false` to omit the token. Set this to a string to provide your own token. Set this to a number to specify an expiration time for the token in seconds.
  * @param {Boolean} [options.download=false] Should headers be set to force a download? Typically this means that clicking the link with this URL will download the file to the user's Downloads folder instead of displaying the file in the browser.
  * @param {Boolean} [options.brokenIsFine=false] Return the URL even if we know it's currently a broken link because the file hasn't been saved in the requested store yet.
+ * @param {Boolean} [options.returnWhenStored=false] Flag relevant only on server, Return the URL only when file has been saved to the requested store.
  * @param {Boolean} [options.metadata=false] Return the URL for the file metadata access point rather than the file itself.
  * @param {String} [options.uploading=null] A URL to return while the file is being uploaded.
  * @param {String} [options.storing=null] A URL to return while the file is being stored.
@@ -78,6 +79,7 @@ FS.File.prototype.urlRelative = function(options) {
     download: false,
     metadata: false,
     brokenIsFine: false,
+    returnWhenStored: false,
     uploading: null, // return this URL while uploading
     storing: null, // return this URL while storing
     filename: null // override the filename that is shown to the user
@@ -95,10 +97,16 @@ FS.File.prototype.urlRelative = function(options) {
       if (options.storing) {
         return options.storing;
       } else if (!options.brokenIsFine) {
-        // We want to return null if we know the URL will be a broken
-        // link because then we can avoid rendering broken links, broken
-        // images, etc.
-        return null;
+        // In case we want to get back the url only when he is stored
+        if (Meteor.isServer && options.returnWhenStored) {
+          // Wait till file is stored to storeName
+          self.onStored(storeName);
+        } else {
+          // We want to return null if we know the URL will be a broken
+          // link because then we can avoid rendering broken links, broken
+          // images, etc.
+          return null;
+        }
       }
     }
 
