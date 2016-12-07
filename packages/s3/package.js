@@ -1,6 +1,6 @@
 Package.describe({
   name: 'cfs:s3',
-  version: '0.1.3',
+  version: '0.1.4',
   summary: "Amazon Web Services S3 storage adapter for CollectionFS",
   git: "https://github.com/CollectionFS/Meteor-CollectionFS/tree/master/packages/s3"
 });
