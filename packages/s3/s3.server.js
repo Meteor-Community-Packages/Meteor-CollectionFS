@@ -122,11 +122,15 @@ FS.Store.S3 = function(name, options) {
       return fileObj.collectionName + '/' + fileObj._id + '-' + (filenameInStore || filename);
     },
     createReadStream: function(fileKey, options) {
-
-      return S3.createReadStream({
+      var params = {
         Bucket: bucket,
         Key: folder + fileKey
-      });
+      };
+
+      if (options && "start" in options && "end" in options)
+        params.Range = "bytes=" + options.start + "-" + options.end;
+
+      return S3.createReadStream(params);
 
     },
     // Comment to documentation: Set options.ContentLength otherwise the
