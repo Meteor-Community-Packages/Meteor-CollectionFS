@@ -1,4 +1,4 @@
-CollectionFS - DEPRECATED
+CollectionFS
 ============
 
 CollectionFS is a suite of Meteor packages that together provide a complete file
