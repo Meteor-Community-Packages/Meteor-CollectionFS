@@ -106,6 +106,8 @@ FS.Collection = function(name, options) {
       return result;
     }
   };
+  
+  if(self.options.idGeneration) _filesOptions.idGeneration = self.options.idGeneration;
 
   // Create the 'cfs.' ++ ".filerecord" and use fsFile
   var collectionName = 'cfs.' + name + '.filerecord';

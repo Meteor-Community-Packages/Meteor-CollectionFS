@@ -102,8 +102,14 @@ var defaultSelectorFunction = function() {
   // Get the collection
   var collection = FS._collections[collectionName];
 
-  // Get the file if possible else return null
-  var file = (id && collection)? collection.findOne({ _id: id }): null;
+  //if Mongo ObjectIds are used, then we need to use that in find statement
+  if(collection.options.idGeneration && collection.options.idGeneration === 'MONGO') {
+    // Get the file if possible else return null
+    var file = (id && collection)? collection.findOne({ _id: new Meteor.Collection.ObjectID(id)}): null;
+  } else {
+    var file = (id && collection)? collection.findOne({ _id: id }): null;
+  }
+
 
   // Return the collection and the file
   return {
