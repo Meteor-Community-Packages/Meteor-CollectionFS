@@ -37,3 +37,4 @@
 /nbproject*
 /smart.lock
 *.DS_Store
+.idea
