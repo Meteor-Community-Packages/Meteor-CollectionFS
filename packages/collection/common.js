@@ -125,24 +125,20 @@ FS.Collection = function(name, options) {
   // Save the collection reference (we want it without the 'cfs.' prefix and '.filerecord' suffix)
   FS._collections[name] = this;
 
-  // Set up observers
-  Meteor.isServer && FS.FileWorker && FS.FileWorker.observe(this);
+  // Register with Job Manager
+  Meteor.isServer && FS.JobManager && FS.JobManager.register(this);
 
-  // Emit "removed" event on collection
-  self.files.find().observe({
-    removed: function(fileObj) {
-      self.emit('removed', fileObj);
-    }
-  });
+  // Register with Collection Observers
+  Meteor.isServer && FS.CollectionObservers && FS.CollectionObservers.register(this);
 
   // Emit events based on TempStore events
   if (FS.TempStore) {
     FS.TempStore.on('stored', function (fileObj, result) {
-      // When a file is successfully stored into the temp store, we emit an "uploaded" event on the FS.Collection only if the file belongs to this collection
+      // When a file is successfully stored into the temp store, we emit an "tempStoreTransferComplete" event on the FS.Collection only if the file belongs to this collection
       if (fileObj.collectionName === name) {
-        var emitted = self.emit('uploaded', fileObj);
+        var emitted = self.emit('tempStoreTransferComplete', fileObj);
         if (FS.debug && !emitted) {
-          console.log(fileObj.name() + ' was successfully uploaded. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "uploaded" event on the ' + name + ' collection.');
+          console.log(fileObj.name() + ' was successfully uploaded. You are seeing this informational message because you enabled debugging and you have not defined any listeners for the "tempStoreTransferComplete" event on the ' + name + ' collection.');
         }
       }
     });

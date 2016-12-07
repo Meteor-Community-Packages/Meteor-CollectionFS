@@ -1,4 +1,20 @@
 /**
+ * @method FS.File.prototype.beginStorage
+ * @public
+ * @return {undefined}
+ *
+ */
+FS.File.prototype.beginStorage = function() {
+  var self = this;
+
+  // Save the binary to a single chunk temp file,
+  // so that it is available when FileWorker calls saveCopies.
+  // This will also trigger file handling from event listeners.
+  self.createReadStream().pipe(FS.TempStore.createWriteStream(self));
+
+}
+
+/**
  * Notes a details about a storage adapter failure within the file record
  * @param {string} storeName
  * @param {number} maxTries

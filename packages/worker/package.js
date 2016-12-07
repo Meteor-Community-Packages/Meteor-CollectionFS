@@ -1,7 +1,7 @@
 Package.describe({
-  git: 'https://github.com/CollectionFS/Meteor-cfs-worker.git',
+  git: 'https://github.com/CollectionFS/Meteor-CollectionFS.git',
   name: 'cfs:worker',
-  version: '0.1.4',
+  version: '0.2.0',
   summary: 'CollectionFS, file worker - handles file copies/versions'
 });
 
@@ -11,13 +11,14 @@ Package.onUse(function(api) {
   api.use([
     'cfs:base-package@0.0.30',
     'cfs:tempstore@0.1.4',
+    'cfs:job-manager@0.1.0',
     'cfs:storage-adapter@0.2.1'
   ]);
 
   api.use([
     'livedata',
     'mongo-livedata',
-    'cfs:power-queue@0.9.11'
+    'vsivsi:job-collection@1.1.0'
   ]);
 
   api.addFiles([

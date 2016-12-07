@@ -18,6 +18,7 @@ Package.onUse(function(api) {
   api.use('cfs:gridfs@0.0.30', { weak: true });
 
   api.use('mongo');
+  api.use('cfs:power-queue@0.9.11', 'server');
 
   api.addFiles([
     'tempStore.js'
