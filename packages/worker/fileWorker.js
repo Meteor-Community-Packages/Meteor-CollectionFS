@@ -124,7 +124,7 @@ function getReadyQuery(storeName) {
  */
 function getDoneQuery(stores) {
   var selector = {
-    $and: []
+    $and: [{chunks: {$exists: true}}]
   };
 
   // Add conditions for all defined stores
