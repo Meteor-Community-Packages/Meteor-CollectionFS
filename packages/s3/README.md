@@ -110,7 +110,7 @@ secure).
 You need to define your store in two files: one located in a `server` director and one located in a `client` directory. In the client-side-only file, simply don't define any options when creating your FS.Store variable. Example:
 
 **Client** *(client/collections_client/avatars.js)*
-```
+```js
 var avatarStoreLarge = new FS.Store.S3("avatarsLarge");
 var avatarStoreSmall = new FS.Store.S3("avatarsSmall");
 
@@ -125,7 +125,7 @@ Avatars = new FS.Collection("avatars", {
 ```
 
 **Server** *(server/collections_server/avatars.js)*
-```
+```js
 var avatarStoreLarge = new FS.Store.S3("avatarsLarge", {
   accessKeyId: "ID-HERE", 
   secretAccessKey: "ACCESS-KEY-HERE", 
