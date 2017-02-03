@@ -274,7 +274,9 @@ uploads a large image, you may want to reduce its resolution, crop it,
 compress it, etc. before allowing the storage adapter to save it. You may also
 want to convert to another content type or change the filename or encrypt
 the file. You can do all of this by defining stream transformations on a
-store.
+store. Because streams [are only implemented on the server](https://github.com/CollectionFS/Meteor-CollectionFS/issues/482#issuecomment-65823925),
+`beforeWrite`, `transformRead` and `transformWrite` run on the server and
+should be placed in your server code or inside `if (Meteor.isServer)`.
 
 > Note: Transforms only work on the server-side code
 
