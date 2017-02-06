@@ -221,7 +221,7 @@ FS.HTTP.Handlers.Get = function httpGetHandler(ref) {
   readStream.pipe(self.createWriteStream());
 };
 
-// Due to unicode or other encoding character filenames can be susscessfull upload to server,
+// File with unicode or other encodings filename can upload to server susscessfully,
 // but when download, the  HTTP header "Content-Disposition" cannot accept 
 // characters other than ASCII, the filename should be converted to binary or URI encoded.
 // https://github.com/wekan/wekan/issues/784
