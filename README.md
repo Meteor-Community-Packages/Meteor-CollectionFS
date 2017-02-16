@@ -129,7 +129,7 @@ resume uploads.
 
 The first step in using this package is to define a `FS.Collection`.
 
-### Creat the FS Collection and Filestore
+### Create the FS Collection and Filestore
 *common.js:*
 
 ```js
@@ -267,7 +267,7 @@ packages. Refer to the package documentation for usage instructions.
 * [cfs:dropbox](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/dropbox): Allows you to save to a Dropbox account.
 * [iyyang:cfs-aliyun](https://github.com/yyang/cfs-aliyun): Allows you to save to Aliyun OSS Storage.
 
-### Securing sensetive information
+### Securing sensitive information
 _If you're using a storage adapter that requires sensitive information such as
 access keys, we recommend supplying that information using environment variables.
 If you instead decide to pass options to the storage adapter constructor,
