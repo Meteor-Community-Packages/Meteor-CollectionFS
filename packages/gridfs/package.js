@@ -1,13 +1,13 @@
 Package.describe({
   name: 'cfs:gridfs',
-  version: '0.0.33',
+  version: '0.0.34',
   summary: 'GridFS storage adapter for CollectionFS',
   git: 'https://github.com/CollectionFS/Meteor-cfs-gridfs.git'
 });
 
 Npm.depends({
-  mongodb: '1.4.35',
-  'gridfs-stream': '0.5.3'
+  mongodb: '2.2.4',
+  'gridfs-stream': '1.1.1'
   //'gridfs-locking-stream': '0.0.3'
 });
 

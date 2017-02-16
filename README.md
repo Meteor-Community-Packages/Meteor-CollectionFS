@@ -14,6 +14,8 @@ Victor Leung wrote a great [quick start guide](https://medium.com/@victorleungtw
 
 [Check out the Wiki](https://github.com/CollectionFS/Meteor-CollectionFS/wiki) for more information, code examples and how-tos.
 
+* Updated cfs:grid mongodb dependency to 2.2.4 (Meteor 1.4)
+
 ## Table of Contents
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -70,13 +72,13 @@ If you have Documentation feedback/requests please post on [issue 206](https://g
 
 ```bash
 $ cd <app dir>
-``` 
+```
 
 You must add `cfs:standard-packages`, which is the main package:
 
 ```bash
 $ meteor add cfs:standard-packages
-``` 
+```
 
 You must add at least one storage adapter package. See the Storage Adapters section for a list of the available storage adapter packages. At least `cfs:gridfs` or `cfs:filesystem` must be added, too, even if you are not using them. The temporary store requires one of them.
 
@@ -98,13 +100,13 @@ $ meteor add cfs:dropbox
 # OR
 
 $ meteor add iyyang:cfs-aliyun
-``` 
+```
 
 Depending on what you need to do, you may need to add additional add-on packages. These are explained in the documentation sections to which they apply.
 
 ```bash
 $ meteor add <CFS add-on package name>
-``` 
+```
 
 ## Introduction
 
@@ -114,20 +116,20 @@ The CollectionFS package makes available two important global variables:
 * An `FS.File` instance wraps a file and its data
 on the client or server. It is similar to the browser `File` object (and can be
 created from a `File` object), but it has additional properties and methods. Many of its methods are reactive when the instance is returned by a call to `find` or `findOne`.
-* An `FS.Collection` provides a collection in which information about 
+* An `FS.Collection` provides a collection in which information about
 files can be stored. It is backed by an underlying normal `Mongo.Collection` instance. Most collection methods, such as `find` and `insert` are available on the `FS.Collection` instance. If you need to call other collection methods such as `_ensureIndex`, you can call them directly on the underlying `Mongo.Collection` instance available through `myFSCollection.files`.
 
 A document from a `FS.Collection` is represented as a `FS.File`.
 
 CollectionFS also provides an HTTP upload package that has the necessary
 mechanisms to upload files, track upload progress reactively, and pause and
-resume uploads. 
+resume uploads.
 
 ## Getting Started
 
 The first step in using this package is to define a `FS.Collection`.
 
-### Create the FS Collection and Filestore
+### Creat the FS Collection and Filestore
 *common.js:*
 
 ```js
@@ -138,8 +140,8 @@ Images = new FS.Collection("images", {
 
 In this example, we've defined a FS.Collection named "images", which will
 be a new collection in your MongoDB database with the name "cfs.images.filerecord". We've
-also told it to use the filesystem storage adataper and store the files in `~/uploads` on 
-the local filesystem. If you don't specify a `path`, a `cfs/files` folder in your app 
+also told it to use the filesystem storage adataper and store the files in `~/uploads` on
+the local filesystem. If you don't specify a `path`, a `cfs/files` folder in your app
 container (bundle directory) will be used.
 
 Your FS.Collection and FS.Store variables do not necessarily have to be
@@ -224,7 +226,7 @@ the data on the server.
 
 ### Using `insert` Properly
 
-When you need to insert a file that's located on a client, always call 
+When you need to insert a file that's located on a client, always call
 `myFSCollection.insert` on the client. While you could define your own method,
 pass it the `fsFile`, and call `myFSCollection.insert` on the server, the
 difficulty is with getting the data from the client to the server. When you
@@ -264,8 +266,8 @@ packages. Refer to the package documentation for usage instructions.
 * [cfs:s3](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/s3): Allows you to save to an Amazon S3 bucket.
 * [cfs:dropbox](https://github.com/CollectionFS/Meteor-CollectionFS/tree/devel/packages/dropbox): Allows you to save to a Dropbox account.
 * [iyyang:cfs-aliyun](https://github.com/yyang/cfs-aliyun): Allows you to save to Aliyun OSS Storage.
- 
-### Securing sensitive information
+
+### Securing sensetive information
 _If you're using a storage adapter that requires sensitive information such as
 access keys, we recommend supplying that information using environment variables.
 If you instead decide to pass options to the storage adapter constructor,
@@ -273,7 +275,7 @@ then be sure that you do that only in the server code (and not simply within a
 `Meteor.isServer` block)._
 
 ## File Manipulation
- 
+
 You may want to manipulate files before saving them. For example, if a user
 uploads a large image, you may want to reduce its resolution, crop it,
 compress it, etc. before allowing the storage adapter to save it. You may also
@@ -328,7 +330,7 @@ beforeWrite: function (fileObj) {
 }
 ```
 
-(It's best to provide the `save: false` option to any of the setters you call in `beforeWrite`.) 
+(It's best to provide the `save: false` option to any of the setters you call in `beforeWrite`.)
 
 ## Image Manipulation
 
@@ -440,7 +442,7 @@ An `FS.File` instance is an object with properties similar to this:
     name: '',
     size: 0,
     type: '',
-    updatedAt: date 
+    updatedAt: date
   },
   copies: {
     storeName: {
@@ -449,7 +451,7 @@ An `FS.File` instance is an object with properties similar to this:
       size: 0,
       type: '',
       createdAt: date,
-      updatedAt: date 
+      updatedAt: date
     }
   },
   uploadedAt: date,
