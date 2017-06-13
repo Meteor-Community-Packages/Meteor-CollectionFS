@@ -109,6 +109,12 @@ FS.Collection = function(name, options) {
   
   if(self.options.idGeneration) _filesOptions.idGeneration = self.options.idGeneration;
 
+  // Enable specifying an alternate driver, to change where the filerecord is stored
+  // Drivers can be created with MongoInternals.RemoteCollectionDriver()
+  if(self.options._driver){
+    _filesOptions._driver = self.options._driver;
+  }
+
   // Create the 'cfs.' ++ ".filerecord" and use fsFile
   var collectionName = 'cfs.' + name + '.filerecord';
   self.files = new Mongo.Collection(collectionName, _filesOptions);
