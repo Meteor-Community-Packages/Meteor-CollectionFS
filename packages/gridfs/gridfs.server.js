@@ -164,6 +164,11 @@ FS.Store.GridFS = function(name, options) {
       mongodb.MongoClient.connect(options.mongoUrl, mongoOptions, function (err, db) {
         if (err) { return callback(err); }
         self.db = db;
+        
+        // ensure that indexes are added as otherwise CollectionFS fails for Mongo >= 3.0
+        var collection = new Mongo.Collection(gridfsName);
+        collection.rawCollection.ensureIndex({ "files_id": 1, "n": 1});        
+        
         callback(null);
       });
     }
