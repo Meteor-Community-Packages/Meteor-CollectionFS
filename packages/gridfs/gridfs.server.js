@@ -167,7 +167,7 @@ FS.Store.GridFS = function(name, options) {
         
         // ensure that indexes are added as otherwise CollectionFS fails for Mongo >= 3.0
         var collection = new Mongo.Collection(gridfsName);
-        collection.rawCollection.ensureIndex({ "files_id": 1, "n": 1});        
+        collection.rawCollection().ensureIndex({ "files_id": 1, "n": 1});        
         
         callback(null);
       });
