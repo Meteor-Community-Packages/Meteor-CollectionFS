@@ -10,14 +10,12 @@ Npm.depends({
 });
 
 Package.onUse(function(api) {
-  api.versionsFrom('1.0');
-
-  api.use(['cfs:base-package@0.0.30', 'cfs:file@0.1.16', 'ecmascript']);
+  api.use(['cfs:base-package@0.0.30', 'cfs:file@0.1.16', 'ecmascript@0.1.0']);
 
   api.use('cfs:filesystem@0.1.2', { weak: true });
   api.use('cfs:gridfs@0.0.30', { weak: true });
 
-  api.use('mongo');
+  api.use('mongo@1.0.0');
 
   api.addFiles([
     'tempStore.js'

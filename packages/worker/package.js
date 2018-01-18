@@ -6,8 +6,6 @@ Package.describe({
 });
 
 Package.onUse(function(api) {
-  api.versionsFrom('1.0');
-
   api.use([
     'cfs:base-package@0.0.30',
     'cfs:tempstore@0.1.6',
@@ -15,8 +13,8 @@ Package.onUse(function(api) {
   ]);
 
   api.use([
-    'livedata',
-    'mongo-livedata',
+    'livedata@1.0.0',
+    'mongo-livedata@1.0.0',
     'cfs:power-queue@0.9.11'
   ]);
 

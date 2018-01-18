@@ -6,8 +6,6 @@ Package.describe({
 });
 
 Package.onUse(function(api) {
-  api.versionsFrom('1.0');
-
   // Rig the collectionFS package v2
   api.imply([
     // Base util rigs the basis for the FS scope and some general helper mehtods
@@ -25,7 +23,6 @@ Package.onUse(function(api) {
     // By default we want to support uploads over HTTP
     'cfs:upload-http@0.0.20',
   ]);
-
 });
 
 Package.onTest(function (api) {
