@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-CollectionFS.git',
   name: 'cfs:standard-packages',
-  version: '0.5.9',
+  version: '0.5.10',
   summary: 'Filesystem for Meteor, collectionFS'
 });
 
@@ -21,7 +21,7 @@ Package.onUse(function(api) {
     // Add the option to have ddp and http access point
     'cfs:access-point@0.1.49',
     // We might also want to have the server create copies of our files?
-    'cfs:worker@0.1.4',
+    'cfs:worker@0.1.5',
     // By default we want to support uploads over HTTP
     'cfs:upload-http@0.0.20',
   ]);

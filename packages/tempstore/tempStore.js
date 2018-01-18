@@ -23,7 +23,7 @@ var CombinedStream = Npm.require('combined-stream');
  * @property FS.TempStore
  * @type {object}
  * @public
- * *it's an event emitter*
+ * @summary An event emitter
  */
 FS.TempStore = new EventEmitter();
 
@@ -35,7 +35,7 @@ var tracker = FS.TempStore.Tracker = new Mongo.Collection('cfs._tempstore.chunks
  * @type {StorageAdapter}
  * @namespace FS.TempStore
  * @private
- * This property is set to either `FS.Store.FileSystem` or `FS.Store.GridFS`
+ * @summary This property is set to either `FS.Store.FileSystem` or `FS.Store.GridFS`
  *
  * __When and why:__
  * We normally default to `cfs-filesystem` unless its not installed. *(we default to gridfs if installed)*
@@ -203,7 +203,7 @@ FS.TempStore.removeFile = function fsTempStoreRemoveFile(fileObj) {
 /**
  * @method FS.TempStore.removeAll
  * @public
- * This function removes all files from tempstorage - it cares not if file is
+ * @summary This function removes all files from tempstorage - it cares not if file is
  * already removed or not found, goal is reached anyway.
  */
 FS.TempStore.removeAll = function fsTempStoreRemoveAll() {
@@ -293,16 +293,28 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
     setObj['keys.' + chunkNum] = result.fileKey;
     tracker.update(selector, {$set: setObj});
 
+    var temp = tracker.findOne(selector);
+
+    if (!temp) {
+      FS.debug && console.log('NOT FOUND FROM TEMPSTORE => EXIT (REMOVED)');
+      return;
+    }
+
     // Get updated chunkCount
-    var chunkCount = FS.Utility.size(tracker.findOne(selector).keys);
+    var chunkCount = FS.Utility.size(temp.keys);
 
     // Progress
     self.emit('progress', fileObj, chunkNum, chunkCount, chunkSum, result);
 
+    var modifier = { $set: {} };
+    if (!fileObj.instance_id) {
+      modifier.$set.instance_id = process.env.COLLECTIONFS_ENV_NAME_UNIQUE_ID ? process.env[process.env.COLLECTIONFS_ENV_NAME_UNIQUE_ID] : process.env.METEOR_PARENT_PID;
+    }
+
     // If upload is completed
     if (chunkCount === chunkSum) {
       // We no longer need the chunk info
-      var modifier = { $set: {}, $unset: {chunkCount: 1, chunkSum: 1, chunkSize: 1} };
+      modifier.$unset = {chunkCount: 1, chunkSum: 1, chunkSize: 1};
 
       // Check if the file has been uploaded before
       if (typeof fileObj.uploadedAt === 'undefined') {
@@ -325,7 +337,8 @@ FS.TempStore.createWriteStream = function(fileObj, options) {
       self.emit('ready', fileObj, chunkCount, result);
     } else {
       // Update the chunkCount on the fileObject
-      fileObj.update({ $set: {chunkCount: chunkCount} });
+      modifier.$set.chunkCount = chunkCount;
+      fileObj.update(modifier);
     }
   });
 

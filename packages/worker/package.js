@@ -1,7 +1,7 @@
 Package.describe({
   git: 'https://github.com/CollectionFS/Meteor-cfs-worker.git',
   name: 'cfs:worker',
-  version: '0.1.4',
+  version: '0.1.5',
   summary: 'CollectionFS, file worker - handles file copies/versions'
 });
 
@@ -10,7 +10,7 @@ Package.onUse(function(api) {
 
   api.use([
     'cfs:base-package@0.0.30',
-    'cfs:tempstore@0.1.4',
+    'cfs:tempstore@0.1.6',
     'cfs:storage-adapter@0.2.1'
   ]);
 

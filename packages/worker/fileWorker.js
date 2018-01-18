@@ -46,7 +46,11 @@ FS.FileWorker.observe = function(fsCollection) {
   fsCollection.files.find(getDoneQuery(fsCollection.options.stores)).observe({
     added: function(fsFile) {
       FS.debug && console.log("FileWorker ADDED - calling deleteChunks for", fsFile._id);
-      FS.TempStore.removeFile(fsFile);
+      try {
+        FS.TempStore.removeFile(fsFile);
+      } catch(err) {
+        console.error(err);
+      }
     }
   });
 
@@ -169,9 +173,13 @@ function saveCopy(fsFile, storeName, options) {
 
   FS.debug && console.log('saving to store ' + storeName);
 
-  var writeStream = storage.adapter.createWriteStream(fsFile);
-  var readStream = FS.TempStore.createReadStream(fsFile);
+  try {
+    var writeStream = storage.adapter.createWriteStream(fsFile);
+    var readStream = FS.TempStore.createReadStream(fsFile);
 
-  // Pipe the temp data into the storage adapter
-  readStream.pipe(writeStream);
+    // Pipe the temp data into the storage adapter
+    readStream.pipe(writeStream);
+  } catch(err) {
+    console.error(err);
+  }
 }

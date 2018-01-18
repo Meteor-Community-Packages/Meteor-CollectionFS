@@ -6,20 +6,20 @@ Package.describe({
 });
 
 Npm.depends({
-  mongodb: '2.2.4',
+  mongodb: '2.2.9',
   'gridfs-stream': '1.1.1'
   //'gridfs-locking-stream': '0.0.3'
 });
 
-Package.onUse(function(api) {
+Package.onUse(function (api) {
   api.versionsFrom('1.4');
 
-  api.use(['cfs:base-package@0.0.30', 'cfs:storage-adapter@0.2.1']);
+  api.use(['cfs:base-package@0.0.30', 'cfs:storage-adapter@0.2.3', 'ecmascript']);
   api.addFiles('gridfs.server.js', 'server');
   api.addFiles('gridfs.client.js', 'client');
 });
 
-Package.onTest(function(api) {
+Package.onTest(function (api) {
   api.use(['cfs:gridfs', 'test-helpers', 'tinytest'], 'server');
   api.addFiles('tests/server-tests.js', 'server');
   api.addFiles('tests/client-tests.js', 'client');
