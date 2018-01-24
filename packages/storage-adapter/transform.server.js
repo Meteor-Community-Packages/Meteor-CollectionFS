@@ -1,4 +1,4 @@
-/* global FS, gm */
+/* global FS */
 
 var PassThrough = Npm.require('stream').PassThrough;
 var lengthStream = Npm.require('length-stream');
@@ -22,16 +22,7 @@ FS.Transform = function(options) {
 };
 
 // Allow packages to add scope
-FS.Transform.scope = {
-// Deprecate gm scope:
-  gm: function(source, height, color) {
-    console.warn('Deprecation notice: `this.gm` is deprecating in favour of the general global `gm` scope');
-    if (typeof gm !== 'function')
-      throw new Error('No graphicsmagick package installed, `gm` not found in scope, eg. `cfs-graphicsmagick`');
-    return gm(source, height, color);
-  }
-// EO Deprecate gm scope
-};
+FS.Transform.scope = {};
 
 // The transformation stream triggers an "stored" event when data is stored into
 // the storage adapter
