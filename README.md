@@ -1,6 +1,10 @@
 CollectionFS
 ============
 
+Looking for maintainers, I'm considering closing this project - please reach out!
+
+--
+
 CollectionFS is a suite of Meteor packages that together provide a complete file
 management solution including uploading, downloading, storage, synchronization,
 manipulation, and copying. It supports several storage adapters for saving to
