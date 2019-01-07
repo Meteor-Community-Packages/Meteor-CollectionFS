@@ -1,0 +1,23 @@
+{
+  "name": "Meteor-CollectionFS",
+  "version": "1.0.0",
+  "description": "CollectionFS ============",
+  "main": "bumpversion.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CollectionFS/Meteor-CollectionFS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CollectionFS/Meteor-CollectionFS/issues"
+  },
+  "homepage": "https://github.com/CollectionFS/Meteor-CollectionFS#readme"
+}
