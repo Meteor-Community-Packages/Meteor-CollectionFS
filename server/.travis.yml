@@ -1,0 +1,15 @@
+language: node_js
+node_js:
+    - "4.6.1"
+cache:
+    directories:
+        - node_modules
+        - $HOME/.meteor/
+
+before_install:
+    - export PATH="$HOME/.meteor:$PATH"
+    - curl https://install.meteor.com | /bin/sh
+before_script:
+    - npm install
+script:
+    - npm run cli
