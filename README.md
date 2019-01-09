@@ -1,7 +1,7 @@
 CollectionFS
 ============
 
-Looking for maintainers, I'm considering closing this project - please reach out!
+Looking for maintainers - please reach out!
 
 --
 
