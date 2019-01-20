@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/CollectionFS/Meteor-CollectionFS/issues"
   },
-  "homepage": "https://github.com/CollectionFS/Meteor-CollectionFS#readme"
+  "homepage": "https://github.com/CollectionFS/Meteor-CollectionFS#readme",
+  "dependencies": {
+    "babel-runtime": "^6.26.0"
+  }
 }
