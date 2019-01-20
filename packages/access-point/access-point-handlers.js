@@ -221,6 +221,29 @@ FS.HTTP.Handlers.Get = function httpGetHandler(ref) {
   readStream.pipe(self.createWriteStream());
 };
 
+// File with unicode or other encodings filename can upload to server susscessfully,
+// but when download, the  HTTP header "Content-Disposition" cannot accept 
+// characters other than ASCII, the filename should be converted to binary or URI encoded.
+// https://github.com/wekan/wekan/issues/784
+const originalHandler = FS.HTTP.Handlers.Get;
+FS.HTTP.Handlers.Get = function (ref) {
+  try {
+      var userAgent = (this.requestHeaders['user-agent']||'').toLowerCase();
+      if(userAgent.indexOf('msie') >= 0 || userAgent.indexOf('chrome') >= 0) {
+          ref.filename =  encodeURIComponent(ref.filename);
+      } else if(userAgent.indexOf('firefox') >= 0) {
+          ref.filename = new Buffer(ref.filename).toString('binary');
+      } else {
+          /* safari*/
+          ref.filename = new Buffer(ref.filename).toString('binary');
+      }   
+   } catch (ex){
+        ref.filename = ref.filename;
+   } 
+   return originalHandler.call(this, ref);
+};
+
+
 /**
  * @method FS.HTTP.Handlers.PutInsert
  * @public
