@@ -1,13 +1,20 @@
 # Changelog
 
-## vCurrent
+## [v0.1.50] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.1.46)
+#### 21/1/19 by Harry Adel
+
+- Bump to version 0.1.50
+
+- *Merged pull-request:* "filename conversion for FS.HTTP.Handlers.Get" [#9](https://github.com/CollectionFS/Meteor-CollectionFS/pull/994) ([yatusiter](https://github.com/yatusiter))
+
+
 
 ## [v0.1.46] (https://github.com/CollectionFS/Meteor-cfs-access-point/tree/v0.1.46)
 #### 30/3/15 by Eric Dobbertin
 
 - Bump to version 0.1.46
 
-- Fixed [#611](https://github.com/CollectionFS/Meteor-CollectionFS/issues/611)
+- *Merged pull-request:* [#611](https://github.com/CollectionFS/Meteor-CollectionFS/issues/611)
 
 - Exposed request handlers on `FS.HTTP.Handlers` object so that app can override
 
